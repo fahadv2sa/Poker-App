@@ -1,6 +1,8 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { HAND_RANK_CATALOG, type CardView, type PlayerView } from "@fp/shared";
+import { cn } from "@/lib/utils";
 
 /** code → Arabic rank name, from the canonical catalog (data-driven). */
 export const RANK_NAME_AR: Record<string, string> = Object.fromEntries(
@@ -33,20 +35,49 @@ const STATUS_AR: Record<string, string> = {
   DISCONNECTED: "غير متصل",
 };
 
-/** A football-player card (face-up) or a face-down back. */
-export function FootballCard({ card, back }: { card?: CardView | null; back?: boolean }) {
+const cardBase =
+  "flex w-[88px] min-h-[124px] flex-col gap-1 rounded-xl border bg-linear-to-b from-[#1e2740] to-[#0f1626] p-2 shadow-md";
+
+/** A football-player card (face-up) or a face-down back, with a deal animation. */
+export function FootballCard({
+  card,
+  back,
+  index = 0,
+}: {
+  card?: CardView | null;
+  back?: boolean;
+  index?: number;
+}) {
   if (back || !card) {
-    return <div className="fcard back" aria-label="بطاقة مغلقة">🂠</div>;
+    return (
+      <div
+        className={cn(
+          cardBase,
+          "items-center justify-center text-2xl [background:repeating-linear-gradient(45deg,#16203a,#16203a_8px,#1b2747_8px,#1b2747_16px)]",
+        )}
+        aria-label="بطاقة مغلقة"
+      >
+        🂠
+      </div>
+    );
   }
   return (
-    <div className="fcard" title={card.name}>
-      <span className="pos">{POSITION_AR[card.position] ?? card.position}</span>
-      <span className="pname">{card.name}</span>
-      <span className="meta">
+    <motion.div
+      initial={{ opacity: 0, y: -18, rotate: -6, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
+      transition={{ duration: 0.4, delay: index * 0.06, ease: [0.2, 0.8, 0.2, 1] }}
+      className={cardBase}
+      title={card.name}
+    >
+      <span className="self-start rounded-md bg-primary px-1.5 py-0.5 text-[0.66rem] font-extrabold text-primary-foreground">
+        {POSITION_AR[card.position] ?? card.position}
+      </span>
+      <span className="text-sm font-extrabold leading-tight">{card.name}</span>
+      <span className="mt-auto text-[0.68rem] text-muted-foreground">
         {card.nationality}
         {card.clubs[0] ? ` · ${card.clubs[0]}` : ""}
       </span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -59,31 +90,36 @@ export function PlayerSeat({
   isActive: boolean;
   isYou: boolean;
 }) {
-  const cls = [
-    "seat",
-    isActive ? "active" : "",
-    player.status === "FOLDED" ? "folded" : "",
-    player.status === "ALLIN" ? "allin" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
   return (
-    <div className={cls}>
-      <div className="name">
+    <div
+      className={cn(
+        "rounded-lg border border-white/10 bg-black/40 p-3 backdrop-blur transition",
+        isActive && "border-primary animate-turn",
+        player.status === "FOLDED" && "opacity-45 grayscale",
+        player.status === "ALLIN" && "border-gold glow-gold",
+      )}
+    >
+      <div className="flex items-center justify-between gap-1 font-bold">
         <span>
           {player.username}
           {isYou ? " (أنت)" : ""}
         </span>
-        {player.isDealer ? <span className="dealer-badge" title="الموزّع">D</span> : null}
+        {player.isDealer ? (
+          <span
+            className="grid size-5 place-items-center rounded-full bg-white text-[0.7rem] font-black text-black"
+            title="الموزّع"
+          >
+            D
+          </span>
+        ) : null}
       </div>
-      <div className="sub">
+      <div className="text-xs text-muted-foreground">
         <span className="num">#{player.playerNumber}</span>
         {" · "}
-        <span className="status">{STATUS_AR[player.status] ?? player.status}</span>
+        {STATUS_AR[player.status] ?? player.status}
       </div>
       {player.committedTotal > 0 ? (
-        <div className="sub">
+        <div className="text-xs text-muted-foreground">
           رهانه: 🪙 <span className="num">{player.committedTotal}</span>
         </div>
       ) : null}
@@ -91,17 +127,19 @@ export function PlayerSeat({
   );
 }
 
-/**
- * Drains right→left over the remaining time of the current turn (RTL). The CSS
- * `drain` animation runs for exactly the time left; `key={deadlineTs}` restarts
- * it when a new turn begins.
- */
+/** Drains right→left over the remaining time of the current turn (RTL). */
 export function TurnTimer({ deadlineTs }: { deadlineTs: number | null }) {
   if (!deadlineTs) return null;
   const remaining = Math.max(0, deadlineTs - Date.now());
   return (
-    <div className="timer" aria-label="الوقت المتبقّي للدور">
-      <span key={deadlineTs} style={{ animationDuration: `${remaining}ms` }} />
+    <div className="h-[5px] w-full overflow-hidden rounded-full bg-white/10">
+      <motion.div
+        key={deadlineTs}
+        className="h-full origin-right bg-linear-to-l from-primary to-accent"
+        initial={{ scaleX: 1 }}
+        animate={{ scaleX: 0 }}
+        transition={{ duration: remaining / 1000, ease: "linear" }}
+      />
     </div>
   );
 }

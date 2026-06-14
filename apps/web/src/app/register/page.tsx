@@ -8,7 +8,7 @@ export default async function RegisterPage() {
   if (session?.user?.id) redirect("/");
 
   return (
-    <main className="shell" style={{ display: "grid", placeItems: "center", minHeight: "100vh" }}>
+    <main className="grid min-h-screen place-items-center px-4 py-10">
       <AuthForm action={registerAction} mode="register" />
     </main>
   );

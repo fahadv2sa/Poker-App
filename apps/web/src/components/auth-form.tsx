@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { motion } from "framer-motion";
 import type { AuthFormState } from "@/app/login/actions";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type AuthAction = (
   prev: AuthFormState | undefined,
@@ -21,51 +26,62 @@ export function AuthForm({
   const isLogin = mode === "login";
 
   return (
-    <form action={formAction} className="card pad-lg stack" style={{ maxWidth: 420, width: "100%" }}>
-      <div className="center stack" style={{ gap: "0.25rem" }}>
-        <h1>{isLogin ? "تسجيل الدخول" : "إنشاء حساب"}</h1>
-        <p className="muted small">
-          {isLogin ? "أهلًا بعودتك إلى طاولة كرة القدم" : "ابدأ برصيد 1000 كوين مجانًا"}
-        </p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="w-full max-w-md"
+    >
+      <Card className="p-6 sm:p-8">
+        <form action={formAction} className="flex flex-col gap-4">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <h1 className="text-2xl">{isLogin ? "تسجيل الدخول" : "إنشاء حساب"}</h1>
+            <p className="text-sm text-muted-foreground">
+              {isLogin ? "أهلًا بعودتك إلى طاولة كرة القدم" : "ابدأ برصيد 1000 كوين مجانًا"}
+            </p>
+          </div>
 
-      {state?.error ? <div className="alert alert-error">{state.error}</div> : null}
+          {state?.error ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+              {state.error}
+            </div>
+          ) : null}
 
-      <div className="field">
-        <label htmlFor="username">اسم المستخدم</label>
-        <input
-          id="username"
-          name="username"
-          className="input"
-          autoComplete="username"
-          placeholder="مثال: messi_10"
-          required
-        />
-      </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="username">اسم المستخدم</Label>
+            <Input
+              id="username"
+              name="username"
+              autoComplete="username"
+              placeholder="مثال: messi_10"
+              required
+            />
+          </div>
 
-      <div className="field">
-        <label htmlFor="password">كلمة المرور</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          className="input"
-          autoComplete={isLogin ? "current-password" : "new-password"}
-          placeholder="٨ أحرف على الأقل"
-          required
-        />
-      </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password">كلمة المرور</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete={isLogin ? "current-password" : "new-password"}
+              placeholder="٨ أحرف على الأقل"
+              required
+            />
+          </div>
 
-      <button type="submit" className="btn btn-primary lg block" disabled={pending}>
-        {pending ? "جارٍ المعالجة…" : isLogin ? "دخول" : "إنشاء الحساب"}
-      </button>
+          <Button type="submit" size="lg" disabled={pending} className="w-full">
+            {pending ? "جارٍ المعالجة…" : isLogin ? "دخول" : "إنشاء الحساب"}
+          </Button>
 
-      <p className="muted small center">
-        {isLogin ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
-        <Link href={isLogin ? "/register" : "/login"} style={{ color: "var(--primary)" }}>
-          {isLogin ? "أنشئ حسابًا" : "سجّل الدخول"}
-        </Link>
-      </p>
-    </form>
+          <p className="text-center text-sm text-muted-foreground">
+            {isLogin ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
+            <Link href={isLogin ? "/register" : "/login"} className="text-primary hover:underline">
+              {isLogin ? "أنشئ حسابًا" : "سجّل الدخول"}
+            </Link>
+          </p>
+        </form>
+      </Card>
+    </motion.div>
   );
 }

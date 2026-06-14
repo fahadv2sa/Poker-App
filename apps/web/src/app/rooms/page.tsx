@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { CreateRoomForm } from "./create-form";
 import { JoinForm } from "./join-form";
 
@@ -22,60 +24,61 @@ export default async function RoomsPage() {
   });
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <span className="dot" />
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <header className="mb-8 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-xl font-black">
+          <span className="size-3 rounded-full bg-primary glow-primary" />
           الغُرف
         </div>
-        <Link href="/" className="btn btn-ghost">
-          ← القائمة
-        </Link>
+        <Button asChild variant="ghost">
+          <Link href="/">← القائمة</Link>
+        </Button>
       </header>
 
-      <div className="menu-grid" style={{ alignItems: "start", marginBottom: "1.5rem" }}>
-        <section className="card pad-lg stack">
-          <h2>إنشاء غرفة</h2>
+      <div className="mb-6 grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+        <Card className="p-6 sm:p-8">
+          <h2 className="mb-4 text-xl">إنشاء غرفة</h2>
           <CreateRoomForm />
-        </section>
-        <section className="card pad-lg stack">
-          <h2>دخول بكود</h2>
+        </Card>
+        <Card className="p-6 sm:p-8">
+          <h2 className="mb-4 text-xl">دخول بكود</h2>
           <JoinForm />
-        </section>
+        </Card>
       </div>
 
-      <section className="card pad-lg stack">
-        <div className="row spread">
-          <h2 style={{ margin: 0 }}>الغرف العامة</h2>
-          <span className="pill">
+      <Card className="p-6 sm:p-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl">الغرف العامة</h2>
+          <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground">
             <span className="num">{rooms.length}</span> غرفة
           </span>
         </div>
 
         {rooms.length === 0 ? (
-          <p className="muted">لا توجد غرف عامة الآن — أنشئ واحدة!</p>
+          <p className="text-muted-foreground">لا توجد غرف عامة الآن — أنشئ واحدة!</p>
         ) : (
-          <div className="stack" style={{ gap: "0.5rem" }}>
+          <div className="flex flex-col gap-2">
             {rooms.map((r) => (
               <Link
                 key={r.id}
                 href={`/table/${r.id}`}
-                className="card"
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                className="flex items-center justify-between rounded-lg border bg-secondary/40 p-4 transition hover:border-primary/45"
               >
                 <div>
                   <strong>{r.roomName}</strong>
-                  <div className="muted small">
+                  <div className="text-sm text-muted-foreground">
                     <span className="num">{r._count.players}</span> /{" "}
                     <span className="num">{r.maxPlayers}</span> لاعبين
                   </div>
                 </div>
-                <span className="pill live">دخول →</span>
+                <span className="rounded-full border border-primary/40 px-3 py-1 text-sm text-primary">
+                  دخول →
+                </span>
               </Link>
             ))}
           </div>
         )}
-      </section>
+      </Card>
     </main>
   );
 }

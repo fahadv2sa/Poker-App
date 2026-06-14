@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 /** Create-room form. POSTs to /api/rooms, then opens the new table. */
 export function CreateRoomForm() {
@@ -40,47 +43,52 @@ export function CreateRoomForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="stack">
-      {error ? <div className="alert alert-error">{error}</div> : null}
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      {error ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+          {error}
+        </div>
+      ) : null}
 
-      <div className="field">
-        <label htmlFor="roomName">اسم الغرفة</label>
-        <input id="roomName" name="roomName" className="input" placeholder="طاولة الأبطال" required />
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="roomName">اسم الغرفة</Label>
+        <Input id="roomName" name="roomName" placeholder="طاولة الأبطال" required />
       </div>
 
-      <div className="row" style={{ gap: "1rem" }}>
-        <div className="field" style={{ flex: 1 }}>
-          <label htmlFor="maxPlayers">أقصى عدد لاعبين</label>
-          <input
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="flex flex-1 flex-col gap-2">
+          <Label htmlFor="maxPlayers">أقصى عدد لاعبين</Label>
+          <Input
             id="maxPlayers"
             name="maxPlayers"
             type="number"
             min={2}
             max={8}
             defaultValue={6}
-            className="input num"
+            className="num"
           />
         </div>
-        <label className="row" style={{ gap: "0.5rem", alignSelf: "flex-end", paddingBottom: "0.7rem" }}>
+        <label className="flex items-center gap-2 pb-2 text-sm">
           <input
             type="checkbox"
             checked={isPrivate}
             onChange={(e) => setIsPrivate(e.target.checked)}
+            className="size-4 accent-[var(--primary)]"
           />
           غرفة خاصة
         </label>
       </div>
 
       {isPrivate ? (
-        <div className="field">
-          <label htmlFor="password">كلمة مرور الغرفة</label>
-          <input id="password" name="password" type="password" className="input" />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="password">كلمة مرور الغرفة</Label>
+          <Input id="password" name="password" type="password" />
         </div>
       ) : null}
 
-      <button type="submit" className="btn btn-primary block" disabled={pending}>
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? "جارٍ الإنشاء…" : "إنشاء وفتح الطاولة"}
-      </button>
+      </Button>
     </form>
   );
 }

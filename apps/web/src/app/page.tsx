@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth, signOut } from "@/auth";
+import { Button } from "@/components/ui/button";
 
 const MENU = [
   { href: "/rooms", icon: "♠", title: "إنشاء غرفة", desc: "ابدأ طاولة جديدة وادعُ أصدقاءك" },
@@ -23,15 +24,15 @@ export default async function HomePage() {
   const balance = user?.wallet?.balance.toString() ?? "0";
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          <span className="dot" />
+    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <header className="mb-8 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-xl font-black">
+          <span className="size-3 rounded-full bg-primary glow-primary" />
           فوتبول بوكر
         </div>
-        <div className="row">
-          <span className="pill gold">
-            🪙 <span className="num">{balance}</span> كوين
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
+            🪙 <span className="num font-semibold">{balance}</span> كوين
           </span>
           <form
             action={async () => {
@@ -39,28 +40,35 @@ export default async function HomePage() {
               await signOut({ redirectTo: "/login" });
             }}
           >
-            <button type="submit" className="btn btn-ghost">
+            <Button type="submit" variant="ghost">
               خروج
-            </button>
+            </Button>
           </form>
         </div>
       </header>
 
-      <section className="card pad-lg" style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ marginBottom: "0.25rem" }}>أهلًا، {user?.username}</h1>
-        <p className="muted">
+      <section className="mb-6 rounded-xl border bg-card p-6 shadow-sm sm:p-8">
+        <h1 className="mb-1 text-2xl">أهلًا، {user?.username}</h1>
+        <p className="text-muted-foreground">
           رقمك التعريفي <span className="num">#{user?.playerNumber}</span> — اختر وجهتك من القائمة.
         </p>
       </section>
 
-      <nav className="menu-grid" aria-label="القائمة الرئيسية">
+      <nav
+        aria-label="القائمة الرئيسية"
+        className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]"
+      >
         {MENU.map((m) => (
-          <Link key={m.title} href={m.href} className="menu-tile">
-            <span className="icon" aria-hidden>
+          <Link
+            key={m.title}
+            href={m.href}
+            className="flex min-h-[120px] flex-col gap-2 rounded-xl border bg-linear-to-b from-card to-secondary p-6 transition hover:-translate-y-1 hover:border-primary/45 hover:shadow-xl"
+          >
+            <span className="text-2xl" aria-hidden>
               {m.icon}
             </span>
-            <h3>{m.title}</h3>
-            <span className="muted small">{m.desc}</span>
+            <h3 className="text-lg font-bold">{m.title}</h3>
+            <span className="text-sm text-muted-foreground">{m.desc}</span>
           </Link>
         ))}
       </nav>
