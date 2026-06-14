@@ -1,0 +1,417 @@
+// Football Poker — database schema (Section 5 of SPEC.md).
+// Conventions: all PKs are uuid; all timestamps are timestamptz; tables and
+// columns are snake_case via @@map/@map. Only Positions + HandRanks are seeded;
+// no real football player is ever inserted (data-driven, Section 17).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum WalletTxType {
+  SIGNUP_BONUS
+  BANK_CLAIM
+  ANTE
+  BET
+  RAISE
+  ALLIN
+  WIN
+  SPLIT_WIN
+  REFUND
+  FOLD_FORFEIT
+
+  @@map("wallet_tx_type")
+}
+
+enum PositionCode {
+  GK
+  DEF
+  MID
+  FWD
+
+  @@map("position_code")
+}
+
+enum GameStatus {
+  LOBBY
+  IN_PROGRESS
+  ENDED
+  ABANDONED
+
+  @@map("game_status")
+}
+
+enum GamePhase {
+  LOBBY
+  PREFLOP
+  FLOP
+  TURN
+  RIVER
+  SHOWDOWN
+  RESOLVE
+  ENDED
+
+  @@map("game_phase")
+}
+
+enum GamePlayerStatus {
+  WAITING
+  ACTIVE
+  FOLDED
+  ALLIN
+  DISCONNECTED
+
+  @@map("game_player_status")
+}
+
+enum CardType {
+  HOLE
+  COMMUNITY
+
+  @@map("card_type")
+}
+
+enum BetRound {
+  PREFLOP
+  FLOP
+  TURN
+  RIVER
+
+  @@map("bet_round")
+}
+
+enum BetAction {
+  ANTE
+  CHECK
+  CALL
+  RAISE
+  FOLD
+  ALLIN
+
+  @@map("bet_action")
+}
+
+enum ResultOutcome {
+  WIN
+  SPLIT
+  LOSE
+  FOLD
+  REFUND
+
+  @@map("result_outcome")
+}
+
+// ----------------------------------------------------------------------------
+// Identity, wallet, stats (persistent)
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  // Sequential, starts at 100001 (sequence restart set in the init migration),
+  // displayed as e.g. #100001.
+  playerNumber Int      @unique @default(autoincrement()) @map("player_number")
+  username     String   @unique
+  passwordHash String   @map("password_hash") // argon2id
+  avatarSeed   String?  @map("avatar_seed")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  wallet       Wallet?
+  stats        UserStats?
+  transactions WalletTransaction[]
+  bankClaims   BankClaim[]
+  gamesCreated Game[]              @relation("GamesCreatedBy")
+  gamePlayers  GamePlayer[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  // balance is updated ONLY in sync with inserting a WalletTransaction, inside
+  // the same DB transaction. A CHECK(balance >= 0) is added in the migration.
+  balance        BigInt   @default(1000)
+  highestBalance BigInt   @default(1000) @map("highest_balance")
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+// Append-only ledger — the financial source of truth (Section 6).
+model WalletTransaction {
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String       @map("user_id") @db.Uuid
+  gameId       String?      @map("game_id") @db.Uuid
+  type         WalletTxType
+  amount       BigInt // positive = credit, negative = debit
+  balanceAfter BigInt       @map("balance_after")
+  reference    String       @unique // = server-generated idempotency key (actionId)
+  metadata     Json?        @db.JsonB
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game         Game?        @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("wallet_transactions")
+}
+
+model BankClaim {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  amount    BigInt   @default(1000)
+  claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, claimedAt])
+  @@map("bank_claims")
+}
+
+model UserStats {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  gamesPlayed    Int      @default(0) @map("games_played")
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  folds          Int      @default(0)
+  totalCoinsWon  BigInt   @default(0) @map("total_coins_won")
+  totalCoinsLost BigInt   @default(0) @map("total_coins_lost")
+  netProfitLoss  BigInt   @default(0) @map("net_profit_loss")
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_stats")
+}
+
+// ----------------------------------------------------------------------------
+// Football reference data (data-driven; owner-supplied except Positions seed)
+// ----------------------------------------------------------------------------
+
+model Nationality {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String  @unique
+  isoCode   String? @map("iso_code")
+  flagEmoji String? @map("flag_emoji")
+
+  clubs     Club[]
+  players   Player[]
+
+  @@map("nationalities")
+}
+
+model Position {
+  id      String       @id @default(uuid()) @db.Uuid
+  code    PositionCode @unique
+  nameAr  String       @map("name_ar")
+  nameEn  String       @map("name_en")
+
+  players Player[]
+
+  @@map("positions")
+}
+
+model Club {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique
+  countryId   String?      @map("country_id") @db.Uuid
+  logoUrl     String?      @map("logo_url")
+
+  country     Nationality? @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  playerClubs PlayerClub[]
+
+  @@map("clubs")
+}
+
+model Player {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  nationalityId String   @map("nationality_id") @db.Uuid
+  positionId    String   @map("position_id") @db.Uuid
+  birthYear     Int?     @map("birth_year")
+  photoUrl      String?  @map("photo_url")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  nationality   Nationality  @relation(fields: [nationalityId], references: [id], onDelete: Restrict)
+  position      Position     @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  playerClubs   PlayerClub[]
+  gameCards     GameCard[]
+
+  @@index([nationalityId])
+  @@index([positionId])
+  @@map("players")
+}
+
+model PlayerClub {
+  id       String @id @default(uuid()) @db.Uuid
+  playerId String @map("player_id") @db.Uuid
+  clubId   String @map("club_id") @db.Uuid
+  fromYear Int?   @map("from_year")
+  toYear   Int?   @map("to_year")
+
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  club     Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@index([playerId])
+  @@index([clubId])
+  @@map("player_clubs")
+}
+
+// Game rules, seeded. rule (jsonb) holds the Rule DSL (Section 7.3/7.4).
+model HandRank {
+  id            String  @id @default(uuid()) @db.Uuid
+  code          String  @unique
+  nameAr        String  @map("name_ar")
+  nameEn        String  @map("name_en")
+  strength      Int     @unique
+  rule          Json    @db.JsonB
+  descriptionAr String? @map("description_ar")
+  examples      Json?   @db.JsonB
+  active        Boolean @default(true)
+
+  claimsAsClaimed PlayerHandClaim[] @relation("ClaimedHandRank")
+  claimsAsBest    PlayerHandClaim[] @relation("BestPossibleRank")
+
+  @@map("hand_ranks")
+}
+
+// ----------------------------------------------------------------------------
+// Game session (rooms are temporary; results/ledger are persistent)
+// ----------------------------------------------------------------------------
+
+model Game {
+  id              String     @id @default(uuid()) @db.Uuid
+  roomName        String     @map("room_name")
+  isPrivate       Boolean    @default(false) @map("is_private")
+  passwordHash    String?    @map("password_hash")
+  maxPlayers      Int        @map("max_players")
+  inviteCode      String     @unique @map("invite_code")
+  status          GameStatus @default(LOBBY)
+  createdBy       String     @map("created_by") @db.Uuid
+  config          Json       @db.JsonB
+  phase           GamePhase  @default(LOBBY)
+  pot             BigInt     @default(0) // display total
+  pots            Json?      @db.JsonB // side pots at resolve: [{ amount, eligibleSeats[] }]
+  currentBet      BigInt     @default(0) @map("current_bet")
+  dealerSeat      Int?       @map("dealer_seat")
+  currentTurnSeat Int?       @map("current_turn_seat")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt       DateTime?  @map("started_at") @db.Timestamptz(6)
+  endedAt         DateTime?  @map("ended_at") @db.Timestamptz(6)
+
+  creator         User       @relation("GamesCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+  players         GamePlayer[]
+  cards           GameCard[]
+  bets            Bet[]
+  handClaims      PlayerHandClaim[]
+  results         GameResult[]
+  transactions    WalletTransaction[]
+
+  @@map("games")
+}
+
+model GamePlayer {
+  id                 String           @id @default(uuid()) @db.Uuid
+  gameId             String           @map("game_id") @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  seat               Int
+  status             GamePlayerStatus @default(WAITING)
+  holeCards          Json?            @map("hole_cards") @db.JsonB // server only, never broadcast
+  committedTotal     BigInt           @default(0) @map("committed_total")
+  committedThisRound BigInt           @default(0) @map("committed_this_round")
+  lastBetAmount      BigInt           @default(0) @map("last_bet_amount")
+  joinedAt           DateTime         @default(now()) @map("joined_at") @db.Timestamptz(6)
+  leftAt             DateTime?        @map("left_at") @db.Timestamptz(6)
+
+  game               Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bets               Bet[]
+  handClaims         PlayerHandClaim[]
+  results            GameResult[]
+
+  @@unique([gameId, seat])
+  @@unique([gameId, userId])
+  @@map("game_players")
+}
+
+model GameCard {
+  id               String   @id @default(uuid()) @db.Uuid
+  gameId           String   @map("game_id") @db.Uuid
+  cardType         CardType @map("card_type")
+  ownerSeat        Int?     @map("owner_seat")
+  communityIndex   Int?     @map("community_index") // 0-4
+  footballPlayerId String   @map("football_player_id") @db.Uuid
+  revealed         Boolean  @default(false)
+
+  game             Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  footballPlayer   Player   @relation(fields: [footballPlayerId], references: [id], onDelete: Restrict)
+
+  @@index([gameId])
+  @@map("game_cards")
+}
+
+model Bet {
+  id           String    @id @default(uuid()) @db.Uuid
+  gameId       String    @map("game_id") @db.Uuid
+  gamePlayerId String    @map("game_player_id") @db.Uuid
+  round        BetRound
+  action       BetAction
+  amount       BigInt
+  sequence     Int
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  game         Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gamePlayer   GamePlayer @relation(fields: [gamePlayerId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@map("bets")
+}
+
+model PlayerHandClaim {
+  id                 String   @id @default(uuid()) @db.Uuid
+  gameId             String   @map("game_id") @db.Uuid
+  gamePlayerId       String   @map("game_player_id") @db.Uuid
+  claimedHandRankId  String?  @map("claimed_hand_rank_id") @db.Uuid
+  isValid            Boolean  @map("is_valid")
+  bestPossibleRankId String?  @map("best_possible_rank_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  game               Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gamePlayer         GamePlayer @relation(fields: [gamePlayerId], references: [id], onDelete: Cascade)
+  claimedHandRank    HandRank?  @relation("ClaimedHandRank", fields: [claimedHandRankId], references: [id], onDelete: SetNull)
+  bestPossibleRank   HandRank?  @relation("BestPossibleRank", fields: [bestPossibleRankId], references: [id], onDelete: SetNull)
+
+  @@index([gameId])
+  @@map("player_hand_claims")
+}
+
+model GameResult {
+  id           String        @id @default(uuid()) @db.Uuid
+  gameId       String        @map("game_id") @db.Uuid
+  gamePlayerId String        @map("game_player_id") @db.Uuid
+  outcome      ResultOutcome
+  coinsDelta   BigInt        @map("coins_delta")
+  finalBalance BigInt        @map("final_balance")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  game         Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gamePlayer   GamePlayer @relation(fields: [gamePlayerId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@map("game_results")
+}

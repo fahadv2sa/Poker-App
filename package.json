@@ -1,0 +1,26 @@
+{
+  "name": "football-poker",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:generate": "pnpm --filter @fp/db generate",
+    "db:migrate": "pnpm --filter @fp/db migrate:dev",
+    "db:deploy": "pnpm --filter @fp/db migrate:deploy",
+    "db:seed": "pnpm --filter @fp/db seed",
+    "db:reset": "pnpm --filter @fp/db migrate:reset"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.5"
+  }
+}
