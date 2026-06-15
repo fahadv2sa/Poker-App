@@ -113,6 +113,20 @@ export class GameRoom {
     await this.postAntesAndOpenPreflop(seated);
   }
 
+  /**
+   * FIX #4 — on (re)connect mid-hand, privately re-send a seat's own hole cards
+   * to that seat only (Section 12: the private view on reconnect). Uses the
+   * per-seat channel (`toSeat`), never the broadcast — so no other client ever
+   * sees them. No-op if the seat hasn't been dealt (e.g. a lobby reconnect).
+   */
+  resyncSeat(seat: number): void {
+    const player = this.state.players.find((p) => p.seat === seat);
+    if (!player || player.holeCards.length === 0) return;
+    this.deps.emitter.toSeat(seat, SERVER_EVENTS.gameDealt, {
+      holeCards: player.holeCards.map(toCardView),
+    });
+  }
+
   private async postAntesAndOpenPreflop(seated: RoomPlayer[]): Promise<void> {
     const ante = BigInt(this.state.config.ante);
     const movements: LedgerMovement[] = [];

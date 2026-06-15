@@ -354,3 +354,39 @@ describe("server-generated idempotency key (FIX #3)", () => {
     expect(refs.every((r) => /^g1:act:\d+:\d+$/.test(r))).toBe(true);
   });
 });
+
+describe("private hole-card resync on reconnect (FIX #4)", () => {
+  const dealtTo = (e: FakeEmitter, seat: number) =>
+    e.seat.filter((x) => x.event === "game:dealt" && x.seat === seat);
+
+  it("re-sends only the reconnecting seat's own hole cards, privately", async () => {
+    const { room, emitter } = makeRoom(allMidDeck());
+    await room.start();
+
+    // Each seat received its private deal exactly once.
+    expect(dealtTo(emitter, 1)).toHaveLength(1);
+    expect(dealtTo(emitter, 2)).toHaveLength(1);
+
+    room.resyncSeat(1); // seat 1 reconnects mid-hand
+
+    const resent = dealtTo(emitter, 1);
+    expect(resent).toHaveLength(2); // original deal + reconnect resync
+    // It carries exactly seat 1's own two hole cards.
+    const payload = resent.at(-1)!.payload as { holeCards: Array<{ playerId: string }> };
+    expect(payload.holeCards).toHaveLength(2);
+    expect(payload.holeCards.map((c) => c.playerId)).toEqual(
+      room.state.players.find((p) => p.seat === 1)!.holeCards.map((c) => c.playerId),
+    );
+
+    // Privacy: no hole cards ever hit the room broadcast, and seat 2 is untouched.
+    expect(emitter.room.some((x) => x.event === "game:dealt")).toBe(false);
+    expect(dealtTo(emitter, 2)).toHaveLength(1);
+  });
+
+  it("does nothing when the seat has no cards yet (lobby reconnect)", () => {
+    const { room, emitter } = makeRoom(allMidDeck());
+    room.resyncSeat(1); // hand not started → no hole cards
+    expect(emitter.seat.filter((x) => x.event === "game:dealt")).toHaveLength(0);
+    expect(emitter.room.some((x) => x.event === "game:dealt")).toBe(false);
+  });
+});

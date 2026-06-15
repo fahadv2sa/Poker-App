@@ -123,6 +123,10 @@ export function attachSocketHandlers(
         socket
           .to(roomKey(game.id))
           .emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, null));
+
+        // FIX #4: a mid-hand reconnect privately re-receives its own hole cards
+        // (seats map was just rebound above, so this reaches the new socket).
+        rt.room.resyncSeat(player.seat);
       }),
     );
 
