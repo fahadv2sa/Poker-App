@@ -30,3 +30,9 @@ export class UsernameTakenError extends WalletError {
     super("اسم المستخدم مستخدم بالفعل", "USERNAME_TAKEN");
   }
 }
+
+export class BankLimitError extends WalletError {
+  constructor(public readonly retryAt: Date) {
+    super("بلغت الحد الأقصى لطلبات البنك (مرتان كل 24 ساعة)", "BANK_LIMIT_REACHED");
+  }
+}

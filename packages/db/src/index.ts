@@ -11,3 +11,4 @@ export type {
 } from "./generated/client";
 export * from "./errors";
 export * from "./wallet";
+export * from "./bank";
