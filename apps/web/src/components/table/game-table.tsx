@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { FootballCard, PHASE_AR, PlayerSeat, RANK_NAME_AR, TurnTimer } from "./parts";
+import { FootballCard, PHASE_AR, PlayerSeat, TurnTimer } from "./parts";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 
@@ -228,7 +228,7 @@ export function GameTable({
                         claimed === r.id && "border-primary glow-primary",
                       )}
                     >
-                      <span>{RANK_NAME_AR[r.code] ?? r.code}</span>
+                      <span>{r.nameAr}</span>
                       <span className="text-xs text-muted-foreground">
                         القوة <span className="num">{r.strength}</span>
                       </span>

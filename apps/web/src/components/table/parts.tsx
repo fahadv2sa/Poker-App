@@ -1,13 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { HAND_RANK_CATALOG, type CardView, type PlayerView } from "@fp/shared";
+import type { CardView, PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
 
-/** code → Arabic rank name, from the canonical catalog (data-driven). */
-export const RANK_NAME_AR: Record<string, string> = Object.fromEntries(
-  HAND_RANK_CATALOG.map((r) => [r.code, r.nameAr]),
-);
+// Rank display names are NOT hardcoded here — they arrive in the showdown:start
+// payload as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
 
 const POSITION_AR: Record<string, string> = {
   GK: "حارس",

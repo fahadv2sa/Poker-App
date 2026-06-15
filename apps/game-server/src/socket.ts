@@ -1,5 +1,5 @@
 import { getWalletBalance, prisma } from "@fp/db";
-import type { Action, HandRankDef } from "@fp/engine";
+import type { Action } from "@fp/engine";
 import {
   CLIENT_EVENTS,
   SERVER_EVENTS,
@@ -16,7 +16,7 @@ import { PrismaCardSource } from "./cards.js";
 import { PrismaRoomPersistence } from "./persistence.js";
 import { NodeTimerService, systemClock } from "./timers.js";
 import type { RoomStore } from "./store.js";
-import type { RoomPlayer, RoomState } from "./types.js";
+import type { RankInfo, RoomPlayer, RoomState } from "./types.js";
 
 const roomKey = (gameId: string) => `game:${gameId}`;
 
@@ -63,7 +63,7 @@ interface SocketUser {
 export function attachSocketHandlers(
   io: Server,
   store: RoomStore,
-  ranks: HandRankDef[],
+  ranks: RankInfo[],
 ): void {
   const runtimes = new Map<string, RoomRuntime>();
 

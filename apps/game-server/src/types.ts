@@ -9,6 +9,17 @@ import type { BetRound, GamePhase, GameConfig } from "@fp/shared";
 
 export type SeatStatus = "WAITING" | "ACTIVE" | "FOLDED" | "ALLIN" | "DISCONNECTED";
 
+/**
+ * A HandRank as the room holds it: the engine's evaluation fields plus the DB's
+ * Arabic display name (`name_ar`). Carrying `nameAr` here keeps rank names
+ * data-driven (Section 2.2) — the showdown payload reads it straight from the
+ * DB-loaded value. It stays structurally assignable to the engine's pure
+ * `HandRankDef` (the extra field is ignored by `validateClaim`).
+ */
+export interface RankInfo extends HandRankDef {
+  nameAr: string;
+}
+
 /** A football-player card: engine attributes + display/identity fields. */
 export interface DealtCard extends Card {
   playerId: string;
@@ -57,8 +68,8 @@ export interface RoomState {
   currentTurnSeat: number | null;
   currentBet: bigint;
   turnDeadlineTs: number | null;
-  /** HandRanks loaded from the DB (data-driven) — used for claim validation. */
-  ranks: HandRankDef[];
+  /** HandRanks loaded from the DB (data-driven) — claim validation + display name. */
+  ranks: RankInfo[];
 }
 
 /** Maps a betting round to its phase. */

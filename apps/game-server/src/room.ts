@@ -349,7 +349,8 @@ export class GameRoom {
       availableHandRanks: this.state.ranks
         .slice()
         .sort((a, b) => b.strength - a.strength)
-        .map((r) => ({ id: r.id, code: r.code, nameAr: r.code, strength: r.strength })),
+        // nameAr is the DB-loaded display name (data-driven), not the code.
+        .map((r) => ({ id: r.id, code: r.code, nameAr: r.nameAr, strength: r.strength })),
       deadlineTs: deadline,
     });
     this.deps.timers.arm(CLAIM_KEY, this.state.config.claimTimerSec * 1000, () => {

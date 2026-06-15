@@ -1,4 +1,4 @@
-import type { HandRankDef, Settlement } from "@fp/engine";
+import type { Settlement } from "@fp/engine";
 import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fp/shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { dealFromDeck } from "../src/cards.js";
@@ -12,7 +12,7 @@ import type {
   RoomPersistence,
   TimerService,
 } from "../src/ports.js";
-import type { DealtCard, RoomPlayer, RoomState } from "../src/types.js";
+import type { DealtCard, RankInfo, RoomPlayer, RoomState } from "../src/types.js";
 
 /**
  * End-to-end hand flow through GameRoom with in-memory fakes (no DB, no
@@ -81,11 +81,12 @@ const clock: Clock = { now: () => 0 };
 
 // --- fixtures --------------------------------------------------------------
 
-const RANKS: HandRankDef[] = HAND_RANK_CATALOG.map((r) => ({
+const RANKS: RankInfo[] = HAND_RANK_CATALOG.map((r) => ({
   id: r.code,
   code: r.code,
   strength: r.strength,
   rule: r.rule,
+  nameAr: r.nameAr,
 }));
 
 const card = (id: string, position: string, nationality = "X"): DealtCard => ({
@@ -126,6 +127,7 @@ function player(seat: number, userId: string): RoomPlayer {
 function makeRoom(
   deck: DealtCard[],
   balances: Record<string, bigint> = {},
+  ranks: RankInfo[] = RANKS,
 ): {
   room: GameRoom;
   persistence: FakePersistence;
@@ -149,7 +151,7 @@ function makeRoom(
     currentTurnSeat: null,
     currentBet: 0n,
     turnDeadlineTs: null,
-    ranks: RANKS,
+    ranks,
   };
   const persistence = new FakePersistence(balances);
   const emitter = new FakeEmitter();
@@ -388,5 +390,36 @@ describe("private hole-card resync on reconnect (FIX #4)", () => {
     room.resyncSeat(1); // hand not started → no hole cards
     expect(emitter.seat.filter((x) => x.event === "game:dealt")).toHaveLength(0);
     expect(emitter.room.some((x) => x.event === "game:dealt")).toBe(false);
+  });
+});
+
+describe("rank display names are data-driven (FIX #5)", () => {
+  it("showdown:start carries the DB name_ar, never the code or a hardcoded map", async () => {
+    // Ranks whose nameAr is a sentinel distinct from the code — stands in for the
+    // DB-loaded value; it can't come from the rank code or a compile-time catalog.
+    const dbRanks: RankInfo[] = HAND_RANK_CATALOG.map((r) => ({
+      id: r.code,
+      code: r.code,
+      strength: r.strength,
+      rule: r.rule,
+      nameAr: `اسم-من-قاعدة-البيانات-${r.code}`,
+    }));
+    const { room, emitter } = makeRoom(allMidDeck(), {}, dbRanks);
+
+    await room.start();
+    // Check the hand down (2 then 1 each street) to reach showdown.
+    for (let i = 0; i < 4; i++) {
+      await room.placeAction(2, { type: "CHECK" });
+      await room.placeAction(1, { type: "CHECK" });
+    }
+    expect(room.state.phase).toBe("SHOWDOWN");
+
+    const payload = roomEvents(emitter, "showdown:start").at(-1)!.payload as {
+      availableHandRanks: Array<{ code: string; nameAr: string }>;
+    };
+    const royal = payload.availableHandRanks.find((r) => r.code === "ROYAL_POSITION")!;
+    expect(royal.nameAr).toBe("اسم-من-قاعدة-البيانات-ROYAL_POSITION");
+    // No rank's display name falls back to its code (no placeholder anywhere).
+    expect(payload.availableHandRanks.every((r) => r.nameAr !== r.code)).toBe(true);
   });
 });
