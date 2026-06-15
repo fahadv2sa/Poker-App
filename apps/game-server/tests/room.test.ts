@@ -35,6 +35,8 @@ class FakePersistence implements RoomPersistence {
   bets: BetRecord[] = [];
   claims: Array<{ seat: number; valid: boolean }> = [];
   settlements: Settlement[] = [];
+  /** How many times persistResolve was invoked (must be exactly 1 per hand). */
+  resolveCalls = 0;
   /** Per-user wallet balances the room sources `available` from (default 1000). */
   constructor(private readonly balances: Record<string, bigint> = {}) {}
   async getBalances(userIds: string[]) {
@@ -46,9 +48,13 @@ class FakePersistence implements RoomPersistence {
     this.bets.push(...b);
   }
   async persistClaim(_g: string, p: RoomPlayer, _r: string | null, valid: boolean) {
+    // Yield a real tick so two concurrent selectClaim calls genuinely interleave
+    // (reproduces the simultaneous-claim race).
+    await Promise.resolve();
     this.claims.push({ seat: p.seat, valid });
   }
   async persistResolve(_g: string, s: Settlement[]) {
+    this.resolveCalls += 1;
     this.settlements.push(...s);
   }
 }
@@ -437,5 +443,36 @@ describe("distributable pot display (FIX #11)", () => {
     expect(bet.action).toBe("FOLD");
     // Seat 1 ante 50 + seat 2 forfeit 25 = 75 — NOT 100 (seat 2's full pre-refund ante).
     expect(bet.pot).toBe(75);
+  });
+});
+
+describe("simultaneous claims resolve the hand exactly once (race guard)", () => {
+  it("never duplicates settlement/results when both players claim at the same time", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start();
+
+    // Walk to showdown with both players still in (check down 2 then 1).
+    for (let i = 0; i < 4; i++) {
+      await room.placeAction(2, { type: "CHECK" });
+      await room.placeAction(1, { type: "CHECK" });
+    }
+    expect(room.state.phase).toBe("SHOWDOWN");
+
+    // Both contenders claim ROYAL_POSITION CONCURRENTLY — the exact race the
+    // smoke test surfaced: both selectClaim handlers pass the "all claimed"
+    // check after their persistClaim await.
+    await Promise.all([
+      room.selectClaim(2, "ROYAL_POSITION"),
+      room.selectClaim(1, "ROYAL_POSITION"),
+    ]);
+
+    expect(room.state.phase).toBe("ENDED");
+    // The single-resolve guard ⇒ resolveHand/persistResolve ran exactly once.
+    expect(persistence.resolveCalls).toBe(1);
+    // A split pays two SPLIT_WIN movements — not four (which is what a double
+    // resolve produced before the fix).
+    const splits = persistence.settlements.filter((m) => m.type === "SPLIT_WIN");
+    expect(splits).toHaveLength(2);
+    expect(splits.every((m) => m.amount === 50n)).toBe(true);
   });
 });

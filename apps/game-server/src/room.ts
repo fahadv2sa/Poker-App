@@ -48,6 +48,11 @@ export class GameRoom {
    *  keys for betting actions. Never derived from client input (FIX #3). */
   private actionSeq = 0;
 
+  /** Single-resolve latch: a hand resolves exactly once even if concurrent
+   *  claims both pass the "all claimed" check. Prevents duplicate
+   *  GameResults/UserStats (the wallet is also idempotent). */
+  private resolved = false;
+
   constructor(
     readonly state: RoomState,
     private readonly deps: RoomDeps,
@@ -395,6 +400,13 @@ export class GameRoom {
   // -- resolution ----------------------------------------------------------
 
   private async resolveHand(lastStanding: boolean): Promise<void> {
+    // Single-resolve guard: the check + set are synchronous (no await between),
+    // so the first caller latches it before yielding; any concurrent second
+    // call (e.g. two simultaneous claims) bails out here. GameResults and
+    // UserStats can therefore never be duplicated.
+    if (this.resolved) return;
+    this.resolved = true;
+
     this.deps.timers.clearAll();
     this.state.phase = "RESOLVE";
 
