@@ -51,6 +51,7 @@ const url = () =>
 function connectErrorMessage(reason: string): string {
   if (reason === "SESSION_EXPIRED") return "انتهت الجلسة، يُرجى تحديث الصفحة";
   if (reason === "UNAUTHENTICATED") return "الجلسة غير صالحة، يُرجى تسجيل الدخول من جديد";
+  if (reason === "RATE_LIMITED") return "محاولات كثيرة، يُرجى المحاولة بعد قليل";
   return "تعذّر الاتصال بالخادم";
 }
 

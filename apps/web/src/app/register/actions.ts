@@ -5,6 +5,7 @@ import { registerUserWithWallet, UsernameTakenError } from "@fp/db";
 import { registerSchema } from "@fp/shared";
 import { signIn } from "@/auth";
 import { hashPassword } from "@/lib/argon";
+import { authRateLimit, clientIp } from "@/lib/rate-limit";
 import type { AuthFormState } from "@/app/login/actions";
 
 /**
@@ -15,6 +16,9 @@ export async function registerAction(
   _prev: AuthFormState | undefined,
   formData: FormData,
 ): Promise<AuthFormState> {
+  if (!authRateLimit(await clientIp())) {
+    return { error: "محاولات كثيرة، يُرجى المحاولة بعد قليل" };
+  }
   const parsed = registerSchema.safeParse({
     username: String(formData.get("username") ?? ""),
     password: String(formData.get("password") ?? ""),

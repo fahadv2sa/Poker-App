@@ -141,7 +141,7 @@ describe("raise reopens the round", () => {
   });
 
   it("debits exactly the call amount for the chip movement", () => {
-    let state = makeState(
+    const state = makeState(
       [
         { seat: 1, available: 1000n, committedThisRound: 100n, hasActed: true },
         { seat: 2, available: 1000n, committedThisRound: 0n },

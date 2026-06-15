@@ -13,10 +13,16 @@ export default async function TablePage({
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    select: { id: true, roomName: true, inviteCode: true, createdBy: true },
-  });
+  const [game, wallet] = await Promise.all([
+    prisma.game.findUnique({
+      where: { id: gameId },
+      select: { id: true, roomName: true, inviteCode: true, createdBy: true },
+    }),
+    prisma.wallet.findUnique({
+      where: { userId: session.user.id },
+      select: { balance: true },
+    }),
+  ]);
   if (!game) notFound();
 
   // Identity comes from the verified session — minted into a signed token the
@@ -33,6 +39,7 @@ export default async function TablePage({
       inviteCode={game.inviteCode}
       roomName={game.roomName}
       isHost={game.createdBy === session.user.id}
+      initialBalance={Number(wallet?.balance ?? 0n)}
     />
   );
 }

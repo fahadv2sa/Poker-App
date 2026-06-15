@@ -41,8 +41,8 @@ beforeAll(async () => {
   } catch (err) {
     throw new Error(
       "Cannot reach the database. Start it with `docker compose up -d` and apply " +
-        "migrations with `pnpm db:deploy` before running bank tests.\n" +
-        String(err),
+        "migrations with `pnpm db:deploy` before running bank tests.",
+      { cause: err },
     );
   }
 });

@@ -467,8 +467,16 @@ export class GameRoom {
     );
   }
 
+  /**
+   * The truly distributable pot (FIX #11): a folded player already had
+   * (committed − forfeit) refunded, so only their forfeit remains in the pot —
+   * not their full pre-refund committed total. Mirrors the side-pot build.
+   */
   private potTotal(): bigint {
-    return this.state.players.reduce((sum, p) => sum + p.committedTotal, 0n);
+    return this.state.players.reduce(
+      (sum, p) => sum + (p.status === "FOLDED" ? p.forfeit : p.committedTotal),
+      0n,
+    );
   }
 
   private revealedCommunity() {

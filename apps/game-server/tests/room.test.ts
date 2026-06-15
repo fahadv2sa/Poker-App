@@ -1,6 +1,6 @@
 import type { Settlement } from "@fp/engine";
 import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fp/shared";
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { dealFromDeck } from "../src/cards.js";
 import { GameRoom, type RoomDeps } from "../src/room.js";
 import type {
@@ -421,5 +421,21 @@ describe("rank display names are data-driven (FIX #5)", () => {
     expect(royal.nameAr).toBe("اسم-من-قاعدة-البيانات-ROYAL_POSITION");
     // No rank's display name falls back to its code (no placeholder anywhere).
     expect(payload.availableHandRanks.every((r) => r.nameAr !== r.code)).toBe(true);
+  });
+});
+
+describe("distributable pot display (FIX #11)", () => {
+  it("counts a folder's forfeit in the pot, not its full refunded committed", async () => {
+    const { room, emitter } = makeRoom(allMidDeck());
+    await room.start(); // antes 50 each
+
+    await room.placeAction(2, { type: "FOLD" });
+
+    const bet = emitter.room
+      .filter((e) => e.event === "bet:placed")
+      .at(-1)!.payload as { action: string; pot: number };
+    expect(bet.action).toBe("FOLD");
+    // Seat 1 ante 50 + seat 2 forfeit 25 = 75 — NOT 100 (seat 2's full pre-refund ante).
+    expect(bet.pot).toBe(75);
   });
 });

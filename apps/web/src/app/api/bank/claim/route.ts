@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { BankLimitError, claimFromBank } from "@fp/db";
 import { auth } from "@/auth";
+import { bankRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,12 @@ export async function POST() {
     return NextResponse.json(
       { error: "UNAUTHENTICATED", messageAr: "يجب تسجيل الدخول" },
       { status: 401 },
+    );
+  }
+  if (!bankRateLimit(userId)) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED", messageAr: "طلبات كثيرة، يُرجى المحاولة بعد قليل" },
+      { status: 429 },
     );
   }
 

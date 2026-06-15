@@ -2,6 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
+import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
 export interface AuthFormState {
   error?: string;
@@ -12,6 +13,9 @@ export async function loginAction(
   _prev: AuthFormState | undefined,
   formData: FormData,
 ): Promise<AuthFormState> {
+  if (!authRateLimit(await clientIp())) {
+    return { error: "محاولات كثيرة، يُرجى المحاولة بعد قليل" };
+  }
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
   try {

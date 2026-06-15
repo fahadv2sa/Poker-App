@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { registerSchema } from "@fp/shared";
 import { registerUserWithWallet, UsernameTakenError } from "@fp/db";
 import { hashPassword } from "@/lib/argon";
+import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -9,8 +10,16 @@ export const runtime = "nodejs";
  * POST /api/auth/register (Section 13)
  * Creates the account + initializes Wallet/UserStats + credits the 1000 signup
  * bonus, atomically (see registerUserWithWallet). Input validated with Zod.
+ * Rate-limited per IP (Section 16).
  */
 export async function POST(req: Request) {
+  if (!authRateLimit(await clientIp())) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED", messageAr: "محاولات كثيرة، يُرجى المحاولة بعد قليل" },
+      { status: 429 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

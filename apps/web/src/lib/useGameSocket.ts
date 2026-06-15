@@ -128,7 +128,6 @@ export function useGameSocket(token: string, inviteCode: string) {
     connRef.current = conn;
     return () => conn.disconnect();
     // Connect once per (token, room).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, inviteCode]);
 
   const start = useCallback(() => connRef.current?.start(), []);

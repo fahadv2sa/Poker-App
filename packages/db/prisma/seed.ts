@@ -1,3 +1,6 @@
+// Load packages/db/.env before the Prisma client reads DATABASE_URL, so
+// `pnpm db:seed` works on a fresh shell (audit #8) — not just via `prisma`.
+import "dotenv/config";
 import { HAND_RANK_CATALOG } from "@fp/shared";
 import { prisma } from "../src/client";
 import { Prisma } from "../src/generated/client";

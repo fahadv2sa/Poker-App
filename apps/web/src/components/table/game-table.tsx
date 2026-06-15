@@ -7,9 +7,8 @@ import { DEFAULT_GAME_CONFIG } from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { FootballCard, PHASE_AR, PlayerSeat, TurnTimer } from "./parts";
+import { FootballCard, OpponentSeat, PHASE_AR, TurnTimer } from "./parts";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 
@@ -26,11 +25,13 @@ export function GameTable({
   inviteCode,
   roomName,
   isHost,
+  initialBalance,
 }: {
   token: string;
   inviteCode: string;
   roomName: string;
   isHost: boolean;
+  initialBalance: number;
 }) {
   const { view, start, placeAction, selectClaim, clearError } = useGameSocket(token, inviteCode);
   const s = view.state;
@@ -41,82 +42,91 @@ export function GameTable({
     () => (s ? [...s.players].sort((a, b) => a.seat - b.seat) : []),
     [s],
   );
-  const me = s?.yourSeat != null ? players.find((p) => p.seat === s.yourSeat) : undefined;
+  const yourSeat = s?.yourSeat ?? null;
+  const me = yourSeat != null ? players.find((p) => p.seat === yourSeat) : undefined;
+  const opponents = players.filter((p) => p.seat !== yourSeat);
 
   const phase = s?.phase ?? "LOBBY";
   const isBetting = BETTING_PHASES.has(phase);
-  const isMyTurn = isBetting && s?.currentTurnSeat === s?.yourSeat && me != null;
+  const isMyTurn = isBetting && s?.currentTurnSeat === yourSeat && me != null;
   const owed = s && me ? s.currentBet - me.committedThisRound : 0;
   const minRaiseTo = (s?.currentBet ?? 0) + DEFAULT_GAME_CONFIG.minRaise;
+  const isContender = me?.status === "ACTIVE" || me?.status === "ALLIN";
+
+  // Display-only balance: pre-hand wallet minus what's committed this hand; after
+  // the result, the net delta. Authoritative balance always lives on the server.
+  const myDelta = view.result?.results.find((r) => r.seat === yourSeat)?.coinsDelta;
+  const shownBalance =
+    myDelta != null ? initialBalance + myDelta : initialBalance - Number(me?.committedTotal ?? 0);
 
   useEffect(() => {
     if (isMyTurn) setRaiseTo(minRaiseTo);
   }, [isMyTurn, minRaiseTo]);
-
   useEffect(() => {
     if (phase !== "SHOWDOWN") setClaimed(null);
   }, [phase]);
 
-  const isContender = me?.status === "ACTIVE" || me?.status === "ALLIN";
-
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-      <header className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          {roomName}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground">
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-6">
+      {/* ---------------------------------------------------------- top bar */}
+      <header className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="size-2.5 shrink-0 rounded-full bg-primary glow-primary" />
+          <span className="truncate text-lg font-black">{roomName}</span>
+          <span className="hidden rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground sm:inline">
             {PHASE_AR[phase] ?? phase}
           </span>
-          <span
-            className={cn(
-              "rounded-full border px-3 py-1 text-sm",
-              view.connected ? "border-primary/40 text-primary" : "text-muted-foreground",
-            )}
-          >
-            {view.connected ? "● متصل" : "○ يتّصل…"}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
+            🪙 <span className="num font-semibold">{shownBalance}</span>
           </span>
-          <Button asChild variant="ghost">
-            <Link href="/">← خروج</Link>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/">خروج</Link>
           </Button>
         </div>
       </header>
 
       {!s ? (
-        <Card className="p-8 text-center text-muted-foreground">جارٍ الاتصال بالطاولة…</Card>
+        <div className="grid flex-1 place-items-center text-muted-foreground">
+          <span className="animate-pulse">جارٍ الاتصال بالطاولة…</span>
+        </div>
       ) : (
-        <div className="grid gap-4 lg:[grid-template-columns:1fr_300px]">
-          {/* ---------------------------------------------------------- felt */}
-          <section className="felt relative flex min-h-[420px] flex-col justify-between gap-5 rounded-[22px] border border-primary/25 p-4 sm:p-8">
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
-              {players.map((p) => (
-                <PlayerSeat
-                  key={p.seat}
-                  player={p}
-                  isActive={s.currentTurnSeat === p.seat}
-                  isYou={p.seat === s.yourSeat}
-                />
-              ))}
+        <>
+          {/* ------------------------------------------------ table centerpiece */}
+          <section
+            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-5 rounded-[44px] border border-primary/20 px-4 py-6 sm:px-8 sm:py-9"
+            style={{ boxShadow: "inset 0 0 0 1px rgba(46,230,166,0.06), inset 0 0 70px rgba(0,0,0,0.5), 0 18px 50px rgba(0,0,0,0.5)" }}
+          >
+            {/* opponents around the rim */}
+            <div className="flex w-full flex-wrap items-start justify-center gap-2">
+              {opponents.length === 0 ? (
+                <span className="py-2 text-sm text-white/50">بانتظار لاعبين آخرين…</span>
+              ) : (
+                opponents.map((p) => (
+                  <OpponentSeat key={p.seat} player={p} isActive={s.currentTurnSeat === p.seat} />
+                ))
+              )}
             </div>
 
-            <div className="flex flex-col items-center gap-3">
+            {/* focal point: pot + community + timer */}
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-2">
               <motion.div
                 key={s.pot}
-                initial={{ scale: 0.85 }}
-                animate={{ scale: 1 }}
-                className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-2 font-extrabold text-gold"
+                initial={{ scale: 0.8, opacity: 0.6 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-[#0b0f1a]/60 px-5 py-2 font-extrabold text-gold shadow-lg backdrop-blur"
               >
-                🪙 المجمّع: <span className="num">{s.pot}</span>
+                🪙 <span className="num text-lg">{s.pot}</span>
                 {s.currentBet > 0 ? (
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-xs font-medium text-white/55">
                     · الرهان <span className="num">{s.currentBet}</span>
                   </span>
                 ) : null}
               </motion.div>
 
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <FootballCard
                     key={i}
@@ -126,163 +136,73 @@ export function GameTable({
                   />
                 ))}
               </div>
-              <TurnTimer deadlineTs={s.currentTurnSeat != null ? s.turnDeadlineTs : null} />
-            </div>
 
-            <div className="flex flex-col items-center gap-2">
-              <span className="text-sm text-muted-foreground">بطاقتاك</span>
-              <div className="flex flex-wrap justify-center gap-2">
-                {view.hole.length > 0 ? (
-                  view.hole.map((c, i) => <FootballCard key={c.playerId} card={c} index={i} />)
-                ) : (
-                  <>
-                    <FootballCard back />
-                    <FootballCard back />
-                  </>
-                )}
-              </div>
+              <TurnTimer deadlineTs={s.currentTurnSeat != null ? s.turnDeadlineTs : null} />
             </div>
           </section>
 
-          {/* --------------------------------------------------------- aside */}
-          <aside className="flex flex-col gap-4">
-            {phase === "LOBBY" ? (
-              <Card className="flex flex-col gap-3 p-5">
-                <h3 className="text-lg font-bold">غرفة الانتظار</h3>
-                <p className="text-sm text-muted-foreground">
-                  شارك كود الدعوة لانضمام اللاعبين، ثم ابدأ عند اكتمال لاعبَين على الأقل.
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">كود الدعوة</span>
-                  <code className="num rounded-md border px-2 py-1">{inviteCode}</code>
-                </div>
-                {isHost ? (
-                  <Button onClick={start} disabled={players.length < 2} className="w-full">
-                    {players.length < 2 ? "بانتظار لاعبين…" : "ابدأ اللعبة"}
-                  </Button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">بانتظار أن يبدأ المضيف اللعبة…</p>
-                )}
-              </Card>
-            ) : null}
-
-            {isMyTurn ? (
-              <Card className="flex flex-col gap-3 p-5">
-                <h3 className="text-lg font-bold">دورك</h3>
-                <div className="flex flex-wrap gap-2">
-                  {owed <= 0 ? (
-                    <Button variant="secondary" onClick={() => placeAction("CHECK")}>
-                      تمرير
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => placeAction("CALL")}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                      مساواة <span className="num">{owed}</span>
-                    </Button>
-                  )}
-                  <Button variant="destructive" onClick={() => placeAction("FOLD")}>
-                    انسحاب
-                  </Button>
-                  <Button variant="secondary" onClick={() => placeAction("ALLIN")}>
-                    كل الرصيد
-                  </Button>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Input
-                    type="number"
-                    min={minRaiseTo}
-                    step={DEFAULT_GAME_CONFIG.minRaise}
-                    value={raiseTo}
-                    onChange={(e) => setRaiseTo(Number(e.target.value))}
-                    className="num max-w-[120px]"
-                  />
-                  <Button onClick={() => placeAction("RAISE", raiseTo)} disabled={raiseTo < minRaiseTo}>
-                    رفع إلى <span className="num">{raiseTo}</span>
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  أقل رفع: <span className="num">{minRaiseTo}</span>
-                </p>
-              </Card>
-            ) : null}
-
-            {phase === "SHOWDOWN" && isContender && view.showdown ? (
-              <Card className="flex flex-col gap-3 p-5">
-                <h3 className="text-lg font-bold">اختر ترابطك</h3>
-                <p className="text-sm text-muted-foreground">
-                  اختر أقوى ترابط تملكه. الاختيار الخاطئ يُخرجك من المنافسة.
-                </p>
-                <div className="flex flex-col gap-2">
-                  {view.showdown.availableHandRanks.map((r) => (
-                    <button
-                      key={r.id}
-                      disabled={claimed != null}
-                      onClick={() => {
-                        setClaimed(r.id);
-                        selectClaim(r.id);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-md border bg-secondary px-3 py-2 text-start transition hover:border-accent disabled:opacity-60",
-                        claimed === r.id && "border-primary glow-primary",
-                      )}
-                    >
-                      <span>{r.nameAr}</span>
-                      <span className="text-xs text-muted-foreground">
-                        القوة <span className="num">{r.strength}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                {claimed ? (
-                  <p className="text-sm text-muted-foreground">تم إرسال اختيارك. بانتظار البقية…</p>
-                ) : null}
-              </Card>
-            ) : null}
-
-            {phase === "SHOWDOWN" && !isContender ? (
-              <Card className="p-5 text-muted-foreground">
-                أنت خارج هذه الجولة — بانتظار النتيجة.
-              </Card>
-            ) : null}
-
-            <AnimatePresence>
-              {view.result ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="flex flex-col gap-3 p-5">
-                    <h3 className="text-lg font-bold">النتيجة</h3>
-                    {view.result.results.map((r) => {
-                      const pos = r.coinsDelta >= 0;
-                      return (
-                        <div
-                          key={r.seat}
-                          className="flex items-center justify-between border-b border-border/60 py-2 last:border-0"
-                        >
-                          <span>
-                            مقعد <span className="num">{r.seat}</span> ·{" "}
-                            {OUTCOME_AR[r.outcome] ?? r.outcome}
-                          </span>
-                          <span className={cn("font-extrabold", pos ? "text-primary" : "text-destructive")}>
-                            {pos ? "+" : ""}
-                            <span className="num">{r.coinsDelta}</span>
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <Button asChild className="w-full">
-                      <Link href="/rooms">طاولة جديدة</Link>
-                    </Button>
-                  </Card>
-                </motion.div>
+          {/* ----------------------------------------------- my hole cards */}
+          <section className="mx-auto mt-5 flex w-full max-w-3xl flex-col items-center gap-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>بطاقتاك</span>
+              {me?.isDealer ? (
+                <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
+                  D
+                </span>
               ) : null}
-            </AnimatePresence>
-          </aside>
-        </div>
+              {me && me.committedTotal > 0 ? (
+                <span className="text-gold">
+                  · رهانك 🪙 <span className="num">{me.committedTotal}</span>
+                </span>
+              ) : null}
+            </div>
+            <div className="flex justify-center gap-3">
+              {view.hole.length > 0 ? (
+                view.hole.map((c, i) => <FootballCard key={c.playerId} card={c} index={i} size="lg" />)
+              ) : (
+                <>
+                  <FootballCard back size="lg" />
+                  <FootballCard back size="lg" />
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* ------------------------------------------------- action zone */}
+          <div className="sticky bottom-2 z-20 mx-auto mt-5 w-full max-w-3xl">
+            <div className="rounded-2xl border bg-card/85 p-4 shadow-2xl backdrop-blur">
+              {phase === "LOBBY" ? (
+                <LobbyPanel
+                  inviteCode={inviteCode}
+                  isHost={isHost}
+                  canStart={players.length >= 2}
+                  onStart={start}
+                />
+              ) : isMyTurn ? (
+                <ActionBar
+                  owed={owed}
+                  minRaiseTo={minRaiseTo}
+                  raiseTo={raiseTo}
+                  setRaiseTo={setRaiseTo}
+                  onAction={placeAction}
+                />
+              ) : phase === "SHOWDOWN" && isContender && view.showdown ? (
+                <ClaimPanel
+                  ranks={view.showdown.availableHandRanks}
+                  claimed={claimed}
+                  onPick={(id) => {
+                    setClaimed(id);
+                    selectClaim(id);
+                  }}
+                />
+              ) : view.result ? (
+                <ResultPanel results={view.result.results} yourSeat={yourSeat} />
+              ) : (
+                <WaitingHint phase={phase} turnSeat={s.currentTurnSeat} />
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <AnimatePresence>
@@ -292,7 +212,7 @@ export function GameTable({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             onClick={clearError}
-            className="fixed inset-x-0 bottom-5 mx-auto w-fit cursor-pointer rounded-md border border-destructive bg-secondary px-4 py-2 text-destructive-foreground shadow-xl"
+            className="fixed inset-x-0 bottom-24 mx-auto w-fit cursor-pointer rounded-lg border border-destructive bg-card px-4 py-2 text-sm text-destructive-foreground shadow-xl"
             role="alert"
           >
             {view.error}
@@ -300,5 +220,196 @@ export function GameTable({
         ) : null}
       </AnimatePresence>
     </main>
+  );
+}
+
+// ---------------------------------------------------------------- sub-panels
+
+function LobbyPanel({
+  inviteCode,
+  isHost,
+  canStart,
+  onStart,
+}: {
+  inviteCode: string;
+  isHost: boolean;
+  canStart: boolean;
+  onStart: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">كود الدعوة</span>
+        <code className="num rounded-md border bg-secondary/50 px-3 py-1 tracking-widest">
+          {inviteCode}
+        </code>
+      </div>
+      {isHost ? (
+        <Button onClick={onStart} disabled={!canStart} className="w-full" size="lg">
+          {canStart ? "ابدأ اللعبة" : "بانتظار لاعب آخر…"}
+        </Button>
+      ) : (
+        <p className="text-center text-sm text-muted-foreground">بانتظار أن يبدأ المضيف اللعبة…</p>
+      )}
+    </div>
+  );
+}
+
+function ActionBar({
+  owed,
+  minRaiseTo,
+  raiseTo,
+  setRaiseTo,
+  onAction,
+}: {
+  owed: number;
+  minRaiseTo: number;
+  raiseTo: number;
+  setRaiseTo: (n: number) => void;
+  onAction: (type: string, amount?: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between text-sm">
+        <span className="font-bold text-primary">دورك</span>
+        {owed > 0 ? (
+          <span className="text-muted-foreground">
+            للمساواة: 🪙 <span className="num font-semibold text-foreground">{owed}</span>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">لا رهان مستحق</span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {owed <= 0 ? (
+          <Button variant="secondary" onClick={() => onAction("CHECK")}>
+            تمرير
+          </Button>
+        ) : (
+          <Button
+            onClick={() => onAction("CALL")}
+            className="bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            مساواة <span className="num">{owed}</span>
+          </Button>
+        )}
+        <Button variant="secondary" onClick={() => onAction("ALLIN")}>
+          كل الرصيد
+        </Button>
+        <Button variant="destructive" onClick={() => onAction("FOLD")}>
+          انسحاب
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          min={minRaiseTo}
+          step={DEFAULT_GAME_CONFIG.minRaise}
+          value={raiseTo}
+          onChange={(e) => setRaiseTo(Number(e.target.value))}
+          className="num"
+          aria-label="مبلغ الرفع"
+        />
+        <Button
+          onClick={() => onAction("RAISE", raiseTo)}
+          disabled={raiseTo < minRaiseTo}
+          className="shrink-0"
+        >
+          رفع إلى <span className="num">{raiseTo}</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ClaimPanel({
+  ranks,
+  claimed,
+  onPick,
+}: {
+  ranks: Array<{ id: string; code: string; nameAr: string; strength: number }>;
+  claimed: string | null;
+  onPick: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="text-sm">
+        <span className="font-bold text-primary">اختر ترابطك</span>
+        <span className="text-muted-foreground"> — الاختيار الخاطئ يُخرجك من المنافسة</span>
+      </div>
+      <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+        {ranks.map((r) => (
+          <button
+            key={r.id}
+            disabled={claimed != null}
+            onClick={() => onPick(r.id)}
+            className={cn(
+              "flex items-center justify-between rounded-lg border bg-secondary/60 px-3 py-2.5 text-start transition",
+              "hover:border-accent disabled:opacity-60",
+              claimed === r.id && "border-primary glow-primary",
+            )}
+          >
+            <span className="font-medium">{r.nameAr}</span>
+            <span className="num text-xs text-muted-foreground">{r.strength}</span>
+          </button>
+        ))}
+      </div>
+      {claimed ? (
+        <p className="text-center text-sm text-muted-foreground">تم إرسال اختيارك. بانتظار البقية…</p>
+      ) : null}
+    </div>
+  );
+}
+
+function ResultPanel({
+  results,
+  yourSeat,
+}: {
+  results: Array<{ seat: number; outcome: string; coinsDelta: number }>;
+  yourSeat: number | null;
+}) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
+      <span className="text-center font-bold text-primary">انتهت الجولة</span>
+      <div className="flex flex-col gap-1">
+        {results.map((r) => {
+          const pos = r.coinsDelta >= 0;
+          return (
+            <div
+              key={r.seat}
+              className={cn(
+                "flex items-center justify-between rounded-lg px-3 py-2",
+                r.seat === yourSeat ? "bg-primary/10" : "bg-secondary/30",
+              )}
+            >
+              <span className="text-sm">
+                {r.seat === yourSeat ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
+              </span>
+              <span className={cn("num font-extrabold", pos ? "text-primary" : "text-destructive")}>
+                {pos ? "+" : ""}
+                {r.coinsDelta}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <Button asChild className="w-full">
+        <Link href="/rooms">طاولة جديدة</Link>
+      </Button>
+    </motion.div>
+  );
+}
+
+function WaitingHint({ phase, turnSeat }: { phase: string; turnSeat: number | null }) {
+  return (
+    <p className="py-1 text-center text-sm text-muted-foreground">
+      {phase === "SHOWDOWN"
+        ? "بانتظار اختيارات اللاعبين…"
+        : turnSeat != null
+          ? `الدور على مقعد ${turnSeat}…`
+          : "بانتظار الجولة…"}
+    </p>
   );
 }

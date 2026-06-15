@@ -35,12 +35,12 @@
   --ring: oklch(0.82 0.16 165);
 
   --gold: oklch(0.83 0.13 85);
-  --felt: radial-gradient(120% 120% at 50% 18%, #1c5b46 0%, #124234 42%, #0c2c24 100%);
+  --felt: radial-gradient(125% 125% at 50% 8%, #1f6b52 0%, #134738 45%, #0a2820 100%);
 
-  /* Arabic gaming font (Tajawal/Cairo if present) → graceful system fallback. */
-  --font-ar: "Tajawal", "Cairo", "Segoe UI", "Noto Kufi Arabic", Tahoma, system-ui,
-    sans-serif;
-  --font-num: "Inter", "Segoe UI", system-ui, sans-serif;
+  /* Fallback stacks. The real fonts (--font-ar / --font-num) are injected on
+     <html> by next/font (layout.tsx); these add system fallbacks. */
+  --font-ar-fallback: "Segoe UI", "Noto Kufi Arabic", Tahoma, system-ui, sans-serif;
+  --font-num-fallback: "Segoe UI", system-ui, sans-serif;
 }
 
 @theme inline {
@@ -69,8 +69,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-ar);
-  --font-mono: var(--font-num);
+  --font-sans: var(--font-ar), var(--font-ar-fallback);
+  --font-mono: var(--font-num), var(--font-num-fallback);
 }
 
 @layer base {
@@ -79,12 +79,13 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-ar);
+    font-family: var(--font-ar), var(--font-ar-fallback);
     min-height: 100vh;
     background-image:
-      radial-gradient(80% 60% at 50% -10%, color-mix(in oklch, var(--accent) 12%, transparent), transparent 60%),
-      radial-gradient(70% 50% at 100% 0%, color-mix(in oklch, var(--primary) 10%, transparent), transparent 55%);
+      radial-gradient(90% 55% at 50% -12%, color-mix(in oklch, var(--accent) 10%, transparent), transparent 60%),
+      radial-gradient(70% 50% at 100% 0%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 55%);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4 {
     @apply font-extrabold tracking-tight;
@@ -94,7 +95,7 @@
 @layer components {
   /* Latin-numeral run inside RTL text. */
   .num {
-    font-family: var(--font-num);
+    font-family: var(--font-num), var(--font-num-fallback);
     font-variant-numeric: tabular-nums;
     direction: ltr;
     unicode-bidi: isolate;

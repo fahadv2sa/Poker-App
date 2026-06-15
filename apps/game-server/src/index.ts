@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import { rateLimit, type RateStore } from "@fp/shared";
 import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { attachSocketHandlers } from "./socket.js";
@@ -17,6 +18,15 @@ async function main(): Promise<void> {
   const httpServer = createServer();
   const io = new Server(httpServer, {
     cors: { origin, credentials: true },
+  });
+
+  // Rate limit connection attempts per IP (audit #9 / Section 16) — before auth,
+  // so it also throttles repeated bad-token / brute-force attempts.
+  const wsRateStore: RateStore = new Map();
+  io.use((socket, next) => {
+    const ip = socket.handshake.address || "unknown";
+    const { allowed } = rateLimit(wsRateStore, `ws:${ip}`, 30, 60_000);
+    next(allowed ? undefined : new Error("RATE_LIMITED"));
   });
 
   // Authentication middleware (FIX #1 / Section 16): verify the signed session
