@@ -21,6 +21,15 @@ import type { RoomPlayer, RoomState } from "./types.js";
  * by unique `reference`, balance never negative.
  */
 export class PrismaRoomPersistence implements RoomPersistence {
+  async getBalances(userIds: string[]): Promise<Map<string, bigint>> {
+    if (userIds.length === 0) return new Map();
+    const wallets = await prisma.wallet.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, balance: true },
+    });
+    return new Map(wallets.map((w) => [w.userId, w.balance]));
+  }
+
   async persistDeal(state: RoomState): Promise<void> {
     await prisma.$transaction(async (tx) => {
       await tx.game.update({

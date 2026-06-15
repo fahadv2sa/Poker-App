@@ -1,4 +1,4 @@
-import { prisma } from "@fp/db";
+import { getWalletBalance, prisma } from "@fp/db";
 import type { Action, HandRankDef } from "@fp/engine";
 import {
   CLIENT_EVENTS,
@@ -112,7 +112,9 @@ export function attachSocketHandlers(
         const rt = await getRuntime(game.id);
         if (!rt) return emitError(socket, "ROOM_NOT_FOUND", "الغرفة غير موجودة");
 
-        const player = seatPlayer(rt.room.state, user);
+        // FIX #2: seat the player with their real wallet balance as `available`.
+        const balance = await getWalletBalance(user.userId);
+        const player = seatPlayer(rt.room.state, user, balance);
         rt.seats.set(player.seat, socket.id);
         joinedGameId = game.id;
         await socket.join(roomKey(game.id));
@@ -146,7 +148,7 @@ export function attachSocketHandlers(
           type: input.type as Action["type"],
           amount: input.amount !== undefined ? BigInt(input.amount) : undefined,
         };
-        await rt.room.placeAction(seat, action, input.actionId);
+        await rt.room.placeAction(seat, action);
       }),
     );
 
@@ -186,8 +188,12 @@ function seatOf(rt: RoomRuntime, socketId: string): number | null {
   return null;
 }
 
-/** Seat an existing player (rejoin) or add a new one to a LOBBY room. */
-function seatPlayer(state: RoomState, user: SocketUser): RoomPlayer {
+/**
+ * Seat an existing player (rejoin) or add a new one to a LOBBY room. `available`
+ * is the joining user's real wallet balance (re-confirmed from the ledger at
+ * hand start); a rejoin keeps its in-progress betting state.
+ */
+function seatPlayer(state: RoomState, user: SocketUser, available: bigint): RoomPlayer {
   const existing = state.players.find((p) => p.userId === user.userId);
   if (existing) {
     existing.connected = true;
@@ -204,7 +210,7 @@ function seatPlayer(state: RoomState, user: SocketUser): RoomPlayer {
     username: user.username,
     playerNumber: user.playerNumber,
     status: "WAITING",
-    available: 0n, // refreshed from the wallet at start
+    available, // real wallet balance; reconfirmed at start
     committedThisRound: 0n,
     committedTotal: 0n,
     lastBetAmount: 0n,

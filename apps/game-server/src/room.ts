@@ -44,6 +44,10 @@ const CLAIM_KEY = "claim";
  * All sensitive decisions happen here — never on the client.
  */
 export class GameRoom {
+  /** Server-side monotonic action counter — the source of wallet idempotency
+   *  keys for betting actions. Never derived from client input (FIX #3). */
+  private actionSeq = 0;
+
   constructor(
     readonly state: RoomState,
     private readonly deps: RoomDeps,
@@ -55,6 +59,25 @@ export class GameRoom {
   async start(): Promise<void> {
     const seated = this.state.players.filter((p) => p.status !== "DISCONNECTED");
     if (seated.length < 2) throw new Error("Need at least 2 players to start");
+
+    // FIX #2: source each seat's spendable `available` from the authoritative
+    // wallet balance (never a guessed 0/1000), and refuse to start if anyone
+    // cannot cover the mandatory ante — so the in-memory balance never goes
+    // negative and stays in lockstep with the ledger.
+    const ante = BigInt(this.state.config.ante);
+    const balances = await this.deps.persistence.getBalances(
+      seated.map((p) => p.userId),
+    );
+    for (const p of seated) {
+      const balance = balances.get(p.userId);
+      if (balance === undefined) {
+        throw new Error(`تعذّر قراءة رصيد اللاعب في المقعد ${p.seat}`);
+      }
+      if (balance < ante) {
+        throw new Error(`اللاعب في المقعد ${p.seat} لا يملك رصيدًا كافيًا للـ Ante`);
+      }
+      p.available = balance;
+    }
 
     this.state.status = "IN_PROGRESS";
     this.state.dealerSeat ??= seated[0]!.seat;
@@ -118,7 +141,7 @@ export class GameRoom {
   // -- player actions ------------------------------------------------------
 
   /** Handle a player's betting action (the server validates turn + legality). */
-  async placeAction(seat: number, action: Action, actionId: string): Promise<void> {
+  async placeAction(seat: number, action: Action): Promise<void> {
     if (this.state.currentTurnSeat !== seat) throw new Error("Not your turn");
     const bs = this.toBettingState(this.roundForPhase());
 
@@ -145,11 +168,16 @@ export class GameRoom {
           : movement.action === "ALLIN"
             ? "ALLIN"
             : "BET";
+      // FIX #3: the idempotency key is SERVER-generated from authoritative state
+      // (gameId + seat + a monotonic server action sequence). The bump happens in
+      // this synchronous section — together with the turn advance above — so a
+      // duplicate/replayed emit is turn-rejected and can never double-spend.
+      const reference = `${this.state.gameId}:act:${seat}:${++this.actionSeq}`;
       movements.push({
         userId: player.userId,
         type,
         amount: -movement.amount,
-        reference: `${this.state.gameId}:act:${seat}:${actionId}`,
+        reference,
       });
     }
     if (movement.action === "FOLD") {
@@ -243,7 +271,7 @@ export class GameRoom {
     if (this.state.currentTurnSeat !== seat) return;
     const la = legalActions(this.toBettingState(this.roundForPhase()), seat);
     const action: Action = la.canCheck ? { type: "CHECK" } : { type: "FOLD" };
-    await this.placeAction(seat, action, `timeout:${this.roundForPhase()}:${seat}`);
+    await this.placeAction(seat, action);
   }
 
   private async advancePhase(): Promise<void> {

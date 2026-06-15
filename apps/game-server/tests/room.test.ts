@@ -35,6 +35,11 @@ class FakePersistence implements RoomPersistence {
   bets: BetRecord[] = [];
   claims: Array<{ seat: number; valid: boolean }> = [];
   settlements: Settlement[] = [];
+  /** Per-user wallet balances the room sources `available` from (default 1000). */
+  constructor(private readonly balances: Record<string, bigint> = {}) {}
+  async getBalances(userIds: string[]) {
+    return new Map(userIds.map((id) => [id, this.balances[id] ?? 1000n]));
+  }
   async persistDeal() {}
   async applyBetting(_g: string, m: LedgerMovement[], b: BetRecord[]) {
     this.movements.push(...m);
@@ -118,7 +123,10 @@ function player(seat: number, userId: string): RoomPlayer {
   };
 }
 
-function makeRoom(deck: DealtCard[]): {
+function makeRoom(
+  deck: DealtCard[],
+  balances: Record<string, bigint> = {},
+): {
   room: GameRoom;
   persistence: FakePersistence;
   emitter: FakeEmitter;
@@ -143,7 +151,7 @@ function makeRoom(deck: DealtCard[]): {
     turnDeadlineTs: null,
     ranks: RANKS,
   };
-  const persistence = new FakePersistence();
+  const persistence = new FakePersistence(balances);
   const emitter = new FakeEmitter();
   const timers = new ManualTimers();
   const deps: RoomDeps = {
@@ -180,23 +188,23 @@ describe("hand flow: check-down to a split showdown", () => {
     expect(room.state.currentTurnSeat).toBe(2); // seat after dealer (1)
 
     // Check the hand down: 2 then 1 on every street.
-    await room.placeAction(2, { type: "CHECK" }, "a1");
-    await room.placeAction(1, { type: "CHECK" }, "a2");
+    await room.placeAction(2, { type: "CHECK" });
+    await room.placeAction(1, { type: "CHECK" });
     expect(room.state.phase).toBe("FLOP");
     expect(room.state.communityRevealed).toBe(3);
 
-    await room.placeAction(2, { type: "CHECK" }, "a3");
-    await room.placeAction(1, { type: "CHECK" }, "a4");
+    await room.placeAction(2, { type: "CHECK" });
+    await room.placeAction(1, { type: "CHECK" });
     expect(room.state.phase).toBe("TURN");
     expect(room.state.communityRevealed).toBe(4);
 
-    await room.placeAction(2, { type: "CHECK" }, "a5");
-    await room.placeAction(1, { type: "CHECK" }, "a6");
+    await room.placeAction(2, { type: "CHECK" });
+    await room.placeAction(1, { type: "CHECK" });
     expect(room.state.phase).toBe("RIVER");
     expect(room.state.communityRevealed).toBe(5);
 
-    await room.placeAction(2, { type: "CHECK" }, "a7");
-    await room.placeAction(1, { type: "CHECK" }, "a8");
+    await room.placeAction(2, { type: "CHECK" });
+    await room.placeAction(1, { type: "CHECK" });
     expect(room.state.phase).toBe("SHOWDOWN");
     expect(roomEvents(emitter, "showdown:start")).toHaveLength(1);
     expect(timers.pending.has("claim")).toBe(true);
@@ -224,7 +232,7 @@ describe("hand flow: fold to last player standing", () => {
     await room.start();
 
     expect(room.state.currentTurnSeat).toBe(2);
-    await room.placeAction(2, { type: "FOLD" }, "f1");
+    await room.placeAction(2, { type: "FOLD" });
 
     expect(room.state.phase).toBe("ENDED");
 
@@ -247,8 +255,102 @@ describe("turn enforcement", () => {
     const { room } = makeRoom(allMidDeck());
     await room.start();
     // Seat 1 is the dealer; seat 2 acts first.
-    await expect(room.placeAction(1, { type: "CHECK" }, "x1")).rejects.toThrow(
+    await expect(room.placeAction(1, { type: "CHECK" })).rejects.toThrow(
       /Not your turn/,
     );
+  });
+});
+
+describe("betting balance sourced from the wallet (FIX #2)", () => {
+  const seatOf = (room: GameRoom, s: number) =>
+    room.state.players.find((p) => p.seat === s)!;
+
+  it("seeds `available` from the wallet and runs ante → raise → call without going negative", async () => {
+    const { room } = makeRoom(allMidDeck(), { u1: 500n, u2: 500n });
+    await room.start();
+
+    // Wallet 500 − ante 50 = 450 each (not a guessed 0 or 1000).
+    expect(seatOf(room, 1).available).toBe(450n);
+    expect(seatOf(room, 2).available).toBe(450n);
+    expect(room.state.currentTurnSeat).toBe(2);
+
+    // Seat 2 raises to 150 (preflop bet is the 50 ante; commit 100 more).
+    await room.placeAction(2, { type: "RAISE", amount: 150n });
+    expect(seatOf(room, 2).available).toBe(350n);
+    expect(room.state.currentBet).toBe(150n);
+
+    // Seat 1 calls the 100 owed.
+    await room.placeAction(1, { type: "CALL" });
+    expect(seatOf(room, 1).available).toBe(350n);
+    expect(room.state.phase).toBe("FLOP");
+
+    // Invariants: committed 150 each, no negative balances.
+    expect(seatOf(room, 1).committedTotal).toBe(150n);
+    expect(seatOf(room, 2).committedTotal).toBe(150n);
+    expect(room.state.players.every((p) => p.available >= 0n)).toBe(true);
+  });
+
+  it("lets a short stack go all-in for exactly its wallet balance (never negative)", async () => {
+    const { room } = makeRoom(allMidDeck(), { u1: 1000n, u2: 80n });
+    await room.start();
+
+    // u2: wallet 80 − ante 50 = 30 available.
+    expect(seatOf(room, 2).available).toBe(30n);
+
+    await room.placeAction(2, { type: "ALLIN" });
+    expect(seatOf(room, 2).available).toBe(0n);
+    expect(seatOf(room, 2).status).toBe("ALLIN");
+    expect(room.state.players.every((p) => p.available >= 0n)).toBe(true);
+  });
+
+  it("refuses to start when a player cannot afford the mandatory ante", async () => {
+    const { room } = makeRoom(allMidDeck(), { u1: 1000n, u2: 30n });
+    await expect(room.start()).rejects.toThrow(/Ante/);
+  });
+});
+
+describe("server-generated idempotency key (FIX #3)", () => {
+  const seatOf = (room: GameRoom, s: number) =>
+    room.state.players.find((p) => p.seat === s)!;
+
+  it("derives the wallet reference from server state and a replay cannot double-spend", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start();
+    expect(room.state.currentTurnSeat).toBe(2);
+
+    await room.placeAction(2, { type: "RAISE", amount: 150n });
+
+    const raises = persistence.movements.filter((m) => m.type === "RAISE");
+    expect(raises).toHaveLength(1);
+    // Reference is purely server-derived: gameId:act:seat:<server-seq>. No client
+    // value can appear here (the client no longer sends an actionId at all).
+    expect(raises[0]!.reference).toMatch(/^g1:act:2:\d+$/);
+
+    const before = persistence.movements.length;
+
+    // Replay the SAME action (a duplicated/late emit). The turn already advanced
+    // synchronously to seat 1, so the server rejects it — no second debit.
+    await expect(room.placeAction(2, { type: "RAISE", amount: 150n })).rejects.toThrow(
+      /Not your turn/,
+    );
+    expect(persistence.movements.length).toBe(before);
+    expect(persistence.movements.filter((m) => m.type === "RAISE")).toHaveLength(1);
+    // The acting seat's balance moved exactly once (one 100-coin commit).
+    expect(seatOf(room, 2).committedTotal).toBe(150n);
+  });
+
+  it("assigns distinct, monotonic server keys to successive actions", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start();
+
+    await room.placeAction(2, { type: "RAISE", amount: 150n }); // seq 1
+    await room.placeAction(1, { type: "CALL" }); // seq 2 (CALL is a BET movement)
+
+    const refs = persistence.movements
+      .filter((m) => m.type === "RAISE" || m.type === "BET")
+      .map((m) => m.reference);
+    expect(refs).toHaveLength(2);
+    expect(new Set(refs).size).toBe(2); // unique per action
+    expect(refs.every((r) => /^g1:act:\d+:\d+$/.test(r))).toBe(true);
   });
 });

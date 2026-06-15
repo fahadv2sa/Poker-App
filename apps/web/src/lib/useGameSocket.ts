@@ -7,7 +7,7 @@ import type {
   ShowdownStartPayload,
   StateSyncPayload,
 } from "@fp/shared";
-import { connectGame, type GameAuth, type GameConnection } from "./realtime";
+import { connectGame, type GameConnection } from "./realtime";
 
 /**
  * Live table state. The server emits granular events (Section 12); this hook
@@ -32,12 +32,12 @@ const INITIAL: TableView = {
   error: null,
 };
 
-export function useGameSocket(auth: GameAuth, inviteCode: string) {
+export function useGameSocket(token: string, inviteCode: string) {
   const [view, setView] = useState<TableView>(INITIAL);
   const connRef = useRef<GameConnection | null>(null);
 
   useEffect(() => {
-    const conn = connectGame(auth, {
+    const conn = connectGame(token, {
       onConnect: () => {
         setView((v) => ({ ...v, connected: true }));
         conn.join(inviteCode);
@@ -127,14 +127,13 @@ export function useGameSocket(auth: GameAuth, inviteCode: string) {
     });
     connRef.current = conn;
     return () => conn.disconnect();
-    // Connect once per (auth, room).
+    // Connect once per (token, room).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.userId, inviteCode]);
+  }, [token, inviteCode]);
 
   const start = useCallback(() => connRef.current?.start(), []);
   const placeAction = useCallback(
-    (type: string, amount?: number) =>
-      connRef.current?.placeAction(type, crypto.randomUUID(), amount),
+    (type: string, amount?: number) => connRef.current?.placeAction(type, amount),
     [],
   );
   const selectClaim = useCallback(

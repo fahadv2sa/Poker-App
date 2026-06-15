@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { DEFAULT_GAME_CONFIG } from "@fp/shared";
-import type { GameAuth } from "@/lib/realtime";
 import { useGameSocket } from "@/lib/useGameSocket";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,17 +22,17 @@ const OUTCOME_AR: Record<string, string> = {
 };
 
 export function GameTable({
-  auth,
+  token,
   inviteCode,
   roomName,
   isHost,
 }: {
-  auth: GameAuth;
+  token: string;
   inviteCode: string;
   roomName: string;
   isHost: boolean;
 }) {
-  const { view, start, placeAction, selectClaim, clearError } = useGameSocket(auth, inviteCode);
+  const { view, start, placeAction, selectClaim, clearError } = useGameSocket(token, inviteCode);
   const s = view.state;
   const [raiseTo, setRaiseTo] = useState(0);
   const [claimed, setClaimed] = useState<string | null>(null);

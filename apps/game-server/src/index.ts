@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { attachSocketHandlers } from "./socket.js";
 import { InMemoryRoomStore } from "./store.js";
@@ -18,25 +19,18 @@ async function main(): Promise<void> {
     cors: { origin, credentials: true },
   });
 
-  // Authentication middleware: in production this validates the Auth.js session
-  // cookie (Section 16) and attaches the verified identity. The handshake auth
-  // payload is a development stand-in until the web app wires the session.
-  io.use((socket, next) => {
-    const auth = socket.handshake.auth as {
-      userId?: string;
-      username?: string;
-      playerNumber?: number;
-    };
-    if (!auth?.userId || !auth.username) {
-      next(new Error("UNAUTHENTICATED"));
-      return;
+  // Authentication middleware (FIX #1 / Section 16): verify the signed session
+  // token the web minted from the Auth.js session. Identity comes ONLY from the
+  // verified token — never from raw handshake fields. Reject otherwise; an
+  // expired token gets a distinct reason so the client can ask for a refresh.
+  io.use(async (socket, next) => {
+    try {
+      const token = (socket.handshake.auth as { token?: unknown })?.token;
+      socket.data.user = await verifyRealtimeToken(token);
+      next();
+    } catch (err) {
+      next(new Error(err instanceof SessionExpiredError ? "SESSION_EXPIRED" : "UNAUTHENTICATED"));
     }
-    socket.data.user = {
-      userId: auth.userId,
-      username: auth.username,
-      playerNumber: auth.playerNumber ?? 0,
-    };
-    next();
   });
 
   // HandRanks are data-driven: load them once at boot (re-seedable at runtime).

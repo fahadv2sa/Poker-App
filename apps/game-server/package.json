@@ -15,6 +15,7 @@
     "@fp/db": "workspace:*",
     "@fp/engine": "workspace:*",
     "@fp/shared": "workspace:*",
+    "jose": "^6.2.3",
     "socket.io": "^4.8.0"
   },
   "devDependencies": {

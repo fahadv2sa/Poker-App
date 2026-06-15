@@ -55,8 +55,9 @@ export const actionPlaceSchema = z.object({
   type: z.enum(BET_ACTIONS).refine((t) => t !== "ANTE", "ANTE is server-posted"),
   /** Required for RAISE (raise-to total this round); ignored otherwise. */
   amount: z.number().int().nonnegative().optional(),
-  /** Client-supplied idempotency key for this action. */
-  actionId: z.string().min(1),
+  // No client-supplied idempotency key: the wallet reference is generated
+  // SERVER-side from authoritative state (gameId + seat + server action seq),
+  // so the client can never influence a financial reference (Section 6.3).
 });
 export type ActionPlaceInput = z.infer<typeof actionPlaceSchema>;
 

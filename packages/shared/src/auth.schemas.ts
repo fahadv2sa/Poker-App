@@ -31,3 +31,16 @@ export const loginSchema = z.object({
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
+
+/**
+ * Identity claims carried by the realtime (Socket.IO) auth token. The web mints
+ * this token server-side from the verified Auth.js session and signs it with
+ * AUTH_SECRET; the game server verifies the signature and reads the identity
+ * from here — never from raw client-supplied handshake fields (Section 16).
+ */
+export const realtimeClaimsSchema = z.object({
+  userId: z.string().min(1),
+  username: z.string().min(1),
+  playerNumber: z.number().int(),
+});
+export type RealtimeClaims = z.infer<typeof realtimeClaimsSchema>;

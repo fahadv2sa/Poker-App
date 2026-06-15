@@ -52,6 +52,12 @@ export interface BetRecord {
  * associated game-record writes, committed together or rolled back together.
  */
 export interface RoomPersistence {
+  /**
+   * Current wallet balances for the given users (the authoritative source for a
+   * seat's spendable `available`). Used when seating and at hand start so the
+   * in-memory betting balance always mirrors the ledger — never a guessed value.
+   */
+  getBalances(userIds: string[]): Promise<Map<string, bigint>>;
   /** Persist the game row + seats at start; deal records written here too. */
   persistDeal(state: RoomState): Promise<void>;
   /** Apply wallet movements + append Bet rows atomically. */

@@ -14,16 +14,11 @@ import {
 } from "@fp/shared";
 
 /**
- * Typed Socket.IO client for the game server (Section 12). The handshake
- * carries the authenticated identity (production: a verified Auth.js session;
- * here forwarded from the page's server-resolved session).
+ * Typed Socket.IO client for the game server (Section 12). The handshake carries
+ * a signed session token (minted server-side by the web from the verified
+ * Auth.js session); the client never sends a raw userId. The game server derives
+ * the identity from the token's signature.
  */
-
-export interface GameAuth {
-  userId: string;
-  username: string;
-  playerNumber: number;
-}
 
 export interface GameHandlers {
   onConnect?: () => void;
@@ -44,7 +39,7 @@ export interface GameConnection {
   socket: Socket;
   join: (inviteCode: string, password?: string) => void;
   start: () => void;
-  placeAction: (type: string, actionId: string, amount?: number) => void;
+  placeAction: (type: string, amount?: number) => void;
   selectClaim: (handRankId: string) => void;
   disconnect: () => void;
 }
@@ -52,8 +47,15 @@ export interface GameConnection {
 const url = () =>
   process.env.NEXT_PUBLIC_GAME_SERVER_URL ?? "http://localhost:4000";
 
-export function connectGame(auth: GameAuth, handlers: GameHandlers): GameConnection {
-  const socket = io(url(), { auth, withCredentials: true });
+/** Map a handshake/connection failure to a localized, non-crashing message. */
+function connectErrorMessage(reason: string): string {
+  if (reason === "SESSION_EXPIRED") return "انتهت الجلسة، يُرجى تحديث الصفحة";
+  if (reason === "UNAUTHENTICATED") return "الجلسة غير صالحة، يُرجى تسجيل الدخول من جديد";
+  return "تعذّر الاتصال بالخادم";
+}
+
+export function connectGame(token: string, handlers: GameHandlers): GameConnection {
+  const socket = io(url(), { auth: { token }, withCredentials: true });
 
   const bind = <T>(event: string, fn?: (p: T) => void) => {
     if (fn) socket.on(event, (p: unknown) => fn(p as T));
@@ -61,6 +63,13 @@ export function connectGame(auth: GameAuth, handlers: GameHandlers): GameConnect
 
   socket.on("connect", () => handlers.onConnect?.());
   socket.on("disconnect", () => handlers.onDisconnect?.());
+  // Handshake rejection (bad/expired token, server down) — fail cleanly.
+  socket.on("connect_error", (err: Error) =>
+    handlers.onError?.({
+      code: "CONNECT_ERROR",
+      messageAr: connectErrorMessage(err.message),
+    }),
+  );
   bind(SERVER_EVENTS.stateSync, handlers.onState);
   bind(SERVER_EVENTS.gameDealt, handlers.onDealt);
   bind(SERVER_EVENTS.phaseChanged, handlers.onPhase);
@@ -77,8 +86,8 @@ export function connectGame(auth: GameAuth, handlers: GameHandlers): GameConnect
     join: (inviteCode, password) =>
       socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode, password }),
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
-    placeAction: (type, actionId, amount) =>
-      socket.emit(CLIENT_EVENTS.actionPlace, { type, actionId, amount }),
+    placeAction: (type, amount) =>
+      socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
     selectClaim: (handRankId) =>
       socket.emit(CLIENT_EVENTS.claimSelect, { handRankId }),
     disconnect: () => socket.disconnect(),

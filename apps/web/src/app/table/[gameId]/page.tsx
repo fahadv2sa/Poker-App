@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
 import { GameTable } from "@/components/table/game-table";
-import type { GameAuth } from "@/lib/realtime";
+import { signRealtimeToken } from "@/lib/realtime-token";
 
 export default async function TablePage({
   params,
@@ -19,15 +19,17 @@ export default async function TablePage({
   });
   if (!game) notFound();
 
-  const gameAuth: GameAuth = {
+  // Identity comes from the verified session — minted into a signed token the
+  // client cannot forge. The browser never sends a raw userId.
+  const token = await signRealtimeToken({
     userId: session.user.id,
     username: session.user.name ?? "لاعب",
     playerNumber: session.user.playerNumber,
-  };
+  });
 
   return (
     <GameTable
-      auth={gameAuth}
+      token={token}
       inviteCode={game.inviteCode}
       roomName={game.roomName}
       isHost={game.createdBy === session.user.id}
