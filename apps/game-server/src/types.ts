@@ -64,6 +64,12 @@ export interface RoomState {
   /** 5 community cards, revealed progressively (FLOP 3, TURN 4, RIVER 5). */
   community: DealtCard[];
   communityRevealed: number;
+  /**
+   * Hand counter within this room/session (feature #7). Increments each dealt
+   * hand and salts every wallet `reference` that would otherwise repeat across
+   * hands (ante/fold-refund/resolve), so idempotency stays correct hand-to-hand.
+   */
+  handNumber: number;
   dealerSeat: number | null;
   currentTurnSeat: number | null;
   currentBet: bigint;

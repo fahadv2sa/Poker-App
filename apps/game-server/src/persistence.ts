@@ -148,12 +148,15 @@ export class PrismaRoomPersistence implements RoomPersistence {
     gameId: string,
     settlements: Settlement[],
     players: RoomPlayer[],
+    handNumber: number,
   ): Promise<void> {
     await prisma.$transaction(async (tx) => {
       const seatToPlayer = await this.seatMap(tx, gameId);
 
       // 1) Apply settlement movements in order (REFUND precedes its paired
-      //    FOLD_FORFEIT so the balance never dips negative).
+      //    FOLD_FORFEIT so the balance never dips negative). The reference is
+      //    salted with the hand number so the same seat/type in a later hand of
+      //    this room is a distinct movement, not an idempotent duplicate.
       let resolveSeq = 0;
       for (const s of settlements) {
         const gp = seatToPlayer.get(s.seat);
@@ -162,7 +165,7 @@ export class PrismaRoomPersistence implements RoomPersistence {
           userId: gp.userId,
           type: s.type,
           amount: s.amount,
-          reference: `${gameId}:resolve:${s.seat}:${s.type}:${resolveSeq++}`,
+          reference: `${gameId}:h${handNumber}:resolve:${s.seat}:${s.type}:${resolveSeq++}`,
           gameId,
         });
       }

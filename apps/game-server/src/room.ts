@@ -14,7 +14,7 @@ import {
   type Card,
   type ResolveSeat,
 } from "@fp/engine";
-import { SERVER_EVENTS } from "@fp/shared";
+import { SERVER_EVENTS, type PlayerView } from "@fp/shared";
 import type {
   BetRecord,
   CardSource,
@@ -36,6 +36,7 @@ export interface RoomDeps {
 
 const TURN_KEY = "turn";
 const CLAIM_KEY = "claim";
+const NEXT_HAND_KEY = "nexthand";
 
 /**
  * Authoritative game-room orchestrator (Section 8 state machine). Holds the
@@ -50,8 +51,13 @@ export class GameRoom {
 
   /** Single-resolve latch: a hand resolves exactly once even if concurrent
    *  claims both pass the "all claimed" check. Prevents duplicate
-   *  GameResults/UserStats (the wallet is also idempotent). */
+   *  GameResults/UserStats (the wallet is also idempotent). Reset at the start
+   *  of every hand (feature #7) so the guard holds independently per hand. */
   private resolved = false;
+
+  /** Re-entrancy latch around the async hand setup (deal/antes): blocks a second
+   *  startNextHand (e.g. auto-timer racing an explicit trigger) from double-dealing. */
+  private startingHand = false;
 
   constructor(
     readonly state: RoomState,
@@ -60,9 +66,15 @@ export class GameRoom {
 
   // -- lifecycle -----------------------------------------------------------
 
-  /** Host starts the hand: deal, post antes, open PREFLOP. (≥2 players.) */
+  /**
+   * Host starts the FIRST hand of the session: every present player must afford
+   * the mandatory ante (refuse otherwise). Subsequent hands roll over via
+   * startNextHand() with lenient sit-out rules (feature #7).
+   */
   async start(): Promise<void> {
-    const seated = this.state.players.filter((p) => p.status !== "DISCONNECTED");
+    const seated = this.state.players.filter(
+      (p) => p.status !== "DISCONNECTED" && p.connected,
+    );
     if (seated.length < 2) throw new Error("Need at least 2 players to start");
 
     // FIX #2: source each seat's spendable `available` from the authoritative
@@ -84,38 +96,172 @@ export class GameRoom {
       p.available = balance;
     }
 
-    this.state.status = "IN_PROGRESS";
+    // First hand: the button starts at the lowest occupied seat (19.9); it
+    // rotates from the next hand onward.
     this.state.dealerSeat ??= seated[0]!.seat;
+    await this.dealHandFor(seated);
+  }
 
-    const { hole, community } = await this.deps.cards.dealHand(
-      seated.length,
-      2,
-    );
+  /**
+   * Roll the room into the next hand (feature #7). Auto-invoked after a hand
+   * ends (armed timer) and also safe as an explicit trigger. Re-sources every
+   * present player's balance from the ledger, sits out anyone who left or can't
+   * afford the ante, rotates the dealer among those who can play, then deals.
+   * With fewer than 2 able players the room stays open but idle (no deal).
+   */
+  async startNextHand(): Promise<void> {
+    if (this.startingHand) return;
+    // Only between hands — never re-deal over a live hand.
+    if (this.state.phase !== "ENDED" && this.state.phase !== "LOBBY") return;
+    this.startingHand = true;
+    try {
+      this.deps.timers.clear(NEXT_HAND_KEY);
+      const ante = BigInt(this.state.config.ante);
+      const present = this.state.players.filter((p) => p.connected);
+      const balances = await this.deps.persistence.getBalances(
+        present.map((p) => p.userId),
+      );
+      for (const p of present) {
+        const b = balances.get(p.userId);
+        if (b !== undefined) p.available = b;
+      }
+      const eligible = present.filter((p) => (balances.get(p.userId) ?? 0n) >= ante);
+
+      if (eligible.length < 2) {
+        this.parkSession(eligible.length);
+        return;
+      }
+      this.state.dealerSeat = this.rotateDealer(eligible.map((p) => p.seat));
+      await this.dealHandFor(eligible);
+    } finally {
+      this.startingHand = false;
+    }
+  }
+
+  /**
+   * A player left (socket disconnect / explicit leave). They're dropped from the
+   * next hand; between hands they're parked immediately. Mid-hand, the existing
+   * turn timer auto-folds them on timeout — unchanged here.
+   */
+  handlePlayerLeft(seat: number): void {
+    const p = this.state.players.find((x) => x.seat === seat);
+    if (!p) return;
+    p.connected = false;
+    if (this.state.phase === "ENDED" || this.state.phase === "LOBBY") {
+      this.resetHandState(p);
+      p.holeCards = [];
+      p.status = "WAITING";
+    }
+  }
+
+  /**
+   * Deal a fresh hand to `participants` (already balance-checked, dealer already
+   * set): reset the per-hand latch/state, deal, post antes, open PREFLOP. Shared
+   * by the first hand (start) and every rollover (startNextHand).
+   */
+  private async dealHandFor(participants: RoomPlayer[]): Promise<void> {
+    // New hand: reset the single-resolve latch (it must hold independently per
+    // hand) and bump the counter that salts repeat-prone wallet references.
+    this.resolved = false;
+    this.state.handNumber += 1;
+    this.state.status = "IN_PROGRESS";
+
+    // Park anyone present but not in this hand (busted / sat out) as WAITING with
+    // cleared state, so they neither act nor count as committed in the pot.
+    const inHand = new Set(participants);
+    for (const p of this.state.players) {
+      if (inHand.has(p)) continue;
+      this.resetHandState(p);
+      p.holeCards = [];
+      if (p.connected) p.status = "WAITING";
+    }
+
+    const { hole, community } = await this.deps.cards.dealHand(participants.length, 2);
     this.state.community = community;
     this.state.communityRevealed = 0;
-    seated.forEach((p, i) => {
+    participants.forEach((p, i) => {
+      this.resetHandState(p);
       p.holeCards = hole[i]!;
       p.status = "ACTIVE";
-      p.committedThisRound = 0n;
-      p.committedTotal = 0n;
-      p.lastBetAmount = 0n;
-      p.hasActed = false;
-      p.claimRankId = null;
-      p.claimValid = false;
-      p.claimStrength = 0;
-      p.forfeit = 0n;
     });
 
     await this.deps.persistence.persistDeal(this.state);
 
+    // Announce the new hand FIRST so clients reset the previous board/result and
+    // show the rotated dealer — then deliver private hole cards, so the board
+    // reset can't wipe the just-received cards. Pot = the antes about to post.
+    const ante = this.state.config.ante;
+    this.deps.emitter.toRoom(SERVER_EVENTS.handStarted, {
+      handNumber: this.state.handNumber,
+      dealerSeat: this.state.dealerSeat,
+      players: this.projectPlayers(),
+      pot: ante * participants.length,
+      currentBet: ante,
+    });
+
     // Each owner privately receives their hole cards (never broadcast).
-    for (const p of seated) {
+    for (const p of participants) {
       this.deps.emitter.toSeat(p.seat, SERVER_EVENTS.gameDealt, {
         holeCards: p.holeCards.map(toCardView),
       });
     }
 
-    await this.postAntesAndOpenPreflop(seated);
+    await this.postAntesAndOpenPreflop(participants);
+  }
+
+  /** Next dealer seat: the lowest eligible seat strictly after the current
+   *  button, wrapping around (19.9 — the button rotates each hand). */
+  private rotateDealer(eligibleSeats: number[]): number {
+    const sorted = [...eligibleSeats].sort((a, b) => a - b);
+    const cur = this.state.dealerSeat;
+    if (cur === null) return sorted[0]!;
+    return sorted.find((s) => s > cur) ?? sorted[0]!;
+  }
+
+  /** Reset a seat's per-hand betting + claim state (keeps wallet `available`). */
+  private resetHandState(p: RoomPlayer): void {
+    p.committedThisRound = 0n;
+    p.committedTotal = 0n;
+    p.lastBetAmount = 0n;
+    p.hasActed = false;
+    p.forfeit = 0n;
+    p.claimRankId = null;
+    p.claimValid = false;
+    p.claimStrength = 0;
+  }
+
+  /** Not enough players can afford a hand: keep the room open but idle. */
+  private parkSession(eligible: number): void {
+    this.deps.timers.clearAll();
+    for (const p of this.state.players) {
+      this.resetHandState(p);
+      p.holeCards = [];
+      if (p.connected) p.status = "WAITING";
+    }
+    this.state.status = "LOBBY";
+    this.state.phase = "LOBBY";
+    this.state.community = [];
+    this.state.communityRevealed = 0;
+    this.state.currentTurnSeat = null;
+    this.state.currentBet = 0n;
+    this.state.turnDeadlineTs = null;
+    this.deps.emitter.toRoom(SERVER_EVENTS.sessionWaiting, {
+      reason: "NEED_PLAYERS",
+      eligible,
+    });
+  }
+
+  /** Sanitized per-seat projection for the hand:started broadcast (no hole cards). */
+  private projectPlayers(): PlayerView[] {
+    return this.state.players.map((p) => ({
+      seat: p.seat,
+      username: p.username,
+      playerNumber: p.playerNumber,
+      status: p.status,
+      committedThisRound: Number(p.committedThisRound),
+      committedTotal: Number(p.committedTotal),
+      isDealer: this.state.dealerSeat === p.seat,
+    }));
   }
 
   /**
@@ -146,7 +292,7 @@ export class GameRoom {
         userId: p.userId,
         type: "ANTE",
         amount: -ante,
-        reference: `${this.state.gameId}:ante:${p.seat}`,
+        reference: `${this.state.gameId}:h${this.state.handNumber}:ante:${p.seat}`,
       });
       bets.push({ seat: p.seat, round: "PREFLOP", action: "ANTE", amount: ante });
     }
@@ -244,7 +390,7 @@ export class GameRoom {
             userId: player.userId,
             type: "REFUND",
             amount: refund,
-            reference: `${this.state.gameId}:foldrefund:${player.seat}`,
+            reference: `${this.state.gameId}:h${this.state.handNumber}:foldrefund:${player.seat}`,
           },
         ],
         [],
@@ -440,10 +586,13 @@ export class GameRoom {
       this.state.gameId,
       settlements,
       this.state.players,
+      this.state.handNumber,
     );
 
+    // Feature #7: the hand ends but the room/session does NOT. `phase` ENDED is
+    // the inter-hand marker; `status` stays IN_PROGRESS so the room remains
+    // live and players keep their seats for the next hand.
     this.state.phase = "ENDED";
-    this.state.status = "ENDED";
 
     const results = this.state.players
       .filter((p) => p.committedTotal > 0n || p.forfeit > 0n)
@@ -457,6 +606,13 @@ export class GameRoom {
       results,
       yourDelta: 0,
       newBalance: 0,
+    });
+
+    // Feature #7: after a short pause, roll into the next hand automatically.
+    // startNextHand re-checks eligibility, so arming it unconditionally is safe
+    // — it parks the room when too few players can afford the ante.
+    this.deps.timers.arm(NEXT_HAND_KEY, this.state.config.nextHandDelaySec * 1000, () => {
+      void this.startNextHand();
     });
   }
 

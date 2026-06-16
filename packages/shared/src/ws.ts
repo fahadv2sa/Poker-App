@@ -32,6 +32,10 @@ export const SERVER_EVENTS = {
   showdownStart: "showdown:start",
   claimReceived: "claim:received",
   gameResult: "game:result",
+  /** A new hand began in the same room (feature #7: multi-hand session). */
+  handStarted: "hand:started",
+  /** The session can't deal a hand yet (fewer than 2 players can afford the ante). */
+  sessionWaiting: "session:waiting",
   error: "error",
 } as const;
 
@@ -160,6 +164,25 @@ export interface GameResultPayload {
   results: GameResultEntry[];
   yourDelta: number;
   newBalance: number;
+}
+
+/**
+ * A fresh hand started in the same room (feature #7). Carries the rotated dealer
+ * and the reset, sanitized player projection so clients can clear the previous
+ * hand's board/result and redraw. Hole cards still arrive privately via game:dealt.
+ */
+export interface HandStartedPayload {
+  handNumber: number;
+  dealerSeat: number | null;
+  players: PlayerView[];
+  pot: number;
+  currentBet: number;
+}
+
+/** The session is open but idle: not enough players can afford the next ante. */
+export interface SessionWaitingPayload {
+  reason: "NEED_PLAYERS";
+  eligible: number;
 }
 
 export interface ErrorPayload {

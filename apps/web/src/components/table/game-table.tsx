@@ -53,11 +53,11 @@ export function GameTable({
   const minRaiseTo = (s?.currentBet ?? 0) + DEFAULT_GAME_CONFIG.minRaise;
   const isContender = me?.status === "ACTIVE" || me?.status === "ALLIN";
 
-  // Display-only balance: pre-hand wallet minus what's committed this hand; after
-  // the result, the net delta. Authoritative balance always lives on the server.
-  const myDelta = view.result?.results.find((r) => r.seat === yourSeat)?.coinsDelta;
-  const shownBalance =
-    myDelta != null ? initialBalance + myDelta : initialBalance - Number(me?.committedTotal ?? 0);
+  // Display-only balance. Across a multi-hand session (feature #7) the base is
+  // the last resolved hand's authoritative finalBalance (view.balance); during a
+  // live hand we subtract what's committed. The server is always the real source.
+  const base = view.balance ?? initialBalance;
+  const shownBalance = view.result ? base : base - Number(me?.committedTotal ?? 0);
 
   useEffect(() => {
     if (isMyTurn) setRaiseTo(minRaiseTo);
@@ -395,9 +395,9 @@ function ResultPanel({
           );
         })}
       </div>
-      <Button asChild className="w-full">
-        <Link href="/rooms">طاولة جديدة</Link>
-      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        الجولة التالية تبدأ تلقائيًا…
+      </p>
     </motion.div>
   );
 }

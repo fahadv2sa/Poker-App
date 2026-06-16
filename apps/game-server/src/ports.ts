@@ -76,12 +76,15 @@ export interface RoomPersistence {
   ): Promise<void>;
   /**
    * Final settlement: apply WIN/SPLIT_WIN/REFUND/FOLD_FORFEIT movements, write
-   * GameResults, and update UserStats — all in one transaction.
+   * GameResults, and update UserStats — all in one transaction. `handNumber`
+   * salts the settlement idempotency keys so successive hands in the same room
+   * (feature #7) never collide on a reference.
    */
   persistResolve(
     gameId: string,
     settlements: Settlement[],
     players: RoomPlayer[],
+    handNumber: number,
   ): Promise<void>;
 }
 

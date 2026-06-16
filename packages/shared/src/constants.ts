@@ -26,6 +26,8 @@ export const DEFAULT_GAME_CONFIG = {
   claimTimerSec: 60,
   handSize: HAND_SIZE,
   allInMode: "side_pots",
+  /** Feature #7: pause between hands before the room auto-deals the next one. */
+  nextHandDelaySec: 5,
 } as const;
 
 export type GameConfig = {
@@ -35,4 +37,5 @@ export type GameConfig = {
   claimTimerSec: number;
   handSize: number;
   allInMode: "side_pots";
+  nextHandDelaySec: number;
 };

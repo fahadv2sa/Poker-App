@@ -174,8 +174,9 @@ export function attachSocketHandlers(
       const seat = seatOf(rt, socket.id);
       if (seat !== null) {
         rt.seats.delete(seat);
-        const p = rt.room.state.players.find((x) => x.seat === seat);
-        if (p) p.connected = false;
+        // Feature #7: the room drops them from the next hand (and parks them now
+        // if we're between hands) without tearing down the live session.
+        rt.room.handlePlayerLeft(seat);
       }
     };
     socket.on(CLIENT_EVENTS.roomLeave, leave);

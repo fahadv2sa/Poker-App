@@ -153,6 +153,7 @@ function makeRoom(
     players: [player(1, "u1"), player(2, "u2")],
     community: [],
     communityRevealed: 0,
+    handNumber: 0,
     dealerSeat: null,
     currentTurnSeat: null,
     currentBet: 0n,

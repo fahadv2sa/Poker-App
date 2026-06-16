@@ -93,6 +93,7 @@ export async function hydrateRoom(
     players,
     community: [],
     communityRevealed: 0,
+    handNumber: 0,
     dealerSeat: game.dealerSeat,
     currentTurnSeat: null,
     currentBet: 0n,

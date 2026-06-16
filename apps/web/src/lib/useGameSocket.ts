@@ -20,6 +20,11 @@ export interface TableView {
   hole: CardView[];
   showdown: ShowdownStartPayload | null;
   result: GameResultPayload | null;
+  /** Authoritative wallet balance from the last hand's result (feature #7);
+   *  null until the first hand resolves, then carried across hands. */
+  balance: number | null;
+  /** True between hands when the room can't deal (fewer than 2 can ante). */
+  waiting: boolean;
   error: string | null;
 }
 
@@ -29,6 +34,8 @@ const INITIAL: TableView = {
   hole: [],
   showdown: null,
   result: null,
+  balance: null,
+  waiting: false,
   error: null,
 };
 
@@ -117,11 +124,53 @@ export function useGameSocket(token: string, inviteCode: string) {
           state: v.state ? { ...v.state, phase: "SHOWDOWN", currentTurnSeat: null } : v.state,
         })),
       onResult: (result) =>
+        setView((v) => {
+          const mine = v.state
+            ? result.results.find((r) => r.seat === v.state!.yourSeat)
+            : undefined;
+          return {
+            ...v,
+            result,
+            showdown: null,
+            balance: mine ? mine.finalBalance : v.balance,
+            state: v.state ? { ...v.state, phase: "ENDED" } : v.state,
+          };
+        }),
+      // Feature #7: a new hand began in the same room — clear the previous
+      // board/result, adopt the rotated dealer, and wait for the private deal.
+      onHandStarted: (p) =>
         setView((v) => ({
           ...v,
-          result,
+          result: null,
           showdown: null,
-          state: v.state ? { ...v.state, phase: "ENDED" } : v.state,
+          hole: [],
+          waiting: false,
+          state: v.state
+            ? {
+                ...v.state,
+                phase: "PREFLOP",
+                status: "IN_PROGRESS",
+                players: p.players,
+                communityCards: [],
+                pot: p.pot,
+                currentBet: p.currentBet,
+                dealerSeat: p.dealerSeat,
+                currentTurnSeat: null,
+                turnDeadlineTs: null,
+              }
+            : v.state,
+        })),
+      // Not enough players can afford the next ante — the room idles, open.
+      onSessionWaiting: () =>
+        setView((v) => ({
+          ...v,
+          result: null,
+          showdown: null,
+          hole: [],
+          waiting: true,
+          state: v.state
+            ? { ...v.state, phase: "LOBBY", status: "LOBBY", currentTurnSeat: null }
+            : v.state,
         })),
       onError: (e) => setView((v) => ({ ...v, error: e.messageAr })),
     });
