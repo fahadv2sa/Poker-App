@@ -367,9 +367,36 @@ describe("stats are counted once per hand (no duplication across the session)", 
   });
 });
 
-describe("a hand automatically rolls into the next", () => {
-  it("arms the next-hand timer when a hand ends", async () => {
-    const { room, timers } = makeRoom(
+describe("between hands: explicit deal gate (Batch 1 — no auto-deal)", () => {
+  it("does NOT auto-arm a next-hand timer; the room waits at ENDED until startNextHand", async () => {
+    const { room, timers, persistence } = makeRoom(
+      [
+        [1, "a"],
+        [2, "b"],
+      ],
+      { a: 5000n, b: 5000n },
+    );
+    await room.start();
+    await playHand(room);
+
+    // Hand ended; the room is parked between hands with NO auto-deal timer and
+    // NO antes charged for a next hand.
+    expect(room.state.phase).toBe("ENDED");
+    expect(timers.pending.has("nexthand")).toBe(false);
+    const antesAfterHand1 = persistence.movements.filter((m) => m.type === "ANTE").length;
+    expect(antesAfterHand1).toBe(2); // only hand 1's antes
+
+    // The explicit trigger deals the next hand (and only now charges antes).
+    await room.startNextHand();
+    expect(room.state.phase).toBe("PREFLOP");
+    expect(room.state.handNumber).toBe(2);
+    expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(4);
+  });
+});
+
+describe("hand:started mirrors authoritative post-ante state (Batch 1, item 1)", () => {
+  it("carries committedThisRound=ante, pot=ante*n, currentBet=ante so the client owes 0 preflop", async () => {
+    const { room, emitter } = makeRoom(
       [
         [1, "a"],
         [2, "b"],
@@ -377,9 +404,51 @@ describe("a hand automatically rolls into the next", () => {
       { a: 1000n, b: 1000n },
     );
     await room.start();
-    expect(timers.pending.has("nexthand")).toBe(false);
-    await playHand(room);
-    expect(timers.pending.has("nexthand")).toBe(true);
+
+    const hs = emitter.room.filter((e) => e.event === "hand:started").at(-1)!.payload as {
+      pot: number;
+      currentBet: number;
+      players: Array<{ committedThisRound: number; committedTotal: number }>;
+    };
+    // The ante is already reflected — the client mirrors these instead of
+    // re-deriving, so amount-to-call = currentBet − committedThisRound = 0.
+    expect(hs.pot).toBe(100);
+    expect(hs.currentBet).toBe(50);
+    expect(hs.players.every((p) => p.committedThisRound === 50)).toBe(true);
+    expect(hs.players.every((p) => p.committedTotal === 50)).toBe(true);
+  });
+});
+
+describe("claim timer: not choosing in time forfeits the claim (decision 19.6)", () => {
+  it("a contender who never claims loses to the valid claimant when the timer fires", async () => {
+    const { room, persistence, timers } = makeRoom(
+      [
+        [1, "a"],
+        [2, "b"],
+      ],
+      { a: 5000n, b: 5000n },
+    );
+    await room.start();
+    await checkDown(room);
+    expect(room.state.phase).toBe("SHOWDOWN");
+
+    // Only seat 1 claims (valid). Seat 2 never chooses → still unresolved.
+    await room.selectClaim(1, "ROYAL_POSITION");
+    expect(room.state.phase).toBe("SHOWDOWN");
+
+    // The claim timer fires → resolve with seat 2 forfeiting its claim.
+    const fire = timers.pending.get("claim");
+    expect(fire).toBeTruthy();
+    fire!();
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(room.state.phase).toBe("ENDED");
+    expect(persistence.resolveCalls).toBe(1);
+    // Seat 1 sweeps the whole pot (its 50 + seat 2's forfeited 50).
+    const win = persistence.settlements.find((s) => s.type === "WIN");
+    expect(win).toMatchObject({ seat: 1, amount: 100n });
+    expect(persistence.balances.get("a")).toBe(5050n);
+    expect(persistence.balances.get("b")).toBe(4950n);
   });
 });
 

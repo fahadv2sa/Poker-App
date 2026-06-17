@@ -8,7 +8,7 @@ import { useGameSocket } from "@/lib/useGameSocket";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FootballCard, OpponentSeat, PHASE_AR, TurnTimer } from "./parts";
+import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 
@@ -33,7 +33,7 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, placeAction, selectClaim, clearError } = useGameSocket(token, inviteCode);
+  const { view, start, nextHand, placeAction, selectClaim, clearError } = useGameSocket(token, inviteCode);
   const s = view.state;
   const [raiseTo, setRaiseTo] = useState(0);
   const [claimed, setClaimed] = useState<string | null>(null);
@@ -104,7 +104,12 @@ export function GameTable({
                 <span className="py-2 text-sm text-white/50">بانتظار لاعبين آخرين…</span>
               ) : (
                 opponents.map((p) => (
-                  <OpponentSeat key={p.seat} player={p} isActive={s.currentTurnSeat === p.seat} />
+                  <OpponentSeat
+                    key={p.seat}
+                    player={p}
+                    isActive={s.currentTurnSeat === p.seat}
+                    deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
+                  />
                 ))
               )}
             </div>
@@ -137,7 +142,9 @@ export function GameTable({
                 ))}
               </div>
 
-              <TurnTimer deadlineTs={s.currentTurnSeat != null ? s.turnDeadlineTs : null} />
+              {isBetting && s.currentTurnSeat != null ? (
+                <Countdown deadlineTs={s.turnDeadlineTs} />
+              ) : null}
             </div>
           </section>
 
@@ -185,10 +192,12 @@ export function GameTable({
                   raiseTo={raiseTo}
                   setRaiseTo={setRaiseTo}
                   onAction={placeAction}
+                  deadlineTs={s.turnDeadlineTs}
                 />
               ) : phase === "SHOWDOWN" && isContender && view.showdown ? (
                 <ClaimPanel
                   ranks={view.showdown.availableHandRanks}
+                  deadlineTs={view.showdown.deadlineTs}
                   claimed={claimed}
                   onPick={(id) => {
                     setClaimed(id);
@@ -196,7 +205,12 @@ export function GameTable({
                   }}
                 />
               ) : view.result ? (
-                <ResultPanel results={view.result.results} yourSeat={yourSeat} />
+                <ResultPanel
+                  results={view.result.results}
+                  yourSeat={yourSeat}
+                  isHost={isHost}
+                  onNextHand={nextHand}
+                />
               ) : (
                 <WaitingHint phase={phase} turnSeat={s.currentTurnSeat} />
               )}
@@ -261,12 +275,14 @@ function ActionBar({
   raiseTo,
   setRaiseTo,
   onAction,
+  deadlineTs,
 }: {
   owed: number;
   minRaiseTo: number;
   raiseTo: number;
   setRaiseTo: (n: number) => void;
   onAction: (type: string, amount?: number) => void;
+  deadlineTs: number | null;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -280,6 +296,8 @@ function ActionBar({
           <span className="text-muted-foreground">لا رهان مستحق</span>
         )}
       </div>
+
+      <Countdown deadlineTs={deadlineTs} />
 
       <div className="grid grid-cols-3 gap-2">
         {owed <= 0 ? (
@@ -326,10 +344,12 @@ function ActionBar({
 
 function ClaimPanel({
   ranks,
+  deadlineTs,
   claimed,
   onPick,
 }: {
   ranks: Array<{ id: string; code: string; nameAr: string; strength: number }>;
+  deadlineTs: number | null;
   claimed: string | null;
   onPick: (id: string) => void;
 }) {
@@ -339,6 +359,13 @@ function ClaimPanel({
         <span className="font-bold text-primary">اختر ترابطك</span>
         <span className="text-muted-foreground"> — الاختيار الخاطئ يُخرجك من المنافسة</span>
       </div>
+
+      <Countdown deadlineTs={deadlineTs} />
+      {!claimed ? (
+        <p className="text-center text-xs text-destructive/90">
+          إن لم تختر قبل انتهاء الوقت ستفقد حقّك في المطالبة بالمجمّع
+        </p>
+      ) : null}
       <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
         {ranks.map((r) => (
           <button
@@ -366,26 +393,39 @@ function ClaimPanel({
 function ResultPanel({
   results,
   yourSeat,
+  isHost,
+  onNextHand,
 }: {
-  results: Array<{ seat: number; outcome: string; coinsDelta: number }>;
+  results: Array<{ seat: number; outcome: string; coinsDelta: number; claimValid: boolean | null }>;
   yourSeat: number | null;
+  isHost: boolean;
+  onNextHand: () => void;
 }) {
+  const [dealing, setDealing] = useState(false);
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
       <span className="text-center font-bold text-primary">انتهت الجولة</span>
       <div className="flex flex-col gap-1">
         {results.map((r) => {
           const pos = r.coinsDelta >= 0;
+          const mine = r.seat === yourSeat;
+          // Item 6: explain a losing/refunded hand caused by an invalid claim,
+          // instead of it silently looking like a plain loss.
+          const invalidClaim =
+            r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
           return (
             <div
               key={r.seat}
               className={cn(
                 "flex items-center justify-between rounded-lg px-3 py-2",
-                r.seat === yourSeat ? "bg-primary/10" : "bg-secondary/30",
+                mine ? "bg-primary/10" : "bg-secondary/30",
               )}
             >
               <span className="text-sm">
-                {r.seat === yourSeat ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
+                {mine ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
+                {invalidClaim ? (
+                  <span className="text-destructive/90"> — ترابط غير محقّق</span>
+                ) : null}
               </span>
               <span className={cn("num font-extrabold", pos ? "text-primary" : "text-destructive")}>
                 {pos ? "+" : ""}
@@ -395,9 +435,22 @@ function ResultPanel({
           );
         })}
       </div>
-      <p className="text-center text-sm text-muted-foreground">
-        الجولة التالية تبدأ تلقائيًا…
-      </p>
+      {isHost ? (
+        <Button
+          onClick={() => {
+            setDealing(true);
+            onNextHand();
+          }}
+          disabled={dealing}
+          className="w-full"
+        >
+          {dealing ? "يبدأ…" : "ابدأ الجولة التالية"}
+        </Button>
+      ) : (
+        <p className="text-center text-sm text-muted-foreground">
+          بانتظار أن يبدأ المضيف الجولة التالية…
+        </p>
+      )}
     </motion.div>
   );
 }

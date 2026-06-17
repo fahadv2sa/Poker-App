@@ -15,18 +15,20 @@ import { prisma } from "../src/client";
 // EDIT THIS LIST. Each player needs: name, nationality, position (GK|DEF|MID|
 // FWD), and clubs (0+). nationality / club rows are created automatically.
 //
-// This starter set of 10 well-known players is chosen so every hand rank is
-// reachable in real 2-player play:
-//   • 5 Real Madrid Brazilians → 5 identical-club set AND 5 same nationality
-//       ⇒ ROYAL_CLUB, ROYAL_NATION, FULL_HOUSE_CLUB
-//   • 5 forwards (3 of them + Haaland + Salah) ⇒ ROYAL_POSITION
-//   • all four positions present ⇒ LINEUP; mixed clubs/nations ⇒ PAIR, TWO_PAIR,
+// This set of 20 well-known players is sized so a FULL 6-seat table can deal
+// (a deal needs seats×2 + 5 distinct active players ⇒ 17 at 6 seats) with
+// headroom, and so every hand rank stays reachable:
+//   • 9 Real Madrid players each with the identical full club set ["Real Madrid"]
+//       ⇒ ROYAL_CLUB (≥5 identical sets) + FULL_HOUSE_CLUB (≥5 share a club)
+//   • 6 Brazilians ⇒ ROYAL_NATION; 8 forwards ⇒ ROYAL_POSITION
+//   • all four positions present (4 GK / 4 DEF / 4 MID / 8 FWD) ⇒ LINEUP
+//   • repeated nationalities/positions/clubs across clubs ⇒ PAIR, TWO_PAIR,
 //       TRIPLE, FULL_HOUSE
 // (Reachable = a deal can produce it, not that every hand does.)
 //
-// NOTE: ROYAL_CLUB needs ≥5 players with an IDENTICAL full club set, so the 5
-// Real Madrid players each list exactly ["Real Madrid"]. Give a player multiple
-// clubs by adding more names to its `clubs` array.
+// NOTE: ROYAL_CLUB needs ≥5 players with an IDENTICAL full club set, so the Real
+// Madrid players each list exactly ["Real Madrid"]. Each player keeps a single
+// current club for now; give a player multiple clubs by adding to its `clubs`.
 // ===========================================================================
 const PLAYERS: Array<{
   name: string;
@@ -44,6 +46,16 @@ const PLAYERS: Array<{
   { name: "Rodri", nationality: "Spain", position: "MID", clubs: ["Manchester City"] },
   { name: "Erling Haaland", nationality: "Norway", position: "FWD", clubs: ["Manchester City"] },
   { name: "Mohamed Salah", nationality: "Egypt", position: "FWD", clubs: ["Liverpool"] },
+  { name: "Thibaut Courtois", nationality: "Belgium", position: "GK", clubs: ["Real Madrid"] },
+  { name: "Jude Bellingham", nationality: "England", position: "MID", clubs: ["Real Madrid"] },
+  { name: "Kylian Mbappé", nationality: "France", position: "FWD", clubs: ["Real Madrid"] },
+  { name: "Antonio Rüdiger", nationality: "Germany", position: "DEF", clubs: ["Real Madrid"] },
+  { name: "Virgil van Dijk", nationality: "Netherlands", position: "DEF", clubs: ["Liverpool"] },
+  { name: "Alisson", nationality: "Brazil", position: "GK", clubs: ["Liverpool"] },
+  { name: "Harry Kane", nationality: "England", position: "FWD", clubs: ["Bayern Munich"] },
+  { name: "Joshua Kimmich", nationality: "Germany", position: "MID", clubs: ["Bayern Munich"] },
+  { name: "Lautaro Martínez", nationality: "Argentina", position: "FWD", clubs: ["Inter Milan"] },
+  { name: "Emiliano Martínez", nationality: "Argentina", position: "GK", clubs: ["Aston Villa"] },
 ];
 // ===========================================================================
 

@@ -187,9 +187,15 @@ export class GameRoom {
 
     await this.deps.persistence.persistDeal(this.state);
 
+    // Post antes BEFORE announcing the hand so hand:started carries the
+    // authoritative post-ante betting state (each seat's committed = ante, pot,
+    // currentBet). The client mirrors these exactly — it never re-derives the
+    // ante — so amount-to-call/your-bet/balance match the server from turn one.
+    await this.postAntes(participants);
+
     // Announce the new hand FIRST so clients reset the previous board/result and
     // show the rotated dealer — then deliver private hole cards, so the board
-    // reset can't wipe the just-received cards. Pot = the antes about to post.
+    // reset can't wipe the just-received cards.
     const ante = this.state.config.ante;
     this.deps.emitter.toRoom(SERVER_EVENTS.handStarted, {
       handNumber: this.state.handNumber,
@@ -206,7 +212,7 @@ export class GameRoom {
       });
     }
 
-    await this.postAntesAndOpenPreflop(participants);
+    this.openPreflop();
   }
 
   /** Next dealer seat: the lowest eligible seat strictly after the current
@@ -278,12 +284,14 @@ export class GameRoom {
     });
   }
 
-  private async postAntesAndOpenPreflop(seated: RoomPlayer[]): Promise<void> {
+  /** Charge the mandatory ante (decision 19.10) for every participant, updating
+   *  in-memory betting state and the ledger together. Does NOT open the round —
+   *  so hand:started can be emitted with the post-ante state before the turn. */
+  private async postAntes(seated: RoomPlayer[]): Promise<void> {
     const ante = BigInt(this.state.config.ante);
     const movements: LedgerMovement[] = [];
     const bets: BetRecord[] = [];
     for (const p of seated) {
-      // Mandatory opening bet (decision 19.10): every player posts the ante.
       p.available -= ante;
       p.committedThisRound = ante;
       p.committedTotal += ante;
@@ -297,7 +305,11 @@ export class GameRoom {
       bets.push({ seat: p.seat, round: "PREFLOP", action: "ANTE", amount: ante });
     }
     await this.deps.persistence.applyBetting(this.state.gameId, movements, bets);
+  }
 
+  /** Open the PREFLOP betting round (antes already posted) and seat the first
+   *  actor after the dealer. */
+  private openPreflop(): void {
     this.state.phase = "PREFLOP";
     this.applyBettingState(openRound(this.toBettingState("PREFLOP"), "PREFLOP"));
     this.beginTurnOrAdvance();
@@ -601,6 +613,9 @@ export class GameRoom {
         outcome: outcomeFor(p, settlements),
         coinsDelta: Number(coinsDelta(p, settlements)),
         finalBalance: Number(p.available),
+        // Folders have no claim context (null); otherwise expose whether the
+        // showdown claim was valid so the client can explain an invalid-claim loss.
+        claimValid: p.status === "FOLDED" ? null : p.claimValid,
       }));
     this.deps.emitter.toRoom(SERVER_EVENTS.gameResult, {
       results,
@@ -608,12 +623,10 @@ export class GameRoom {
       newBalance: 0,
     });
 
-    // Feature #7: after a short pause, roll into the next hand automatically.
-    // startNextHand re-checks eligibility, so arming it unconditionally is safe
-    // — it parks the room when too few players can afford the ante.
-    this.deps.timers.arm(NEXT_HAND_KEY, this.state.config.nextHandDelaySec * 1000, () => {
-      void this.startNextHand();
-    });
+    // Feature #7 / Batch 1: the hand ends but the room does NOT auto-deal. It
+    // waits between hands (phase ENDED) with the result on screen; the next hand
+    // begins only on an explicit trigger (startNextHand, host-initiated). No
+    // antes are charged without that consent.
   }
 
   // -- helpers -------------------------------------------------------------

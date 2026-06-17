@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import type { CardView, PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
@@ -126,13 +127,16 @@ export function FootballCard({
   );
 }
 
-/** Compact opponent seat placed around the table rim. */
+/** Compact opponent seat placed around the table rim. When it's this seat's
+ *  turn, shows the live remaining-time countdown ON the seat (Batch 1). */
 export function OpponentSeat({
   player,
   isActive,
+  deadlineTs,
 }: {
   player: PlayerView;
   isActive: boolean;
+  deadlineTs?: number | null;
 }) {
   return (
     <motion.div
@@ -147,14 +151,17 @@ export function OpponentSeat({
     >
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-sm font-bold">{player.username}</span>
-        {player.isDealer ? (
-          <span
-            className="grid size-4 shrink-0 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
-            title="الموزّع"
-          >
-            D
-          </span>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          {isActive ? <Countdown deadlineTs={deadlineTs ?? null} compact /> : null}
+          {player.isDealer ? (
+            <span
+              className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
+              title="الموزّع"
+            >
+              D
+            </span>
+          ) : null}
+        </div>
       </div>
       <div className="flex items-center justify-between gap-2 text-[0.68rem] text-muted-foreground">
         <span>{STATUS_AR[player.status] ?? player.status}</span>
@@ -168,19 +175,70 @@ export function OpponentSeat({
   );
 }
 
-/** Drains right→left over the remaining time of the current turn (RTL). */
-export function TurnTimer({ deadlineTs }: { deadlineTs: number | null }) {
-  if (!deadlineTs) return null;
-  const remaining = Math.max(0, deadlineTs - Date.now());
+/** Live remaining time (ms) until `deadlineTs`, re-rendered ~4×/sec. */
+export function useRemainingMs(deadlineTs: number | null): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (deadlineTs == null) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [deadlineTs]);
+  if (deadlineTs == null) return null;
+  return Math.max(0, deadlineTs - now);
+}
+
+/**
+ * A live, numeric countdown for the current turn / claim window. `compact` is the
+ * small seat badge; otherwise a labelled number + draining bar. The server sends
+ * the authoritative `deadlineTs`; this just renders it ticking.
+ */
+export function Countdown({
+  deadlineTs,
+  totalMs = 60_000,
+  compact = false,
+}: {
+  deadlineTs: number | null;
+  totalMs?: number;
+  compact?: boolean;
+}) {
+  const remMs = useRemainingMs(deadlineTs);
+  if (remMs == null) return null;
+  const secs = Math.ceil(remMs / 1000);
+  const pct = Math.max(0, Math.min(100, (remMs / totalMs) * 100));
+  const danger = secs <= 10;
+
+  if (compact) {
+    return (
+      <span
+        className={cn(
+          "num rounded-full px-1.5 py-0.5 text-[0.62rem] font-bold tabular-nums",
+          danger ? "bg-destructive/20 text-destructive" : "bg-primary/15 text-primary",
+        )}
+      >
+        {secs}
+      </span>
+    );
+  }
   return (
-    <div className="h-1.5 w-44 max-w-[60vw] overflow-hidden rounded-full bg-white/10">
-      <motion.div
-        key={deadlineTs}
-        className="h-full origin-right rounded-full bg-linear-to-l from-primary to-accent"
-        initial={{ scaleX: 1 }}
-        animate={{ scaleX: 0 }}
-        transition={{ duration: remaining / 1000, ease: "linear" }}
-      />
+    <div className="flex w-full max-w-[260px] flex-col items-center gap-1">
+      <span
+        className={cn(
+          "num text-sm font-bold tabular-nums",
+          danger ? "text-destructive" : "text-primary",
+        )}
+      >
+        ⏱ {secs} ث
+      </span>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div
+          className={cn(
+            "h-full rounded-full transition-[width] duration-200 ease-linear",
+            danger ? "bg-destructive" : "bg-linear-to-l from-primary to-accent",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }

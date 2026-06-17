@@ -141,6 +141,20 @@ export function attachSocketHandlers(
       }),
     );
 
+    // Batch 1: explicit between-hands gate — the host deals the next hand; the
+    // server only then charges antes (no auto-deal). startNextHand re-checks
+    // eligibility and rotates the dealer.
+    socket.on(CLIENT_EVENTS.nextHand, () =>
+      guard(socket, async () => {
+        const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
+        if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
+        if (rt.room.state.createdBy !== user.userId) {
+          return emitError(socket, "NOT_HOST", "المضيف فقط يبدأ الجولة التالية");
+        }
+        await rt.room.startNextHand();
+      }),
+    );
+
     socket.on(CLIENT_EVENTS.actionPlace, (raw: unknown) =>
       guard(socket, async () => {
         const input = actionPlaceSchema.parse(raw);

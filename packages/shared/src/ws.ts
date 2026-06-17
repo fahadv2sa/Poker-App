@@ -18,6 +18,8 @@ export const CLIENT_EVENTS = {
   roomJoin: "room:join",
   roomLeave: "room:leave",
   gameStart: "game:start",
+  /** Host explicitly deals the next hand of the session (Batch 1: no auto-deal). */
+  nextHand: "hand:next",
   actionPlace: "action:place",
   claimSelect: "claim:select",
 } as const;
@@ -158,6 +160,9 @@ export interface GameResultEntry {
   outcome: (typeof RESULT_OUTCOMES)[number];
   coinsDelta: number;
   finalBalance: number;
+  /** Whether this seat's showdown claim was valid; `null` for folders / no claim
+   *  context. Lets the client explain an invalid-claim loss (Batch 1, item 6). */
+  claimValid: boolean | null;
 }
 
 export interface GameResultPayload {

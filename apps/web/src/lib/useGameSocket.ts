@@ -63,6 +63,11 @@ export function useGameSocket(token: string, inviteCode: string) {
                   phase: p.phase,
                   communityCards: p.communityCards,
                   currentBet: 0,
+                  // Mirror the server: a new street resets each seat's
+                  // committed-this-round to 0 (clearRoundCommitments). Without
+                  // this the client's owed math drifts and a legal CHECK can be
+                  // wrongly blocked. committedTotal (whole-hand) is preserved.
+                  players: v.state.players.map((pl) => ({ ...pl, committedThisRound: 0 })),
                 },
               }
             : v,
@@ -180,6 +185,7 @@ export function useGameSocket(token: string, inviteCode: string) {
   }, [token, inviteCode]);
 
   const start = useCallback(() => connRef.current?.start(), []);
+  const nextHand = useCallback(() => connRef.current?.nextHand(), []);
   const placeAction = useCallback(
     (type: string, amount?: number) => connRef.current?.placeAction(type, amount),
     [],
@@ -190,5 +196,5 @@ export function useGameSocket(token: string, inviteCode: string) {
   );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
 
-  return { view, start, placeAction, selectClaim, clearError };
+  return { view, start, nextHand, placeAction, selectClaim, clearError };
 }

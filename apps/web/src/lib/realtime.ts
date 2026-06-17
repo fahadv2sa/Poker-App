@@ -43,6 +43,7 @@ export interface GameConnection {
   socket: Socket;
   join: (inviteCode: string, password?: string) => void;
   start: () => void;
+  nextHand: () => void;
   placeAction: (type: string, amount?: number) => void;
   selectClaim: (handRankId: string) => void;
   disconnect: () => void;
@@ -93,6 +94,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
     join: (inviteCode, password) =>
       socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode, password }),
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
+    nextHand: () => socket.emit(CLIENT_EVENTS.nextHand, {}),
     placeAction: (type, amount) =>
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
     selectClaim: (handRankId) =>
