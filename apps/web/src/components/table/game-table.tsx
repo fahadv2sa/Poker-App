@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { DEFAULT_GAME_CONFIG } from "@fp/shared";
+import { DEFAULT_GAME_CONFIG, type CardView } from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
+import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/tableView";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,10 +49,12 @@ export function GameTable({
 
   const phase = s?.phase ?? "LOBBY";
   const isBetting = BETTING_PHASES.has(phase);
-  const isMyTurn = isBetting && s?.currentTurnSeat === yourSeat && me != null;
+  // Whose-turn / contender derived from the shared, unit-tested selectors so the
+  // seat-1/host case can't silently regress (PROBLEM 1).
+  const isMyTurn = selIsMyTurn(view);
+  const isContender = selIsContender(view);
   const owed = s && me ? s.currentBet - me.committedThisRound : 0;
   const minRaiseTo = (s?.currentBet ?? 0) + DEFAULT_GAME_CONFIG.minRaise;
-  const isContender = me?.status === "ACTIVE" || me?.status === "ALLIN";
 
   // Display-only balance. Across a multi-hand session (feature #7) the base is
   // the last resolved hand's authoritative finalBalance (view.balance); during a
@@ -207,6 +210,7 @@ export function GameTable({
               ) : view.result ? (
                 <ResultPanel
                   results={view.result.results}
+                  winningRankNameAr={view.result.winningRankNameAr}
                   yourSeat={yourSeat}
                   isHost={isHost}
                   onNextHand={nextHand}
@@ -392,11 +396,20 @@ function ClaimPanel({
 
 function ResultPanel({
   results,
+  winningRankNameAr,
   yourSeat,
   isHost,
   onNextHand,
 }: {
-  results: Array<{ seat: number; outcome: string; coinsDelta: number; claimValid: boolean | null }>;
+  results: Array<{
+    seat: number;
+    outcome: string;
+    coinsDelta: number;
+    claimValid: boolean | null;
+    claimedRankNameAr: string | null;
+    holeCards: CardView[] | null;
+  }>;
+  winningRankNameAr: string | null;
   yourSeat: number | null;
   isHost: boolean;
   onNextHand: () => void;
@@ -404,8 +417,15 @@ function ResultPanel({
   const [dealing, setDealing] = useState(false);
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-      <span className="text-center font-bold text-primary">انتهت الجولة</span>
-      <div className="flex flex-col gap-1">
+      <div className="text-center">
+        <div className="font-bold text-primary">انتهت الجولة</div>
+        {winningRankNameAr ? (
+          <div className="text-sm text-gold">
+            الترابط الفائز: <span className="font-extrabold">{winningRankNameAr}</span>
+          </div>
+        ) : null}
+      </div>
+      <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
         {results.map((r) => {
           const pos = r.coinsDelta >= 0;
           const mine = r.seat === yourSeat;
@@ -417,20 +437,38 @@ function ResultPanel({
             <div
               key={r.seat}
               className={cn(
-                "flex items-center justify-between rounded-lg px-3 py-2",
+                "flex flex-col gap-1.5 rounded-lg px-3 py-2",
                 mine ? "bg-primary/10" : "bg-secondary/30",
               )}
             >
-              <span className="text-sm">
-                {mine ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
-                {invalidClaim ? (
-                  <span className="text-destructive/90"> — ترابط غير محقّق</span>
-                ) : null}
-              </span>
-              <span className={cn("num font-extrabold", pos ? "text-primary" : "text-destructive")}>
-                {pos ? "+" : ""}
-                {r.coinsDelta}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">
+                  {mine ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
+                </span>
+                <span className={cn("num font-extrabold", pos ? "text-primary" : "text-destructive")}>
+                  {pos ? "+" : ""}
+                  {r.coinsDelta}
+                </span>
+              </div>
+              {/* The association this player claimed (data-driven, Arabic from DB). */}
+              {r.claimedRankNameAr ? (
+                <div className="text-xs text-muted-foreground">
+                  اختار: <span className="text-foreground">{r.claimedRankNameAr}</span>
+                  {invalidClaim ? (
+                    <span className="text-destructive/90"> — غير محقّق</span>
+                  ) : null}
+                </div>
+              ) : invalidClaim ? (
+                <div className="text-xs text-destructive/90">لم يختر ترابطًا محقّقًا</div>
+              ) : null}
+              {/* Official reveal: contenders' hole cards, visible to everyone. */}
+              {r.holeCards && r.holeCards.length > 0 ? (
+                <div className="flex gap-1.5">
+                  {r.holeCards.map((c, i) => (
+                    <FootballCard key={c.playerId} card={c} index={i} />
+                  ))}
+                </div>
+              ) : null}
             </div>
           );
         })}

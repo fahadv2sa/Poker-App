@@ -606,21 +606,44 @@ export class GameRoom {
     // live and players keep their seats for the next hand.
     this.state.phase = "ENDED";
 
+    // Official reveal (SPEC §2.4): only at a real showdown (not last-standing)
+    // do remaining contenders' hole cards become public — folders are NEVER
+    // revealed. Card privacy holds during the hand; this is the official reveal.
+    const rankNameById = (id: string | null): string | null =>
+      id ? (this.state.ranks.find((r) => r.id === id)?.nameAr ?? null) : null;
+    const isShowdown = !lastStanding;
+
     const results = this.state.players
       .filter((p) => p.committedTotal > 0n || p.forfeit > 0n)
-      .map((p) => ({
-        seat: p.seat,
-        outcome: outcomeFor(p, settlements),
-        coinsDelta: Number(coinsDelta(p, settlements)),
-        finalBalance: Number(p.available),
-        // Folders have no claim context (null); otherwise expose whether the
-        // showdown claim was valid so the client can explain an invalid-claim loss.
-        claimValid: p.status === "FOLDED" ? null : p.claimValid,
-      }));
+      .map((p) => {
+        const folded = p.status === "FOLDED";
+        const revealed = isShowdown && !folded;
+        return {
+          seat: p.seat,
+          outcome: outcomeFor(p, settlements),
+          coinsDelta: Number(coinsDelta(p, settlements)),
+          finalBalance: Number(p.available),
+          // Folders have no claim context (null); otherwise expose whether the
+          // showdown claim was valid so the client can explain an invalid-claim loss.
+          claimValid: folded ? null : p.claimValid,
+          claimedRankNameAr: folded ? null : rankNameById(p.claimRankId),
+          holeCards: revealed ? p.holeCards.map(toCardView) : null,
+        };
+      });
+
+    // The winning association = the rank claimed by the winner(s) at showdown.
+    const winnerSeat = settlements.find(
+      (sm) => sm.type === "WIN" || sm.type === "SPLIT_WIN",
+    )?.seat;
+    const winner =
+      winnerSeat != null ? this.state.players.find((p) => p.seat === winnerSeat) : undefined;
+    const winningRankNameAr = isShowdown && winner ? rankNameById(winner.claimRankId) : null;
+
     this.deps.emitter.toRoom(SERVER_EVENTS.gameResult, {
       results,
       yourDelta: 0,
       newBalance: 0,
+      winningRankNameAr,
     });
 
     // Feature #7 / Batch 1: the hand ends but the room does NOT auto-deal. It

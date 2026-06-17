@@ -163,12 +163,22 @@ export interface GameResultEntry {
   /** Whether this seat's showdown claim was valid; `null` for folders / no claim
    *  context. Lets the client explain an invalid-claim loss (Batch 1, item 6). */
   claimValid: boolean | null;
+  /** The association this seat claimed at showdown (Arabic, from the DB), or null
+   *  if they folded / never chose. Shown in the result so players see each pick. */
+  claimedRankNameAr: string | null;
+  /** Official reveal (SPEC §2.4): a remaining contender's hole cards become
+   *  visible to everyone ONLY at showdown resolution. `null` for folders (never
+   *  revealed) and for non-showdown (last-player-standing) endings. */
+  holeCards: CardView[] | null;
 }
 
 export interface GameResultPayload {
   results: GameResultEntry[];
   yourDelta: number;
   newBalance: number;
+  /** The winning association (Arabic, from the DB), or null for a non-showdown
+   *  (last-player-standing) ending. */
+  winningRankNameAr: string | null;
 }
 
 /**

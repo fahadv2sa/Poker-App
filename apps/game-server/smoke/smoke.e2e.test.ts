@@ -402,27 +402,44 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
     B.socket.disconnect();
 
     // === ASSERTION 1 — CARD PRIVACY (live) =================================
+    // Privacy holds DURING the hand: hole cards reach only their owner via the
+    // private game:dealt — never any other broadcast. The one exception is the
+    // OFFICIAL REVEAL in game:result at showdown (SPEC §2.4), asserted below.
     const aHole = A.hole.map((c) => c.playerId);
     const bHole = B.hole.map((c) => c.playerId);
     const allHole = [...aHole, ...bHole];
     expect(new Set(allHole).size).toBe(4); // 4 distinct hole players
 
+    const isPrivateOrReveal = (ev: string) => ev === "game:dealt" || ev === "game:result";
     for (const c of [A, B]) {
       const dealt = c.events.filter((e) => e.event === "game:dealt");
       expect(dealt).toHaveLength(1); // each got exactly ONE private deal
       for (const e of c.events) {
-        if (e.event === "game:dealt") continue; // the legit private channel
+        if (isPrivateOrReveal(e.event)) continue; // private channel + official reveal
         const json = JSON.stringify(e.payload ?? {});
         for (const id of allHole) {
-          expect(json.includes(id)).toBe(false); // no hole card in any broadcast
+          expect(json.includes(id)).toBe(false); // no hole card in any other broadcast
         }
       }
     }
-    // A never saw B's cards and vice versa.
-    const aSeen = JSON.stringify(A.events);
-    const bSeen = JSON.stringify(B.events);
+    // Before the reveal, A never saw B's cards and vice versa (exclude game:result).
+    const aSeen = JSON.stringify(A.events.filter((e) => e.event !== "game:result"));
+    const bSeen = JSON.stringify(B.events.filter((e) => e.event !== "game:result"));
     for (const id of bHole) expect(aSeen.includes(id)).toBe(false);
     for (const id of aHole) expect(bSeen.includes(id)).toBe(false);
+
+    // === ASSERTION 1b — OFFICIAL REVEAL at showdown ========================
+    // game:result reveals BOTH contenders' hole cards to everyone, and names the
+    // winning association (Arabic, from the DB).
+    const resultPayload = A.events.find((e) => e.event === "game:result")!.payload as {
+      results: Array<{ holeCards: Array<{ playerId: string }> | null }>;
+      winningRankNameAr: string | null;
+    };
+    const revealedIds = resultPayload.results.flatMap((r) =>
+      r.holeCards ? r.holeCards.map((c) => c.playerId) : [],
+    );
+    expect(new Set(revealedIds)).toEqual(new Set(allHole)); // all 4 contender cards revealed
+    expect(typeof resultPayload.winningRankNameAr).toBe("string"); // winning association named
 
     // === ASSERTION 2 — WALLET LEDGER SETTLEMENT ============================
     for (const u of [userA, userB]) {

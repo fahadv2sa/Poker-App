@@ -477,3 +477,47 @@ describe("simultaneous claims resolve the hand exactly once (race guard)", () =>
     expect(splits.every((m) => m.amount === 50n)).toBe(true);
   });
 });
+
+describe("showdown official reveal + winning association (PROBLEM 2)", () => {
+  const royalNameAr = RANKS.find((r) => r.code === "ROYAL_POSITION")!.nameAr;
+
+  it("reveals contenders' hole cards to everyone and reports each claim + the winning rank", async () => {
+    const { room, emitter } = makeRoom(allMidDeck());
+    await room.start();
+    for (let i = 0; i < 4; i++) {
+      await room.placeAction(2, { type: "CHECK" });
+      await room.placeAction(1, { type: "CHECK" });
+    }
+    expect(room.state.phase).toBe("SHOWDOWN");
+    await room.selectClaim(2, "ROYAL_POSITION");
+    await room.selectClaim(1, "ROYAL_POSITION");
+    expect(room.state.phase).toBe("ENDED");
+
+    const result = roomEvents(emitter, "game:result").at(-1)!.payload;
+    // The winning association is the (DB) Arabic name of the rank that won.
+    expect(result.winningRankNameAr).toBe(royalNameAr);
+
+    for (const seat of [1, 2]) {
+      const row = result.results.find((r: any) => r.seat === seat);
+      expect(row.claimedRankNameAr).toBe(royalNameAr); // each player's pick
+      expect(row.holeCards).toHaveLength(2); // revealed at the official reveal
+      const expected = room.state.players
+        .find((p) => p.seat === seat)!
+        .holeCards.map((c) => c.playerId);
+      expect(row.holeCards.map((c: any) => c.playerId)).toEqual(expected);
+    }
+  });
+
+  it("does NOT reveal hole cards when the hand ends by fold (no showdown)", async () => {
+    const { room, emitter } = makeRoom(allMidDeck());
+    await room.start();
+    await room.placeAction(2, { type: "FOLD" }); // seat 1 wins by last-standing
+
+    expect(room.state.phase).toBe("ENDED");
+    const result = roomEvents(emitter, "game:result").at(-1)!.payload;
+    expect(result.winningRankNameAr).toBeNull();
+    for (const row of result.results) {
+      expect(row.holeCards).toBeNull(); // privacy held — no official reveal
+    }
+  });
+});

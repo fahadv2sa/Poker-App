@@ -1,46 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  CardView,
-  GameResultPayload,
-  ShowdownStartPayload,
-  StateSyncPayload,
-} from "@fp/shared";
 import { connectGame, type GameConnection } from "./realtime";
+import { applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
+
+export type { TableView } from "./tableView";
 
 /**
  * Live table state. The server emits granular events (Section 12); this hook
  * folds them into one view model the table renders. The server remains the only
  * referee — this is presentation state, re-synced from `state:sync` on connect.
+ * The pure folding/selectors live in ./tableView so they're unit-testable.
  */
-export interface TableView {
-  connected: boolean;
-  state: StateSyncPayload | null;
-  hole: CardView[];
-  showdown: ShowdownStartPayload | null;
-  result: GameResultPayload | null;
-  /** Authoritative wallet balance from the last hand's result (feature #7);
-   *  null until the first hand resolves, then carried across hands. */
-  balance: number | null;
-  /** True between hands when the room can't deal (fewer than 2 can ante). */
-  waiting: boolean;
-  error: string | null;
-}
-
-const INITIAL: TableView = {
-  connected: false,
-  state: null,
-  hole: [],
-  showdown: null,
-  result: null,
-  balance: null,
-  waiting: false,
-  error: null,
-};
-
 export function useGameSocket(token: string, inviteCode: string) {
-  const [view, setView] = useState<TableView>(INITIAL);
+  const [view, setView] = useState<TableView>(INITIAL_VIEW);
   const connRef = useRef<GameConnection | null>(null);
 
   useEffect(() => {
@@ -50,7 +23,9 @@ export function useGameSocket(token: string, inviteCode: string) {
         conn.join(inviteCode);
       },
       onDisconnect: () => setView((v) => ({ ...v, connected: false })),
-      onState: (state) => setView((v) => ({ ...v, state })),
+      // Preserve our own seat: a broadcast sync (another player joining) carries
+      // yourSeat=null and must not erase the seat we already hold (PROBLEM 1).
+      onState: (state) => setView((v) => applyStateSync(v, state)),
       onDealt: (p) => setView((v) => ({ ...v, hole: p.holeCards })),
       onPhase: (p) =>
         setView((v) =>
