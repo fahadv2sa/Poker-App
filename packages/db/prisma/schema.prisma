@@ -239,6 +239,9 @@ model Club {
 model Player {
   id            String   @id @default(uuid()) @db.Uuid
   name          String
+  // Arabic display name (Batch 2). Display-only — NEVER used in rank logic, which
+  // keys on nationality/position/clubs. Nullable so existing rows stay valid.
+  nameAr        String?  @map("name_ar")
   nationalityId String   @map("nationality_id") @db.Uuid
   positionId    String   @map("position_id") @db.Uuid
   birthYear     Int?     @map("birth_year")

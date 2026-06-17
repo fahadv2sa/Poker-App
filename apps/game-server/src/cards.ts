@@ -40,6 +40,7 @@ export class PrismaCardSource implements CardSource {
       return {
         playerId: r.id,
         name: r.name,
+        nameAr: r.nameAr,
         nationality: r.nationality.name,
         position: r.position.code,
         clubs: r.playerClubs.map((pc) => pc.club.name),

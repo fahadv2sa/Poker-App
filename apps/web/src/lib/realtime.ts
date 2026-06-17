@@ -9,6 +9,7 @@ import {
   type HandStartedPayload,
   type PhaseChangedPayload,
   type PlayerFoldedPayload,
+  type PlayerLeftPayload,
   type SessionWaitingPayload,
   type ShowdownStartPayload,
   type StateSyncPayload,
@@ -36,6 +37,7 @@ export interface GameHandlers {
   onResult?: (p: GameResultPayload) => void;
   onHandStarted?: (p: HandStartedPayload) => void;
   onSessionWaiting?: (p: SessionWaitingPayload) => void;
+  onPlayerLeft?: (p: PlayerLeftPayload) => void;
   onError?: (p: { code: string; messageAr: string }) => void;
 }
 
@@ -87,6 +89,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.gameResult, handlers.onResult);
   bind(SERVER_EVENTS.handStarted, handlers.onHandStarted);
   bind(SERVER_EVENTS.sessionWaiting, handlers.onSessionWaiting);
+  bind(SERVER_EVENTS.playerLeft, handlers.onPlayerLeft);
   bind(SERVER_EVENTS.error, handlers.onError);
 
   return {

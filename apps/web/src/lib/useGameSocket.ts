@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { StateSyncPayload } from "@fp/shared";
 import { connectGame, type GameConnection } from "./realtime";
-import { applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
+import { actionNotice, applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
 
 export type { TableView } from "./tableView";
 
@@ -16,9 +17,32 @@ export function useGameSocket(token: string, inviteCode: string) {
   const [view, setView] = useState<TableView>(INITIAL_VIEW);
   const connRef = useRef<GameConnection | null>(null);
 
+  // Latest state (for name lookups inside event handlers) + a stable notice
+  // pusher, both kept in refs so the connect effect runs once per (token, room).
+  const stateRef = useRef<StateSyncPayload | null>(null);
+  stateRef.current = view.state;
+  const noticeIdRef = useRef(0);
+  const connectedBeforeRef = useRef(false);
+  const pushNoticeRef = useRef<(text: string, kind: "action" | "system") => void>(() => {});
+  pushNoticeRef.current = (text, kind) => {
+    const id = ++noticeIdRef.current;
+    setView((v) => ({ ...v, notices: [...v.notices, { id, text, kind }].slice(-5) }));
+    setTimeout(
+      () => setView((v) => ({ ...v, notices: v.notices.filter((n) => n.id !== id) })),
+      3500,
+    );
+  };
+  const nameOf = (seat: number) =>
+    stateRef.current?.players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
+
   useEffect(() => {
     const conn = connectGame(token, {
       onConnect: () => {
+        // A6: a second+ connect is a reconnect — tell the player.
+        if (connectedBeforeRef.current) {
+          pushNoticeRef.current("تمت إعادة الاتصال بالطاولة", "system");
+        }
+        connectedBeforeRef.current = true;
         setView((v) => ({ ...v, connected: true }));
         conn.join(inviteCode);
       },
@@ -50,17 +74,10 @@ export function useGameSocket(token: string, inviteCode: string) {
       onTurn: (p) =>
         setView((v) =>
           v.state
-            ? {
-                ...v,
-                state: {
-                  ...v.state,
-                  currentTurnSeat: p.seat,
-                  turnDeadlineTs: p.deadlineTs,
-                },
-              }
+            ? { ...v, state: { ...v.state, currentTurnSeat: p.seat, turnDeadlineTs: p.deadlineTs } }
             : v,
         ),
-      onBet: (p) =>
+      onBet: (p) => {
         setView((v) => {
           if (!v.state) return v;
           const players = v.state.players.map((pl) =>
@@ -80,9 +97,12 @@ export function useGameSocket(token: string, inviteCode: string) {
           );
           return {
             ...v,
-            state: { ...v.state, players, pot: p.pot, currentBet: p.currentBet },
+            state: { ...v.state, players, pot: p.pot, pots: p.pots, currentBet: p.currentBet },
           };
-        }),
+        });
+        // C10: announce the action to the whole table (works for every seat).
+        pushNoticeRef.current(actionNotice(nameOf(p.seat), p), "action");
+      },
       onFolded: (p) =>
         setView((v) =>
           v.state
@@ -97,10 +117,18 @@ export function useGameSocket(token: string, inviteCode: string) {
               }
             : v,
         ),
+      // A3: track who has claimed at showdown.
+      onClaimReceived: (p) =>
+        setView((v) =>
+          v.claimedSeats.includes(p.seat)
+            ? v
+            : { ...v, claimedSeats: [...v.claimedSeats, p.seat] },
+        ),
       onShowdown: (showdown) =>
         setView((v) => ({
           ...v,
           showdown,
+          claimedSeats: [],
           state: v.state ? { ...v.state, phase: "SHOWDOWN", currentTurnSeat: null } : v.state,
         })),
       onResult: (result) =>
@@ -112,6 +140,8 @@ export function useGameSocket(token: string, inviteCode: string) {
             ...v,
             result,
             showdown: null,
+            // A7: keep the header balance authoritative — adopt the server's
+            // finalBalance for our seat as the new base going into the next hand.
             balance: mine ? mine.finalBalance : v.balance,
             state: v.state ? { ...v.state, phase: "ENDED" } : v.state,
           };
@@ -125,6 +155,7 @@ export function useGameSocket(token: string, inviteCode: string) {
           showdown: null,
           hole: [],
           waiting: false,
+          claimedSeats: [],
           state: v.state
             ? {
                 ...v.state,
@@ -133,6 +164,7 @@ export function useGameSocket(token: string, inviteCode: string) {
                 players: p.players,
                 communityCards: [],
                 pot: p.pot,
+                pots: [{ amount: p.pot, eligibleSeats: [] }],
                 currentBet: p.currentBet,
                 dealerSeat: p.dealerSeat,
                 currentTurnSeat: null,
@@ -152,6 +184,9 @@ export function useGameSocket(token: string, inviteCode: string) {
             ? { ...v.state, phase: "LOBBY", status: "LOBBY", currentTurnSeat: null }
             : v.state,
         })),
+      // A6: an opponent disconnected/left — transient banner.
+      onPlayerLeft: (p) =>
+        pushNoticeRef.current(`${p.username || `مقعد ${p.seat}`} غادر الطاولة`, "system"),
       onError: (e) => setView((v) => ({ ...v, error: e.messageAr })),
     });
     connRef.current = conn;

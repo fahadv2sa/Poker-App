@@ -1,4 +1,5 @@
 import type {
+  BetPlacedPayload,
   CardView,
   GameResultPayload,
   ShowdownStartPayload,
@@ -11,12 +12,23 @@ import type {
  * per-seat "is it my turn" logic, including the seat-1/host case). The server is
  * always authoritative; this only folds the events it emits into a render model.
  */
+/** A transient on-screen notice (action notifications, opponent-left, reconnect). */
+export interface Notice {
+  id: number;
+  text: string;
+  kind: "action" | "system";
+}
+
 export interface TableView {
   connected: boolean;
   state: StateSyncPayload | null;
   hole: CardView[];
   showdown: ShowdownStartPayload | null;
   result: GameResultPayload | null;
+  /** Seats that have submitted a showdown claim this hand (A3). */
+  claimedSeats: number[];
+  /** Auto-dismissing notices shown at the top of the table (A6, C10). */
+  notices: Notice[];
   /** Authoritative wallet balance from the last hand's result (feature #7). */
   balance: number | null;
   /** True between hands when the room can't deal (fewer than 2 can ante). */
@@ -30,6 +42,8 @@ export const INITIAL_VIEW: TableView = {
   hole: [],
   showdown: null,
   result: null,
+  claimedSeats: [],
+  notices: [],
   balance: null,
   waiting: false,
   error: null,
@@ -71,4 +85,22 @@ export function isContender(view: TableView): boolean {
   if (!s || s.yourSeat == null) return false;
   const me = s.players.find((p) => p.seat === s.yourSeat);
   return me?.status === "ACTIVE" || me?.status === "ALLIN";
+}
+
+/** Arabic, table-wide notification text for a player's action (C10). */
+export function actionNotice(name: string, p: BetPlacedPayload): string {
+  switch (p.action) {
+    case "CHECK":
+      return `${name} مرّر`;
+    case "CALL":
+      return `${name} ساوى ${p.amount}`;
+    case "RAISE":
+      return `${name} رفع إلى ${p.currentBet}`;
+    case "ALLIN":
+      return `${name} دخل بكل رصيده (${p.amount})`;
+    case "FOLD":
+      return `${name} انسحب`;
+    default:
+      return `${name} راهن ${p.amount}`;
+  }
 }

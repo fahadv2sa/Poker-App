@@ -1,6 +1,7 @@
-import type { PlayerView, StateSyncPayload } from "@fp/shared";
+import type { BetPlacedPayload, PlayerView, StateSyncPayload } from "@fp/shared";
 import { describe, expect, it } from "vitest";
 import {
+  actionNotice,
   applyStateSync,
   INITIAL_VIEW,
   isContender,
@@ -34,6 +35,7 @@ function sync(over: Partial<StateSyncPayload> = {}): StateSyncPayload {
     players: [pv(1, "ACTIVE", true), pv(2, "ACTIVE")],
     communityCards: [],
     pot: 100,
+    pots: [{ amount: 100, eligibleSeats: [1, 2] }],
     currentBet: 50,
     dealerSeat: 1,
     currentTurnSeat: 1,
@@ -90,6 +92,25 @@ describe("isMyTurn is correct for every seat, including seat 1 / host", () => {
   it("is false outside betting phases (e.g. SHOWDOWN)", () => {
     const v = viewWith({ yourSeat: 1, currentTurnSeat: 1, phase: "SHOWDOWN" });
     expect(isMyTurn(v)).toBe(false);
+  });
+});
+
+describe("actionNotice (C10 — Arabic, every action incl. host/seat 1)", () => {
+  const bet = (over: Partial<BetPlacedPayload>): BetPlacedPayload => ({
+    seat: 1,
+    action: "CHECK",
+    amount: 0,
+    pot: 100,
+    pots: [{ amount: 100, eligibleSeats: [1, 2] }],
+    currentBet: 0,
+    ...over,
+  });
+  it("formats each action type for the named player", () => {
+    expect(actionNotice("سامي", bet({ action: "CHECK" }))).toBe("سامي مرّر");
+    expect(actionNotice("سامي", bet({ action: "CALL", amount: 50 }))).toBe("سامي ساوى 50");
+    expect(actionNotice("سامي", bet({ action: "RAISE", currentBet: 150 }))).toContain("رفع إلى 150");
+    expect(actionNotice("سامي", bet({ action: "ALLIN", amount: 300 }))).toContain("بكل رصيده");
+    expect(actionNotice("سامي", bet({ action: "FOLD" }))).toBe("سامي انسحب");
   });
 });
 

@@ -38,6 +38,8 @@ export const SERVER_EVENTS = {
   handStarted: "hand:started",
   /** The session can't deal a hand yet (fewer than 2 players can afford the ante). */
   sessionWaiting: "session:waiting",
+  /** A player disconnected / left the room (Batch 2: opponent-left banner). */
+  playerLeft: "player:left",
   error: "error",
 } as const;
 
@@ -76,10 +78,15 @@ export type ClaimSelectInput = z.infer<typeof claimSelectSchema>;
 // Server → client (typed views)
 // ---------------------------------------------------------------------------
 
-/** Public projection of a football-player card (no private data). */
+/** Public projection of a football-player card. The football attributes
+ *  (nationality/position/clubs) remain in the payload — they're public for
+ *  community cards and the official showdown reveal, and drive nothing on the
+ *  client beyond optional display; the card UI shows only the name(s). */
 export interface CardView {
   playerId: string;
   name: string;
+  /** Arabic display name (Batch 2, data-driven from the DB); null if unseeded. */
+  nameAr: string | null;
   nationality: string;
   position: string;
   clubs: string[];
@@ -96,6 +103,13 @@ export interface PlayerView {
   isDealer: boolean;
 }
 
+/** A single (main or side) pot for display when an all-in splits the pot (A4). */
+export interface PotView {
+  amount: number;
+  /** Non-folded seats eligible to win this layer. */
+  eligibleSeats: number[];
+}
+
 /** Sanitized room snapshot sent to every client (never includes hole cards). */
 export interface StateSyncPayload {
   gameId: string;
@@ -105,6 +119,8 @@ export interface StateSyncPayload {
   players: PlayerView[];
   communityCards: (CardView | null)[];
   pot: number;
+  /** Layered pots for display (length 1 = single pot; >1 only with all-ins). */
+  pots: PotView[];
   currentBet: number;
   dealerSeat: number | null;
   currentTurnSeat: number | null;
@@ -132,6 +148,8 @@ export interface BetPlacedPayload {
   action: (typeof BET_ACTIONS)[number];
   amount: number;
   pot: number;
+  /** Layered pots for display (length 1 = single pot; >1 only with all-ins). */
+  pots: PotView[];
   currentBet: number;
 }
 
@@ -198,6 +216,12 @@ export interface HandStartedPayload {
 export interface SessionWaitingPayload {
   reason: "NEED_PLAYERS";
   eligible: number;
+}
+
+/** A player disconnected / left the room (Batch 2). */
+export interface PlayerLeftPayload {
+  seat: number;
+  username: string;
 }
 
 export interface ErrorPayload {

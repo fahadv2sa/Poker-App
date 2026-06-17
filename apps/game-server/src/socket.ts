@@ -9,7 +9,7 @@ import {
   type StateSyncPayload,
 } from "@fp/shared";
 import type { Server, Socket } from "socket.io";
-import { GameRoom, type RoomDeps } from "./room.js";
+import { computeLivePots, GameRoom, type RoomDeps } from "./room.js";
 import type { Emitter } from "./ports.js";
 import { hydrateRoom } from "./factory.js";
 import { PrismaCardSource } from "./cards.js";
@@ -188,9 +188,12 @@ export function attachSocketHandlers(
       const seat = seatOf(rt, socket.id);
       if (seat !== null) {
         rt.seats.delete(seat);
+        const username = rt.room.state.players.find((p) => p.seat === seat)?.username ?? "";
         // Feature #7: the room drops them from the next hand (and parks them now
         // if we're between hands) without tearing down the live session.
         rt.room.handlePlayerLeft(seat);
+        // Batch 2: tell the rest of the table so they can show a banner.
+        socket.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
       }
     };
     socket.on(CLIENT_EVENTS.roomLeave, leave);
@@ -264,12 +267,14 @@ function buildStateSync(state: RoomState, yourSeat: number | null): StateSyncPay
     communityCards: state.community.slice(0, state.communityRevealed).map((c) => ({
       playerId: c.playerId,
       name: c.name,
+      nameAr: c.nameAr ?? null,
       nationality: c.nationality,
       position: c.position,
       clubs: [...c.clubs],
       photoUrl: c.photoUrl,
     })),
     pot: Number(state.players.reduce((s, p) => s + p.committedTotal, 0n)),
+    pots: computeLivePots(state),
     currentBet: Number(state.currentBet),
     dealerSeat: state.dealerSeat,
     currentTurnSeat: state.currentTurnSeat,

@@ -1,5 +1,6 @@
 import {
   applyAction,
+  buildSidePots,
   clearRoundCommitments,
   computeFold,
   isHandOver,
@@ -12,9 +13,10 @@ import {
   type BettingSeat,
   type BettingState,
   type Card,
+  type PotSeat,
   type ResolveSeat,
 } from "@fp/engine";
-import { SERVER_EVENTS, type PlayerView } from "@fp/shared";
+import { SERVER_EVENTS, type PlayerView, type PotView } from "@fp/shared";
 import type {
   BetRecord,
   CardSource,
@@ -375,6 +377,7 @@ export class GameRoom {
       action: movement.action,
       amount: Number(movement.amount),
       pot: Number(this.potTotal()),
+      pots: computeLivePots(this.state),
       currentBet: Number(this.state.currentBet),
     });
     if (movement.action === "FOLD") {
@@ -741,10 +744,45 @@ export class GameRoom {
 // Free helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Layered pots for DISPLAY (A4). With no all-in there is a single pot, so we
+ * return one entry (the distributable total). Once any seat is all-in, real
+ * side pots exist, so we expose the layered breakdown via the same engine
+ * `buildSidePots` used at resolve. Display-only — settlement still uses resolve.
+ */
+export function computeLivePots(state: RoomState): PotView[] {
+  const nonFolded = state.players
+    .filter((p) => p.status === "ACTIVE" || p.status === "ALLIN")
+    .map((p) => p.seat);
+  const total = state.players.reduce(
+    (sum, p) => sum + (p.status === "FOLDED" ? p.forfeit : p.committedTotal),
+    0n,
+  );
+  if (!state.players.some((p) => p.status === "ALLIN")) {
+    return [{ amount: Number(total), eligibleSeats: nonFolded }];
+  }
+  const potSeats: PotSeat[] = state.players
+    .filter((p) => p.committedTotal > 0n || p.forfeit > 0n)
+    .map((p) => {
+      const folded = p.status === "FOLDED";
+      return {
+        seat: p.seat,
+        committed: folded ? 0n : p.committedTotal,
+        folded,
+        forfeit: folded ? p.forfeit : 0n,
+      };
+    });
+  return buildSidePots(potSeats).map((sp) => ({
+    amount: Number(sp.amount),
+    eligibleSeats: sp.eligibleSeats,
+  }));
+}
+
 function toCardView(c: DealtCard) {
   return {
     playerId: c.playerId,
     name: c.name,
+    nameAr: c.nameAr ?? null,
     nationality: c.nationality,
     position: c.position,
     clubs: [...c.clubs],

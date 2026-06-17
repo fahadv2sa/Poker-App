@@ -2,7 +2,7 @@ import type { Settlement } from "@fp/engine";
 import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fp/shared";
 import { describe, expect, it } from "vitest";
 import { dealFromDeck } from "../src/cards.js";
-import { GameRoom, type RoomDeps } from "../src/room.js";
+import { computeLivePots, GameRoom, type RoomDeps } from "../src/room.js";
 import type {
   BetRecord,
   CardSource,
@@ -98,6 +98,7 @@ const RANKS: RankInfo[] = HAND_RANK_CATALOG.map((r) => ({
 const card = (id: string, position: string, nationality = "X"): DealtCard => ({
   playerId: id,
   name: id,
+  nameAr: `${id}-ع`, // data-driven Arabic name (Batch 2); must flow to the reveal
   nationality,
   position,
   clubs: [],
@@ -505,6 +506,8 @@ describe("showdown official reveal + winning association (PROBLEM 2)", () => {
         .find((p) => p.seat === seat)!
         .holeCards.map((c) => c.playerId);
       expect(row.holeCards.map((c: any) => c.playerId)).toEqual(expected);
+      // Batch 2: the Arabic name (data-driven) flows through to the revealed card.
+      expect(row.holeCards.every((c: any) => typeof c.nameAr === "string")).toBe(true);
     }
   });
 
@@ -519,5 +522,26 @@ describe("showdown official reveal + winning association (PROBLEM 2)", () => {
     for (const row of result.results) {
       expect(row.holeCards).toBeNull(); // privacy held — no official reveal
     }
+  });
+});
+
+describe("side-pot display breakdown (A4)", () => {
+  it("returns a single pot with no all-in, then layered pots once a seat is all-in", async () => {
+    const { room } = makeRoom(allMidDeck(), { u1: 1000n, u2: 80n });
+    await room.start();
+
+    // Antes only → one pot of 100.
+    let pots = computeLivePots(room.state);
+    expect(pots).toHaveLength(1);
+    expect(pots[0]!.amount).toBe(100);
+
+    // Short stack (u2: 80 − 50 ante = 30) goes all-in → main pot + side pot.
+    await room.placeAction(2, { type: "ALLIN" });
+    pots = computeLivePots(room.state);
+    expect(pots).toHaveLength(2);
+    expect(pots[0]!.amount).toBe(100); // level 50, both seats eligible
+    expect([...pots[0]!.eligibleSeats].sort()).toEqual([1, 2]);
+    expect(pots[1]!.amount).toBe(30); // level 80, only the all-in seat
+    expect(pots[1]!.eligibleSeats).toEqual([2]);
   });
 });

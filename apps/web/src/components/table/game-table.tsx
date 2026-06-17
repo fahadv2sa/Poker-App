@@ -112,12 +112,13 @@ export function GameTable({
                     player={p}
                     isActive={s.currentTurnSeat === p.seat}
                     deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
+                    hasClaimed={phase === "SHOWDOWN" && view.claimedSeats.includes(p.seat)}
                   />
                 ))
               )}
             </div>
 
-            {/* focal point: pot + community + timer */}
+            {/* focal point: pot(s) + community + timer */}
             <div className="flex flex-1 flex-col items-center justify-center gap-4 py-2">
               <motion.div
                 key={s.pot}
@@ -133,6 +134,22 @@ export function GameTable({
                   </span>
                 ) : null}
               </motion.div>
+
+              {/* A4: when an all-in splits the pot, show the layered breakdown. */}
+              {s.pots.length > 1 ? (
+                <div className="flex flex-wrap justify-center gap-1.5 text-[0.7rem]">
+                  {s.pots.map((p, i) => (
+                    <span
+                      key={i}
+                      className="rounded-full border border-gold/30 bg-[#0b0f1a]/50 px-2.5 py-1 text-gold/90"
+                      title={`مؤهلون: ${p.eligibleSeats.join("، ") || "—"}`}
+                    >
+                      {i === 0 ? "المجمّع الرئيسي" : `جانبي ${i}`}: 🪙{" "}
+                      <span className="num">{p.amount}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -182,12 +199,19 @@ export function GameTable({
           <div className="sticky bottom-2 z-20 mx-auto mt-5 w-full max-w-3xl">
             <div className="rounded-2xl border bg-card/85 p-4 shadow-2xl backdrop-blur">
               {phase === "LOBBY" ? (
-                <LobbyPanel
-                  inviteCode={inviteCode}
-                  isHost={isHost}
-                  canStart={players.length >= 2}
-                  onStart={start}
-                />
+                <div className="flex flex-col gap-3">
+                  {view.waiting ? (
+                    <p className="rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-center text-sm text-gold">
+                      بانتظار انضمام لاعبين (أو إعادة شحن الرصيد) لبدء جولة جديدة…
+                    </p>
+                  ) : null}
+                  <LobbyPanel
+                    inviteCode={inviteCode}
+                    isHost={isHost}
+                    canStart={players.length >= 2}
+                    onStart={start}
+                  />
+                </div>
               ) : isMyTurn ? (
                 <ActionBar
                   owed={owed}
@@ -216,12 +240,41 @@ export function GameTable({
                   onNextHand={nextHand}
                 />
               ) : (
-                <WaitingHint phase={phase} turnSeat={s.currentTurnSeat} />
+                <WaitingHint
+                  phase={phase}
+                  turnName={
+                    s.currentTurnSeat != null
+                      ? players.find((p) => p.seat === s.currentTurnSeat)?.username ?? null
+                      : null
+                  }
+                />
               )}
             </div>
           </div>
         </>
       )}
+
+      {/* A6 + C10: auto-dismissing notices (actions, opponent left, reconnect). */}
+      <div className="pointer-events-none fixed inset-x-0 top-16 z-30 flex flex-col items-center gap-1.5">
+        <AnimatePresence>
+          {view.notices.map((n) => (
+            <motion.div
+              key={n.id}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className={cn(
+                "rounded-full border px-4 py-1.5 text-sm shadow-lg backdrop-blur",
+                n.kind === "system"
+                  ? "border-gold/40 bg-gold/10 text-gold"
+                  : "border-white/15 bg-card/90 text-foreground",
+              )}
+            >
+              {n.text}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {view.error ? (
@@ -493,14 +546,18 @@ function ResultPanel({
   );
 }
 
-function WaitingHint({ phase, turnSeat }: { phase: string; turnSeat: number | null }) {
+function WaitingHint({ phase, turnName }: { phase: string; turnName: string | null }) {
   return (
     <p className="py-1 text-center text-sm text-muted-foreground">
-      {phase === "SHOWDOWN"
-        ? "بانتظار اختيارات اللاعبين…"
-        : turnSeat != null
-          ? `الدور على مقعد ${turnSeat}…`
-          : "بانتظار الجولة…"}
+      {phase === "SHOWDOWN" ? (
+        "بانتظار اختيارات اللاعبين…"
+      ) : turnName != null ? (
+        <>
+          الدور على <span className="font-bold text-primary">{turnName}</span>…
+        </>
+      ) : (
+        "بانتظار الجولة…"
+      )}
     </p>
   );
 }

@@ -24,6 +24,8 @@ export interface RankInfo extends HandRankDef {
 export interface DealtCard extends Card {
   playerId: string;
   name: string;
+  /** Arabic display name (Batch 2). Display-only; null if not seeded. */
+  nameAr?: string | null;
   photoUrl: string | null;
 }
 

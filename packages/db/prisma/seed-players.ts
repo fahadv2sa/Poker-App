@@ -32,30 +32,31 @@ import { prisma } from "../src/client";
 // ===========================================================================
 const PLAYERS: Array<{
   name: string;
+  nameAr: string;
   nationality: string;
   position: "GK" | "DEF" | "MID" | "FWD";
   clubs: string[];
 }> = [
-  { name: "Vinícius Júnior", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
-  { name: "Rodrygo", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
-  { name: "Endrick", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
-  { name: "Éder Militão", nationality: "Brazil", position: "DEF", clubs: ["Real Madrid"] },
-  { name: "Marcelo", nationality: "Brazil", position: "DEF", clubs: ["Real Madrid"] },
-  { name: "Gianluigi Donnarumma", nationality: "Italy", position: "GK", clubs: ["Paris Saint-Germain"] },
-  { name: "Kevin De Bruyne", nationality: "Belgium", position: "MID", clubs: ["Manchester City"] },
-  { name: "Rodri", nationality: "Spain", position: "MID", clubs: ["Manchester City"] },
-  { name: "Erling Haaland", nationality: "Norway", position: "FWD", clubs: ["Manchester City"] },
-  { name: "Mohamed Salah", nationality: "Egypt", position: "FWD", clubs: ["Liverpool"] },
-  { name: "Thibaut Courtois", nationality: "Belgium", position: "GK", clubs: ["Real Madrid"] },
-  { name: "Jude Bellingham", nationality: "England", position: "MID", clubs: ["Real Madrid"] },
-  { name: "Kylian Mbappé", nationality: "France", position: "FWD", clubs: ["Real Madrid"] },
-  { name: "Antonio Rüdiger", nationality: "Germany", position: "DEF", clubs: ["Real Madrid"] },
-  { name: "Virgil van Dijk", nationality: "Netherlands", position: "DEF", clubs: ["Liverpool"] },
-  { name: "Alisson", nationality: "Brazil", position: "GK", clubs: ["Liverpool"] },
-  { name: "Harry Kane", nationality: "England", position: "FWD", clubs: ["Bayern Munich"] },
-  { name: "Joshua Kimmich", nationality: "Germany", position: "MID", clubs: ["Bayern Munich"] },
-  { name: "Lautaro Martínez", nationality: "Argentina", position: "FWD", clubs: ["Inter Milan"] },
-  { name: "Emiliano Martínez", nationality: "Argentina", position: "GK", clubs: ["Aston Villa"] },
+  { name: "Vinícius Júnior", nameAr: "فينيسيوس جونيور", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
+  { name: "Rodrygo", nameAr: "رودريغو", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
+  { name: "Endrick", nameAr: "إندريك", nationality: "Brazil", position: "FWD", clubs: ["Real Madrid"] },
+  { name: "Éder Militão", nameAr: "إيدر ميليتاو", nationality: "Brazil", position: "DEF", clubs: ["Real Madrid"] },
+  { name: "Marcelo", nameAr: "مارسيلو", nationality: "Brazil", position: "DEF", clubs: ["Real Madrid"] },
+  { name: "Gianluigi Donnarumma", nameAr: "جانلويجي دوناروما", nationality: "Italy", position: "GK", clubs: ["Paris Saint-Germain"] },
+  { name: "Kevin De Bruyne", nameAr: "كيفن دي بروين", nationality: "Belgium", position: "MID", clubs: ["Manchester City"] },
+  { name: "Rodri", nameAr: "رودري", nationality: "Spain", position: "MID", clubs: ["Manchester City"] },
+  { name: "Erling Haaland", nameAr: "إيرلينغ هالاند", nationality: "Norway", position: "FWD", clubs: ["Manchester City"] },
+  { name: "Mohamed Salah", nameAr: "محمد صلاح", nationality: "Egypt", position: "FWD", clubs: ["Liverpool"] },
+  { name: "Thibaut Courtois", nameAr: "تيبو كورتوا", nationality: "Belgium", position: "GK", clubs: ["Real Madrid"] },
+  { name: "Jude Bellingham", nameAr: "جود بيلينغهام", nationality: "England", position: "MID", clubs: ["Real Madrid"] },
+  { name: "Kylian Mbappé", nameAr: "كيليان مبابي", nationality: "France", position: "FWD", clubs: ["Real Madrid"] },
+  { name: "Antonio Rüdiger", nameAr: "أنطونيو روديغر", nationality: "Germany", position: "DEF", clubs: ["Real Madrid"] },
+  { name: "Virgil van Dijk", nameAr: "فيرجيل فان دايك", nationality: "Netherlands", position: "DEF", clubs: ["Liverpool"] },
+  { name: "Alisson", nameAr: "أليسون", nationality: "Brazil", position: "GK", clubs: ["Liverpool"] },
+  { name: "Harry Kane", nameAr: "هاري كين", nationality: "England", position: "FWD", clubs: ["Bayern Munich"] },
+  { name: "Joshua Kimmich", nameAr: "جوشوا كيميتش", nationality: "Germany", position: "MID", clubs: ["Bayern Munich"] },
+  { name: "Lautaro Martínez", nameAr: "لاوتارو مارتينيز", nationality: "Argentina", position: "FWD", clubs: ["Inter Milan"] },
+  { name: "Emiliano Martínez", nameAr: "إميليانو مارتينيز", nationality: "Argentina", position: "GK", clubs: ["Aston Villa"] },
 ];
 // ===========================================================================
 
@@ -83,6 +84,7 @@ async function main() {
   for (const pl of PLAYERS) {
     const data = {
       name: pl.name,
+      nameAr: pl.nameAr,
       nationalityId: nationalityId.get(pl.nationality)!,
       positionId: positionId.get(pl.position)!,
       active: true,
