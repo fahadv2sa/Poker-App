@@ -15,6 +15,7 @@
     "migrate:reset": "prisma migrate reset --force",
     "seed": "tsx prisma/seed.ts",
     "seed:players": "tsx prisma/seed-players.ts",
+    "import:api-football": "tsx prisma/import-api-football.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

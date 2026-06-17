@@ -33,5 +33,9 @@ Thumbs.db
 # test / coverage
 coverage/
 
+# one-time API-Football importer resume checkpoint (never commit)
+.import-progress.json
+.run-logs/
+
 # docker volume (if mapped locally)
 .pgdata/

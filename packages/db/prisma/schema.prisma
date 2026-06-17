@@ -242,6 +242,9 @@ model Player {
   // Arabic display name (Batch 2). Display-only — NEVER used in rank logic, which
   // keys on nationality/position/clubs. Nullable so existing rows stay valid.
   nameAr        String?  @map("name_ar")
+  // External provider id (e.g. API-Football player id). Idempotency key for the
+  // one-time importer; null for manually-seeded players. Display/data only.
+  externalRef   Int?     @unique @map("external_ref")
   nationalityId String   @map("nationality_id") @db.Uuid
   positionId    String   @map("position_id") @db.Uuid
   birthYear     Int?     @map("birth_year")

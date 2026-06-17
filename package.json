@@ -17,6 +17,7 @@
     "db:deploy": "pnpm --filter @fp/db migrate:deploy",
     "db:seed": "pnpm --filter @fp/db seed",
     "db:seed-players": "pnpm --filter @fp/db seed:players",
+    "db:import-api-football": "pnpm --filter @fp/db import:api-football",
     "db:reset": "pnpm --filter @fp/db migrate:reset"
   },
   "devDependencies": {
