@@ -16,6 +16,7 @@
  * reconciled — mirrors the seed-players upsert pattern. Resumable via a local
  * checkpoint file (gitignored).
  */
+import "./_ensure-system-ca";
 import "dotenv/config";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
