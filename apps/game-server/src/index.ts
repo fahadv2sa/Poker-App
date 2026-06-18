@@ -12,7 +12,9 @@ import { InMemoryRoomStore } from "./store.js";
  * (Ante/Bet/AllIn/Fold/Resolve + side pots). Pure rules live in @fp/engine.
  */
 async function main(): Promise<void> {
-  const port = Number(process.env.GAME_SERVER_PORT ?? 4000);
+  // Railway (and most managed hosts) inject PORT; fall back to GAME_SERVER_PORT
+  // for local dev, then 4000.
+  const port = Number(process.env.PORT ?? process.env.GAME_SERVER_PORT ?? 4000);
   const origin = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 
   const httpServer = createServer();

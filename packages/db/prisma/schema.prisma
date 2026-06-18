@@ -9,8 +9,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Runtime queries use the pooled URL; Prisma Migrate uses the direct one.
+  // For Railway PostgreSQL both point at the same connection string; the split
+  // lets a future move to Neon (pooled vs direct) happen with no code change.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ----------------------------------------------------------------------------

@@ -1,0 +1,42 @@
+# Railway deployment — Football Poker monorepo (pnpm workspaces + Turborepo).
+#
+# Architecture — all from this one GitHub repo:
+#   Service "web"          → apps/web         (Next.js)    →  poker.fmgtech.dev
+#   Service "game-server"  → apps/game-server (Socket.IO)  →  poker-rt.fmgtech.dev
+#   Plugin  "Postgres"     → Railway PostgreSQL
+#
+# Railway does NOT create multiple services from a single config file. Create each
+# service in the dashboard (New Service → this GitHub repo), keep Root Directory at
+# the repo ROOT (so the pnpm workspace installs once and the root `postinstall`
+# runs `prisma generate` for both), then set each service's Build/Start commands
+# to its section below. The shared [build]/[deploy] defaults here apply to any
+# service whose "Config File Path" points at this file.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# Service: web  (apps/web)
+#   Root Directory : (repo root)
+#   Build Command  : pnpm --filter @fp/web build
+#   Start Command  : pnpm --filter @fp/web start
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
+#                    NEXT_PUBLIC_GAME_SERVER_URL
+#                    (NEXT_PUBLIC_* is baked in at BUILD time — set it before building)
+#   Replicas       : 1+  (stateless — safe to scale horizontally)
+#
+# Service: game-server  (apps/game-server)
+#   Root Directory : (repo root)
+#   Build Command  : (none — tsx runs TypeScript source; install + postinstall suffices)
+#   Start Command  : pnpm --filter @fp/game-server start      # → tsx src/index.ts
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN
+#                    (PORT is injected by Railway — do not set it)
+#   Replicas       : EXACTLY 1  (authoritative in-memory room state + timers — never scale)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+# Keep at 1: the game-server holds room state in memory and must be a single
+# instance. The web app is stateless and may be scaled separately in its own service.
+numReplicas = 1
