@@ -110,6 +110,16 @@ enum ResultOutcome {
   @@map("result_outcome")
 }
 
+// Big-tournament categories tracked per player for the fame score (display/
+// difficulty only — never used by the rank engine).
+enum TournamentType {
+  WORLD_CUP
+  EURO_COPA
+  CHAMPIONS_LEAGUE
+
+  @@map("tournament_type")
+}
+
 // ----------------------------------------------------------------------------
 // Identity, wallet, stats (persistent)
 // ----------------------------------------------------------------------------
@@ -250,17 +260,38 @@ model Player {
   birthYear     Int?     @map("birth_year")
   photoUrl      String?  @map("photo_url")
   active        Boolean  @default(true)
+  // Fame system (display + difficulty tiers only — NEVER used by the rank
+  // engine, which keys on nationality/position/clubs). Filled by the import +
+  // calculate scripts; both nullable/0 until then so existing rows stay valid.
+  top5LeagueSeasons Int    @default(0) @map("top5_league_seasons")
+  fameScore         Float? @map("fame_score")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  nationality   Nationality  @relation(fields: [nationalityId], references: [id], onDelete: Restrict)
-  position      Position     @relation(fields: [positionId], references: [id], onDelete: Restrict)
-  playerClubs   PlayerClub[]
-  gameCards     GameCard[]
+  nationality     Nationality            @relation(fields: [nationalityId], references: [id], onDelete: Restrict)
+  position        Position               @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  playerClubs     PlayerClub[]
+  tournamentStats PlayerTournamentStat[]
+  gameCards       GameCard[]
 
   @@index([nationalityId])
   @@index([positionId])
   @@map("players")
+}
+
+// One row per (player, tournament type) holding an appearance count, sourced by
+// the API-Football tournament-stats import. Feeds COMPONENT 3 of the fame score.
+model PlayerTournamentStat {
+  id             String         @id @default(uuid()) @db.Uuid
+  playerId       String         @map("player_id") @db.Uuid
+  tournamentType TournamentType @map("tournament_type")
+  appearances    Int            @default(0)
+
+  player         Player         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, tournamentType])
+  @@index([playerId])
+  @@map("player_tournament_stats")
 }
 
 model PlayerClub {

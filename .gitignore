@@ -33,8 +33,9 @@ Thumbs.db
 # test / coverage
 coverage/
 
-# one-time API-Football importer resume checkpoint (never commit)
+# one-time API-Football importer resume checkpoints (never commit)
 .import-progress.json
+.tournament-progress.json
 .run-logs/
 
 # docker volume (if mapped locally)
