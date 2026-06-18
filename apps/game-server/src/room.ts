@@ -9,14 +9,21 @@ import {
   openRound,
   resolveShowdown,
   validateClaim,
+  explainRank,
   type Action,
   type BettingSeat,
   type BettingState,
   type Card,
   type PotSeat,
   type ResolveSeat,
+  type WitnessGroup,
 } from "@fp/engine";
-import { SERVER_EVENTS, type PlayerView, type PotView } from "@fp/shared";
+import {
+  SERVER_EVENTS,
+  type ClaimEvidenceGroup,
+  type PlayerView,
+  type PotView,
+} from "@fp/shared";
 import type {
   BetRecord,
   CardSource,
@@ -630,6 +637,9 @@ export class GameRoom {
           // showdown claim was valid so the client can explain an invalid-claim loss.
           claimValid: folded ? null : p.claimValid,
           claimedRankNameAr: folded ? null : rankNameById(p.claimRankId),
+          // The WHY: engine witness → DB-named cards/attributes. Only for a
+          // valid showdown claim; null for folders/invalid/last-standing.
+          claimEvidence: folded || !isShowdown ? null : this.buildClaimEvidence(p),
           holeCards: revealed ? p.holeCards.map(toCardView) : null,
         };
       });
@@ -694,11 +704,37 @@ export class GameRoom {
 
   /** The 7-card evaluation pool for a player (hole + revealed community). */
   private poolFor(player: RoomPlayer): Card[] {
-    return [...player.holeCards, ...this.state.community].map((c) => ({
+    return this.dealtPoolFor(player).map((c) => ({
       nationality: c.nationality,
       position: c.position,
       clubs: c.clubs,
     }));
+  }
+
+  /** The same pool as `poolFor`, but the full DealtCards (names, positionNameAr)
+   *  so witness indices map back to display data. Same order as `poolFor`. */
+  private dealtPoolFor(player: RoomPlayer): DealtCard[] {
+    return [...player.holeCards, ...this.state.community];
+  }
+
+  /**
+   * Build the data-driven explanation of a player's *valid* claim from the
+   * engine's witness: the engine says which cards and shared token satisfy each
+   * leaf; we name them from the DB-loaded cards. No rank logic here, and no
+   * hardcoded football data. Null unless the player holds a valid claim.
+   */
+  private buildClaimEvidence(player: RoomPlayer): ClaimEvidenceGroup[] | null {
+    if (!player.claimRankId || !player.claimValid) return null;
+    const rank = this.state.ranks.find((r) => r.id === player.claimRankId);
+    if (!rank) return null;
+    const dealt = this.dealtPoolFor(player);
+    const pool: Card[] = dealt.map((c) => ({
+      nationality: c.nationality,
+      position: c.position,
+      clubs: c.clubs,
+    }));
+    const groups = explainRank(rank.rule, pool);
+    return groups ? groups.map((g) => toEvidenceGroup(g, dealt)) : null;
   }
 
   /** Project the room players into the engine's betting state. */
@@ -787,6 +823,54 @@ function toCardView(c: DealtCard) {
     position: c.position,
     clubs: [...c.clubs],
     photoUrl: c.photoUrl,
+  };
+}
+
+/**
+ * Map one engine WitnessGroup to the wire shape, naming cards and resolving the
+ * shared value to its DB display: position → Arabic name (positions.name_ar,
+ * falling back to the code if unseeded); nationality/club → their stored DB
+ * name. The Arabic attribute label is fixed game vocabulary, not football data.
+ */
+function toEvidenceGroup(g: WitnessGroup, dealt: DealtCard[]): ClaimEvidenceGroup {
+  const players = g.cardIndices.map((i) => ({
+    nameAr: dealt[i]!.nameAr ?? null,
+    nameEn: dealt[i]!.name,
+  }));
+
+  if (g.attribute === "position") {
+    const head = dealt[g.cardIndices[0]!]!;
+    return {
+      attribute: "position",
+      attributeLabelAr: "نفس المركز",
+      value: head.positionNameAr ?? g.value,
+      players,
+    };
+  }
+  if (g.attribute === "nationality") {
+    return {
+      attribute: "nationality",
+      attributeLabelAr: "نفس الجنسية",
+      value: g.value,
+      players,
+    };
+  }
+  // club
+  if (g.match === "identical") {
+    const clubs = [...dealt[g.cardIndices[0]!]!.clubs];
+    return {
+      attribute: "club",
+      attributeLabelAr: "نفس مجموعة الأندية",
+      value: clubs.join("، "),
+      values: clubs,
+      players,
+    };
+  }
+  return {
+    attribute: "club",
+    attributeLabelAr: "نادي مشترك",
+    value: g.value,
+    players,
   };
 }
 

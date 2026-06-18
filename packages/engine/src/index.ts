@@ -15,9 +15,15 @@ export type {
   ClaimValidation,
   ValidClaim,
   Resolution,
+  WitnessGroup,
 } from "./types.js";
 
-export { enumerateWitnesses, evaluateRank } from "./evaluate.js";
+export {
+  enumerateWitnesses,
+  evaluateRank,
+  enumerateExplained,
+  explainRank,
+} from "./evaluate.js";
 
 export {
   parseRule,

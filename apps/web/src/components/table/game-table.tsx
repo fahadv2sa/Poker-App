@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { DEFAULT_GAME_CONFIG, type CardView } from "@fp/shared";
+import {
+  DEFAULT_GAME_CONFIG,
+  type ClaimEvidenceGroup,
+  type GameResultEntry,
+  type PlayerView,
+} from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
 import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/tableView";
 import { cn } from "@/lib/utils";
@@ -232,13 +237,11 @@ export function GameTable({
                   }}
                 />
               ) : view.result ? (
-                <ResultPanel
-                  results={view.result.results}
-                  winningRankNameAr={view.result.winningRankNameAr}
-                  yourSeat={yourSeat}
-                  isHost={isHost}
-                  onNextHand={nextHand}
-                />
+                // The rich breakdown lives in the full-screen ResultOverlay
+                // (below); this underlying slot just holds a calm placeholder.
+                <p className="py-1 text-center text-sm text-muted-foreground">
+                  انتهت الجولة — النتيجة معروضة.
+                </p>
               ) : (
                 <WaitingHint
                   phase={phase}
@@ -253,6 +256,21 @@ export function GameTable({
           </div>
         </>
       )}
+
+      {/* Dedicated full-screen result page: rich, data-driven breakdown that
+          stays until the host deals the next hand (no auto-dismiss). */}
+      <AnimatePresence>
+        {view.result ? (
+          <ResultOverlay
+            results={view.result.results}
+            winningRankNameAr={view.result.winningRankNameAr}
+            players={players}
+            yourSeat={yourSeat}
+            isHost={isHost}
+            onNextHand={nextHand}
+          />
+        ) : null}
+      </AnimatePresence>
 
       {/* A6 + C10: auto-dismissing notices (actions, opponent left, reconnect). */}
       <div className="pointer-events-none fixed inset-x-0 top-16 z-30 flex flex-col items-center gap-1.5">
@@ -447,101 +465,201 @@ function ClaimPanel({
   );
 }
 
-function ResultPanel({
+// ----------------------------------------------------------- result page
+
+/** Renders the data-driven WHY behind one claimed association: the rank name,
+ *  then each evidence group ("ميسي ودي ماريا (نفس الجنسية: الأرجنتين)") joined
+ *  by "+". All Arabic text and values come from the server payload (DB/engine);
+ *  the client only lays them out. */
+function ClaimExplanation({
+  rankNameAr,
+  groups,
+}: {
+  rankNameAr: string | null;
+  groups: ClaimEvidenceGroup[] | null;
+}) {
+  if (!groups || groups.length === 0) {
+    return rankNameAr ? (
+      <span className="font-bold text-gold">{rankNameAr}</span>
+    ) : null;
+  }
+  return (
+    <div className="leading-relaxed">
+      {rankNameAr ? <span className="font-bold text-gold">{rankNameAr}: </span> : null}
+      {groups.map((g, i) => (
+        <span key={i}>
+          {i > 0 ? <span className="text-muted-foreground"> + </span> : null}
+          <span className="font-semibold text-foreground">
+            {g.players.map((p) => p.nameAr ?? p.nameEn).join(" و ")}
+          </span>{" "}
+          <span className="text-muted-foreground">
+            ({g.attributeLabelAr}: {g.value})
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Full-screen, dedicated result page shown after a hand ends. Reveals the
+ *  winner first, then the losers; stays up until the host deals the next hand. */
+function ResultOverlay({
   results,
   winningRankNameAr,
+  players,
   yourSeat,
   isHost,
   onNextHand,
 }: {
-  results: Array<{
-    seat: number;
-    outcome: string;
-    coinsDelta: number;
-    claimValid: boolean | null;
-    claimedRankNameAr: string | null;
-    holeCards: CardView[] | null;
-  }>;
+  results: GameResultEntry[];
   winningRankNameAr: string | null;
+  players: PlayerView[];
   yourSeat: number | null;
   isHost: boolean;
   onNextHand: () => void;
 }) {
   const [dealing, setDealing] = useState(false);
+
+  const nameOf = (seat: number) =>
+    players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
+
+  const winners = results.filter((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
+  const losers = results
+    .filter((r) => r.outcome !== "WIN" && r.outcome !== "SPLIT")
+    .sort((a, b) => a.coinsDelta - b.coinsDelta);
+
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
-      <div className="text-center">
-        <div className="font-bold text-primary">انتهت الجولة</div>
-        {winningRankNameAr ? (
-          <div className="text-sm text-gold">
-            الترابط الفائز: <span className="font-extrabold">{winningRankNameAr}</span>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex justify-center overflow-y-auto bg-background/85 p-3 backdrop-blur-md sm:p-6"
+    >
+      <div className="my-auto w-full max-w-2xl space-y-4">
+        {/* Winner section (revealed first) */}
+        <motion.section
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+          className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 shadow-2xl"
+        >
+          <div className="text-center text-sm font-bold text-gold">
+            {winners.length > 1 ? "الفائزون" : "الفائز"}
           </div>
-        ) : null}
-      </div>
-      <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
-        {results.map((r) => {
-          const pos = r.coinsDelta >= 0;
-          const mine = r.seat === yourSeat;
-          // Item 6: explain a losing/refunded hand caused by an invalid claim,
-          // instead of it silently looking like a plain loss.
-          const invalidClaim =
-            r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
-          return (
-            <div
-              key={r.seat}
-              className={cn(
-                "flex flex-col gap-1.5 rounded-lg px-3 py-2",
-                mine ? "bg-primary/10" : "bg-secondary/30",
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm">
-                  {mine ? "أنت" : `مقعد ${r.seat}`} · {OUTCOME_AR[r.outcome] ?? r.outcome}
-                </span>
-                <span className={cn("num font-extrabold", pos ? "text-primary" : "text-destructive")}>
-                  {pos ? "+" : ""}
-                  {r.coinsDelta}
-                </span>
-              </div>
-              {/* The association this player claimed (data-driven, Arabic from DB). */}
-              {r.claimedRankNameAr ? (
-                <div className="text-xs text-muted-foreground">
-                  اختار: <span className="text-foreground">{r.claimedRankNameAr}</span>
-                  {invalidClaim ? (
-                    <span className="text-destructive/90"> — غير محقّق</span>
+          {winners.length === 0 ? (
+            <p className="mt-2 text-center text-muted-foreground">لا يوجد فائز — استُردّت المساهمات.</p>
+          ) : (
+            <div className="mt-3 space-y-3">
+              {winners.map((w) => (
+                <div key={w.seat} className="space-y-1.5 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xl font-extrabold text-foreground">
+                      {w.seat === yourSeat ? "أنت" : nameOf(w.seat)}
+                    </span>
+                    <span className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-sm font-extrabold text-primary">
+                      +{w.coinsDelta}
+                    </span>
+                  </div>
+                  <div className="text-sm">
+                    <ClaimExplanation
+                      rankNameAr={winningRankNameAr ?? w.claimedRankNameAr}
+                      groups={w.claimEvidence}
+                    />
+                  </div>
+                  {w.holeCards && w.holeCards.length > 0 ? (
+                    <div className="flex justify-center gap-1.5 pt-1">
+                      {w.holeCards.map((c, i) => (
+                        <FootballCard key={c.playerId} card={c} index={i} />
+                      ))}
+                    </div>
                   ) : null}
                 </div>
-              ) : invalidClaim ? (
-                <div className="text-xs text-destructive/90">لم يختر ترابطًا محقّقًا</div>
-              ) : null}
-              {/* Official reveal: contenders' hole cards, visible to everyone. */}
-              {r.holeCards && r.holeCards.length > 0 ? (
-                <div className="flex gap-1.5">
-                  {r.holeCards.map((c, i) => (
-                    <FootballCard key={c.playerId} card={c} index={i} />
-                  ))}
-                </div>
-              ) : null}
+              ))}
             </div>
-          );
-        })}
+          )}
+        </motion.section>
+
+        {/* Losers section (revealed after) */}
+        {losers.length > 0 ? (
+          <div className="space-y-2">
+            <div className="px-1 text-xs font-semibold text-muted-foreground">الخاسرون</div>
+            {losers.map((r, i) => {
+              const mine = r.seat === yourSeat;
+              const invalidClaim =
+                r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
+              return (
+                <motion.div
+                  key={r.seat}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut", delay: 0.32 + i * 0.09 }}
+                  className={cn(
+                    "flex flex-col gap-1.5 rounded-xl border p-3",
+                    mine ? "border-primary/30 bg-primary/10" : "border-white/10 bg-card/80",
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">
+                      {mine ? "أنت" : nameOf(r.seat)}
+                      <span className="mr-2 text-xs font-normal text-muted-foreground">
+                        {OUTCOME_AR[r.outcome] ?? r.outcome}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "num font-extrabold",
+                        r.coinsDelta >= 0 ? "text-primary" : "text-destructive",
+                      )}
+                    >
+                      {r.coinsDelta >= 0 ? "+" : ""}
+                      {r.coinsDelta}
+                    </span>
+                  </div>
+                  {r.outcome === "FOLD" ? (
+                    <div className="text-xs text-muted-foreground">انسحب من الجولة.</div>
+                  ) : invalidClaim ? (
+                    <div className="text-xs text-destructive/90">
+                      {r.claimedRankNameAr ? (
+                        <>
+                          اختار <span className="text-foreground">{r.claimedRankNameAr}</span> — غير محقّق
+                        </>
+                      ) : (
+                        "لم يختر ترابطًا محقّقًا"
+                      )}
+                    </div>
+                  ) : r.claimEvidence || r.claimedRankNameAr ? (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">اختار: </span>
+                      <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
+                    </div>
+                  ) : null}
+                </motion.div>
+              );
+            })}
+          </div>
+        ) : null}
+
+        {/* The page never auto-dismisses — only the host advances the round. */}
+        <div className="pt-1">
+          {isHost ? (
+            <Button
+              onClick={() => {
+                setDealing(true);
+                onNextHand();
+              }}
+              disabled={dealing}
+              className="w-full"
+              size="lg"
+            >
+              {dealing ? "يبدأ…" : "الجولة التالية"}
+            </Button>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              بانتظار أن يبدأ المضيف الجولة التالية…
+            </p>
+          )}
+        </div>
       </div>
-      {isHost ? (
-        <Button
-          onClick={() => {
-            setDealing(true);
-            onNextHand();
-          }}
-          disabled={dealing}
-          className="w-full"
-        >
-          {dealing ? "يبدأ…" : "ابدأ الجولة التالية"}
-        </Button>
-      ) : (
-        <p className="text-center text-sm text-muted-foreground">
-          بانتظار أن يبدأ المضيف الجولة التالية…
-        </p>
-      )}
     </motion.div>
   );
 }

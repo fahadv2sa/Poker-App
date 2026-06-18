@@ -173,11 +173,36 @@ export interface ClaimReceivedPayload {
   seat: number;
 }
 
+/**
+ * One leaf of the WHY behind a claimed association, built server-side from the
+ * engine's witness + DB data (Section 2.2 data-driven; no football data or
+ * explanations hardcoded in the client). Renders as e.g.
+ * "ميسي ودي ماريا (نفس الجنسية: الأرجنتين)".
+ */
+export interface ClaimEvidenceGroup {
+  /** Which attribute these cards share. */
+  attribute: "nationality" | "position" | "club";
+  /** Ready Arabic connective label for the attribute — fixed game vocabulary,
+   *  not football data (e.g. "نفس الجنسية", "نفس المركز", "نادي مشترك"). */
+  attributeLabelAr: string;
+  /** The shared value as the DB stores it: position → Arabic name (positions
+   *  table); nationality/club → their DB name. Never hardcoded in the client. */
+  value: string;
+  /** club "identical" only: the full shared club set (else omitted). */
+  values?: string[];
+  /** The football-player cards forming this group — display names only. */
+  players: { nameAr: string | null; nameEn: string }[];
+}
+
 export interface GameResultEntry {
   seat: number;
   outcome: (typeof RESULT_OUTCOMES)[number];
   coinsDelta: number;
   finalBalance: number;
+  /** Structured evidence (from the engine's witness) for WHY this seat's valid
+   *  claim was achieved — the cards involved + the shared attribute/value, all
+   *  data-driven. null for folders, invalid claims, or last-standing endings. */
+  claimEvidence: ClaimEvidenceGroup[] | null;
   /** Whether this seat's showdown claim was valid; `null` for folders / no claim
    *  context. Lets the client explain an invalid-claim loss (Batch 1, item 6). */
   claimValid: boolean | null;

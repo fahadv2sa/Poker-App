@@ -43,6 +43,7 @@ export class PrismaCardSource implements CardSource {
         nameAr: r.nameAr,
         nationality: r.nationality.name,
         position: r.position.code,
+        positionNameAr: r.position.nameAr,
         clubs: r.playerClubs.map((pc) => pc.club.name),
         photoUrl: r.photoUrl,
       };

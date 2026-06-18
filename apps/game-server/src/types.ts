@@ -26,6 +26,9 @@ export interface DealtCard extends Card {
   name: string;
   /** Arabic display name (Batch 2). Display-only; null if not seeded. */
   nameAr?: string | null;
+  /** Arabic name of this card's position (positions.name_ar), for result
+   *  evidence — `position` itself is the engine token (GK/DEF/MID/FWD). */
+  positionNameAr?: string | null;
   photoUrl: string | null;
 }
 

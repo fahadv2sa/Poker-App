@@ -1,4 +1,4 @@
-import type { Rule } from "@fp/shared";
+import type { Rule, RuleAttribute } from "@fp/shared";
 
 /**
  * The engine's projection of a football player onto the three attributes the
@@ -31,6 +31,27 @@ export interface HandRankDef {
   code: string;
   strength: number;
   rule: Rule;
+}
+
+/**
+ * One leaf-rule match inside a witness: which pool cards satisfied a single
+ * group/coverage leaf, and on what shared attribute and value. This is the raw
+ * *evidence* behind a rank — the engine surfaces the structure (it never
+ * localizes); the caller maps `value` (an opaque token) to a display name.
+ *
+ *  - nationality/position: `value` is the shared token (a nationality name or a
+ *    position code such as "GK").
+ *  - club, match "shared": `value` is the single shared club token.
+ *  - club, match "identical": `value` is the canonical full club-set key; read
+ *    the cards' own `clubs` for the actual set.
+ */
+export interface WitnessGroup {
+  attribute: RuleAttribute;
+  /** club only: how the match was made. Absent for nationality/position. */
+  match?: "shared" | "identical";
+  value: string;
+  /** Indices into the pool of the cards forming this group. */
+  cardIndices: number[];
 }
 
 /** Result of validating a player's claimed rank against their pool. */
