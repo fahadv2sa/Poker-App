@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DEFAULT_GAME_CONFIG,
+  type CardView,
   type ClaimEvidenceGroup,
   type GameResultEntry,
   type PlayerView,
@@ -265,6 +266,7 @@ export function GameTable({
             results={view.result.results}
             winningRankNameAr={view.result.winningRankNameAr}
             players={players}
+            community={(s?.communityCards ?? []).filter((c): c is CardView => c !== null)}
             yourSeat={yourSeat}
             isHost={isHost}
             onNextHand={nextHand}
@@ -507,6 +509,7 @@ function ResultOverlay({
   results,
   winningRankNameAr,
   players,
+  community,
   yourSeat,
   isHost,
   onNextHand,
@@ -514,6 +517,7 @@ function ResultOverlay({
   results: GameResultEntry[];
   winningRankNameAr: string | null;
   players: PlayerView[];
+  community: CardView[];
   yourSeat: number | null;
   isHost: boolean;
   onNextHand: () => void;
@@ -522,6 +526,11 @@ function ResultOverlay({
 
   const nameOf = (seat: number) =>
     players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
+
+  // A revealed player's full hand = their 2 hole cards + the 5 shared community
+  // cards. Folders/last-standing have null holeCards (never revealed) → no cards.
+  const fullHand = (holeCards: CardView[] | null): CardView[] | null =>
+    holeCards && holeCards.length > 0 ? [...holeCards, ...community] : null;
 
   const winners = results.filter((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
   const losers = results
@@ -566,10 +575,10 @@ function ResultOverlay({
                       groups={w.claimEvidence}
                     />
                   </div>
-                  {w.holeCards && w.holeCards.length > 0 ? (
-                    <div className="flex justify-center gap-1.5 pt-1">
-                      {w.holeCards.map((c, i) => (
-                        <FootballCard key={c.playerId} card={c} index={i} />
+                  {fullHand(w.holeCards) ? (
+                    <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                      {fullHand(w.holeCards)!.map((c, i) => (
+                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
                       ))}
                     </div>
                   ) : null}
@@ -631,6 +640,13 @@ function ResultOverlay({
                     <div className="text-xs">
                       <span className="text-muted-foreground">اختار: </span>
                       <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
+                    </div>
+                  ) : null}
+                  {fullHand(r.holeCards) ? (
+                    <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                      {fullHand(r.holeCards)!.map((c, i) => (
+                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
+                      ))}
                     </div>
                   ) : null}
                 </motion.div>

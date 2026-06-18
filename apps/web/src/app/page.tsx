@@ -5,11 +5,12 @@ import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 const MENU = [
-  { href: "/rooms", icon: "♠", title: "إنشاء غرفة", desc: "ابدأ طاولة جديدة وادعُ أصدقاءك" },
+  { href: "/create-room", icon: "♠", title: "إنشاء غرفة", desc: "ابدأ طاولة جديدة وادعُ أصدقاءك" },
   { href: "/rooms", icon: "♣", title: "دخول غرفة", desc: "انضمّ بكود دعوة أو من الغرف العامة" },
   { href: "/stats", icon: "📊", title: "الإحصائيات", desc: "مبارياتك ونسبة فوزك" },
   { href: "/bank", icon: "🏦", title: "البنك", desc: "اطلب 1000 كوين عند نفاد الرصيد" },
   { href: "/profile", icon: "👤", title: "الملف الشخصي", desc: "معلوماتك ورقمك التعريفي" },
+  { href: "/guide", icon: "📖", title: "دليل الترابطات", desc: "تعرف على جميع ترابطات اللعبة وشروط تحققها" },
 ];
 
 export default async function HomePage() {

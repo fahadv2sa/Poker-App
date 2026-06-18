@@ -4,8 +4,14 @@ import { prisma } from "@fp/db";
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CreateRoomForm } from "./create-form";
-import { JoinForm } from "./join-form";
+
+/** Arabic labels for the room difficulty (display only). */
+const DIFFICULTY_AR: Record<string, string> = {
+  VERY_EASY: "سهل جداً",
+  EASY: "سهل",
+  MEDIUM: "متوسط",
+  ELITE: "النخبة",
+};
 
 export default async function RoomsPage() {
   const session = await auth();
@@ -16,7 +22,10 @@ export default async function RoomsPage() {
     select: {
       id: true,
       roomName: true,
+      isPrivate: true,
+      difficulty: true,
       maxPlayers: true,
+      creator: { select: { username: true } },
       _count: { select: { players: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -28,23 +37,12 @@ export default async function RoomsPage() {
       <header className="mb-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xl font-black">
           <span className="size-3 rounded-full bg-primary glow-primary" />
-          الغُرف
+          دخول غرفة
         </div>
         <Button asChild variant="ghost">
           <Link href="/">← القائمة</Link>
         </Button>
       </header>
-
-      <div className="mb-6 grid items-start gap-4 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
-        <Card className="p-6 sm:p-8">
-          <h2 className="mb-4 text-xl">إنشاء غرفة</h2>
-          <CreateRoomForm />
-        </Card>
-        <Card className="p-6 sm:p-8">
-          <h2 className="mb-4 text-xl">دخول بكود</h2>
-          <JoinForm />
-        </Card>
-      </div>
 
       <Card className="p-6 sm:p-8">
         <div className="mb-4 flex items-center justify-between">
@@ -62,16 +60,27 @@ export default async function RoomsPage() {
               <Link
                 key={r.id}
                 href={`/table/${r.id}`}
-                className="flex items-center justify-between rounded-lg border bg-secondary/40 p-4 transition hover:border-primary/45"
+                className="flex items-center justify-between gap-3 rounded-lg border bg-secondary/40 p-4 transition hover:border-primary/45"
               >
-                <div>
-                  <strong>{r.roomName}</strong>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="num">{r._count.players}</span> /{" "}
-                    <span className="num">{r.maxPlayers}</span> لاعبين
+                <div className="min-w-0">
+                  <strong className="block truncate">{r.roomName}</strong>
+                  <div className="mt-0.5 text-sm text-muted-foreground">
+                    بواسطة {r.creator.username}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-gold">
+                      {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
+                    </span>
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
+                      {r.isPrivate ? "خاصة" : "عامة"}
+                    </span>
+                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
+                      <span className="num">{r._count.players}</span> /{" "}
+                      <span className="num">{r.maxPlayers}</span> لاعبين
+                    </span>
                   </div>
                 </div>
-                <span className="rounded-full border border-primary/40 px-3 py-1 text-sm text-primary">
+                <span className="shrink-0 rounded-full border border-primary/40 px-3 py-1 text-sm text-primary">
                   دخول →
                 </span>
               </Link>

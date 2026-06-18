@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import type { CardView, PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,165 @@ function CardDivider() {
   );
 }
 
+/** Position code → Arabic label (display only; the four canonical positions). */
+const POSITION_AR: Record<string, string> = {
+  GK: "حارس مرمى",
+  DEF: "مدافع",
+  MID: "وسط",
+  FWD: "مهاجم",
+};
+
+/**
+ * Shared full-screen player modal — the single expand/detail overlay reused by
+ * every card (gameplay and the result screen). Shows the large photo, full
+ * Arabic + English names, nationality, position, fame score, and the complete
+ * career club history. Centred, scrollable, dark-themed; closes on the X,
+ * outside click, or Escape. UI-only — reads what's already in CardView.
+ */
+export function PlayerCardModal({
+  card,
+  variant = "game",
+  onClose,
+}: {
+  card: CardView;
+  /** "game" shows only photo + names + score; "result" adds nationality,
+   *  position, and the full career club history. */
+  variant?: "game" | "result";
+  onClose: () => void;
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  const showPhoto = Boolean(card.photoUrl) && !imgError;
+  const fame = card.fameScore;
+  const legendary = fame != null && fame >= 100;
+  const clubs = card.clubs.filter((c) => c && c.trim());
+  const positionAr = POSITION_AR[card.position] ?? card.position;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "relative my-auto max-h-[92vh] w-[88vw] max-w-[360px] overflow-y-auto rounded-2xl border text-center shadow-2xl",
+          "bg-linear-to-b from-[#202a44] to-[#0e1626]",
+          legendary ? "border-gold/80 shadow-[0_0_34px_rgba(212,175,55,0.6)]" : "border-white/15",
+        )}
+      >
+        <button
+          type="button"
+          aria-label="إغلاق"
+          onClick={onClose}
+          className="absolute right-2 top-2 z-20 grid size-8 place-items-center rounded-full bg-black/60 text-lg text-white/85 transition hover:bg-black/80"
+        >
+          ✕
+        </button>
+        {fame != null ? (
+          <span
+            className={cn(
+              "absolute left-2 top-2 z-20 rounded-md border px-2 py-0.5 text-sm font-black tabular-nums shadow-sm",
+              legendary
+                ? "border-gold bg-gold text-black shadow-[0_0_12px_rgba(212,175,55,0.85)]"
+                : "border-gold/50 bg-black/55 text-gold backdrop-blur-sm",
+            )}
+          >
+            {Math.round(fame)}
+          </span>
+        ) : null}
+
+        {/* Large photo */}
+        <div className="relative w-full overflow-hidden bg-[#0b1322]">
+          <div className="aspect-[4/5] w-full">
+            {showPhoto ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.photoUrl!}
+                alt={card.name}
+                referrerPolicy="no-referrer"
+                onError={() => setImgError(true)}
+                className="h-full w-full object-cover object-top"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#1b2742] to-[#0b1322]">
+                <span className="text-6xl font-black tracking-wide text-white/40">
+                  {cardInitials(card.name)}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
+        </div>
+
+        <div className="flex flex-col items-stretch gap-3 p-5 text-center">
+          {/* Full names — shown in both variants */}
+          <div>
+            <div className="break-words text-2xl font-extrabold">{card.nameAr ?? card.name}</div>
+            <div className="mt-0.5 break-words text-sm text-white/70">{card.name}</div>
+          </div>
+
+          {/* Full player details — RESULT SCREEN ONLY. Hidden during gameplay so
+              cards reveal only photo + name + score. */}
+          {variant === "result" ? (
+            <>
+              {/* Nationality + position */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="text-[0.65rem] text-muted-foreground">الجنسية</div>
+                  <div className="mt-0.5 break-words text-sm font-semibold">{card.nationality}</div>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="text-[0.65rem] text-muted-foreground">المركز</div>
+                  <div className="mt-0.5 break-words text-sm font-semibold">{positionAr}</div>
+                </div>
+              </div>
+
+              {/* Full career club history */}
+              <div>
+                <div className="mb-1.5 text-xs font-semibold text-gold/80">مسيرة الأندية</div>
+                {clubs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">—</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {clubs.map((c, i) => (
+                      <div
+                        key={`${c}-${i}`}
+                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-1.5"
+                      >
+                        <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-white/10 text-[0.6rem] text-muted-foreground">
+                          {i + 1}
+                        </span>
+                        <span className="flex-1 break-words text-right text-sm">{c}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
+        </div>
+      </motion.div>
+    </div>,
+    document.body,
+  );
+}
+
 /**
  * A football-player card (DISPLAY ONLY) — a premium trading-card look:
  * photo on top, then English name, Arabic name, and the club, each separated by
@@ -62,13 +222,20 @@ export function FootballCard({
   back,
   index = 0,
   size = "md",
+  variant = "game",
 }: {
   card?: CardView | null;
   back?: boolean;
   index?: number;
   size?: "md" | "lg";
+  /** "game" (default) reveals only photo/name/score on expand; "result" reveals
+   *  the full player details. The card FACE is minimal in both contexts. */
+  variant?: "game" | "result";
 }) {
   const [imgError, setImgError] = useState(false);
+  // Click-to-expand: any face-up card opens the shared PlayerCardModal with the
+  // full player details. UI-only, local state — no gameplay impact.
+  const [expanded, setExpanded] = useState(false);
   const width = size === "lg" ? "w-[120px]" : "w-[80px] sm:w-[88px]";
 
   if (back || !card) {
@@ -89,17 +256,30 @@ export function FootballCard({
   }
 
   const showPhoto = Boolean(card.photoUrl) && !imgError;
-  const club = card.clubs.find((c) => c && c.trim()) ?? null;
   const fame = card.fameScore;
   const legendary = fame != null && fame >= 100; // Messi (=100): special standout
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: -14, rotate: -4, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
       transition={{ duration: 0.38, delay: index * 0.07, ease: [0.22, 0.61, 0.36, 1] }}
+      role="button"
+      tabIndex={0}
+      aria-label={`توسيع بطاقة ${card.name}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        setExpanded(true);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setExpanded(true);
+        }
+      }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border text-center",
+        "group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border text-center",
         "bg-linear-to-b from-[#202a44] to-[#0e1626]",
         "shadow-[0_6px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
         "transition duration-200 hover:-translate-y-0.5 hover:border-gold/40",
@@ -180,18 +360,15 @@ export function FootballCard({
         >
           {card.nameAr ?? card.name}
         </span>
-        <CardDivider />
-        {/* Club — small, muted, elegant */}
-        <span
-          className={cn(
-            "w-full truncate font-medium leading-tight text-gold/70",
-            size === "lg" ? "text-[0.62rem]" : "text-[0.5rem]",
-          )}
-        >
-          {club ?? "—"}
-        </span>
       </div>
     </motion.div>
+
+      {/* Click-to-expand opens the shared PlayerCardModal. Its detail level is
+          gated by `variant` (game = photo/name/score only). */}
+      {expanded ? (
+        <PlayerCardModal card={card} variant={variant} onClose={() => setExpanded(false)} />
+      ) : null}
+    </>
   );
 }
 
