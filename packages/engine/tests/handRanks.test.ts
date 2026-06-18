@@ -85,7 +85,7 @@ describe("TWO_PAIR (strength 2) — two DISJOINT pairs", () => {
   });
 });
 
-describe("TRIPLE (strength 3) — three by nationality or position, NEVER club", () => {
+describe("TRIPLE (strength 3) — three by nationality, position, or shared club", () => {
   const TRIPLE = ruleOf("TRIPLE");
 
   it("matches three of a nationality", () => {
@@ -98,13 +98,13 @@ describe("TRIPLE (strength 3) — three by nationality or position, NEVER club",
     expect(evaluateRank(TRIPLE, pool)).toBe(true);
   });
 
-  it("does NOT match three sharing only a club", () => {
+  it("matches three sharing only a club (club now counts for TRIPLE)", () => {
     const pool = [
       card("BR", "GK", ["RM"]),
       card("AR", "DEF", ["RM"]),
       card("IT", "MID", ["RM"]),
     ];
-    expect(evaluateRank(TRIPLE, pool)).toBe(false);
+    expect(evaluateRank(TRIPLE, pool)).toBe(true);
   });
 
   it("rejects only two of a nationality (min 3)", () => {
@@ -178,7 +178,7 @@ describe("FULL_HOUSE_CLUB (strength 5) — HAND_SIZE cards share ≥1 club", () 
   });
 });
 
-describe("FULL_HOUSE (strength 6) — 3+2 disjoint, NEVER club", () => {
+describe("FULL_HOUSE (strength 6) — 3+2 disjoint, by club/position/nationality", () => {
   const FULL_HOUSE = ruleOf("FULL_HOUSE");
 
   it("matches three of a position + two of a nationality (disjoint)", () => {
@@ -216,7 +216,7 @@ describe("FULL_HOUSE (strength 6) — 3+2 disjoint, NEVER club", () => {
     expect(evaluateRank(FULL_HOUSE, pool)).toBe(false);
   });
 
-  it("does NOT count clubs (3-of-a-club + 2-of-a-club is not a full house)", () => {
+  it("counts clubs now (3-of-a-club + 2-of-a-club IS a full house)", () => {
     const pool = [
       card("AR", "GK", ["RM"]),
       card("BR", "DEF", ["RM"]),
@@ -224,7 +224,7 @@ describe("FULL_HOUSE (strength 6) — 3+2 disjoint, NEVER club", () => {
       card("ES", "FWD", ["BAR"]),
       card("FR", "GK", ["BAR"]), // 2 share club BAR
     ];
-    expect(evaluateRank(FULL_HOUSE, pool)).toBe(false);
+    expect(evaluateRank(FULL_HOUSE, pool)).toBe(true);
   });
 });
 

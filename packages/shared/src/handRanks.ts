@@ -95,6 +95,17 @@ const pairAnyOf: AnyOfRule = {
   ],
 };
 
+// A single "triple-like" group: three cards sharing a nationality, a position,
+// or at least one career club. Used by TRIPLE and by each half of FULL_HOUSE.
+const tripleAnyOf: AnyOfRule = {
+  type: "anyOf",
+  rules: [
+    { type: "group", attribute: "nationality", min: 3 },
+    { type: "group", attribute: "position", min: 3 },
+    { type: "group", attribute: "club", min: 3 },
+  ],
+};
+
 /**
  * The 9 official hand ranks, strongest (9) to weakest (1). Seeded into
  * HandRanks and interpreted by the engine. Editing a rule here (and re-seeding)
@@ -133,29 +144,11 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     nameAr: "فل هاوس",
     nameEn: "Full House",
     strength: 6,
-    rule: {
-      type: "anyOf",
-      rules: [
-        {
-          type: "allOf",
-          disjoint: true,
-          rules: [
-            { type: "group", attribute: "position", min: 3 },
-            { type: "group", attribute: "nationality", min: 2 },
-          ],
-        },
-        {
-          type: "allOf",
-          disjoint: true,
-          rules: [
-            { type: "group", attribute: "nationality", min: 3 },
-            { type: "group", attribute: "position", min: 2 },
-          ],
-        },
-      ],
-    },
+    // A group of 3 (sharing a club, position, or nationality) plus a DISJOINT
+    // group of 2 (likewise), with no shared cards between the two groups.
+    rule: { type: "allOf", disjoint: true, rules: [tripleAnyOf, pairAnyOf] },
     descriptionAr:
-      "‏(3 بنفس المركز + 2 بنفس الجنسية) أو (3 بنفس الجنسية + 2 بنفس المركز)، مجموعتان منفصلتان. لا يستخدم النادي.",
+      "ثلاثة لاعبين يجمعهم نادٍ مشترك أو مركز واحد أو جنسية واحدة، بالإضافة إلى لاعبَين آخرَين يجمعهما نادٍ مشترك أو مركز واحد أو جنسية واحدة. المجموعتان منفصلتان تماماً.",
     examples: ["ثلاثة مدافعين + برازيليان", "ثلاثة برازيليين + مهاجمان"],
   },
   {
@@ -181,14 +174,10 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     nameAr: "ثلاثي",
     nameEn: "Triple",
     strength: 3,
-    rule: {
-      type: "anyOf",
-      rules: [
-        { type: "group", attribute: "nationality", min: 3 },
-        { type: "group", attribute: "position", min: 3 },
-      ],
-    },
-    descriptionAr: "‏3 بطاقات بترابط جنسية أو مركز. لا يستخدم النادي.",
+    // Three cards sharing a club, a position, or a nationality.
+    rule: tripleAnyOf,
+    descriptionAr:
+      "ثلاثة لاعبين يجمعهم نادٍ مشترك في مسيرتهم الاحترافية، أو مركز واحد، أو جنسية واحدة.",
     examples: ["ثلاثة إيطاليين", "ثلاثة لاعبي وسط"],
   },
   {
