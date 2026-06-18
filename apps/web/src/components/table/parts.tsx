@@ -90,6 +90,8 @@ export function FootballCard({
 
   const showPhoto = Boolean(card.photoUrl) && !imgError;
   const club = card.clubs.find((c) => c && c.trim()) ?? null;
+  const fame = card.fameScore;
+  const legendary = fame != null && fame >= 100; // Messi (=100): special standout
 
   return (
     <motion.div
@@ -97,15 +99,34 @@ export function FootballCard({
       animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
       transition={{ duration: 0.38, delay: index * 0.07, ease: [0.22, 0.61, 0.36, 1] }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-white/10 text-center",
+        "group relative flex flex-col overflow-hidden rounded-xl border text-center",
         "bg-linear-to-b from-[#202a44] to-[#0e1626]",
         "shadow-[0_6px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
         "transition duration-200 hover:-translate-y-0.5 hover:border-gold/40",
         "hover:shadow-[0_12px_26px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        legendary
+          ? "border-gold/80 shadow-[0_0_20px_rgba(212,175,55,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]"
+          : "border-white/10",
         width,
       )}
       title={card.name}
     >
+      {/* Fame score — premium badge in the top-left corner (Part 4). */}
+      {fame != null ? (
+        <span
+          className={cn(
+            "absolute left-1 top-1 z-10 rounded-md border px-1.5 py-0.5 font-black tabular-nums shadow-sm",
+            legendary
+              ? "border-gold bg-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.85)]"
+              : "border-gold/50 bg-black/55 text-gold backdrop-blur-sm",
+            size === "lg" ? "text-[0.7rem]" : "text-[0.56rem]",
+          )}
+          title={`درجة الشهرة: ${Math.round(fame)}/100`}
+        >
+          {Math.round(fame)}
+        </span>
+      ) : null}
+
       {/* Photo — dominates the top, rounded by the card's overflow-hidden. */}
       <div className="relative w-full overflow-hidden bg-[#0b1322]">
         <div className="aspect-[4/5] w-full">

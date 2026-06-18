@@ -1,5 +1,5 @@
 import type { Settlement } from "@fp/engine";
-import type { BetRound } from "@fp/shared";
+import type { BetRound, Difficulty } from "@fp/shared";
 import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
 
 /**
@@ -13,9 +13,14 @@ import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
 export interface CardSource {
   /**
    * Deal `holeCount` hole cards per seat plus 5 community cards, all distinct.
-   * Throws if the player database has too few active players.
+   * `difficulty` restricts the draw to the matching fame tier (Part 3).
+   * Throws if the player database has too few eligible players.
    */
-  dealHand(seatCount: number, holePerSeat: number): Promise<{
+  dealHand(
+    seatCount: number,
+    holePerSeat: number,
+    difficulty?: Difficulty,
+  ): Promise<{
     hole: DealtCard[][];
     community: DealtCard[];
   }>;

@@ -185,7 +185,11 @@ export class GameRoom {
       if (p.connected) p.status = "WAITING";
     }
 
-    const { hole, community } = await this.deps.cards.dealHand(participants.length, 2);
+    const { hole, community } = await this.deps.cards.dealHand(
+      participants.length,
+      2,
+      this.state.difficulty ?? "MEDIUM",
+    );
     this.state.community = community;
     this.state.communityRevealed = 0;
     participants.forEach((p, i) => {
@@ -823,6 +827,7 @@ function toCardView(c: DealtCard) {
     position: c.position,
     clubs: [...c.clubs],
     photoUrl: c.photoUrl,
+    fameScore: c.fameScore ?? null,
   };
 }
 

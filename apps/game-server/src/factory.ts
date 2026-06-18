@@ -88,6 +88,7 @@ export async function hydrateRoom(
     maxPlayers: game.maxPlayers,
     isPrivate: game.isPrivate,
     config,
+    difficulty: game.difficulty,
     status: game.status === "IN_PROGRESS" ? "IN_PROGRESS" : "LOBBY",
     phase: "LOBBY",
     players,

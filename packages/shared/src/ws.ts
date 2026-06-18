@@ -91,6 +91,9 @@ export interface CardView {
   position: string;
   clubs: string[];
   photoUrl: string | null;
+  /** Fame score 0-100 (Part 4 badge), or null if not yet calculated. Display
+   *  only — never used by rank logic. */
+  fameScore: number | null;
 }
 
 export interface PlayerView {

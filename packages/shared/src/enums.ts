@@ -70,3 +70,19 @@ export type BetAction = (typeof BET_ACTIONS)[number];
 
 export const RESULT_OUTCOMES = ["WIN", "SPLIT", "LOSE", "FOLD", "REFUND"] as const;
 export type ResultOutcome = (typeof RESULT_OUTCOMES)[number];
+
+/**
+ * Room difficulty — selects which fame tier of players the deal draws from
+ * (Part 3). Display/dealing-pool only; never affects rank logic.
+ */
+export const DIFFICULTIES = ["VERY_EASY", "EASY", "MEDIUM", "ELITE"] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
+/** Difficulty → highest player tier (1=most famous) included when dealing.
+ *  ELITE includes every active player (incl. untiered), so it has no ceiling. */
+export const DIFFICULTY_MAX_TIER: Record<Difficulty, number | null> = {
+  VERY_EASY: 1,
+  EASY: 2,
+  MEDIUM: 3,
+  ELITE: null,
+};

@@ -120,6 +120,16 @@ enum TournamentType {
   @@map("tournament_type")
 }
 
+// Room difficulty — selects which fame tier the deal draws from (Part 3).
+enum Difficulty {
+  VERY_EASY
+  EASY
+  MEDIUM
+  ELITE
+
+  @@map("difficulty")
+}
+
 // ----------------------------------------------------------------------------
 // Identity, wallet, stats (persistent)
 // ----------------------------------------------------------------------------
@@ -265,6 +275,9 @@ model Player {
   // calculate scripts; both nullable/0 until then so existing rows stay valid.
   top5LeagueSeasons Int    @default(0) @map("top5_league_seasons")
   fameScore         Float? @map("fame_score")
+  // Fame tier 1-4 (1 = most famous), derived from fame_score rank by
+  // calculate-scores. Drives the difficulty dealing filter (Part 3).
+  tier              Int?
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -276,6 +289,7 @@ model Player {
 
   @@index([nationalityId])
   @@index([positionId])
+  @@index([tier])
   @@map("players")
 }
 
@@ -339,6 +353,7 @@ model Game {
   maxPlayers      Int        @map("max_players")
   inviteCode      String     @unique @map("invite_code")
   status          GameStatus @default(LOBBY)
+  difficulty      Difficulty @default(MEDIUM)
   createdBy       String     @map("created_by") @db.Uuid
   config          Json       @db.JsonB
   phase           GamePhase  @default(LOBBY)

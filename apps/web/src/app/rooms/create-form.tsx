@@ -2,9 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { type Difficulty } from "@fp/shared";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+/** The four difficulty choices (Part 5) — label + short description shown to
+ *  the player so they understand which fame pool they're drawing from. */
+const DIFFICULTY_OPTIONS: ReadonlyArray<{ value: Difficulty; label: string; desc: string }> = [
+  { value: "VERY_EASY", label: "سهل جداً", desc: "أشهر 200 لاعب في العالم" },
+  { value: "EASY", label: "سهل", desc: "أشهر 700 لاعب" },
+  { value: "MEDIUM", label: "متوسط", desc: "أشهر 1200 لاعب" },
+  { value: "ELITE", label: "النخبة", desc: "جميع اللاعبين" },
+];
 
 /** Create-room form. POSTs to /api/rooms, then opens the new table. */
 export function CreateRoomForm() {
@@ -12,6 +23,7 @@ export function CreateRoomForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [difficulty, setDifficulty] = useState<Difficulty>("MEDIUM");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,6 +39,7 @@ export function CreateRoomForm() {
           isPrivate,
           maxPlayers: Number(form.get("maxPlayers") ?? 6),
           password: isPrivate ? String(form.get("password") ?? "") : undefined,
+          difficulty,
         }),
       });
       const data = await res.json();
@@ -53,6 +66,34 @@ export function CreateRoomForm() {
       <div className="flex flex-col gap-2">
         <Label htmlFor="roomName">اسم الغرفة</Label>
         <Input id="roomName" name="roomName" placeholder="طاولة الأبطال" required />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>مستوى الصعوبة</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {DIFFICULTY_OPTIONS.map((o) => {
+            const active = difficulty === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setDifficulty(o.value)}
+                aria-pressed={active}
+                className={cn(
+                  "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",
+                  active
+                    ? "border-gold/60 bg-gold/10 shadow-[0_0_0_1px_rgba(212,175,55,0.35)]"
+                    : "border-white/10 bg-card/60 hover:border-white/25",
+                )}
+              >
+                <span className={cn("text-sm font-bold", active ? "text-gold" : "text-foreground")}>
+                  {o.label}
+                </span>
+                <span className="text-[0.7rem] leading-snug text-muted-foreground">{o.desc}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">

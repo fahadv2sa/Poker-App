@@ -1,5 +1,5 @@
 import type { Card, HandRankDef } from "@fp/engine";
-import type { BetRound, GamePhase, GameConfig } from "@fp/shared";
+import type { BetRound, Difficulty, GamePhase, GameConfig } from "@fp/shared";
 
 /**
  * Authoritative in-memory room state (Section 8). The server is the only
@@ -29,6 +29,8 @@ export interface DealtCard extends Card {
   /** Arabic name of this card's position (positions.name_ar), for result
    *  evidence — `position` itself is the engine token (GK/DEF/MID/FWD). */
   positionNameAr?: string | null;
+  /** Fame score 0-100 (Part 4 card badge); null if not calculated. Display only. */
+  fameScore?: number | null;
   photoUrl: string | null;
 }
 
@@ -63,6 +65,9 @@ export interface RoomState {
   maxPlayers: number;
   isPrivate: boolean;
   config: GameConfig;
+  /** Room difficulty — which fame tier the deal draws from (Part 3). Defaults to
+   *  MEDIUM at the deal if unset (e.g. in tests). */
+  difficulty?: Difficulty;
   status: "LOBBY" | "IN_PROGRESS" | "ENDED" | "ABANDONED";
   phase: GamePhase;
   players: RoomPlayer[];

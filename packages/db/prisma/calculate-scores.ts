@@ -132,28 +132,42 @@ async function main() {
     return { ...row, score: finalScore(row) };
   });
 
+  // PART 3 tiers — rank by fame_score DESC (name as a stable tiebreaker), then:
+  // top 200 → 1, next 500 → 2, next 500 → 3, the rest → 4. The dealing filter
+  // (game-server) maps a room's difficulty onto these tiers.
+  const sorted = [...rows].sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+  const tierOf = new Map<string, 1 | 2 | 3 | 4>();
+  sorted.forEach((r, idx) => {
+    tierOf.set(r.id, idx < 200 ? 1 : idx < 700 ? 2 : idx < 1200 ? 3 : 4);
+  });
+
   if (!DRY_RUN) {
     let done = 0;
     const CHUNK = 200;
     for (let i = 0; i < rows.length; i += CHUNK) {
       await Promise.all(
         rows.slice(i, i + CHUNK).map((r) =>
-          prisma.player.update({ where: { id: r.id }, data: { fameScore: r.score } }),
+          prisma.player.update({
+            where: { id: r.id },
+            data: { fameScore: r.score, tier: tierOf.get(r.id)! },
+          }),
         ),
       );
       done += Math.min(CHUNK, rows.length - i);
       console.log(`  written ${done}/${rows.length}`);
     }
   }
-
-  const sorted = [...rows].sort((a, b) => b.score - a.score);
   const saudi = rows.filter((r) => isSaudi(r.nationality)).length;
   const messi = rows.filter((r) => isMessi(r)).length;
+  const tierCount = (t: number) => [...tierOf.values()].filter((x) => x === t).length;
   console.log("\n==== SUMMARY ====");
   console.log(`scored              : ${rows.length}`);
   console.log(`max / min           : ${sorted[0]?.score} / ${sorted.at(-1)?.score}`);
   console.log(`Messi rows (=100)   : ${messi}`);
   console.log(`Saudi rows (+30)    : ${saudi}`);
+  console.log(
+    `tiers 1/2/3/4       : ${tierCount(1)} / ${tierCount(2)} / ${tierCount(3)} / ${tierCount(4)}`,
+  );
   console.log("top 10 by fame:");
   for (const r of sorted.slice(0, 10)) {
     console.log(`  ${r.score.toString().padStart(6)}  ${r.name} (${r.nationality})`);

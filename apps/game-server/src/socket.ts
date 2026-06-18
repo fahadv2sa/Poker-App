@@ -272,6 +272,7 @@ function buildStateSync(state: RoomState, yourSeat: number | null): StateSyncPay
       position: c.position,
       clubs: [...c.clubs],
       photoUrl: c.photoUrl,
+      fameScore: c.fameScore ?? null,
     })),
     pot: Number(state.players.reduce((s, p) => s + p.committedTotal, 0n)),
     pots: computeLivePots(state),
