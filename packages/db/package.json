@@ -16,6 +16,7 @@
     "seed": "tsx prisma/seed.ts",
     "seed:players": "tsx prisma/seed-players.ts",
     "import:api-football": "tsx prisma/import-api-football.ts",
+    "transliterate:names": "tsx prisma/transliterate-names.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -25,6 +26,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.2",
     "@fp/shared": "workspace:*",
     "@prisma/client": "^6.2.1"
   },
