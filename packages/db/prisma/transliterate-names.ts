@@ -142,12 +142,12 @@ async function main() {
   let failedBatches = 0;
 
   for (let b = 0; b < batches.length; b++) {
-    const batch = batches[b];
+    const batch = batches[b]!;
     try {
       const result = await transliterateBatch(batch);
 
       for (let i = 0; i < batch.length; i++) {
-        const row = batch[i];
+        const row = batch[i]!;
         const nameAr = result.get(i + 1) ?? "";
 
         if (DRY_RUN) {
