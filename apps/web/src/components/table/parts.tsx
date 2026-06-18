@@ -27,11 +27,35 @@ const STATUS_AR: Record<string, string> = {
   DISCONNECTED: "غير متصل",
 };
 
+/** Up-to-two-letter initials for the photo placeholder (first + last token). */
+function cardInitials(name: string): string {
+  const parts = name.replace(/\./g, " ").split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "؟";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
+}
+
+/** A soft, gradient hairline separator (not a heavy line). */
+function CardDivider() {
+  return (
+    <span
+      className="my-0.5 h-px w-4/5 bg-linear-to-r from-transparent via-white/25 to-transparent"
+      aria-hidden
+    />
+  );
+}
+
 /**
- * A football-player card (DISPLAY ONLY). Batch 2: shows ONLY the player's name —
- * English, a divider, then Arabic — centred in the middle of the card. The
- * club/nationality/position are deliberately NOT shown (they remain in the DB
- * and drive every rank calculation server-side; they're just hidden here).
+ * A football-player card (DISPLAY ONLY) — a premium trading-card look:
+ * photo on top, then English name, Arabic name, and the club, each separated by
+ * a soft divider, everything centred. The club/nationality/position remain in
+ * the DB and drive every rank calculation server-side; this view only displays
+ * the photo, the two names, and a single club label.
+ *
+ * NOTE: the club shown is the first entry in the card's club list. The imported
+ * data carries no club recency (no years / current flag), so this is not
+ * guaranteed to be the player's *current* club for multi-club players; it is
+ * always correct for single-club players. No "current" claim is made in the UI.
  */
 export function FootballCard({
   card,
@@ -44,19 +68,18 @@ export function FootballCard({
   index?: number;
   size?: "md" | "lg";
 }) {
-  const dims =
-    size === "lg"
-      ? "w-[104px] min-h-[150px] p-3"
-      : "w-[68px] min-h-[98px] p-2 sm:w-[76px] sm:min-h-[108px]";
+  const [imgError, setImgError] = useState(false);
+  const width = size === "lg" ? "w-[120px]" : "w-[80px] sm:w-[88px]";
 
   if (back || !card) {
     return (
       <div
         className={cn(
           "flex items-center justify-center rounded-xl border border-white/10 text-2xl text-white/30",
+          "aspect-[2/3]",
           "[background:repeating-linear-gradient(135deg,#101a30,#101a30_7px,#16223c_7px,#16223c_14px)]",
           "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
-          dims,
+          width,
         )}
         aria-label="بطاقة مغلقة"
       >
@@ -65,39 +88,88 @@ export function FootballCard({
     );
   }
 
+  const showPhoto = Boolean(card.photoUrl) && !imgError;
+  const club = card.clubs.find((c) => c && c.trim()) ?? null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -14, rotate: -4, scale: 0.92 }}
       animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
       transition={{ duration: 0.38, delay: index * 0.07, ease: [0.22, 0.61, 0.36, 1] }}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 text-center",
+        "group relative flex flex-col overflow-hidden rounded-xl border border-white/10 text-center",
         "bg-linear-to-b from-[#202a44] to-[#0e1626]",
         "shadow-[0_6px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
-        dims,
+        "transition duration-200 hover:-translate-y-0.5 hover:border-gold/40",
+        "hover:shadow-[0_12px_26px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        width,
       )}
       title={card.name}
     >
-      {/* English name */}
-      <span
-        className={cn(
-          "font-extrabold leading-tight",
-          size === "lg" ? "text-[0.95rem]" : "text-[0.72rem]",
-        )}
-      >
-        {card.name}
-      </span>
-      {/* divider between the two names */}
-      <span className="h-px w-3/4 bg-white/20" aria-hidden />
-      {/* Arabic name (data-driven from the DB) */}
-      <span
-        className={cn(
-          "font-bold leading-tight text-white/80",
-          size === "lg" ? "text-[0.9rem]" : "text-[0.7rem]",
-        )}
-      >
-        {card.nameAr ?? card.name}
-      </span>
+      {/* Photo — dominates the top, rounded by the card's overflow-hidden. */}
+      <div className="relative w-full overflow-hidden bg-[#0b1322]">
+        <div className="aspect-[4/5] w-full">
+          {showPhoto ? (
+            // Remote provider image; plain <img> avoids next/image remote config.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={card.photoUrl!}
+              alt={card.name}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              onError={() => setImgError(true)}
+              className="h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.05]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#1b2742] to-[#0b1322]">
+              <span
+                className={cn(
+                  "font-black tracking-wide text-white/40",
+                  size === "lg" ? "text-2xl" : "text-lg",
+                )}
+              >
+                {cardInitials(card.name)}
+              </span>
+            </div>
+          )}
+        </div>
+        {/* Soft scrim blends the photo into the card body. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
+      </div>
+
+      {/* Text block (centred): EN name · AR name · club, each soft-divided. */}
+      <div className={cn("flex flex-col items-center", size === "lg" ? "gap-0.5 p-2" : "gap-0.5 p-1.5")}>
+        <CardDivider />
+        {/* English name (slightly smaller than Arabic) */}
+        <span
+          className={cn(
+            "w-full truncate font-bold leading-tight text-white/90",
+            size === "lg" ? "text-[0.78rem]" : "text-[0.6rem]",
+          )}
+        >
+          {card.name}
+        </span>
+        <CardDivider />
+        {/* Arabic name (data-driven from the DB; falls back to English) */}
+        <span
+          className={cn(
+            "w-full truncate font-extrabold leading-tight",
+            size === "lg" ? "text-[0.95rem]" : "text-[0.74rem]",
+          )}
+        >
+          {card.nameAr ?? card.name}
+        </span>
+        <CardDivider />
+        {/* Club — small, muted, elegant */}
+        <span
+          className={cn(
+            "w-full truncate font-medium leading-tight text-gold/70",
+            size === "lg" ? "text-[0.62rem]" : "text-[0.5rem]",
+          )}
+        >
+          {club ?? "—"}
+        </span>
+      </div>
     </motion.div>
   );
 }
