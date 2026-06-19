@@ -19,8 +19,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "فوتبول بوكر",
-  description: "لعبة ورق كرة قدم بأسلوب بوكر — أونلاين",
+  title: "فوتبول بي",
+  description: "تحديات كرة قدم",
+  openGraph: {
+    title: "فوتبول بي",
+    description: "تحديات كرة قدم",
+    type: "website",
+    locale: "ar_AR",
+    siteName: "فوتبول بي",
+  },
+  twitter: {
+    card: "summary",
+    title: "فوتبول بي",
+    description: "تحديات كرة قدم",
+  },
 };
 
 export const viewport: Viewport = {

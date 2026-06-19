@@ -29,7 +29,7 @@ export default async function HomePage() {
       <header className="mb-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xl font-black">
           <span className="size-3 rounded-full bg-primary glow-primary" />
-          فوتبول بوكر
+          فوتبول بي
         </div>
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
