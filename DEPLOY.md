@@ -72,6 +72,37 @@ psql "<Railway connection string>" -f data.sql
 (Positions and hand_ranks come from STEP 4's seed; `player_tournament_stats` is
 intentionally empty until the tournament-stats import is run.)
 
+> **STEP 5b — remap `position_id` (REQUIRED).** `positions` are *seeded* on
+> Railway (STEP 4), so their UUIDs differ from your local DB's. The imported
+> `players.position_id` values still point at the **local** position UUIDs, and
+> the `--data-only` load can leave them dangling (a plain restore would fail the
+> FK; `--disable-triggers` would silently keep the bad refs). Either way, every
+> `player.position` resolves to `null` and the game crashes with
+> *"Field position is required to return data, got `null`"*. `nationalities` and
+> `clubs` are imported wholesale so their UUIDs match — only positions need this.
+> Fix by remapping via the stable `code`, using the local positions as a lookup:
+>
+> ```bash
+> # 1) load local positions into a lookup table on Railway (real table, not TEMP,
+> #    so it survives across the separate psql sessions below)
+> psql "<Railway connection string>" \
+>   -c "CREATE TABLE positions_local (LIKE positions INCLUDING ALL);"
+> docker exec football_poker_db pg_dump -U football -d football_poker \
+>   --data-only --no-owner -t positions \
+>   | sed 's/public.positions /public.positions_local /g' \
+>   | psql "<Railway connection string>"
+>
+> # 2) repoint players to the seeded positions by code, then drop the lookup
+> psql "<Railway connection string>" -c "
+>   UPDATE players p SET position_id = pos.id
+>   FROM positions_local pl JOIN positions pos ON pos.code = pl.code
+>   WHERE p.position_id = pl.id;
+>   DROP TABLE positions_local;"
+> ```
+>
+> Verify: `SELECT count(*) FROM players p LEFT JOIN positions pos
+> ON p.position_id = pos.id WHERE pos.id IS NULL;` must return **0**.
+
 ## STEP 6 — Configure the game-server service
 Create/select the **game-server** service (Root Directory = repo root):
 - **Build Command:** _(none — `tsx` runs the source; install + postinstall is enough)_
