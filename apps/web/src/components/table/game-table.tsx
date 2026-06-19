@@ -456,7 +456,7 @@ function ClaimPanel({
             )}
           >
             <span className="font-medium">{r.nameAr}</span>
-            <span className="num text-xs text-muted-foreground">{r.strength}</span>
+            <span className="num text-xs text-muted-foreground">{10 - r.strength}</span>
           </button>
         ))}
       </div>
