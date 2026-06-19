@@ -6,8 +6,9 @@ import { buildSidePots, type PotSeat, type SidePot } from "./pots.js";
  * it builds the side pots and returns the exact wallet movements to apply.
  *
  * Distribution per pot: the highest claimed strength among the pot's eligible
- * (non-folded, valid) seats wins it; ties split (SPLIT_WIN), remainder coins go
- * to the lowest seats. A pot with no eligible valid winner pays no one — its
+ * (non-folded, valid) seats wins it; ties split (SPLIT_WIN), and any indivisible
+ * remainder coins go to the first (lowest-seat) winner. A pot with no eligible
+ * valid winner pays no one — its
  * non-folder layer contributions are REFUNDed to their contributors, and any
  * folder forfeit parked in it becomes a FOLD_FORFEIT sink (see
  * forfeit-accounting model). Last-player-standing is just the case where the
@@ -37,16 +38,14 @@ function splitAmount(amount: bigint, winners: number[]): Map<number, bigint> {
   const sorted = [...winners].sort((a, b) => a - b);
   const n = BigInt(sorted.length);
   const base = amount / n;
-  let remainder = amount - base * n; // 0 .. n-1, handed out 1 coin at a time
+  // Indivisible remainder (0 .. n-1) all goes to the FIRST (lowest-seat) winner,
+  // per the betting rules. base * n + remainder === amount, so the pot is always
+  // fully distributed with no coins created or lost.
+  const remainder = amount - base * n;
   const out = new Map<number, bigint>();
-  for (const seat of sorted) {
-    let share = base;
-    if (remainder > 0n) {
-      share += 1n;
-      remainder -= 1n;
-    }
-    out.set(seat, share);
-  }
+  sorted.forEach((seat, i) => {
+    out.set(seat, i === 0 ? base + remainder : base);
+  });
   return out;
 }
 

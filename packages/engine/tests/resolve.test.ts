@@ -72,6 +72,25 @@ describe("split", () => {
     // 300 / 3 = 100 each, no remainder.
     expect([net.get(2), net.get(5), net.get(9)]).toEqual([100n, 100n, 100n]);
   });
+
+  it("gives ALL indivisible remainder coins to the first (lowest) winner", () => {
+    // Single 500-coin pot, three-way tie at the top (seats 4 & 5 contributed but
+    // lose). 500 / 3 = 166 base, remainder 2 → both odd coins go to seat 1, not
+    // spread one-each across seats 1 & 2. Pot stays fully distributed (zero-sum).
+    const { settlements } = resolveShowdown([
+      seat(1, 100n, { strength: 7 }),
+      seat(2, 100n, { strength: 7 }),
+      seat(3, 100n, { strength: 7 }),
+      seat(4, 100n, { strength: 2 }),
+      seat(5, 100n, { strength: 2 }),
+    ]);
+    const net = netBySeat(settlements);
+    expect(net.get(1)).toBe(168n); // first winner takes both remainder coins
+    expect(net.get(2)).toBe(166n);
+    expect(net.get(3)).toBe(166n);
+    // Whole pot distributed, nothing created or lost.
+    expect(sumByType(settlements, "SPLIT_WIN")).toBe(500n);
+  });
 });
 
 describe("everyone wrong → no winner (Section 11.5)", () => {
