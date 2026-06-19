@@ -113,7 +113,7 @@ describe("TRIPLE (strength 3) — three by nationality, position, or shared club
   });
 });
 
-describe("LINEUP (strength 4) — all four positions covered", () => {
+describe("LINEUP (strength 5) — all four positions covered", () => {
   const LINEUP = ruleOf("LINEUP");
 
   it("matches GK + DEF + MID + FWD", () => {
@@ -150,7 +150,7 @@ describe("LINEUP (strength 4) — all four positions covered", () => {
   });
 });
 
-describe("FULL_HOUSE_CLUB (strength 5) — HAND_SIZE cards share ≥1 club", () => {
+describe("FULL_HOUSE_CLUB (strength 6) — HAND_SIZE cards share ≥1 club", () => {
   const FHC = ruleOf("FULL_HOUSE_CLUB");
 
   it("matches five cards all sharing one club, even as a secondary club", () => {
@@ -178,7 +178,7 @@ describe("FULL_HOUSE_CLUB (strength 5) — HAND_SIZE cards share ≥1 club", () 
   });
 });
 
-describe("FULL_HOUSE (strength 6) — 3+2 disjoint, by club/position/nationality", () => {
+describe("FULL_HOUSE (strength 4) — 3+2 disjoint, by club/position/nationality", () => {
   const FULL_HOUSE = ruleOf("FULL_HOUSE");
 
   it("matches three of a position + two of a nationality (disjoint)", () => {

@@ -140,22 +140,10 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     examples: ["خمسة لاعبين بنفس المركز"],
   },
   {
-    code: "FULL_HOUSE",
-    nameAr: "فل هاوس",
-    nameEn: "Full House",
-    strength: 6,
-    // A group of 3 (sharing a club, position, or nationality) plus a DISJOINT
-    // group of 2 (likewise), with no shared cards between the two groups.
-    rule: { type: "allOf", disjoint: true, rules: [tripleAnyOf, pairAnyOf] },
-    descriptionAr:
-      "ثلاثة لاعبين يجمعهم نادٍ مشترك أو مركز واحد أو جنسية واحدة، بالإضافة إلى لاعبَين آخرَين يجمعهما نادٍ مشترك أو مركز واحد أو جنسية واحدة. المجموعتان منفصلتان تماماً.",
-    examples: ["ثلاثة مدافعين + برازيليان", "ثلاثة برازيليين + مهاجمان"],
-  },
-  {
     code: "FULL_HOUSE_CLUB",
     nameAr: "فل هاوس كلوب",
     nameEn: "Club Full House",
-    strength: 5,
+    strength: 6,
     rule: { type: "group", attribute: "club", min: HAND_SIZE },
     descriptionAr: `${HAND_SIZE} بطاقات تشترك في نادٍ واحد على الأقل.`,
     examples: ["خمسة لاعبين مرّوا جميعًا بنادٍ واحد مشترك"],
@@ -164,10 +152,22 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     code: "LINEUP",
     nameAr: "تشكيلة",
     nameEn: "Lineup",
-    strength: 4,
+    strength: 5,
     rule: { type: "coverage", attribute: "position", values: "all" },
     descriptionAr: "تغطية كل المراكز الأربعة: GK وDEF وMID وFWD.",
     examples: ["حارس + مدافع + وسط + مهاجم"],
+  },
+  {
+    code: "FULL_HOUSE",
+    nameAr: "فل هاوس",
+    nameEn: "Full House",
+    strength: 4,
+    // A group of 3 (sharing a club, position, or nationality) plus a DISJOINT
+    // group of 2 (likewise), with no shared cards between the two groups.
+    rule: { type: "allOf", disjoint: true, rules: [tripleAnyOf, pairAnyOf] },
+    descriptionAr:
+      "ثلاثة لاعبين يجمعهم نادٍ مشترك أو مركز واحد أو جنسية واحدة، بالإضافة إلى لاعبَين آخرَين يجمعهما نادٍ مشترك أو مركز واحد أو جنسية واحدة. المجموعتان منفصلتان تماماً.",
+    examples: ["ثلاثة مدافعين + برازيليان", "ثلاثة برازيليين + مهاجمان"],
   },
   {
     code: "TRIPLE",

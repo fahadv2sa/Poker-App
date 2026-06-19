@@ -95,9 +95,9 @@ and writes to PostgreSQL inside transactions.
 | 9 | `ROYAL_CLUB` | رويال النادي | 5 cards with an identical full club set |
 | 8 | `ROYAL_NATION` | رويال الجنسية | 5 cards same nationality |
 | 7 | `ROYAL_POSITION` | رويال المراكز | 5 cards same position |
-| 6 | `FULL_HOUSE` | فل هاوس | (3 position + 2 nationality) or (3 nationality + 2 position), disjoint |
-| 5 | `FULL_HOUSE_CLUB` | فل هاوس كلوب | 5 cards share at least one club |
-| 4 | `LINEUP` | تشكيلة | covers all four positions (GK, DEF, MID, FWD) |
+| 6 | `FULL_HOUSE_CLUB` | فل هاوس كلوب | 5 cards share at least one club |
+| 5 | `LINEUP` | تشكيلة | covers all four positions (GK, DEF, MID, FWD) |
+| 4 | `FULL_HOUSE` | فل هاوس | (3 position + 2 nationality) or (3 nationality + 2 position), disjoint |
 | 3 | `TRIPLE` | ثلاثي | 3 cards sharing nationality OR position (NOT club) |
 | 2 | `TWO_PAIR` | زوجين | two disjoint pairs, each by nationality/position/club |
 | 1 | `PAIR` | زوج | one pair by nationality/position/club |
