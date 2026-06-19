@@ -36,6 +36,7 @@ coverage/
 # one-time API-Football importer resume checkpoints (never commit)
 .import-progress.json
 .tournament-progress.json
+.diff-import-progress.json
 .run-logs/
 
 # docker volume (if mapped locally)

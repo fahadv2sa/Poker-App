@@ -392,12 +392,30 @@ async function upsertPlayer(
   }
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+// Reusable helpers for the differential importer (differential-import.ts) and
+// any future tooling — re-export the existing functions so the rate-limited
+// fetch, position mapping, and player/club upsert logic are never duplicated.
+export {
+  apiGet,
+  QuotaStop,
+  requestsMade,
+  birthYearOf,
+  primaryPosition,
+  POSITION_MAP,
+  upsertPlayer,
+};
+export type { ApiEnvelope, PlayerItem, TeamItem, Discovered };
+
+// Only auto-run the full season importer when this file is executed directly
+// (pnpm db:import-api-football) — NOT when another script imports its helpers.
+if (process.argv[1]?.endsWith("import-api-football.ts")) {
+  main()
+    .then(async () => {
+      await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+      console.error(e);
+      await prisma.$disconnect();
+      process.exit(1);
+    });
+}
