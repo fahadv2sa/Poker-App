@@ -3,6 +3,8 @@ import { Server } from "socket.io";
 import { rateLimit, type RateStore } from "@fp/shared";
 import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
+import { PrismaRoomPersistence } from "./persistence.js";
+import { reconcileOrphanedGames } from "./recovery.js";
 import { attachSocketHandlers } from "./socket.js";
 import { InMemoryRoomStore } from "./store.js";
 
@@ -44,6 +46,12 @@ async function main(): Promise<void> {
       next(new Error(err instanceof SessionExpiredError ? "SESSION_EXPIRED" : "UNAUTHENTICATED"));
     }
   });
+
+  // Crash/restart recovery (run BEFORE accepting traffic): in-memory round state
+  // is lost on restart, so any game still IN_PROGRESS in the DB is orphaned — its
+  // committed antes/bets were debited but never credited back. Reconcile each via
+  // the ledger (refund unresolved commitments) and mark it ABANDONED. Idempotent.
+  await reconcileOrphanedGames(new PrismaRoomPersistence());
 
   // HandRanks are data-driven: load them once at boot (re-seedable at runtime).
   const ranks = await loadRanks();
