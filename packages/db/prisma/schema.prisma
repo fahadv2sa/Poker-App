@@ -278,6 +278,10 @@ model Player {
   // or card privacy). The fame-score "legend" component stays 0 for everyone
   // until that scoring rule is activated separately.
   isLegend      Boolean  @default(false) @map("is_legend")
+  // Legend-card score: the raw fame_score mapped into the legend range
+  // [80, 95] via 80 + 15*(fame_score/100); Messi=100, Ronaldo=99 override.
+  // Null for non-legends. fame_score keeps the raw value untouched.
+  legendScore   Float?   @map("legend_score")
   // Fame system (display + difficulty tiers only — NEVER used by the rank
   // engine, which keys on nationality/position/clubs). Filled by the import +
   // calculate scripts; both nullable/0 until then so existing rows stay valid.
