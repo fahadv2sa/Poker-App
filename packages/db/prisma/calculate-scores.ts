@@ -12,11 +12,16 @@
  *   distinct clubs              10%
  *   legend cards                10%   0 for everyone until legends are defined
  *
- * Messi is the benchmark and the unique ceiling (pinned to exactly 100). For
- * every other player, each component = (player_raw / Messi_raw) * weight; if a
- * player MEETS OR EXCEEDS Messi on a component (ratio >= 1) it is hard-capped to
- * 10% below him (0.9 * weight). So no one may equal or exceed Messi on any
- * component or overall — Messi stays uniquely at 100 (others max ~81).
+ * Messi is the SOLE benchmark and the unique ceiling (pinned to exactly 100). For
+ * every other player, each component is normalized against Messi and scaled to a
+ * 0.95 ceiling: component = 0.95 * min(1, player_raw / Messi_raw) * weight. A
+ * player who meets/exceeds Messi sits 5% below him on that component (0.95*weight),
+ * smoothly — continuous at ratio=1, no discontinuity, ordering preserved — and
+ * below weight for everyone, so no one reaches Messi on any component or overall
+ * (normalized players max 0.95*90 = 85.5).
+ *
+ * Cristiano Ronaldo is a FIXED final-score exception at 99 (override only, NOT a
+ * benchmark — it never affects how any other player is normalized).
  *
  * Missing inputs contribute 0 (no skip/throw). Tournament inputs come from the
  * tournament-stats import; players not yet imported get 0 there. Re-run after the
@@ -116,8 +121,11 @@ const benchmarkOf = (r: Row): Benchmark => ({
 function componentScore(raw: number, messiRaw: number, weight: number): number {
   if (messiRaw <= 0) return 0;
   const ratio = raw / messiRaw;
-  if (ratio >= 1) return 0.9 * weight;
-  return ratio * weight;
+  // Smooth normalization scaled to a 0.95 ceiling: below Messi → 0.95*ratio*weight;
+  // meet/exceed Messi → 0.95*weight (5% below him). Continuous at ratio=1 (no
+  // discontinuity), monotonic (ordering preserved), and < weight for everyone, so
+  // no one reaches Messi on the component.
+  return 0.95 * Math.min(1, ratio) * weight;
 }
 
 // Lionel Messi specifically — API-Football id 154. The name fallback also
@@ -125,8 +133,16 @@ function componentScore(raw: number, messiRaw: number, weight: number): number {
 const isMessi = (r: Row) =>
   r.externalRef === 154 || (/\bmessi\b/i.test(r.name) && norm(r.nationality) === "argentina");
 
+// Cristiano Ronaldo (API-Football id 874) — a FIXED final-score exception at 99,
+// NOT a normalization benchmark. The name fallback requires Portugal so the
+// Brazilian "Ronaldo" (Nazário) never matches.
+const isRonaldo = (r: Row) =>
+  r.externalRef === 874 ||
+  (/\bcristiano ronaldo\b/i.test(r.name) && norm(r.nationality) === "portugal");
+
 function finalScore(r: Row, m: Benchmark): number {
   if (isMessi(r)) return 100; // Messi is the unique ceiling (pinned).
+  if (isRonaldo(r)) return 99; // fixed exception — override only, not a benchmark.
   const s =
     componentScore(top5Raw(r), m.top5, WEIGHTS.top5) +
     componentScore(clubStrengthRaw(r), m.club, WEIGHTS.club) +
@@ -212,12 +228,15 @@ async function main() {
   }
 
   const messiCount = rows.filter((r) => isMessi(r)).length;
-  const topNonMessi = sorted.find((r) => !isMessi(r))?.score ?? 0;
+  const ronaldoScore = rows.find((r) => isRonaldo(r))?.score ?? null;
+  // Top of the NORMALIZED field (excluding the two fixed exceptions).
+  const topNormalized = sorted.find((r) => !isMessi(r) && !isRonaldo(r))?.score ?? 0;
   const tierCount = (t: number) => [...tierOf.values()].filter((x) => x === t).length;
   console.log("\n==== SUMMARY ====");
   console.log(`scored                 : ${rows.length}`);
-  console.log(`Messi rows (=100)      : ${messiCount}`);
-  console.log(`top non-Messi / min    : ${topNonMessi} / ${sorted.at(-1)?.score}`);
+  console.log(`Messi (=100) rows      : ${messiCount}`);
+  console.log(`Ronaldo (=99)          : ${ronaldoScore}`);
+  console.log(`top normalized / min   : ${topNormalized} / ${sorted.at(-1)?.score}`);
   console.log(
     `tiers 1/2/3/4          : ${tierCount(1)} / ${tierCount(2)} / ${tierCount(3)} / ${tierCount(4)}`,
   );
