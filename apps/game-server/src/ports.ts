@@ -91,6 +91,18 @@ export interface RoomPersistence {
     players: RoomPlayer[],
     handNumber: number,
   ): Promise<void>;
+  /**
+   * Close a room for good: refund any coins still committed to a live hand
+   * (REFUND movements, returning each contributor's stake) and mark the game
+   * ABANDONED — atomically, in one transaction. `refunds` is empty when closing
+   * from the lobby or between hands (nothing is in the pot). The salted
+   * `reference` on each refund keeps it idempotent if a close is ever retried.
+   */
+  closeGame(
+    gameId: string,
+    refunds: LedgerMovement[],
+    handNumber: number,
+  ): Promise<void>;
 }
 
 /** Broadcasts server→client events (Section 12). */

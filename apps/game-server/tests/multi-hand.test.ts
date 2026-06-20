@@ -78,6 +78,12 @@ class LedgerPersistence implements RoomPersistence {
     }
     this.settlements.push(...settlements);
   }
+  async closeGame(_g: string, refunds: LedgerMovement[]) {
+    for (const m of refunds) {
+      this.balances.set(m.userId, (this.balances.get(m.userId) ?? 0n) + m.amount);
+      this.movements.push(m);
+    }
+  }
 }
 
 class FakeEmitter implements Emitter {
@@ -533,5 +539,27 @@ describe("a player can leave between hands without breaking the room", () => {
     // And the session still resolves cleanly.
     await playHand(room);
     expect(room.state.phase).toBe("ENDED");
+  });
+});
+
+describe("closing a table mid-hand restores every committed coin (ledger net-zero)", () => {
+  it("refunds the antes so both players return to their pre-hand balance", async () => {
+    const { room, persistence } = makeRoom(
+      [
+        [1, "a"],
+        [2, "b"],
+      ],
+      { a: 1000n, b: 1000n },
+    );
+    await room.start(); // antes 50 each
+    expect(persistence.balances.get("a")).toBe(950n);
+    expect(persistence.balances.get("b")).toBe(950n);
+
+    await room.close();
+
+    // The live hand is voided: every committed coin is returned through the ledger.
+    expect(persistence.balances.get("a")).toBe(1000n);
+    expect(persistence.balances.get("b")).toBe(1000n);
+    expect(room.state.status).toBe("ABANDONED");
   });
 });

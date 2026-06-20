@@ -187,6 +187,8 @@ export function useGameSocket(token: string, inviteCode: string) {
       // A6: an opponent disconnected/left — transient banner.
       onPlayerLeft: (p) =>
         pushNoticeRef.current(`${p.username || `مقعد ${p.seat}`} غادر الطاولة`, "system"),
+      // The room was closed (host or auto-empty): mark it so the table redirects.
+      onRoomClosed: (p) => setView((v) => ({ ...v, closed: p.reason })),
       onError: (e) => setView((v) => ({ ...v, error: e.messageAr })),
     });
     connRef.current = conn;
@@ -196,6 +198,7 @@ export function useGameSocket(token: string, inviteCode: string) {
 
   const start = useCallback(() => connRef.current?.start(), []);
   const nextHand = useCallback(() => connRef.current?.nextHand(), []);
+  const closeTable = useCallback(() => connRef.current?.closeTable(), []);
   const placeAction = useCallback(
     (type: string, amount?: number) => connRef.current?.placeAction(type, amount),
     [],
@@ -206,5 +209,5 @@ export function useGameSocket(token: string, inviteCode: string) {
   );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
 
-  return { view, start, nextHand, placeAction, selectClaim, clearError };
+  return { view, start, nextHand, closeTable, placeAction, selectClaim, clearError };
 }

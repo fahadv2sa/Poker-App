@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -40,10 +41,13 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, nextHand, placeAction, selectClaim, clearError } = useGameSocket(token, inviteCode);
+  const { view, start, nextHand, closeTable, placeAction, selectClaim, clearError } =
+    useGameSocket(token, inviteCode);
+  const router = useRouter();
   const s = view.state;
   const [raiseTo, setRaiseTo] = useState(0);
   const [claimed, setClaimed] = useState<string | null>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const players = useMemo(
     () => (s ? [...s.players].sort((a, b) => a.seat - b.seat) : []),
@@ -74,6 +78,13 @@ export function GameTable({
   useEffect(() => {
     if (phase !== "SHOWDOWN") setClaimed(null);
   }, [phase]);
+  // The room was closed (host or auto-empty): briefly show why, then return to
+  // the menu. The server already evicted us and settled any refunds.
+  useEffect(() => {
+    if (!view.closed) return;
+    const t = setTimeout(() => router.replace("/"), 1400);
+    return () => clearTimeout(t);
+  }, [view.closed, router]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-6">
@@ -90,6 +101,29 @@ export function GameTable({
           <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
             🪙 <span className="num font-semibold">{shownBalance}</span>
           </span>
+          {/* Host-only Close Table (two-step confirm): ends any live hand,
+              refunds bets, evicts everyone, deletes the room. */}
+          {isHost ? (
+            confirmClose ? (
+              <span className="flex items-center gap-1">
+                <Button variant="destructive" size="sm" onClick={() => closeTable()}>
+                  تأكيد الإغلاق
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmClose(false)}>
+                  إلغاء
+                </Button>
+              </span>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setConfirmClose(true)}
+              >
+                إغلاق الطاولة
+              </Button>
+            )
+          ) : null}
           <Button asChild variant="ghost" size="sm">
             <Link href="/">خروج</Link>
           </Button>
@@ -307,6 +341,27 @@ export function GameTable({
             role="alert"
           >
             {view.error}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Room closed (host closed it, or it auto-emptied): explain, then redirect. */}
+      <AnimatePresence>
+        {view.closed ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center bg-background/90 px-6 text-center backdrop-blur"
+          >
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-xl font-black">
+                {view.closed === "CLOSED_BY_HOST" ? "أغلق المضيف الطاولة" : "أُغلقت الطاولة"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                تمت إعادة أي رهانات نشطة إلى رصيدك — يتم إرجاعك إلى القائمة…
+              </p>
+            </div>
           </motion.div>
         ) : null}
       </AnimatePresence>

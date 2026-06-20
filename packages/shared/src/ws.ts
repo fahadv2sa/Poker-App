@@ -17,6 +17,9 @@ import { BET_ACTIONS, GAME_PHASES, RESULT_OUTCOMES } from "./enums.js";
 export const CLIENT_EVENTS = {
   roomJoin: "room:join",
   roomLeave: "room:leave",
+  /** Host closes the table: void any live hand (refund bets), evict everyone,
+   *  delete the room (server verifies the requester is the creator). */
+  roomClose: "room:close",
   gameStart: "game:start",
   /** Host explicitly deals the next hand of the session (Batch 1: no auto-deal). */
   nextHand: "hand:next",
@@ -40,6 +43,9 @@ export const SERVER_EVENTS = {
   sessionWaiting: "session:waiting",
   /** A player disconnected / left the room (Batch 2: opponent-left banner). */
   playerLeft: "player:left",
+  /** The room was closed (host closed it, or it auto-deleted when it emptied).
+   *  Clients should leave the table and return to the menu. */
+  roomClosed: "room:closed",
   error: "error",
 } as const;
 
@@ -58,6 +64,9 @@ export type RoomLeaveInput = z.infer<typeof roomLeaveSchema>;
 
 export const gameStartSchema = z.object({});
 export type GameStartInput = z.infer<typeof gameStartSchema>;
+
+export const roomCloseSchema = z.object({});
+export type RoomCloseInput = z.infer<typeof roomCloseSchema>;
 
 export const actionPlaceSchema = z.object({
   type: z.enum(BET_ACTIONS).refine((t) => t !== "ANTE", "ANTE is server-posted"),
@@ -250,6 +259,12 @@ export interface SessionWaitingPayload {
 export interface PlayerLeftPayload {
   seat: number;
   username: string;
+}
+
+/** The room was closed and removed. `CLOSED_BY_HOST` = the creator closed it;
+ *  `EMPTY` = it auto-deleted when the last player left. */
+export interface RoomClosedPayload {
+  reason: "CLOSED_BY_HOST" | "EMPTY";
 }
 
 export interface ErrorPayload {

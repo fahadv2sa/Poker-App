@@ -91,6 +91,35 @@ export function attachSocketHandlers(
     return rt;
   }
 
+  // Per-game teardown guard: serializes the host-close and the auto-empty cleanup
+  // so a room is closed (and its hand refunded) exactly once even if they race.
+  const closingGames = new Set<string>();
+
+  /**
+   * Close a room and remove it: void+refund any live hand and mark the game
+   * ABANDONED (room.close), notify clients to leave, force every socket out of
+   * the Socket.IO room, then drop the in-memory runtime + store entry. If the
+   * money/persist step throws, the room is left intact and the error propagates.
+   */
+  async function closeAndTeardown(
+    gameId: string,
+    rt: RoomRuntime,
+    reason: "CLOSED_BY_HOST" | "EMPTY",
+  ): Promise<void> {
+    if (closingGames.has(gameId)) return;
+    closingGames.add(gameId);
+    try {
+      await rt.room.close();
+      io.to(roomKey(gameId)).emit(SERVER_EVENTS.roomClosed, { reason });
+      io.in(roomKey(gameId)).socketsLeave(roomKey(gameId));
+      rt.seats.clear();
+      runtimes.delete(gameId);
+      store.delete(gameId);
+    } finally {
+      closingGames.delete(gameId);
+    }
+  }
+
   io.on("connection", (socket: Socket) => {
     const user = socket.data.user as SocketUser | undefined;
     if (!user) {
@@ -141,6 +170,20 @@ export function attachSocketHandlers(
       }),
     );
 
+    // Host closes the table: server-side creator check (identity from the verified
+    // token, never the client), then void+refund any live hand and delete the room.
+    socket.on(CLIENT_EVENTS.roomClose, () =>
+      guard(socket, async () => {
+        if (!joinedGameId) return emitError(socket, "NO_ROOM", "لست في غرفة");
+        const rt = runtimes.get(joinedGameId);
+        if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
+        if (rt.room.state.createdBy !== user.userId) {
+          return emitError(socket, "NOT_HOST", "المضيف فقط يغلق الطاولة");
+        }
+        await closeAndTeardown(joinedGameId, rt, "CLOSED_BY_HOST");
+      }),
+    );
+
     // Batch 1: explicit between-hands gate — the host deals the next hand; the
     // server only then charges antes (no auto-deal). startNextHand re-checks
     // eligibility and rotates the dealer.
@@ -181,7 +224,7 @@ export function attachSocketHandlers(
       }),
     );
 
-    const leave = () => {
+    const leave = async () => {
       if (!joinedGameId) return;
       const rt = runtimes.get(joinedGameId);
       if (!rt) return;
@@ -195,9 +238,18 @@ export function attachSocketHandlers(
         // Batch 2: tell the rest of the table so they can show a banner.
         socket.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
       }
+      // Auto-cleanup: once nobody connected remains, close the room (voiding +
+      // refunding any live hand) and delete it — so an abandoned table never lingers.
+      if (!rt.room.state.players.some((p) => p.connected)) {
+        await closeAndTeardown(joinedGameId, rt, "EMPTY");
+      }
     };
-    socket.on(CLIENT_EVENTS.roomLeave, leave);
-    socket.on("disconnect", leave);
+    socket.on(CLIENT_EVENTS.roomLeave, () => {
+      void leave().catch((err) => console.error("room:leave cleanup failed", err));
+    });
+    socket.on("disconnect", () => {
+      void leave().catch((err) => console.error("disconnect cleanup failed", err));
+    });
   });
 }
 

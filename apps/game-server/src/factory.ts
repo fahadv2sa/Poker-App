@@ -67,6 +67,9 @@ export async function hydrateRoom(
     },
   });
   if (!game) return null;
+  // A closed table is gone for good — never rebuild it from the DB (a late
+  // rejoin to a closed room must fail, not resurrect it as a fresh lobby).
+  if (game.status === "ABANDONED") return null;
 
   const players: RoomPlayer[] = game.players.map((gp) =>
     emptyPlayer(

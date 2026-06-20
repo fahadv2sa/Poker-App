@@ -47,6 +47,11 @@ const TURN_KEY = "turn";
 const CLAIM_KEY = "claim";
 const NEXT_HAND_KEY = "nexthand";
 
+/** Phases in which a hand is genuinely live with coins committed to the pot —
+ *  closing during one must refund those stakes. LOBBY/ENDED hold no live pot
+ *  (ENDED = a just-resolved hand whose money is already settled). */
+const LIVE_HAND_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"]);
+
 /**
  * Authoritative game-room orchestrator (Section 8 state machine). Holds the
  * in-memory room state, drives phase transitions using the pure engine, and
@@ -67,6 +72,16 @@ export class GameRoom {
   /** Re-entrancy latch around the async hand setup (deal/antes): blocks a second
    *  startNextHand (e.g. auto-timer racing an explicit trigger) from double-dealing. */
   private startingHand = false;
+
+  /** Close latches: `closing` blocks a concurrent close mid-await; `closed` makes
+   *  close() a permanent no-op once done (host-close racing the auto-empty cleanup). */
+  private closing = false;
+  private closed = false;
+
+  /** True once the room has been closed (its hand refunded, status ABANDONED). */
+  get isClosed(): boolean {
+    return this.closed;
+  }
 
   constructor(
     readonly state: RoomState,
@@ -160,6 +175,68 @@ export class GameRoom {
       this.resetHandState(p);
       p.holeCards = [];
       p.status = "WAITING";
+    }
+  }
+
+  /**
+   * Close the room for good (host "Close Table", or auto-cleanup when it empties).
+   * Safely VOIDS any live hand rather than resolving it: every contributor's
+   * still-committed stake is refunded — `committedTotal` for a non-folder, the
+   * remaining `forfeit` for a folder (the rest was already refunded at fold). That
+   * sum is exactly the pot, so the hand nets to zero with no winner and no
+   * FOLD_FORFEIT sink. Refunds + the ABANDONED status flip commit in one DB
+   * transaction (ledger row locks + idempotency). Idempotent and latched, so a
+   * host-close racing the empty-room cleanup runs the money path exactly once.
+   */
+  async close(): Promise<void> {
+    if (this.closed || this.closing) return;
+    this.closing = true;
+    try {
+      this.deps.timers.clearAll();
+
+      // Compute refunds WITHOUT mutating wallet state yet, so a retry after a
+      // persistence failure can't double-credit (the ledger reference is also
+      // idempotent as a second line of defense).
+      const refunds: LedgerMovement[] = [];
+      const refundBySeat = new Map<number, bigint>();
+      if (!this.resolved && LIVE_HAND_PHASES.has(this.state.phase)) {
+        for (const p of this.state.players) {
+          const stake = p.status === "FOLDED" ? p.forfeit : p.committedTotal;
+          if (stake > 0n) {
+            refundBySeat.set(p.seat, stake);
+            refunds.push({
+              userId: p.userId,
+              type: "REFUND",
+              amount: stake,
+              reference: `${this.state.gameId}:h${this.state.handNumber}:abortrefund:${p.seat}`,
+            });
+          }
+        }
+      }
+
+      await this.deps.persistence.closeGame(
+        this.state.gameId,
+        refunds,
+        this.state.handNumber,
+      );
+
+      // Persistence committed — now reflect refunds in memory and tear the hand
+      // down to a clean, inert ABANDONED state.
+      for (const p of this.state.players) {
+        p.available += refundBySeat.get(p.seat) ?? 0n;
+        this.resetHandState(p);
+        p.holeCards = [];
+      }
+      this.state.status = "ABANDONED";
+      this.state.phase = "ENDED";
+      this.state.community = [];
+      this.state.communityRevealed = 0;
+      this.state.currentTurnSeat = null;
+      this.state.currentBet = 0n;
+      this.state.turnDeadlineTs = null;
+      this.closed = true;
+    } finally {
+      this.closing = false;
     }
   }
 

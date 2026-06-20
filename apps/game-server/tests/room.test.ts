@@ -57,6 +57,14 @@ class FakePersistence implements RoomPersistence {
     this.resolveCalls += 1;
     this.settlements.push(...s);
   }
+  /** How many times closeGame was invoked (room teardown). */
+  closeCalls = 0;
+  closeRefunds: LedgerMovement[] = [];
+  async closeGame(_g: string, refunds: LedgerMovement[]) {
+    this.closeCalls += 1;
+    this.closeRefunds.push(...refunds);
+    this.movements.push(...refunds);
+  }
 }
 
 class FakeEmitter implements Emitter {
@@ -543,5 +551,84 @@ describe("side-pot display breakdown (A4)", () => {
     expect([...pots[0]!.eligibleSeats].sort()).toEqual([1, 2]);
     expect(pots[1]!.amount).toBe(30); // level 80, only the all-in seat
     expect(pots[1]!.eligibleSeats).toEqual([2]);
+  });
+});
+
+describe("close table — void + refund, mark abandoned (table lifecycle)", () => {
+  const bigMidDeck = () =>
+    Array.from({ length: 15 }, (_, i) => card(`q${i}`, "MID", `M${i}`));
+
+  it("closes a lobby room with no refunds and marks it ABANDONED", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.close();
+    expect(persistence.closeCalls).toBe(1);
+    expect(persistence.closeRefunds).toHaveLength(0); // nothing in the pot
+    expect(room.state.status).toBe("ABANDONED");
+    expect(room.isClosed).toBe(true);
+  });
+
+  it("voids a live hand: every seat's committed stake is refunded (whole pot back)", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start(); // antes 50 each, PREFLOP
+    expect(room.state.phase).toBe("PREFLOP");
+
+    await room.close();
+
+    expect(persistence.closeRefunds).toHaveLength(2);
+    expect(persistence.closeRefunds.every((m) => m.type === "REFUND" && m.amount === 50n)).toBe(
+      true,
+    );
+    // References are server-derived + idempotent (salted by hand number + seat).
+    expect(persistence.closeRefunds.every((m) => /:abortrefund:\d+$/.test(m.reference))).toBe(true);
+    expect(room.state.status).toBe("ABANDONED");
+  });
+
+  it("refunds a folder's forfeit (not the already-returned part) and each survivor's full stake", async () => {
+    const { room, persistence } = makeRoom(bigMidDeck(), { u1: 1000n, u2: 1000n, u3: 1000n });
+    room.state.players.push(player(3, "u3"));
+    await room.start(); // antes 50 each → pot 150; seat 2 acts first
+    expect(room.state.currentTurnSeat).toBe(2);
+
+    await room.placeAction(2, { type: "FOLD" }); // preflop fold: forfeit 25, 25 already back
+    expect(room.state.phase).toBe("PREFLOP"); // still live (seats 1 & 3 remain)
+
+    await room.close();
+
+    const amountForSeat = (s: number) =>
+      persistence.closeRefunds.find((m) => m.reference.endsWith(`:abortrefund:${s}`))?.amount;
+    expect(amountForSeat(1)).toBe(50n); // survivor: full ante back
+    expect(amountForSeat(3)).toBe(50n); // survivor: full ante back
+    expect(amountForSeat(2)).toBe(25n); // folder: only the forfeit still in the pot
+    // The whole distributable pot (50 + 25 + 50 = 125) is returned — nothing lost/created.
+    const total = persistence.closeRefunds.reduce((sum, m) => sum + m.amount, 0n);
+    expect(total).toBe(125n);
+  });
+
+  it("does NOT refund when closing between hands — the money was already settled", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start();
+    await room.placeAction(2, { type: "FOLD" }); // seat 1 wins by last-standing → ENDED
+    expect(room.state.phase).toBe("ENDED");
+
+    await room.close();
+    expect(persistence.closeRefunds).toHaveLength(0); // already resolved, nothing to void
+    expect(room.state.status).toBe("ABANDONED");
+  });
+
+  it("is idempotent — a second close is a no-op (refunds applied once)", async () => {
+    const { room, persistence } = makeRoom(allMidDeck());
+    await room.start();
+    await room.close();
+    await room.close();
+    expect(persistence.closeCalls).toBe(1);
+    expect(persistence.closeRefunds).toHaveLength(2);
+  });
+
+  it("clears any armed turn/claim timers on close", async () => {
+    const { room, timers } = makeRoom(allMidDeck());
+    await room.start();
+    expect(timers.pending.has("turn")).toBe(true);
+    await room.close();
+    expect(timers.pending.size).toBe(0);
   });
 });

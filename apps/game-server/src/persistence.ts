@@ -212,6 +212,33 @@ export class PrismaRoomPersistence implements RoomPersistence {
     });
   }
 
+  async closeGame(
+    gameId: string,
+    refunds: LedgerMovement[],
+    _handNumber: number,
+  ): Promise<void> {
+    await prisma.$transaction(async (tx) => {
+      // Return each contributor's still-committed stake through the ledger
+      // (FOR UPDATE + idempotent reference, balance never negative) — the live
+      // hand is voided, not resolved, so there is no winner and no forfeit sink.
+      for (const m of refunds) {
+        await applyWalletTransaction(tx, {
+          userId: m.userId,
+          type: m.type,
+          amount: m.amount,
+          reference: m.reference,
+          gameId,
+        });
+      }
+      // ABANDONED (distinct from ENDED, which marks a normally-resolved hand of a
+      // still-live session) so the room is gone for good and can't be resurrected.
+      await tx.game.update({
+        where: { id: gameId },
+        data: { status: "ABANDONED", phase: "ENDED", endedAt: new Date(), pot: 0n },
+      });
+    });
+  }
+
   /** seat → { gamePlayer id, userId } for the game's players. */
   private async seatMap(
     tx: TxClient,

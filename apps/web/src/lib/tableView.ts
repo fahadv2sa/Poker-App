@@ -33,6 +33,9 @@ export interface TableView {
   balance: number | null;
   /** True between hands when the room can't deal (fewer than 2 can ante). */
   waiting: boolean;
+  /** Set once the room is closed (host closed it, or it auto-emptied). The table
+   *  shows a notice and returns to the menu; null while the room is live. */
+  closed: "CLOSED_BY_HOST" | "EMPTY" | null;
   error: string | null;
 }
 
@@ -46,6 +49,7 @@ export const INITIAL_VIEW: TableView = {
   notices: [],
   balance: null,
   waiting: false,
+  closed: null,
   error: null,
 };
 

@@ -10,6 +10,7 @@ import {
   type PhaseChangedPayload,
   type PlayerFoldedPayload,
   type PlayerLeftPayload,
+  type RoomClosedPayload,
   type SessionWaitingPayload,
   type ShowdownStartPayload,
   type StateSyncPayload,
@@ -38,6 +39,7 @@ export interface GameHandlers {
   onHandStarted?: (p: HandStartedPayload) => void;
   onSessionWaiting?: (p: SessionWaitingPayload) => void;
   onPlayerLeft?: (p: PlayerLeftPayload) => void;
+  onRoomClosed?: (p: RoomClosedPayload) => void;
   onError?: (p: { code: string; messageAr: string }) => void;
 }
 
@@ -46,6 +48,7 @@ export interface GameConnection {
   join: (inviteCode: string, password?: string) => void;
   start: () => void;
   nextHand: () => void;
+  closeTable: () => void;
   placeAction: (type: string, amount?: number) => void;
   selectClaim: (handRankId: string) => void;
   disconnect: () => void;
@@ -90,6 +93,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.handStarted, handlers.onHandStarted);
   bind(SERVER_EVENTS.sessionWaiting, handlers.onSessionWaiting);
   bind(SERVER_EVENTS.playerLeft, handlers.onPlayerLeft);
+  bind(SERVER_EVENTS.roomClosed, handlers.onRoomClosed);
   bind(SERVER_EVENTS.error, handlers.onError);
 
   return {
@@ -98,6 +102,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
       socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode, password }),
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
     nextHand: () => socket.emit(CLIENT_EVENTS.nextHand, {}),
+    closeTable: () => socket.emit(CLIENT_EVENTS.roomClose, {}),
     placeAction: (type, amount) =>
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
     selectClaim: (handRankId) =>
