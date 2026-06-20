@@ -1,5 +1,5 @@
 import { Prisma, prisma } from "@fp/db";
-import { DIFFICULTY_MAX_TIER, type Difficulty } from "@fp/shared";
+import { DIFFICULTY_MIN_SCORE, type Difficulty } from "@fp/shared";
 import type { CardSource } from "./ports.js";
 import type { DealtCard } from "./types.js";
 
@@ -17,15 +17,16 @@ export class PrismaCardSource implements CardSource {
   ): Promise<{ hole: DealtCard[][]; community: DealtCard[] }> {
     const need = seatCount * holePerSeat + 5;
 
-    // Difficulty → tier ceiling. ELITE (null) draws from every active player;
-    // the others restrict to the top tiers (untiered players only appear in ELITE).
-    const maxTier = DIFFICULTY_MAX_TIER[difficulty];
-    const tierFilter =
-      maxTier === null ? Prisma.empty : Prisma.sql`AND tier IS NOT NULL AND tier <= ${maxTier}`;
+    // Difficulty → minimum fame_score, compared as floor(fame_score) so decimals
+    // never shift a boundary (79.9 counts as 79, not 80). ELITE (min 0) draws from
+    // every active player; the others restrict to floor(fame_score) >= their floor.
+    const minScore = DIFFICULTY_MIN_SCORE[difficulty];
+    const scoreFilter =
+      minScore <= 0 ? Prisma.empty : Prisma.sql`AND floor(fame_score) >= ${minScore}`;
 
     // Random, uniform draw of distinct eligible active players.
     const picked = await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-      SELECT id FROM players WHERE active = true ${tierFilter} ORDER BY random() LIMIT ${need}
+      SELECT id FROM players WHERE active = true ${scoreFilter} ORDER BY random() LIMIT ${need}
     `);
     if (picked.length < need) {
       throw new Error(
