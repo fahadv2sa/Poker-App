@@ -27,9 +27,10 @@ import type { DealtCard, RankInfo, RoomPlayer, RoomState } from "../src/types.js
 
 class FakeCards implements CardSource {
   constructor(private readonly deck: DealtCard[]) {}
-  async dealHand(seatCount: number, holePerSeat: number) {
+  async dealHand(_tableId: string, seatCount: number, holePerSeat: number) {
     return dealFromDeck(this.deck, seatCount, holePerSeat);
   }
+  releaseTable() {}
 }
 
 /**

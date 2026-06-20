@@ -9,14 +9,17 @@ import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
  * database or sockets.
  */
 
-/** Supplies random football-player cards for a hand (data-driven, from the DB). */
+/** Supplies football-player cards for a hand (data-driven, from the DB). */
 export interface CardSource {
   /**
-   * Deal `holeCount` hole cards per seat plus 5 community cards, all distinct.
-   * `difficulty` restricts the draw to the matching fame tier (Part 3).
-   * Throws if the player database has too few eligible players.
+   * Deal `holePerSeat` hole cards per seat plus 5 community cards, all distinct.
+   * `difficulty` restricts the draw to the matching fame tier (Part 3). Dealing
+   * is single-deck per table (`tableId`): every card dealt is consumed and does
+   * not repeat until the whole tier deck is exhausted, then it reshuffles.
+   * Throws if the player database has too few eligible players for one round.
    */
   dealHand(
+    tableId: string,
     seatCount: number,
     holePerSeat: number,
     difficulty?: Difficulty,
@@ -24,6 +27,9 @@ export interface CardSource {
     hole: DealtCard[][];
     community: DealtCard[];
   }>;
+  /** Drop a table's deck when its room closes (frees memory; the next table at
+   *  that difficulty starts from a fresh full shuffle). */
+  releaseTable(tableId: string): void;
 }
 
 /** A single wallet movement the room asks the ledger to apply atomically. */

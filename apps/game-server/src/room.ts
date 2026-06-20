@@ -234,6 +234,8 @@ export class GameRoom {
       this.state.currentTurnSeat = null;
       this.state.currentBet = 0n;
       this.state.turnDeadlineTs = null;
+      // Free this table's shuffled deck (single-deck no-repeat state).
+      this.deps.cards.releaseTable(this.state.gameId);
       this.closed = true;
     } finally {
       this.closing = false;
@@ -263,6 +265,7 @@ export class GameRoom {
     }
 
     const { hole, community } = await this.deps.cards.dealHand(
+      this.state.gameId,
       participants.length,
       2,
       this.state.difficulty ?? "MEDIUM",
