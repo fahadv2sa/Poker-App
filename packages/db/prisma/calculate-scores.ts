@@ -48,8 +48,9 @@ function nationPoints(nationality: string): number {
   if (NATION_TIER1.has(n)) return 10;
   if (NATION_TIER2.has(n)) return 7;
   // Tier 3 (4 pts): any other named nationality (we can't query FIFA rankings,
-  // so a present nationality is treated as ranked). Tier 4 (1 pt): empty/unknown.
-  return n ? 4 : 1;
+  // so a present nationality is treated as ranked). Missing/empty nationality
+  // contributes 0 — any missing score input is treated as zero for its component.
+  return n ? 4 : 0;
 }
 
 function clubPoints(clubs: string[]): number {
@@ -88,13 +89,11 @@ function baseScore(r: Row): number {
 // top-5-league dataset at all, in which case the rule simply applies to nobody.)
 const isMessi = (r: Row) =>
   r.externalRef === 154 || (/\bmessi\b/i.test(r.name) && norm(r.nationality) === "argentina");
-const isSaudi = (nationality: string) => /^saudi/.test(norm(nationality)); // "Saudi Arabia"
-
 function finalScore(r: Row): number {
-  if (isMessi(r)) return 100; // SPECIAL RULE 1 — Messi is always exactly 100
-  let s = baseScore(r);
-  if (isSaudi(r.nationality)) s = Math.min(99, s + 30); // RULE 2 — +30, cap 99 (Messi-only 100)
-  return Math.round(s * 100) / 100;
+  if (isMessi(r)) return 100; // SPECIAL RULE — Messi is always exactly 100.
+  // No nationality bonus and no special cap: every other player (including Saudi
+  // players) is scored by the exact same base formula.
+  return Math.round(baseScore(r) * 100) / 100;
 }
 
 async function main() {
@@ -122,7 +121,9 @@ async function main() {
       id: p.id,
       name: p.name,
       externalRef: p.externalRef,
-      nationality: p.nationality.name,
+      // Missing inputs default to zero for their component (no skip/throw):
+      // nationality → "" (0 pts), clubs → [] (0 pts), tournament stats → 0.
+      nationality: p.nationality?.name ?? "",
       clubs: [...new Set(p.playerClubs.map((pc) => pc.club.name))],
       top5: p.top5LeagueSeasons,
       worldCup: stat("WORLD_CUP"),
@@ -157,14 +158,12 @@ async function main() {
       console.log(`  written ${done}/${rows.length}`);
     }
   }
-  const saudi = rows.filter((r) => isSaudi(r.nationality)).length;
   const messi = rows.filter((r) => isMessi(r)).length;
   const tierCount = (t: number) => [...tierOf.values()].filter((x) => x === t).length;
   console.log("\n==== SUMMARY ====");
   console.log(`scored              : ${rows.length}`);
   console.log(`max / min           : ${sorted[0]?.score} / ${sorted.at(-1)?.score}`);
   console.log(`Messi rows (=100)   : ${messi}`);
-  console.log(`Saudi rows (+30)    : ${saudi}`);
   console.log(
     `tiers 1/2/3/4       : ${tierCount(1)} / ${tierCount(2)} / ${tierCount(3)} / ${tierCount(4)}`,
   );
