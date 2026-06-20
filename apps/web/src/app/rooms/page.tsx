@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 
 /** Arabic labels for the room difficulty (display only). */
 const DIFFICULTY_AR: Record<string, string> = {
-  VERY_EASY: "سهل جداً",
   EASY: "سهل",
   MEDIUM: "متوسط",
   ELITE: "النخبة",

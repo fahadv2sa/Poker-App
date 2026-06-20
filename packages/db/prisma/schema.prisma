@@ -124,9 +124,9 @@ enum TournamentType {
   @@map("tournament_type")
 }
 
-// Room difficulty — selects which fame tier the deal draws from (Part 3).
+// Room difficulty — selects the fame_score floor the deal draws from (Part 3).
+// Three levels: EASY (floor>=70), MEDIUM (floor>=50), ELITE (all active).
 enum Difficulty {
-  VERY_EASY
   EASY
   MEDIUM
   ELITE

@@ -75,16 +75,15 @@ export type ResultOutcome = (typeof RESULT_OUTCOMES)[number];
  * Room difficulty — selects which fame tier of players the deal draws from
  * (Part 3). Display/dealing-pool only; never affects rank logic.
  */
-export const DIFFICULTIES = ["VERY_EASY", "EASY", "MEDIUM", "ELITE"] as const;
+export const DIFFICULTIES = ["EASY", "MEDIUM", "ELITE"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
 /** Difficulty → MINIMUM fame_score a player needs to enter the deal pool, compared
- *  as `Math.floor(fame_score)` so decimals never shift a boundary (79.9 → 79, out of
- *  the 80 band). Cumulative toward 100: each level includes everyone at or above its
- *  floor (VERY_EASY 80–100, EASY 70–100, MEDIUM 50–100). ELITE = 0 → every active
- *  player. Display/dealing-pool only; never affects rank logic. */
+ *  as `Math.floor(fame_score)` so decimals never shift a boundary (69.9 → 69, out of
+ *  the 70 band). Cumulative toward 100: each level includes everyone at or above its
+ *  floor (EASY 70–100, MEDIUM 50–100). ELITE = 0 → every active player. Display/
+ *  dealing-pool only; never affects rank logic. */
 export const DIFFICULTY_MIN_SCORE: Record<Difficulty, number> = {
-  VERY_EASY: 80,
   EASY: 70,
   MEDIUM: 50,
   ELITE: 0,

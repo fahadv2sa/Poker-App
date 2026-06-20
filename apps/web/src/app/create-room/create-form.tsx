@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-/** The four difficulty choices (Part 5) — label + short description shown to
+/** The three difficulty choices (Part 5) — label + short description shown to
  *  the player so they understand which fame pool they're drawing from. */
 const DIFFICULTY_OPTIONS: ReadonlyArray<{ value: Difficulty; label: string; desc: string }> = [
-  { value: "VERY_EASY", label: "سهل جداً", desc: "اللاعبون بتقييم 80 إلى 100" },
   { value: "EASY", label: "سهل", desc: "اللاعبون بتقييم 70 إلى 100" },
   { value: "MEDIUM", label: "متوسط", desc: "اللاعبون بتقييم 50 إلى 100" },
   { value: "ELITE", label: "النخبة", desc: "جميع اللاعبين" },
