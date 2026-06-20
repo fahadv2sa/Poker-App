@@ -53,7 +53,9 @@ export class PrismaCardSource implements CardSource {
         nationality: r.nationality.name,
         position: r.position.code,
         positionNameAr: r.position.nameAr,
-        fameScore: r.fameScore,
+        // Effective card score: legends show their legend-track score, everyone
+        // else their base fame_score (legendScore is null for non-legends).
+        fameScore: r.legendScore ?? r.fameScore,
         clubs: r.playerClubs.map((pc) => pc.club.name),
         photoUrl: r.photoUrl,
       };
