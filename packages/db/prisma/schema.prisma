@@ -274,6 +274,10 @@ model Player {
   birthYear     Int?     @map("birth_year")
   photoUrl      String?  @map("photo_url")
   active        Boolean  @default(true)
+  // Legend flag (display/curation only — never used by the rank engine, wallet,
+  // or card privacy). The fame-score "legend" component stays 0 for everyone
+  // until that scoring rule is activated separately.
+  isLegend      Boolean  @default(false) @map("is_legend")
   // Fame system (display + difficulty tiers only — NEVER used by the rank
   // engine, which keys on nationality/position/clubs). Filled by the import +
   // calculate scripts; both nullable/0 until then so existing rows stay valid.
