@@ -14,11 +14,11 @@
  *
  * Messi is the SOLE benchmark and the unique ceiling (pinned to exactly 100). For
  * every other player, each component is normalized against Messi and scaled to a
- * 0.95 ceiling: component = 0.95 * min(1, player_raw / Messi_raw) * weight. A
- * player who meets/exceeds Messi sits 5% below him on that component (0.95*weight),
+ * 0.99 ceiling: component = 0.99 * min(1, player_raw / Messi_raw) * weight. A
+ * player who meets/exceeds Messi sits 1% below him on that component (0.99*weight),
  * smoothly — continuous at ratio=1, no discontinuity, ordering preserved — and
  * below weight for everyone, so no one reaches Messi on any component or overall
- * (normalized players max 0.95*90 = 85.5).
+ * (normalized players max 0.99*90 = 89.1).
  *
  * Cristiano Ronaldo is a FIXED final-score exception at 99 (override only, NOT a
  * benchmark — it never affects how any other player is normalized).
@@ -95,6 +95,10 @@ const WEIGHTS = {
   legend: 10,
 } as const;
 
+// A player who meets/exceeds Messi on a component sits this fraction of his full
+// weight — i.e. 1% below Messi. The smooth normalization scales to this ceiling.
+const COMPONENT_CEILING = 0.99;
+
 interface Benchmark {
   top5: number;
   club: number;
@@ -121,11 +125,11 @@ const benchmarkOf = (r: Row): Benchmark => ({
 function componentScore(raw: number, messiRaw: number, weight: number): number {
   if (messiRaw <= 0) return 0;
   const ratio = raw / messiRaw;
-  // Smooth normalization scaled to a 0.95 ceiling: below Messi → 0.95*ratio*weight;
-  // meet/exceed Messi → 0.95*weight (5% below him). Continuous at ratio=1 (no
+  // Smooth normalization scaled to the ceiling: below Messi → ceiling*ratio*weight;
+  // meet/exceed Messi → ceiling*weight (1% below him). Continuous at ratio=1 (no
   // discontinuity), monotonic (ordering preserved), and < weight for everyone, so
   // no one reaches Messi on the component.
-  return 0.95 * Math.min(1, ratio) * weight;
+  return COMPONENT_CEILING * Math.min(1, ratio) * weight;
 }
 
 // Lionel Messi specifically — API-Football id 154. The name fallback also
