@@ -151,10 +151,13 @@ model User {
 
   wallet       Wallet?
   stats        UserStats?
+  metrics      PlayerMetrics?
   transactions WalletTransaction[]
   bankClaims   BankClaim[]
   gamesCreated Game[]              @relation("GamesCreatedBy")
   gamePlayers  GamePlayer[]
+  playEvents   PlayEvent[]
+  playerBadges PlayerBadge[]
 
   @@map("users")
 }
@@ -219,6 +222,119 @@ model UserStats {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_stats")
+}
+
+// ============================================================================
+// Statistics & progression (4-layer system). All keyed on the stable User.id,
+// independent of any future profile layer. Append-only events (Layer 1) →
+// incremental per-player metrics (Layer 2) → data-driven badges (Layer 3) →
+// composite XP/level (Layer 4). Live play writes lightweight PlayEvent rows
+// only; all aggregation runs after the hand, outside the betting hot path.
+// ============================================================================
+
+// Layer 1 — raw, append-only event log (same philosophy as the wallet ledger).
+enum PlayEventType {
+  BET // a wager: value = amount, metadata.potBefore for bet/pot ratio
+  RAISE
+  CALL
+  CHECK
+  FOLD
+  ALLIN
+  // One per dealt player at resolve — the unit the aggregator folds into
+  // metrics. metadata carries the derived per-hand facts (won, folded, showdown,
+  // rankStrength, dealtStrength, luck, maxBetToPot, isBluff, bluffWon, weakWon…).
+  ROUND_SUMMARY
+
+  @@map("play_event_type")
+}
+
+model PlayEvent {
+  // Monotonic watermark for incremental, idempotent aggregation.
+  seq        BigInt        @id @default(autoincrement())
+  playerId   String        @map("player_id") @db.Uuid
+  gameId     String?       @map("game_id") @db.Uuid
+  handNumber Int           @map("hand_number")
+  type       PlayEventType
+  value      Float?
+  metadata   Json?         @db.JsonB
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  player     User          @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  game       Game?         @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([playerId, seq])
+  @@index([playerId, createdAt])
+  @@index([gameId, handNumber])
+  @@map("play_events")
+}
+
+// Layer 2 — precomputed per-player read model. Updated AFTER a hand, incrementally
+// (only over events past `lastSeq`). The stats page reads straight from here.
+model PlayerMetrics {
+  userId            String   @id @map("user_id") @db.Uuid
+  matches           Int      @default(0)
+  wins              Int      @default(0)
+  losses            Int      @default(0)
+  folds             Int      @default(0)
+  netProfit         BigInt   @default(0) @map("net_profit")
+  totalWon          BigInt   @default(0) @map("total_won")
+  totalLost         BigInt   @default(0) @map("total_lost")
+  showdownCount     Int      @default(0) @map("showdown_count")
+  bluffCount        Int      @default(0) @map("bluff_count")
+  bluffSuccessCount Int      @default(0) @map("bluff_success_count")
+  weakWonCount      Int      @default(0) @map("weak_won_count")
+  // Sums for averages (kept incrementally so rates need no event re-scan).
+  betToPotSum       Float    @default(0) @map("bet_to_pot_sum")
+  betActionCount    Int      @default(0) @map("bet_action_count")
+  luckSum           Float    @default(0) @map("luck_sum")
+  luckRounds        Int      @default(0) @map("luck_rounds")
+  biggestPot        BigInt   @default(0) @map("biggest_pot")
+  currentWinStreak  Int      @default(0) @map("current_win_streak")
+  longestWinStreak  Int      @default(0) @map("longest_win_streak")
+  // Layer 4 — composite progression.
+  xp                BigInt   @default(0)
+  level             Int      @default(1)
+  // Watermark: the highest PlayEvent.seq folded in so far (idempotent/incremental).
+  lastSeq           BigInt   @default(0) @map("last_seq")
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("player_metrics")
+}
+
+// Layer 3 — data-driven badge definitions (same pattern as HandRank). Add a new
+// badge by inserting a row — no code change. `rule` is the condition DSL over
+// PlayerMetrics-derived fields.
+model Badge {
+  id            String        @id @default(uuid()) @db.Uuid
+  code          String        @unique
+  nameAr        String        @map("name_ar")
+  descriptionAr String        @map("description_ar")
+  icon          String        @default("🏅")
+  sortOrder     Int           @default(0) @map("sort_order")
+  active        Boolean       @default(true)
+  rule          Json          @db.JsonB
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  awards        PlayerBadge[]
+
+  @@map("badges")
+}
+
+// Awarded badges — idempotent (a badge is granted once per player).
+model PlayerBadge {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  badgeId   String   @map("badge_id") @db.Uuid
+  awardedAt DateTime @default(now()) @map("awarded_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@map("player_badges")
 }
 
 // ----------------------------------------------------------------------------
@@ -437,6 +553,7 @@ model Game {
   handClaims      PlayerHandClaim[]
   results         GameResult[]
   transactions    WalletTransaction[]
+  playEvents      PlayEvent[]
 
   @@map("games")
 }

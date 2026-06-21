@@ -1,6 +1,16 @@
 import type { Settlement } from "@fp/engine";
-import type { BetRound, Difficulty } from "@fp/shared";
+import type { BetRound, Difficulty, PlayEventType } from "@fp/shared";
 import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
+
+/** One Layer-1 stats event (append-only). Written off the betting hot path. */
+export interface PlayEventRecord {
+  playerId: string;
+  gameId?: string | null;
+  handNumber: number;
+  type: PlayEventType;
+  value?: number | null;
+  metadata?: Record<string, unknown> | null;
+}
 
 /**
  * Ports the GameRoom orchestrator depends on. Real implementations do I/O
@@ -109,6 +119,11 @@ export interface RoomPersistence {
     refunds: LedgerMovement[],
     handNumber: number,
   ): Promise<void>;
+  /** Stats Layer 1: append a batch of raw play events (append-only). */
+  recordPlayEvents(events: PlayEventRecord[]): Promise<void>;
+  /** Stats Layers 2-4: incrementally aggregate metrics/badges/XP for the given
+   *  players. Runs AFTER a hand, off the betting hot path. */
+  aggregatePlayers(userIds: string[]): Promise<void>;
 }
 
 /** Broadcasts server→client events (Section 12). */

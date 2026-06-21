@@ -1,7 +1,7 @@
 // Load packages/db/.env before the Prisma client reads DATABASE_URL, so
 // `pnpm db:seed` works on a fresh shell (audit #8) — not just via `prisma`.
 import "dotenv/config";
-import { HAND_RANK_CATALOG } from "@fp/shared";
+import { BADGE_CATALOG, HAND_RANK_CATALOG } from "@fp/shared";
 import { prisma } from "../src/client";
 import { Prisma } from "../src/generated/client";
 
@@ -58,6 +58,25 @@ async function main() {
     });
   }
   console.log(`Seeded ${HAND_RANK_CATALOG.length} hand ranks.`);
+
+  // Badges (Layer 3) — data-driven, same upsert-by-code pattern as hand ranks.
+  // Adding a badge later = add a row to BADGE_CATALOG and re-seed (or INSERT).
+  for (const b of BADGE_CATALOG) {
+    const fields = {
+      nameAr: b.nameAr,
+      descriptionAr: b.descriptionAr,
+      icon: b.icon,
+      sortOrder: b.sortOrder,
+      active: true,
+      rule: b.rule as unknown as Prisma.InputJsonValue,
+    };
+    await prisma.badge.upsert({
+      where: { code: b.code },
+      update: fields,
+      create: { code: b.code, ...fields },
+    });
+  }
+  console.log(`Seeded ${BADGE_CATALOG.length} badges.`);
 }
 
 main()

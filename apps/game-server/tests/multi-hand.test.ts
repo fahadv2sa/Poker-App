@@ -9,6 +9,7 @@ import type {
   Clock,
   Emitter,
   LedgerMovement,
+  PlayEventRecord,
   RoomPersistence,
   TimerService,
 } from "../src/ports.js";
@@ -84,6 +85,14 @@ class LedgerPersistence implements RoomPersistence {
       this.balances.set(m.userId, (this.balances.get(m.userId) ?? 0n) + m.amount);
       this.movements.push(m);
     }
+  }
+  playEvents: PlayEventRecord[] = [];
+  aggregated: string[] = [];
+  async recordPlayEvents(events: PlayEventRecord[]) {
+    this.playEvents.push(...events);
+  }
+  async aggregatePlayers(ids: string[]) {
+    this.aggregated.push(...ids);
   }
 }
 

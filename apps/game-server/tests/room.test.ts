@@ -9,6 +9,7 @@ import type {
   Clock,
   Emitter,
   LedgerMovement,
+  PlayEventRecord,
   RoomPersistence,
   TimerService,
 } from "../src/ports.js";
@@ -65,6 +66,14 @@ class FakePersistence implements RoomPersistence {
     this.closeCalls += 1;
     this.closeRefunds.push(...refunds);
     this.movements.push(...refunds);
+  }
+  playEvents: PlayEventRecord[] = [];
+  aggregated: string[] = [];
+  async recordPlayEvents(events: PlayEventRecord[]) {
+    this.playEvents.push(...events);
+  }
+  async aggregatePlayers(ids: string[]) {
+    this.aggregated.push(...ids);
   }
 }
 
@@ -248,6 +257,13 @@ describe("hand flow: check-down to a split showdown", () => {
     const reveals = emitter.seat.filter((s) => s.event === "result:best");
     expect(reveals).toHaveLength(2);
     expect(reveals.every((r) => r.payload.rankNameAr != null)).toBe(true);
+
+    // Stats: Layer-1 events were flushed at resolve (one ROUND_SUMMARY per dealt
+    // player, plus the buffered bet events), and aggregation ran for both seats.
+    const summaries = persistence.playEvents.filter((e) => e.type === "ROUND_SUMMARY");
+    expect(summaries).toHaveLength(2);
+    expect(persistence.playEvents.some((e) => e.type === "CHECK")).toBe(true);
+    expect([...new Set(persistence.aggregated)]).toHaveLength(2);
   });
 });
 

@@ -20,8 +20,11 @@ import {
   type WitnessGroup,
 } from "@fp/engine";
 import {
+  BLUFF_BET_TO_POT,
   SERVER_EVENTS,
+  WEAK_RANK_MAX_STRENGTH,
   type BestRankPayload,
+  type PlayEventType,
   type ClaimEvidenceGroup,
   type PlayerView,
   type PotView,
@@ -32,6 +35,7 @@ import type {
   Clock,
   Emitter,
   LedgerMovement,
+  PlayEventRecord,
   RoomPersistence,
   TimerService,
 } from "./ports.js";
@@ -64,6 +68,11 @@ export class GameRoom {
   /** Server-side monotonic action counter — the source of wallet idempotency
    *  keys for betting actions. Never derived from client input (FIX #3). */
   private actionSeq = 0;
+
+  /** Stats Layer 1: lightweight play events buffered in MEMORY during the hand
+   *  (zero added I/O in the betting hot path) and flushed once at resolve, where
+   *  the post-match aggregation also runs. Reset at the start of every hand. */
+  private pendingEvents: PlayEventRecord[] = [];
 
   /** Single-resolve latch: a hand resolves exactly once even if concurrent
    *  claims both pass the "all claimed" check. Prevents duplicate
@@ -262,6 +271,7 @@ export class GameRoom {
     // New hand: reset the single-resolve latch (it must hold independently per
     // hand) and bump the counter that salts repeat-prone wallet references.
     this.resolved = false;
+    this.pendingEvents = [];
     this.state.handNumber += 1;
     this.state.status = "IN_PROGRESS";
 
@@ -426,6 +436,17 @@ export class GameRoom {
     if (this.state.currentTurnSeat !== seat) throw new Error("Not your turn");
     const bs = this.toBettingState(this.roundForPhase());
 
+    // Stats Layer 1 (captured BEFORE the bet mutates the pot): pot-before for the
+    // bet/pot ratio, the street, and the decision time. In-memory only.
+    const potBefore = Number(this.potTotal());
+    const street = this.roundForPhase();
+    const turnStartTs =
+      this.state.turnDeadlineTs != null
+        ? this.state.turnDeadlineTs - this.state.config.turnTimerSec * 1000
+        : null;
+    const responseMs =
+      turnStartTs != null ? Math.max(0, this.deps.clock.now() - turnStartTs) : null;
+
     // Reject illegal raises up front for a clean error (engine also guards).
     if (action.type === "RAISE") {
       const la = legalActions(bs, seat);
@@ -485,6 +506,22 @@ export class GameRoom {
     if (movement.action === "FOLD") {
       this.deps.emitter.toRoom(SERVER_EVENTS.playerFolded, { seat });
     }
+
+    // Buffer the lightweight Layer-1 event (memory push; no I/O in the hot path).
+    this.pendingEvents.push({
+      playerId: player.userId,
+      gameId: this.state.gameId,
+      handNumber: this.state.handNumber,
+      type: movement.action as PlayEventType,
+      value: Number(movement.amount),
+      metadata: {
+        seat,
+        street,
+        potBefore,
+        betToPot: potBefore > 0 ? Number(movement.amount) / potBefore : 0,
+        responseMs,
+      },
+    });
 
     await this.afterAction();
   }
@@ -785,6 +822,15 @@ export class GameRoom {
       this.deps.emitter.toSeat(p.seat, SERVER_EVENTS.bestRank, this.buildBestRank(p));
     }
 
+    // Stats: flush the hand's Layer-1 events + run aggregation. AFTER the result
+    // emit (players already saw the outcome) and fully guarded — a stats failure
+    // must never affect the game. This is the only place aggregation runs.
+    try {
+      await this.flushHandStats(settlements, isShowdown);
+    } catch (err) {
+      console.error("[stats] hand aggregation failed", err);
+    }
+
     // Feature #7 / Batch 1: the hand ends but the room does NOT auto-deal. It
     // waits between hands (phase ENDED) with the result on screen; the next hand
     // begins only on an explicit trigger (startNextHand, host-initiated). No
@@ -875,6 +921,74 @@ export class GameRoom {
       evidence,
       cards: cardIdx.map((i) => toCardView(dealt[i]!)),
     };
+  }
+
+  /**
+   * Stats: build the per-player ROUND_SUMMARY events for the just-resolved hand,
+   * flush them (plus the buffered bet events) to the append-only log, and run the
+   * incremental aggregation. Reuses the SAME evaluator as the winner/best-rank
+   * path (bestAchievableRank) — display/analytics only, never the outcome.
+   */
+  private async flushHandStats(
+    settlements: readonly { seat: number; type: string; amount: bigint }[],
+    isShowdown: boolean,
+  ): Promise<void> {
+    const dealt = this.state.players.filter((p) => p.holeCards.length > 0);
+    if (dealt.length === 0) return;
+
+    const pot = Number(this.potTotal());
+    // Dealt-hand strength proxy = avg of the two hole cards' fame (0–1).
+    const strengthOf = (p: RoomPlayer): number => {
+      const f = p.holeCards.map((c) => c.fameScore ?? 0);
+      return f.length ? f.reduce((a, b) => a + b, 0) / f.length / 100 : 0;
+    };
+    const strengths = new Map(dealt.map((p) => [p.seat, strengthOf(p)]));
+    const roundAvg = [...strengths.values()].reduce((a, b) => a + b, 0) / dealt.length;
+
+    const summaries: PlayEventRecord[] = dealt.map((p) => {
+      const delta = Number(coinsDelta(p, settlements));
+      const outcome = outcomeFor(p, settlements);
+      const folded = p.status === "FOLDED";
+      const won = outcome === "WIN" || outcome === "SPLIT";
+      const contender = p.status === "ACTIVE" || p.status === "ALLIN";
+      const rankStrength = folded
+        ? 0
+        : (bestAchievableRank(this.poolFor(p), this.state.ranks)?.strength ?? 0);
+      const ratios = this.pendingEvents
+        .filter((e) => e.playerId === p.userId && (e.value ?? 0) > 0)
+        .map((e) => Number((e.metadata as { betToPot?: number } | null)?.betToPot ?? 0));
+      const maxBetToPot = ratios.length ? Math.max(...ratios) : 0;
+      const weak = rankStrength <= WEAK_RANK_MAX_STRENGTH;
+      const isBluff = maxBetToPot >= BLUFF_BET_TO_POT && weak;
+      const myStrength = strengths.get(p.seat) ?? 0;
+      return {
+        playerId: p.userId,
+        gameId: this.state.gameId,
+        handNumber: this.state.handNumber,
+        type: "ROUND_SUMMARY" as PlayEventType,
+        value: delta,
+        metadata: {
+          outcome,
+          folded,
+          showdown: isShowdown && contender,
+          rankStrength,
+          dealtStrength: myStrength,
+          luck: myStrength - roundAvg,
+          maxBetToPot,
+          betToPotSum: ratios.reduce((a, b) => a + b, 0),
+          betActionCount: ratios.length,
+          isBluff,
+          bluffWon: isBluff && won,
+          weakWon: won && weak,
+          pot,
+        },
+      };
+    });
+
+    const events = [...this.pendingEvents, ...summaries];
+    this.pendingEvents = [];
+    await this.deps.persistence.recordPlayEvents(events);
+    await this.deps.persistence.aggregatePlayers(dealt.map((p) => p.userId));
   }
 
   private buildClaimEvidence(player: RoomPlayer): ClaimEvidenceGroup[] | null {

@@ -18,10 +18,13 @@ export default async function HomePage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { username: true, playerNumber: true, wallet: { select: { balance: true } } },
-  });
+  const [user, badges] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true, playerNumber: true, wallet: { select: { balance: true } } },
+    }),
+    prisma.badge.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+  ]);
   const balance = user?.wallet?.balance.toString() ?? "0";
 
   return (
@@ -73,6 +76,30 @@ export default async function HomePage() {
           </Link>
         ))}
       </nav>
+
+      {/* Badges intro — data-driven from the badges table (Layer 3). Add a badge
+          row and this card updates automatically, no code change. */}
+      {badges.length > 0 ? (
+        <section className="mt-8 rounded-xl border bg-card p-6 shadow-sm sm:p-8">
+          <h2 className="mb-1 text-xl font-bold">الشارات</h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            شارات تُمنح تلقائيًا حسب أسلوب لعبك — إليك معنى كلٍّ منها وكيف تكسبها:
+          </p>
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+            {badges.map((b) => (
+              <div key={b.id} className="flex items-start gap-3 rounded-lg border bg-secondary/30 p-4">
+                <span className="text-2xl" aria-hidden>
+                  {b.icon}
+                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-bold">{b.nameAr}</span>
+                  <span className="text-sm leading-snug text-muted-foreground">{b.descriptionAr}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

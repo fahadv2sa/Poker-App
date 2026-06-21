@@ -1,14 +1,17 @@
 import {
   Prisma,
+  aggregatePlayers as dbAggregatePlayers,
   applyWalletTransaction,
   getWalletBalance,
   prisma,
+  recordPlayEvents as dbRecordPlayEvents,
   type TxClient,
 } from "@fp/db";
 import type { Settlement } from "@fp/engine";
 import type {
   BetRecord,
   LedgerMovement,
+  PlayEventRecord,
   RoomPersistence,
 } from "./ports.js";
 import type { RoomPlayer, RoomState } from "./types.js";
@@ -237,6 +240,23 @@ export class PrismaRoomPersistence implements RoomPersistence {
         data: { status: "ABANDONED", phase: "ENDED", endedAt: new Date(), pot: 0n },
       });
     });
+  }
+
+  async recordPlayEvents(events: PlayEventRecord[]): Promise<void> {
+    await dbRecordPlayEvents(
+      events.map((e) => ({
+        playerId: e.playerId,
+        gameId: e.gameId ?? null,
+        handNumber: e.handNumber,
+        type: e.type,
+        value: e.value ?? null,
+        metadata: (e.metadata ?? null) as Prisma.InputJsonValue | null,
+      })),
+    );
+  }
+
+  async aggregatePlayers(userIds: string[]): Promise<void> {
+    await dbAggregatePlayers(userIds);
   }
 
   /** seat → { gamePlayer id, userId } for the game's players. */
