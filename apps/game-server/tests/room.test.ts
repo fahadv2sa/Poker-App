@@ -243,6 +243,11 @@ describe("hand flow: check-down to a split showdown", () => {
     const result = roomEvents(emitter, "game:result").at(-1)!.payload;
     expect(result.results).toHaveLength(2);
     expect(result.results.every((r: any) => r.coinsDelta === 0)).toBe(true);
+
+    // MANUAL mode: the per-seat best-rank suggestion IS sent (guides declaration).
+    const reveals = emitter.seat.filter((s) => s.event === "result:best");
+    expect(reveals).toHaveLength(2);
+    expect(reveals.every((r) => r.payload.rankNameAr != null)).toBe(true);
   });
 });
 
@@ -268,10 +273,9 @@ describe("AUTO mode: server resolves ranks with no self-declaration", () => {
     expect(splits).toHaveLength(2);
     expect(splits.every((m) => m.amount === 50n)).toBe(true);
 
-    // The winner-screen best-rank reveal still fires per seat in AUTO mode (#6).
-    const reveals = emitter.seat.filter((s) => s.event === "result:best");
-    expect(reveals).toHaveLength(2);
-    expect(reveals.every((r) => r.payload.rankNameAr != null)).toBe(true);
+    // The best-rank SUGGESTION is suppressed in AUTO mode (it's a MANUAL-mode
+    // aid for self-declaration); the automatic resolution above still ran.
+    expect(emitter.seat.filter((s) => s.event === "result:best")).toHaveLength(0);
 
     expect(roomEvents(emitter, "game:result").at(-1)!.payload.results).toHaveLength(2);
   });

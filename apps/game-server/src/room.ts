@@ -774,7 +774,13 @@ export class GameRoom {
     // sent PRIVATELY per seat (toSeat) so a folder sees their own combination
     // without exposing their cards to anyone else. Display only — computed by the
     // same evaluator as the winner logic, never affects the outcome above.
-    for (const p of this.state.players) {
+    //
+    // MANUAL-only suggestion: it guides each player's self-declaration. In AUTO
+    // the server already evaluated + resolved the ranks, so no suggestion is
+    // shown — we simply skip the emit (the automatic evaluation in startShowdown
+    // is unaffected; this is purely the on-screen aid). The mode is fixed per
+    // table, so there is never a stale reveal from a different mode.
+    for (const p of this.state.config.resolveMode === "MANUAL" ? this.state.players : []) {
       if (p.holeCards.length === 0) continue; // not dealt this hand
       this.deps.emitter.toSeat(p.seat, SERVER_EVENTS.bestRank, this.buildBestRank(p));
     }
