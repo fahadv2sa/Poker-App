@@ -118,18 +118,6 @@ export function PlayerCardModal({
         >
           ✕
         </button>
-        {fame != null ? (
-          <span
-            className={cn(
-              "absolute left-2 top-2 z-20 rounded-md border px-2 py-0.5 text-sm font-black tabular-nums shadow-sm",
-              legendary
-                ? "border-gold bg-gold text-black shadow-[0_0_12px_rgba(212,175,55,0.85)]"
-                : "border-gold/50 bg-black/55 text-gold backdrop-blur-sm",
-            )}
-          >
-            {Math.round(fame)}
-          </span>
-        ) : null}
 
         {/* Large photo */}
         <div className="relative w-full overflow-hidden bg-[#0b1322]">
@@ -153,6 +141,22 @@ export function PlayerCardModal({
           </div>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
         </div>
+
+        {/* Fame score — gold strip between photo and name (never over the face). */}
+        {fame != null ? (
+          <div
+            className={cn(
+              "flex w-full items-center justify-center gap-1.5 py-1 text-base font-black tabular-nums",
+              legendary
+                ? "bg-gold text-black shadow-[0_0_12px_rgba(212,175,55,0.7)]"
+                : "border-y border-gold/30 bg-linear-to-b from-gold/30 to-gold/10 text-gold",
+            )}
+            title={`درجة الشهرة: ${Math.round(fame)}/100`}
+          >
+            <span aria-hidden className="opacity-80">★</span>
+            {Math.round(fame)}
+          </div>
+        ) : null}
 
         <div className="flex flex-col items-stretch gap-3 p-5 text-center">
           {/* Full names — shown in both variants */}
@@ -322,22 +326,6 @@ export function FootballCard({
       )}
       title={card.name}
     >
-      {/* Fame score — premium badge in the top-left corner (Part 4). */}
-      {fame != null ? (
-        <span
-          className={cn(
-            "absolute left-1 top-1 z-10 rounded-md border px-1.5 py-0.5 font-black tabular-nums shadow-sm",
-            legendary
-              ? "border-gold bg-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.85)]"
-              : "border-gold/50 bg-black/55 text-gold backdrop-blur-sm",
-            size === "lg" ? "text-[0.7rem]" : "text-[0.56rem]",
-          )}
-          title={`درجة الشهرة: ${Math.round(fame)}/100`}
-        >
-          {Math.round(fame)}
-        </span>
-      ) : null}
-
       {/* Photo — dominates the top, rounded by the card's overflow-hidden. */}
       <div className="relative w-full overflow-hidden bg-[#0b1322]">
         <div className="aspect-[4/5] w-full">
@@ -368,6 +356,24 @@ export function FootballCard({
         {/* Soft scrim blends the photo into the card body. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
       </div>
+
+      {/* Fame score — gold strip between the photo and the name (never over the
+          face). Legendary (Messi=100) gets a solid-gold standout. */}
+      {fame != null ? (
+        <div
+          className={cn(
+            "flex w-full items-center justify-center gap-1 font-black tabular-nums",
+            legendary
+              ? "bg-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.7)]"
+              : "border-y border-gold/30 bg-linear-to-b from-gold/30 to-gold/10 text-gold",
+            size === "lg" ? "py-0.5 text-[0.72rem]" : "py-px text-[0.56rem]",
+          )}
+          title={`درجة الشهرة: ${Math.round(fame)}/100`}
+        >
+          <span aria-hidden className="text-[0.85em] opacity-80">★</span>
+          {Math.round(fame)}
+        </div>
+      ) : null}
 
       {/* Text block (centred): EN name · AR name · club, each soft-divided. */}
       <div className={cn("flex flex-col items-center", size === "lg" ? "gap-0.5 p-2" : "gap-0.5 p-1.5")}>
