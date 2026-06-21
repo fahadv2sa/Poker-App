@@ -612,6 +612,22 @@ export class GameRoom {
       return;
     }
 
+    // AUTO mode (table-level, server-authoritative): evaluate each contender's
+    // strongest rank with the SAME engine evaluator and resolve immediately —
+    // no self-declaration, no claim UI, no claim timer. Outcome = highest actual
+    // rank (ties split); a contender with no qualifying rank can't win. The
+    // per-seat best-rank reveal still fires from resolveHand, as in MANUAL.
+    if (this.state.config.resolveMode === "AUTO") {
+      for (const p of contenders) {
+        const best = bestAchievableRank(this.poolFor(p), this.state.ranks);
+        p.claimRankId = best?.id ?? null;
+        p.claimValid = best != null;
+        p.claimStrength = best?.strength ?? 0;
+      }
+      await this.resolveHand(false);
+      return;
+    }
+
     const deadline = this.deps.clock.now() + this.state.config.claimTimerSec * 1000;
     this.deps.emitter.toRoom(SERVER_EVENTS.showdownStart, {
       availableHandRanks: this.state.ranks

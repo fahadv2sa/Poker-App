@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma, prisma } from "@fp/db";
-import { DEFAULT_GAME_CONFIG, DIFFICULTIES } from "@fp/shared";
+import { DEFAULT_GAME_CONFIG, DIFFICULTIES, RESOLVE_MODES } from "@fp/shared";
 import { auth } from "@/auth";
 import { hashPassword } from "@/lib/argon";
 
@@ -14,6 +14,7 @@ const createRoomSchema = z.object({
   maxPlayers: z.number().int().min(2).max(8).default(6),
   password: z.string().min(1).max(64).optional(),
   difficulty: z.enum(DIFFICULTIES).default("MEDIUM"),
+  resolveMode: z.enum(RESOLVE_MODES).default("MANUAL"),
 });
 
 /** Unguessable invite code (Section 16). */
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
       { status: 422 },
     );
   }
-  const { roomName, isPrivate, maxPlayers, password, difficulty } = parsed.data;
+  const { roomName, isPrivate, maxPlayers, password, difficulty, resolveMode } = parsed.data;
 
   const passwordHash = isPrivate && password ? await hashPassword(password) : null;
   const game = await prisma.game.create({
@@ -84,7 +85,8 @@ export async function POST(req: Request) {
       difficulty,
       inviteCode: inviteCode(),
       createdBy: userId,
-      config: DEFAULT_GAME_CONFIG as unknown as Prisma.InputJsonValue,
+      // Per-table config (jsonb); resolveMode is the creator's Auto/Manual choice.
+      config: { ...DEFAULT_GAME_CONFIG, resolveMode } as unknown as Prisma.InputJsonValue,
     },
     select: { id: true, inviteCode: true },
   });

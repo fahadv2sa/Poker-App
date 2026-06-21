@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { type Difficulty } from "@fp/shared";
+import { type Difficulty, type ResolveMode } from "@fp/shared";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,12 @@ const DIFFICULTY_OPTIONS: ReadonlyArray<{ value: Difficulty; label: string; desc
   { value: "ELITE", label: "النخبة", desc: "جميع اللاعبين" },
 ];
 
+/** How hand-ranks are resolved at showdown (Auto/Manual), set by the creator. */
+const RESOLVE_MODE_OPTIONS: ReadonlyArray<{ value: ResolveMode; label: string; desc: string }> = [
+  { value: "MANUAL", label: "يدوي", desc: "كل لاعب يختار ترابطه بنفسه" },
+  { value: "AUTO", label: "تلقائي", desc: "النظام يحسب الأقوى ويحدد الفائز تلقائيًا" },
+];
+
 /** Create-room form. POSTs to /api/rooms, then opens the new table. */
 export function CreateRoomForm() {
   const router = useRouter();
@@ -23,6 +29,7 @@ export function CreateRoomForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("MEDIUM");
+  const [resolveMode, setResolveMode] = useState<ResolveMode>("MANUAL");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,6 +46,7 @@ export function CreateRoomForm() {
           maxPlayers: Number(form.get("maxPlayers") ?? 6),
           password: isPrivate ? String(form.get("password") ?? "") : undefined,
           difficulty,
+          resolveMode,
         }),
       });
       const data = await res.json();
@@ -77,6 +85,34 @@ export function CreateRoomForm() {
                 key={o.value}
                 type="button"
                 onClick={() => setDifficulty(o.value)}
+                aria-pressed={active}
+                className={cn(
+                  "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",
+                  active
+                    ? "border-gold/60 bg-gold/10 shadow-[0_0_0_1px_rgba(212,175,55,0.35)]"
+                    : "border-white/10 bg-card/60 hover:border-white/25",
+                )}
+              >
+                <span className={cn("text-sm font-bold", active ? "text-gold" : "text-foreground")}>
+                  {o.label}
+                </span>
+                <span className="text-[0.7rem] leading-snug text-muted-foreground">{o.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>طريقة حسم الترابطات</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {RESOLVE_MODE_OPTIONS.map((o) => {
+            const active = resolveMode === o.value;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setResolveMode(o.value)}
                 aria-pressed={active}
                 className={cn(
                   "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",

@@ -78,6 +78,15 @@ export type ResultOutcome = (typeof RESULT_OUTCOMES)[number];
 export const DIFFICULTIES = ["EASY", "MEDIUM", "ELITE"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
+/**
+ * How hand-ranks are resolved at showdown — a table-level setting the creator
+ * picks at creation. MANUAL = each player self-declares their rank (validated
+ * server-side); AUTO = the server evaluates every player's strongest rank with
+ * the engine and decides the winner automatically, no declaration step.
+ */
+export const RESOLVE_MODES = ["MANUAL", "AUTO"] as const;
+export type ResolveMode = (typeof RESOLVE_MODES)[number];
+
 /** Difficulty → MINIMUM fame_score a player needs to enter the deal pool, compared
  *  as `Math.floor(fame_score)` so decimals never shift a boundary (69.9 → 69, out of
  *  the 70 band). Cumulative toward 100: each level includes everyone at or above its

@@ -3,6 +3,7 @@
  * default room config in Section 5. Defaults live here; per-room overrides are
  * stored in Games.config (jsonb).
  */
+import type { ResolveMode } from "./enums.js";
 
 /** Section 19.1 — HAND_SIZE = 5 for Royals and Full-House-Club. */
 export const HAND_SIZE = 5;
@@ -28,6 +29,9 @@ export const DEFAULT_GAME_CONFIG = {
   allInMode: "side_pots",
   /** Feature #7: pause between hands before the room auto-deals the next one. */
   nextHandDelaySec: 5,
+  /** How showdown ranks resolve (table-level). Default keeps the current
+   *  self-declaration behavior; AUTO lets the server decide automatically. */
+  resolveMode: "MANUAL",
 } as const;
 
 export type GameConfig = {
@@ -38,4 +42,5 @@ export type GameConfig = {
   handSize: number;
   allInMode: "side_pots";
   nextHandDelaySec: number;
+  resolveMode: ResolveMode;
 };

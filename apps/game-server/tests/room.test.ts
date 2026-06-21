@@ -246,6 +246,37 @@ describe("hand flow: check-down to a split showdown", () => {
   });
 });
 
+describe("AUTO mode: server resolves ranks with no self-declaration", () => {
+  it("auto-evaluates the strongest rank and resolves, emitting no claim UI", async () => {
+    const { room, persistence, emitter, timers } = makeRoom(allMidDeck());
+    room.state.config = { ...room.state.config, resolveMode: "AUTO" };
+
+    await room.start();
+    // Check the hand down through all four streets to the showdown.
+    for (let i = 0; i < 4; i++) {
+      await room.placeAction(2, { type: "CHECK" });
+      await room.placeAction(1, { type: "CHECK" });
+    }
+
+    // No manual claim step: no showdown:start, no claim timer — resolved directly.
+    expect(roomEvents(emitter, "showdown:start")).toHaveLength(0);
+    expect(timers.pending.has("claim")).toBe(false);
+    expect(room.state.phase).toBe("ENDED");
+
+    // Both 7-midfielder pools auto-evaluate to ROYAL_POSITION ⇒ tie ⇒ split.
+    const splits = persistence.settlements.filter((m) => m.type === "SPLIT_WIN");
+    expect(splits).toHaveLength(2);
+    expect(splits.every((m) => m.amount === 50n)).toBe(true);
+
+    // The winner-screen best-rank reveal still fires per seat in AUTO mode (#6).
+    const reveals = emitter.seat.filter((s) => s.event === "result:best");
+    expect(reveals).toHaveLength(2);
+    expect(reveals.every((r) => r.payload.rankNameAr != null)).toBe(true);
+
+    expect(roomEvents(emitter, "game:result").at(-1)!.payload.results).toHaveLength(2);
+  });
+});
+
 describe("hand flow: fold to last player standing", () => {
   it("ends immediately and the survivor sweeps the pot including the forfeit", async () => {
     const { room, persistence } = makeRoom(allMidDeck());
