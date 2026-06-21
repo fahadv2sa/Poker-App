@@ -83,7 +83,7 @@ export function QuickPlay({ token }: { token: string }) {
     const max = state?.max ?? QUICK_PLAY.maxSeats;
     const ready = count >= min;
     return (
-      <Card className="overflow-hidden p-0">
+      <Card className="panel overflow-hidden p-0">
         <div
           className="flex flex-col items-center gap-3 px-6 py-8 text-center"
           style={{
@@ -149,7 +149,7 @@ export function QuickPlay({ token }: { token: string }) {
             key={t.value}
             type="button"
             onClick={() => joinTier(t.value)}
-            className="flex flex-col gap-1 rounded-2xl border border-white/10 bg-card/70 p-5 text-right transition hover:-translate-y-0.5 hover:border-primary/45"
+            className="tile flex flex-col gap-1 p-5 text-right"
           >
             <span className="text-lg font-black">{t.label}</span>
             <span className="text-xs text-muted-foreground">{t.desc}</span>

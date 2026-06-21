@@ -162,7 +162,7 @@ export function CreateRoomForm() {
         </div>
       ) : null}
 
-      <Button type="submit" disabled={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} className="btn-cta w-full">
         {pending ? "جارٍ الإنشاء…" : "إنشاء وفتح الطاولة"}
       </Button>
     </form>

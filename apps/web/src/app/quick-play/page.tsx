@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { signRealtimeToken } from "@/lib/realtime-token";
 import { QuickPlay } from "@/components/quick-play";
 
@@ -20,18 +19,14 @@ export default async function QuickPlayPage() {
   });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          لعب سريع
-        </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
-      </header>
+    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+      <div aria-hidden className="arena-rail" />
 
-      <QuickPlay token={token} />
+      <PageHeader icon="⚡" title="لعب سريع" subtitle="انضمّ لطاولة عشوائية فورًا" />
+
+      <div className="relative z-10">
+        <QuickPlay token={token} />
+      </div>
     </main>
   );
 }

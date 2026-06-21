@@ -31,8 +31,13 @@ export function ClaimButton({ canClaim }: { canClaim: boolean }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button onClick={claim} disabled={pending || !canClaim} className="w-full">
-        {pending ? "جارٍ الطلب…" : canClaim ? "اطلب 1000 كوين" : "بلغت الحد لهذه الفترة"}
+      <Button
+        onClick={claim}
+        disabled={pending || !canClaim}
+        size="lg"
+        className={canClaim ? "btn-gold-cta w-full" : "w-full"}
+      >
+        {pending ? "جارٍ الطلب…" : canClaim ? "🪙 اطلب 1000 كوين" : "بلغت الحد لهذه الفترة"}
       </Button>
       {msg ? (
         <div

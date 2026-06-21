@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { Panel } from "@/components/panel";
 import { ProfileEditor } from "@/components/profile-editor";
 import { ProfileView } from "@/components/profile-view";
 
@@ -47,18 +48,12 @@ export default async function ProfilePage() {
   ];
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          الملف الشخصي
-        </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
-      </header>
+    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+      <div aria-hidden className="arena-rail" />
 
-      <Card className="p-6 sm:p-8">
+      <PageHeader icon="👤" title="الملف الشخصي" subtitle="معلوماتك ورقمك التعريفي" accent="cyan" />
+
+      <Panel className="relative z-10">
         <ProfileView
           displayName={user.nickname ?? user.username}
           subtitle={`${user.username} · #${user.playerNumber}`}
@@ -74,7 +69,7 @@ export default async function ProfilePage() {
         <Button asChild variant="ghost" className="mt-6 w-full">
           <Link href="/stats">عرض الإحصائيات الكاملة →</Link>
         </Button>
-      </Card>
+      </Panel>
     </main>
   );
 }

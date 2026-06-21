@@ -17,12 +17,24 @@ import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/ta
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { SoundControl } from "@/components/sound-control";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
 import { OpponentProfileModal } from "./opponent-profile-modal";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
+
+// Fixed (non-random) confetti pieces for the winner screen — deterministic so
+// there's no hydration mismatch and it stays cheap. Purely decorative; the
+// global reduced-motion rule hides them. Colors map to the brand palette.
+const CONFETTI_COLORS = ["var(--gold)", "var(--primary)", "var(--accent)", "#ffffff"];
+const CONFETTI = Array.from({ length: 26 }, (_, i) => ({
+  left: (i * 37 + 5) % 100,
+  delay: (i % 10) * 0.32,
+  duration: 2.8 + (i % 5) * 0.5,
+  color: CONFETTI_COLORS[i % CONFETTI_COLORS.length]!,
+}));
 
 const OUTCOME_AR: Record<string, string> = {
   WIN: "فائز",
@@ -132,7 +144,7 @@ export function GameTable({
       {/* ---------------------------------------------------------- top bar */}
       <header className="mb-4 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="size-2.5 shrink-0 rounded-full bg-primary glow-primary" />
+          <Logo className="size-7 shrink-0" />
           <span className="truncate text-lg font-black">{roomName}</span>
           <span className="hidden rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground sm:inline">
             {PHASE_AR[phase] ?? phase}
@@ -720,7 +732,26 @@ function ResultOverlay({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex justify-center overflow-y-auto bg-background/85 p-3 backdrop-blur-md sm:p-6"
     >
-      <div className="my-auto w-full max-w-2xl space-y-4">
+      {/* Celebratory confetti — only when there's actually a winner. Decorative,
+          pointer-events-none, hidden under prefers-reduced-motion. */}
+      {winners.length > 0 ? (
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+          {CONFETTI.map((c, i) => (
+            <span
+              key={i}
+              className="confetti-pc"
+              style={{
+                left: `${c.left}%`,
+                background: c.color,
+                animationDelay: `${c.delay}s`,
+                animationDuration: `${c.duration}s`,
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="relative z-10 my-auto w-full max-w-2xl space-y-4">
         {/* Winner section (revealed first) */}
         <motion.section
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -728,6 +759,13 @@ function ResultOverlay({
           transition={{ duration: 0.28, ease: "easeOut" }}
           className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 shadow-2xl"
         >
+          {winners.length > 0 ? (
+            <div className="mb-1 flex justify-center">
+              <span className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl">
+                🏆
+              </span>
+            </div>
+          ) : null}
           <div className="text-center text-sm font-bold text-gold">
             {winners.length > 1 ? "الفائزون" : "الفائز"}
           </div>

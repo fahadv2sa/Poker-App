@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { Panel } from "@/components/panel";
 import { JoinForm } from "./join-form";
 
 /** Arabic labels for the room difficulty (display only). */
@@ -39,66 +39,66 @@ export default async function RoomsPage() {
   const rooms = found.map(({ passwordHash, ...r }) => ({ ...r, locked: passwordHash !== null }));
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          دخول غرفة
-        </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
-      </header>
+    <main className="relative mx-auto max-w-5xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+      <div aria-hidden className="arena-rail" />
 
-      <Card className="mb-4 p-6 sm:p-8">
-        <h2 className="mb-4 text-xl">دخول بكود</h2>
+      <PageHeader icon="♣" title="دخول غرفة" subtitle="انضمّ بكود دعوة أو من الغرف العامة" accent="cyan" />
+
+      <Panel accent className="relative z-10 mb-4">
+        <h2 className="mb-4 text-lg font-bold">دخول بكود</h2>
         <JoinForm />
-      </Card>
+      </Panel>
 
-      <Card className="p-6 sm:p-8">
+      <Panel className="relative z-10">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl">الغرف العامة</h2>
-          <span className="rounded-full border px-3 py-1 text-sm text-muted-foreground">
+          <h2 className="text-lg font-bold">الغرف العامة</h2>
+          <span className="rounded-full border border-border/70 px-3 py-1 text-sm text-muted-foreground">
             <span className="num">{rooms.length}</span> غرفة
           </span>
         </div>
 
         {rooms.length === 0 ? (
-          <p className="text-muted-foreground">لا توجد غرف عامة الآن — أنشئ واحدة!</p>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span className="text-3xl opacity-60" aria-hidden>♣</span>
+            <p className="text-muted-foreground">لا توجد غرف عامة الآن — أنشئ واحدة!</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5">
             {rooms.map((r) => (
               <Link
                 key={r.id}
                 href={`/table/${r.id}`}
-                className="flex items-center justify-between gap-3 rounded-lg border bg-secondary/40 p-4 transition hover:border-primary/45"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-secondary/25 p-4 transition hover:-translate-y-0.5 hover:border-primary/45 hover:bg-secondary/40"
               >
-                <div className="min-w-0">
-                  <strong className="block truncate">{r.roomName}</strong>
-                  <div className="mt-0.5 text-sm text-muted-foreground">
-                    بواسطة {r.creator.username}
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-                    <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-gold">
-                      {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
-                    </span>
-                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
-                      {r.locked ? "🔒 خاصة" : "عامة"}
-                    </span>
-                    <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
-                      <span className="num">{r._count.players}</span> /{" "}
-                      <span className="num">{r.maxPlayers}</span> لاعبين
-                    </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-accent/25 bg-accent/10 text-xl" aria-hidden>
+                    {r.locked ? "🔒" : "♣"}
+                  </span>
+                  <div className="min-w-0">
+                    <strong className="block truncate">{r.roomName}</strong>
+                    <div className="mt-0.5 text-sm text-muted-foreground">بواسطة {r.creator.username}</div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-gold">
+                        {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
+                      </span>
+                      <span className="rounded-full border border-border/70 px-2 py-0.5 text-muted-foreground">
+                        {r.locked ? "🔒 خاصة" : "عامة"}
+                      </span>
+                      <span className="rounded-full border border-border/70 px-2 py-0.5 text-muted-foreground">
+                        <span className="num">{r._count.players}</span> /{" "}
+                        <span className="num">{r.maxPlayers}</span> لاعبين
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <span className="shrink-0 rounded-full border border-primary/40 px-3 py-1 text-sm text-primary">
+                <span className="shrink-0 rounded-full border border-primary/40 bg-primary/5 px-3 py-1 text-sm font-bold text-primary transition group-hover:bg-primary/15">
                   {r.locked ? "🔒 دخول" : "دخول →"}
                 </span>
               </Link>
             ))}
           </div>
         )}
-      </Card>
+      </Panel>
     </main>
   );
 }

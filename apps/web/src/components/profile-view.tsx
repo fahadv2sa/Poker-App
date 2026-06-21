@@ -41,11 +41,11 @@ export function ProfileView({
           <img
             src={avatarUrl}
             alt={displayName}
-            className="size-16 rounded-full object-cover ring-1 ring-border"
+            className="size-16 rounded-full object-cover ring-2 ring-primary/40 [box-shadow:0_0_18px_color-mix(in_oklch,var(--primary)_22%,transparent)]"
           />
         ) : (
           <div
-            className="grid size-16 place-items-center rounded-full text-2xl font-black text-white"
+            className="grid size-16 place-items-center rounded-full text-2xl font-black text-white ring-2 ring-primary/40 [box-shadow:0_0_18px_color-mix(in_oklch,var(--primary)_22%,transparent)]"
             style={{
               background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))`,
             }}

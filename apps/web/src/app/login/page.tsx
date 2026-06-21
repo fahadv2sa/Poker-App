@@ -8,7 +8,8 @@ export default async function LoginPage() {
   if (session?.user?.id) redirect("/");
 
   return (
-    <main className="grid min-h-screen place-items-center px-4 py-10">
+    <main className="relative grid min-h-screen place-items-center overflow-hidden px-4 py-10">
+      <div aria-hidden className="arena-rail" />
       <AuthForm action={loginAction} mode="login" />
     </main>
   );

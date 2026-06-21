@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { Panel } from "@/components/panel";
 import { CreateRoomForm } from "./create-form";
 
 /** Create a room (name, difficulty, resolve mode, max players, private toggle).
@@ -12,21 +11,14 @@ export default async function CreateRoomPage() {
   if (!session?.user?.id) redirect("/login");
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          إنشاء غرفة
-        </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
-      </header>
+    <main className="relative mx-auto max-w-xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+      <div aria-hidden className="arena-rail" />
 
-      <Card className="p-6 sm:p-8">
-        <h2 className="mb-4 text-xl">إنشاء غرفة</h2>
+      <PageHeader icon="♠" title="إنشاء غرفة" subtitle="ابدأ طاولة جديدة وادعُ أصدقاءك" />
+
+      <Panel accent className="relative z-10">
         <CreateRoomForm />
-      </Card>
+      </Panel>
     </main>
   );
 }

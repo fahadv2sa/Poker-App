@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
+import { Panel } from "@/components/panel";
 import { RemoveFriendButton } from "@/components/remove-friend-button";
 import { RespondRequestButtons } from "@/components/respond-request-buttons";
 
@@ -91,19 +90,13 @@ export default async function FriendsPage() {
   const friends = links.map((l) => (l.requesterId === me ? l.addressee : l.requester));
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
-      <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          الأصدقاء
-        </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
-      </header>
+    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+      <div aria-hidden className="arena-rail" />
+
+      <PageHeader icon="🤝" title="الأصدقاء" subtitle="قائمة أصدقائك وإدارتهم" />
 
       {requests.length > 0 ? (
-        <Card className="mb-5 p-4 sm:p-6">
+        <Panel accent className="relative z-10 mb-5 p-4 sm:p-6">
           <h2 className="mb-1 flex items-center gap-2 text-lg font-bold">
             الطلبات الواردة
             <span className="num rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
@@ -115,15 +108,18 @@ export default async function FriendsPage() {
               <Row key={p.id} p={p} action={<RespondRequestButtons playerNumber={p.playerNumber} />} />
             ))}
           </div>
-        </Card>
+        </Panel>
       ) : null}
 
-      <Card className="p-4 sm:p-6">
+      <Panel className="relative z-10 p-4 sm:p-6">
         <h2 className="mb-1 text-lg font-bold">أصدقائي</h2>
         {friends.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            لا أصدقاء بعد — افتح ملف خصم أثناء اللعب وأرسِل له طلب صداقة.
-          </p>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <span className="text-3xl opacity-60" aria-hidden>🤝</span>
+            <p className="text-sm text-muted-foreground">
+              لا أصدقاء بعد — افتح ملف خصم أثناء اللعب وأرسِل له طلب صداقة.
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col">
             {friends.map((p) => (
@@ -131,7 +127,7 @@ export default async function FriendsPage() {
             ))}
           </div>
         )}
-      </Card>
+      </Panel>
     </main>
   );
 }
