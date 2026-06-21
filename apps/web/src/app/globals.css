@@ -128,6 +128,40 @@
 }
 .animate-turn { animation: turn-pulse 1.8s ease-in-out infinite; }
 
+/* Stats "player card" — rank ring + animated bars + badge shimmer (CSS-only). */
+.rank-ring {
+  border-radius: 9999px;
+  padding: 5px;
+  background: conic-gradient(
+    var(--gold) calc(var(--p, 0) * 1deg),
+    color-mix(in oklch, var(--border) 70%, transparent) 0
+  );
+}
+.rank-ring > * {
+  background: var(--card);
+  border-radius: 9999px;
+}
+
+@keyframes bar-grow { from { width: 0; } }
+.bar-fill { animation: bar-grow 0.85s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.badge-shine { position: relative; overflow: hidden; }
+.badge-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    color-mix(in oklch, var(--gold) 26%, transparent) 50%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  animation: badge-shine 4s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+@keyframes badge-shine { 0% { transform: translateX(-130%); } 55%, 100% { transform: translateX(240%); } }
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
 }
