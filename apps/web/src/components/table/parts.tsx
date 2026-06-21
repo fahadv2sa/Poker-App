@@ -375,6 +375,60 @@ export function FootballCard({
 /** Compact opponent seat placed around the table rim. When it's this seat's
  *  turn, shows a strong "now playing" highlight + live countdown ON the seat
  *  (A2); shows a "claimed" badge at showdown (A3). */
+/** Deterministic gradient hue for a generated avatar fallback. */
+function hueFromSeed(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
+  return h;
+}
+
+/** Player avatar for the table: loads the uploaded image by public number, and
+ *  falls back to a generated gradient if there's none (the 404 sets `failed`,
+ *  which persists for the mounted seat — no repeated requests). */
+export function SeatAvatar({
+  playerNumber,
+  seed,
+  size = 44,
+  className,
+}: {
+  playerNumber: number;
+  seed: string;
+  size?: number;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  const hue = hueFromSeed(seed);
+  return (
+    <div
+      className={cn("overflow-hidden rounded-full bg-[#0b1120]", className)}
+      style={{ width: size, height: size }}
+    >
+      {!failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`/api/profile/avatar/by-number/${playerNumber}`}
+          alt=""
+          onError={() => setFailed(true)}
+          className="size-full object-cover"
+        />
+      ) : (
+        <div
+          className="grid size-full place-items-center font-black text-white"
+          style={{
+            fontSize: size * 0.4,
+            background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))`,
+          }}
+          aria-hidden
+        >
+          {seed.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** A seated opponent: avatar (floodlight ring encoding state), name, status and
+ *  committed chips. Tap to open the rich profile. The ring color is the state. */
 export function OpponentSeat({
   player,
   isActive,
@@ -389,6 +443,13 @@ export function OpponentSeat({
   /** Tap the seat to open this opponent's public profile (on-demand read). */
   onOpenProfile?: (playerNumber: number) => void;
 }) {
+  const folded = player.status === "FOLDED";
+  const allin = player.status === "ALLIN";
+  const ring = isActive
+    ? "ring-2 ring-primary glow-primary"
+    : allin
+      ? "ring-2 ring-gold glow-gold"
+      : "ring-1 ring-white/15";
   return (
     <motion.div
       layout
@@ -396,44 +457,43 @@ export function OpponentSeat({
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
-        "flex min-w-[120px] flex-col gap-0.5 rounded-xl border px-3 py-2 backdrop-blur transition",
-        "border-white/10 bg-[#070b14]/70",
-        onOpenProfile && "cursor-pointer hover:border-primary/50",
-        isActive && "border-primary bg-primary/10 glow-primary animate-turn ring-2 ring-primary/60",
-        player.status === "FOLDED" && "opacity-40 grayscale",
-        player.status === "ALLIN" && "border-gold/70 glow-gold",
+        "relative flex w-[84px] flex-col items-center gap-1 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1.5 py-2 backdrop-blur transition",
+        onOpenProfile && "cursor-pointer hover:border-primary/40 hover:bg-[#0a1020]/80",
+        isActive && "animate-turn border-primary/50",
+        folded && "opacity-45 grayscale",
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-sm font-bold">{player.username}</span>
-        <div className="flex shrink-0 items-center gap-1">
-          {isActive ? <Countdown deadlineTs={deadlineTs ?? null} compact /> : null}
-          {player.isDealer ? (
-            <span
-              className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
-              title="الموزّع"
-            >
-              D
-            </span>
-          ) : null}
-        </div>
-      </div>
-      <div className="flex items-center justify-between gap-2 text-[0.68rem] text-muted-foreground">
-        <span>
-          {isActive ? (
-            <span className="font-bold text-primary">يلعب الآن…</span>
-          ) : hasClaimed ? (
-            <span className="font-bold text-accent">اختار ✓</span>
-          ) : (
-            (STATUS_AR[player.status] ?? player.status)
-          )}
-        </span>
-        {player.committedTotal > 0 ? (
-          <span className="text-gold">
-            🪙 <span className="num">{player.committedTotal}</span>
+      <div className="relative">
+        <SeatAvatar playerNumber={player.playerNumber} seed={player.username} size={44} className={ring} />
+        {player.isDealer ? (
+          <span
+            className="absolute -bottom-0.5 -left-0.5 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
+            title="الموزّع"
+          >
+            D
+          </span>
+        ) : null}
+        {isActive ? (
+          <span className="absolute -top-1 -right-1 rounded-full bg-[#070b14] px-0.5">
+            <Countdown deadlineTs={deadlineTs ?? null} compact />
           </span>
         ) : null}
       </div>
+      <span className="max-w-full truncate text-[0.72rem] font-bold leading-tight">{player.username}</span>
+      <span className="text-[0.6rem] leading-none">
+        {isActive ? (
+          <span className="font-bold text-primary">يلعب…</span>
+        ) : hasClaimed ? (
+          <span className="font-bold text-accent">اختار ✓</span>
+        ) : (
+          <span className="text-muted-foreground">{STATUS_AR[player.status] ?? player.status}</span>
+        )}
+      </span>
+      {player.committedTotal > 0 ? (
+        <span className="rounded-full bg-gold/10 px-1.5 text-[0.6rem] text-gold">
+          🪙 <span className="num">{player.committedTotal}</span>
+        </span>
+      ) : null}
     </motion.div>
   );
 }

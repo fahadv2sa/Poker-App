@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ProfileView } from "@/components/profile-view";
+import { SeatAvatar } from "./parts";
+
+type FriendState = "none" | "pending_out" | "pending_in" | "friends";
 
 interface PublicProfile {
   playerNumber: number;
@@ -12,19 +14,33 @@ interface PublicProfile {
   avatarSeed: string;
   level: number;
   likes: number;
-  matches: number;
+  friends: number;
   wins: number;
+  losses: number;
   biggestWin: string;
+  biggestLoss: string;
   isSelf: boolean;
   likedByMe: boolean;
-  isFriend: boolean;
+  friendState: FriendState;
+}
+
+/** Stadium-scoreboard stat tile. */
+function StatTile({ icon, label, value, tone }: { icon: string; label: string; value: string; tone: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[#070b14]/60 px-2 py-3 text-center">
+      <span aria-hidden className="text-base leading-none">
+        {icon}
+      </span>
+      <span className={`num text-base font-extrabold leading-none ${tone}`}>{value}</span>
+      <span className="text-[0.62rem] leading-tight text-muted-foreground">{label}</span>
+    </div>
+  );
 }
 
 /**
- * On-demand opponent profile during play: fetches the PUBLIC profile by
- * playerNumber and reuses the shared ProfileView (read-only — never any cards).
- * Adds Like (toggle) + Add/Remove-friend, both server-authoritative. Rendered
- * inside the table's <AnimatePresence> so it animates in/out.
+ * Rich opponent profile during play — a floodlit scoreboard card. Reuses the
+ * public profile endpoint (every value from its source of truth); never reveals
+ * cards. Like (toggle) + the full friend-request state machine.
  */
 export function OpponentProfileModal({
   playerNumber,
@@ -52,36 +68,35 @@ export function OpponentProfileModal({
     };
   }, [playerNumber]);
 
-  async function toggleLike() {
-    if (!p) return;
+  async function post(url: string, body: object, method = "POST") {
     setBusy(true);
     try {
-      const res = await fetch("/api/social/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerNumber }),
-      });
-      const d = await res.json();
-      if (res.ok) setP({ ...p, likedByMe: d.liked, likes: d.likes });
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      return res.ok ? await res.json() : null;
     } finally {
       setBusy(false);
     }
   }
 
-  async function toggleFriend() {
+  async function toggleLike() {
     if (!p) return;
-    setBusy(true);
-    try {
-      const res = await fetch("/api/social/friend", {
-        method: p.isFriend ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerNumber }),
-      });
-      const d = await res.json();
-      if (res.ok) setP({ ...p, isFriend: d.isFriend });
-    } finally {
-      setBusy(false);
-    }
+    const d = await post("/api/social/like", { playerNumber });
+    if (d) setP({ ...p, likedByMe: d.liked, likes: d.likes });
+  }
+  async function sendRequest() {
+    if (!p) return;
+    const d = await post("/api/social/friend", { playerNumber });
+    if (d) setP({ ...p, friendState: d.friendState });
+  }
+  async function removeOrCancel() {
+    if (!p) return;
+    const d = await post("/api/social/friend", { playerNumber }, "DELETE");
+    if (d) setP({ ...p, friendState: d.friendState });
+  }
+  async function respond(action: "accept" | "reject") {
+    if (!p) return;
+    const d = await post("/api/social/friend/respond", { playerNumber, action });
+    if (d) setP({ ...p, friendState: d.friendState });
   }
 
   return (
@@ -93,54 +108,99 @@ export function OpponentProfileModal({
       className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-4 backdrop-blur-md"
     >
       <motion.div
-        initial={{ scale: 0.96, y: 10 }}
+        initial={{ scale: 0.95, y: 12 }}
         animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.96, opacity: 0 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl"
+        className="w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-card shadow-2xl"
       >
         {err ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{err}</p>
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">{err}</p>
         ) : !p ? (
-          <p className="animate-pulse py-6 text-center text-sm text-muted-foreground">جارٍ التحميل…</p>
+          <p className="animate-pulse px-6 py-10 text-center text-sm text-muted-foreground">جارٍ التحميل…</p>
         ) : (
           <>
-            <ProfileView
-              displayName={p.displayName}
-              subtitle={`#${p.playerNumber}`}
-              avatarUrl={p.avatarUrl}
-              avatarSeed={p.avatarSeed}
-              level={p.level}
-              likes={p.likes}
-              rows={[
-                ["المباريات", String(p.matches)],
-                ["الانتصارات", String(p.wins)],
-                ["أكبر رهان رابح", `${p.biggestWin} كوين`],
-              ]}
-            />
+            {/* floodlit header */}
+            <div
+              className="relative flex flex-col items-center gap-2 px-6 pb-5 pt-7"
+              style={{
+                background:
+                  "radial-gradient(120% 90% at 50% -20%, color-mix(in oklch, var(--accent) 28%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in oklch, var(--accent) 8%, transparent), transparent)",
+              }}
+            >
+              <SeatAvatar
+                playerNumber={p.playerNumber}
+                seed={p.avatarSeed}
+                size={84}
+                className="ring-2 ring-accent/70 shadow-[0_0_28px_rgba(56,189,248,0.35)]"
+              />
+              <div className="text-center">
+                <div className="text-xl font-black">{p.displayName}</div>
+                <div className="num text-xs text-muted-foreground">رقم العضوية #{p.playerNumber}</div>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs text-gold">
+                المستوى <span className="num font-bold">{p.level}</span>
+              </span>
+            </div>
+
+            {/* scoreboard */}
+            <div className="grid grid-cols-3 gap-2 px-5 pb-2">
+              <StatTile icon="❤️" label="الإعجابات" value={String(p.likes)} tone="text-primary" />
+              <StatTile icon="👥" label="الأصدقاء" value={String(p.friends)} tone="text-accent" />
+              <StatTile icon="🏆" label="الانتصارات" value={String(p.wins)} tone="text-primary" />
+              <StatTile icon="💔" label="الخسارات" value={String(p.losses)} tone="text-destructive" />
+              <StatTile icon="📈" label="أكبر رهان فائز" value={p.biggestWin} tone="text-gold" />
+              <StatTile icon="📉" label="أكبر رهان خاسر" value={p.biggestLoss} tone="text-destructive" />
+            </div>
+
+            {/* actions */}
             {!p.isSelf ? (
-              <div className="mt-5 grid grid-cols-2 gap-2">
+              <div className="space-y-2 px-5 pb-5 pt-3">
                 <Button
                   variant={p.likedByMe ? "default" : "secondary"}
                   disabled={busy}
                   onClick={toggleLike}
+                  className="w-full"
                 >
                   {p.likedByMe ? "❤️ معجَب" : "🤍 إعجاب"}
                 </Button>
-                <Button
-                  variant={p.isFriend ? "default" : "secondary"}
-                  disabled={busy}
-                  onClick={toggleFriend}
-                >
-                  {p.isFriend ? "✓ صديق" : "➕ إضافة كصديق"}
-                </Button>
+                {p.friendState === "none" ? (
+                  <Button disabled={busy} onClick={sendRequest} className="w-full">
+                    ➕ إضافة كصديق
+                  </Button>
+                ) : p.friendState === "pending_out" ? (
+                  <Button variant="secondary" disabled={busy} onClick={removeOrCancel} className="w-full">
+                    ⏳ بانتظار القبول · إلغاء
+                  </Button>
+                ) : p.friendState === "pending_in" ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button disabled={busy} onClick={() => respond("accept")}>
+                      قبول الطلب
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => respond("reject")}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      رفض
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="secondary" disabled={busy} onClick={removeOrCancel} className="w-full">
+                    ✓ صديق · إزالة
+                  </Button>
+                )}
               </div>
             ) : null}
           </>
         )}
-        <Button variant="ghost" className="mt-4 w-full" onClick={onClose}>
+        <button
+          onClick={onClose}
+          className="w-full border-t border-white/10 py-3 text-sm text-muted-foreground transition hover:text-foreground"
+        >
           إغلاق
-        </Button>
+        </button>
       </motion.div>
     </motion.div>
   );

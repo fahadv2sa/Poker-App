@@ -166,8 +166,8 @@ model User {
   playerBadges PlayerBadge[]
   likesGiven    Like[]       @relation("LikesGiven")
   likesGot      Like[]       @relation("LikesGot")
-  friendshipsA  Friendship[] @relation("FriendshipA")
-  friendshipsB  Friendship[] @relation("FriendshipB")
+  friendReqSent Friendship[] @relation("FriendRequester")
+  friendReqRecv Friendship[] @relation("FriendAddressee")
 
   @@map("users")
 }
@@ -188,20 +188,31 @@ model Like {
   @@map("likes")
 }
 
-// Social — symmetric friendship, stored canonically (userAId < userBId) so a pair
-// can't duplicate. Auto-accepted (no request flow). Self-friend is rejected in code.
+enum FriendStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+
+  @@map("friend_status")
+}
+
+// Social — directional friend request with an approval state machine. One row per
+// (requester, addressee). A friendship is ACTIVE only when status=ACCEPTED.
+// Overlapping/duplicate requests + self-requests are rejected/auto-handled in code.
 model Friendship {
-  id        String   @id @default(uuid()) @db.Uuid
-  userAId   String   @map("user_a_id") @db.Uuid
-  userBId   String   @map("user_b_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          String       @id @default(uuid()) @db.Uuid
+  requesterId String       @map("requester_id") @db.Uuid
+  addresseeId String       @map("addressee_id") @db.Uuid
+  status      FriendStatus @default(PENDING)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  userA     User     @relation("FriendshipA", fields: [userAId], references: [id], onDelete: Cascade)
-  userB     User     @relation("FriendshipB", fields: [userBId], references: [id], onDelete: Cascade)
+  requester   User         @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User         @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
 
-  @@unique([userAId, userBId])
-  @@index([userAId])
-  @@index([userBId])
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
   @@map("friendships")
 }
 

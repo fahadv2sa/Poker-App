@@ -179,9 +179,24 @@ export function GameTable({
         <>
           {/* ------------------------------------------------ table centerpiece */}
           <section
-            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-5 rounded-[44px] border border-primary/20 px-4 py-6 sm:px-8 sm:py-9"
+            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-5 overflow-hidden rounded-[44px] border border-primary/15 px-4 py-6 sm:px-8 sm:py-9"
             style={{ boxShadow: "inset 0 0 0 1px rgba(46,230,166,0.06), inset 0 0 70px rgba(0,0,0,0.5), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
+            {/* Pitch markings — the felt reads as a football pitch (decorative,
+                static, zero perf cost). */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.12]">
+              <div className="absolute inset-3 rounded-[36px] border-2 border-white" />
+              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white" />
+              <div className="absolute left-1/2 top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white sm:size-36" />
+              <div className="absolute left-1/2 top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+            </div>
+            {/* Stadium floodlight rim along the top edge. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-24"
+              style={{ background: "radial-gradient(60% 100% at 50% 0%, color-mix(in oklch, var(--accent) 22%, transparent), transparent)" }}
+            />
+
             {/* opponents around the rim */}
             <div className="flex w-full flex-wrap items-start justify-center gap-2">
               {opponents.length === 0 ? (
@@ -200,19 +215,20 @@ export function GameTable({
               )}
             </div>
 
-            {/* focal point: pot(s) + community + timer */}
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-2">
+            {/* focal point: pot scoreboard + community + timer */}
+            <div className="relative flex flex-1 flex-col items-center justify-center gap-4 py-2">
               <motion.div
                 key={s.pot}
-                initial={{ scale: 0.8, opacity: 0.6 }}
+                initial={{ scale: 0.85, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-[#0b0f1a]/60 px-5 py-2 font-extrabold text-gold shadow-lg backdrop-blur"
+                className="glow-gold flex flex-col items-center gap-0.5 rounded-2xl border border-gold/40 bg-[#0b0f1a]/75 px-7 py-2 shadow-lg backdrop-blur"
               >
-                🪙 <span className="num text-lg">{s.pot}</span>
+                <span className="text-[0.58rem] font-bold tracking-[0.25em] text-gold/70">المجمّع</span>
+                <span className="num text-3xl font-black leading-none text-gold">{s.pot}</span>
                 {s.currentBet > 0 ? (
-                  <span className="text-xs font-medium text-white/55">
-                    · الرهان <span className="num">{s.currentBet}</span>
+                  <span className="text-[0.66rem] text-white/55">
+                    الرهان <span className="num">{s.currentBet}</span>
                   </span>
                 ) : null}
               </motion.div>

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
+import { friendStateOf, relationRow } from "@/lib/social";
 
 export const runtime = "nodejs";
 
-async function resolve(req: Request): Promise<
+async function target(req: Request): Promise<
   | { error: ReturnType<typeof NextResponse.json> }
-  | { me: string; targetId: string; a: string; b: string }
+  | { me: string; targetId: string }
 > {
   const session = await auth();
   const me = session?.user?.id;
@@ -23,34 +24,61 @@ async function resolve(req: Request): Promise<
   if (!Number.isInteger(num)) {
     return { error: NextResponse.json({ error: "BAD_ID", messageAr: "معرّف غير صالح" }, { status: 400 }) };
   }
-  const target = await prisma.user.findUnique({ where: { playerNumber: num }, select: { id: true } });
-  if (!target) {
+  const t = await prisma.user.findUnique({ where: { playerNumber: num }, select: { id: true } });
+  if (!t) {
     return { error: NextResponse.json({ error: "NOT_FOUND", messageAr: "اللاعب غير موجود" }, { status: 404 }) };
   }
-  if (target.id === me) {
+  if (t.id === me) {
     return { error: NextResponse.json({ error: "SELF", messageAr: "لا يمكنك إضافة نفسك" }, { status: 400 }) };
   }
-  const [a, b] = [me, target.id].sort() as [string, string]; // canonical pair
-  return { me, targetId: target.id, a, b };
+  return { me, targetId: t.id };
 }
 
-/** POST /api/social/friend { playerNumber } — add a friend (symmetric, immediate).
- *  Idempotent: the unique pair upsert no-ops if already friends. */
+/** POST /api/social/friend { playerNumber } — send a friend request. State machine:
+ *  none→PENDING; if THEY already requested me → auto-accept; if already friends or
+ *  already requested → no-op; a prior REJECTED row re-opens as PENDING from me. */
 export async function POST(req: Request) {
-  const r = await resolve(req);
+  const r = await target(req);
   if ("error" in r) return r.error;
-  await prisma.friendship.upsert({
-    where: { userAId_userBId: { userAId: r.a, userBId: r.b } },
-    create: { userAId: r.a, userBId: r.b },
-    update: {},
+  const { me, targetId } = r;
+
+  const friendState = await prisma.$transaction(async (tx) => {
+    const row = await tx.friendship.findFirst({
+      where: {
+        OR: [
+          { requesterId: me, addresseeId: targetId },
+          { requesterId: targetId, addresseeId: me },
+        ],
+      },
+    });
+    if (!row) {
+      await tx.friendship.create({ data: { requesterId: me, addresseeId: targetId, status: "PENDING" } });
+      return "pending_out" as const;
+    }
+    if (row.status === "ACCEPTED") return "friends" as const;
+    if (row.status === "PENDING") {
+      if (row.requesterId === me) return "pending_out" as const; // already sent
+      // They requested me → sending back auto-accepts.
+      await tx.friendship.update({ where: { id: row.id }, data: { status: "ACCEPTED" } });
+      return "friends" as const;
+    }
+    // REJECTED → reopen as a fresh request from me.
+    await tx.friendship.update({
+      where: { id: row.id },
+      data: { requesterId: me, addresseeId: targetId, status: "PENDING" },
+    });
+    return "pending_out" as const;
   });
-  return NextResponse.json({ ok: true, isFriend: true });
+
+  return NextResponse.json({ friendState });
 }
 
-/** DELETE /api/social/friend { playerNumber } — remove a friend (either side). */
+/** DELETE /api/social/friend { playerNumber } — remove a friend, or cancel an
+ *  outgoing request, or drop an incoming one (whatever row exists between us). */
 export async function DELETE(req: Request) {
-  const r = await resolve(req);
+  const r = await target(req);
   if ("error" in r) return r.error;
-  await prisma.friendship.deleteMany({ where: { userAId: r.a, userBId: r.b } });
-  return NextResponse.json({ ok: true, isFriend: false });
+  const row = await relationRow(r.me, r.targetId);
+  if (row) await prisma.friendship.delete({ where: { id: row.id } });
+  return NextResponse.json({ friendState: friendStateOf(null, r.me) });
 }

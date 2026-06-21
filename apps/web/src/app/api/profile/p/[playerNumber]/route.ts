@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
+import { friendStateOf, friendsCount, relationRow } from "@/lib/social";
 
 export const runtime = "nodejs";
 
 /** GET /api/profile/p/[playerNumber] — PUBLIC profile of a player (by their public
- *  number), plus the requester's relationship flags. Excludes private data
- *  (balance, cards). Used by the opponent-profile modal during play. */
+ *  number), plus the requester's relationship. Excludes private data (balance,
+ *  cards). Every value comes from its existing source — no duplication. */
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ playerNumber: string }> },
@@ -30,7 +31,7 @@ export async function GET(
       playerNumber: true,
       avatarSeed: true,
       likesReceived: true,
-      metrics: { select: { level: true, matches: true, wins: true, biggestWin: true } },
+      metrics: { select: { level: true, wins: true, losses: true, biggestWin: true, biggestLoss: true } },
       avatar: { select: { updatedAt: true } },
     },
   });
@@ -39,19 +40,10 @@ export async function GET(
   }
 
   const isSelf = u.id === me;
-  const [a, b] = [me, u.id].sort() as [string, string];
-  const [liked, friendship] = isSelf
-    ? [null, null]
-    : await Promise.all([
-        prisma.like.findUnique({
-          where: { likerId_targetId: { likerId: me, targetId: u.id } },
-          select: { id: true },
-        }),
-        prisma.friendship.findUnique({
-          where: { userAId_userBId: { userAId: a, userBId: b } },
-          select: { id: true },
-        }),
-      ]);
+  const [row, friends] = await Promise.all([
+    isSelf ? Promise.resolve(null) : relationRow(me, u.id),
+    friendsCount(u.id),
+  ]);
 
   return NextResponse.json({
     playerNumber: u.playerNumber,
@@ -60,11 +52,16 @@ export async function GET(
     avatarSeed: u.avatarSeed ?? u.username,
     level: u.metrics?.level ?? 1,
     likes: u.likesReceived,
-    matches: u.metrics?.matches ?? 0,
+    friends,
     wins: u.metrics?.wins ?? 0,
+    losses: u.metrics?.losses ?? 0,
     biggestWin: (u.metrics?.biggestWin ?? 0n).toString(),
+    biggestLoss: (u.metrics?.biggestLoss ?? 0n).toString(),
     isSelf,
-    likedByMe: liked != null,
-    isFriend: friendship != null,
+    likedByMe: isSelf ? false : (await prisma.like.findUnique({
+      where: { likerId_targetId: { likerId: me, targetId: u.id } },
+      select: { id: true },
+    })) != null,
+    friendState: friendStateOf(row, me),
   });
 }
