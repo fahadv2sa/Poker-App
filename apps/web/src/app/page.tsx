@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 
 const MENU = [
   { href: "/quick-play", icon: "⚡", title: "لعب سريع", desc: "انضمّ لطاولة عشوائية فورًا دون إنشاء غرفة" },
@@ -29,8 +30,8 @@ export default async function HomePage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       <header className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
+        <div className="flex items-center gap-2.5 text-xl font-black">
+          <Logo className="size-9" />
           فوتبول بي
         </div>
         <div className="flex items-center gap-3">
@@ -50,11 +51,16 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <section className="mb-6 rounded-xl border bg-card p-6 shadow-sm sm:p-8">
-        <h1 className="mb-1 text-2xl">أهلًا، {user?.username}</h1>
-        <p className="text-muted-foreground">
-          رقمك التعريفي <span className="num">#{user?.playerNumber}</span> — اختر وجهتك من القائمة.
-        </p>
+      <section className="mb-6 flex flex-col items-center gap-4 rounded-xl border bg-linear-to-b from-card to-secondary/40 p-6 text-center shadow-sm sm:flex-row sm:gap-6 sm:p-8 sm:text-right">
+        <Logo glow className="size-24 shrink-0 sm:size-28" />
+        <div>
+          <h1 className="mb-1 text-2xl">
+            أهلًا، {user?.username} في <span className="text-primary">فوتبول بي</span>
+          </h1>
+          <p className="text-muted-foreground">
+            رقمك التعريفي <span className="num">#{user?.playerNumber}</span> — اختر وجهتك من القائمة.
+          </p>
+        </div>
       </section>
 
       <nav

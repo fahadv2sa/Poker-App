@@ -21,6 +21,19 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "فوتبول بي",
   description: "تحديات كرة قدم",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "فوتبول بي",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     title: "فوتبول بي",
     description: "تحديات كرة قدم",

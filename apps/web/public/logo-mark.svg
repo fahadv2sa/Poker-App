@@ -1,0 +1,53 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="فوتبول بي">
+  <defs>
+    <radialGradient id="fpBall" cx="37%" cy="29%" r="82%">
+      <stop offset="0" stop-color="#a6f0ff"/>
+      <stop offset="36%" stop-color="#3ee3a8"/>
+      <stop offset="76%" stop-color="#149b72"/>
+      <stop offset="100%" stop-color="#0a2f23"/>
+    </radialGradient>
+    <linearGradient id="fpGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- sphere -->
+  <circle cx="256" cy="256" r="196" fill="url(#fpBall)"/>
+  <!-- luxury gold hairline + inner shade -->
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#e9c55c" stroke-opacity=".32" stroke-width="4"/>
+  <circle cx="256" cy="256" r="187" fill="none" stroke="#06130e" stroke-opacity=".45" stroke-width="2"/>
+
+  <!-- seams: central pentagon + spokes to the rim (classic ball structure) -->
+  <g stroke="#07150f" stroke-width="7" fill="none" stroke-linejoin="round" stroke-linecap="round" opacity=".85">
+    <path d="M256 150 L344 214 L310 320 L202 320 L168 214 Z"/>
+    <path d="M256 150 V94"/>
+    <path d="M344 214 L398 180"/>
+    <path d="M310 320 L352 372"/>
+    <path d="M202 320 L160 372"/>
+    <path d="M168 214 L114 180"/>
+  </g>
+
+  <!-- suit "panels" -->
+  <g fill="#07150f">
+    <!-- spade (hero, centre) -->
+    <g transform="translate(256 244)">
+      <path d="M0 -42 C 22 -12 52 2 52 30 A20 20 0 0 1 16 44 C 19 54 24 59 31 64 H-31 C -24 59 -19 54 -16 44 A20 20 0 0 1 -52 30 C -52 2 -22 -12 0 -42 Z"/>
+    </g>
+    <!-- diamond (right panel) -->
+    <g transform="translate(380 256)">
+      <path d="M0 -30 L22 0 L0 30 L-22 0 Z"/>
+    </g>
+    <!-- heart (left panel) -->
+    <g transform="translate(132 256)">
+      <path d="M0 28 C -34 4 -28 -24 -8 -24 C 0 -24 0 -15 0 -12 C 0 -15 0 -24 8 -24 C 28 -24 34 4 0 28 Z"/>
+    </g>
+    <!-- club (bottom panel) -->
+    <g transform="translate(256 382)">
+      <path d="M0 -26 a15 15 0 1 1 -12 7 a15 15 0 1 1 24 0 a15 15 0 1 1 -12 -7 Z M-5 4 H5 L9 30 H-9 Z"/>
+    </g>
+  </g>
+
+  <!-- gloss highlight -->
+  <ellipse cx="196" cy="168" rx="78" ry="46" fill="url(#fpGloss)"/>
+</svg>
