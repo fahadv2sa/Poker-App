@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { StateSyncPayload } from "@fp/shared";
 import { connectGame, type GameConnection } from "./realtime";
 import { actionNotice, applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
+import { ANIMATIONS_ENABLED } from "./anim";
+import { fxBus } from "./fx-bus";
 
 export type { TableView } from "./tableView";
 
@@ -108,6 +110,14 @@ export function useGameSocket(token: string, inviteCode: string) {
         });
         // C10: announce the action to the whole table (works for every seat).
         pushNoticeRef.current(actionNotice(nameOf(p.seat), p), "action");
+        // Visual-only FX cue (state already applied above). No-op when nobody is
+        // listening (animations off). Never goes to the server.
+        if (ANIMATIONS_ENABLED) {
+          if (p.action === "ALLIN") fxBus.emit({ type: "allin", seat: p.seat });
+          if (p.action !== "FOLD" && p.action !== "CHECK") {
+            fxBus.emit({ type: "bet", seat: p.seat, amount: p.amount, action: p.action });
+          }
+        }
       },
       onFolded: (p) =>
         setView((v) =>

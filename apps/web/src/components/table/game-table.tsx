@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
   DEFAULT_GAME_CONFIG,
   type BestRankPayload,
@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
 import { OpponentProfileModal } from "./opponent-profile-modal";
+import { FxProvider, useFx, CountUp, StreetFlourish } from "./fx";
+import { anim } from "@/lib/anim";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 
@@ -144,6 +146,9 @@ export function GameTable({
   }, [view.closed, router]);
 
   return (
+    <MotionConfig reducedMotion="user">
+    <FxProvider>
+    {anim("streetFlourish") ? <StreetFlourish phase={phase} /> : null}
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-6">
       {/* ---------------------------------------------------------- top bar */}
       <header className="mb-4 flex items-center justify-between gap-3">
@@ -253,14 +258,28 @@ export function GameTable({
             {/* focal point: pot scoreboard + community + timer */}
             <div className="relative flex flex-1 flex-col items-center justify-center gap-4 py-2">
               <motion.div
-                key={s.pot}
+                key={anim("potCountUp") ? "pot" : s.pot}
+                data-fx="pot"
                 initial={{ scale: 0.85, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                className="glow-gold flex flex-col items-center gap-0.5 rounded-2xl border border-gold/40 bg-[#0b0f1a]/75 px-7 py-2 shadow-lg backdrop-blur"
+                className="glow-gold relative flex flex-col items-center gap-0.5 rounded-2xl border border-gold/40 bg-[#0b0f1a]/75 px-7 py-2 shadow-lg backdrop-blur"
               >
+                {/* #4 absorb ripple — replays on each pot change */}
+                {anim("potCountUp") ? (
+                  <motion.span
+                    key={s.pot}
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-gold/40"
+                    initial={{ opacity: 0.5, scale: 1 }}
+                    animate={{ opacity: 0, scale: 1.22 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  />
+                ) : null}
                 <span className="text-[0.58rem] font-bold tracking-[0.25em] text-gold/70">المجمّع</span>
-                <span className="num text-3xl font-black leading-none text-gold">{s.pot}</span>
+                <span className="num text-3xl font-black leading-none text-gold">
+                  {anim("potCountUp") ? <CountUp value={s.pot} /> : s.pot}
+                </span>
                 {s.currentBet > 0 ? (
                   <span className="text-[0.66rem] text-white/55">
                     الرهان <span className="num">{s.currentBet}</span>
@@ -291,6 +310,7 @@ export function GameTable({
                     index={i}
                     card={s.communityCards[i] ?? null}
                     back={!s.communityCards[i]}
+                    reveal="flip"
                   />
                 ))}
               </div>
@@ -302,13 +322,25 @@ export function GameTable({
           </section>
 
           {/* ----------------------------------------------- my hole cards */}
-          <section className="mx-auto mt-5 flex w-full max-w-3xl flex-col items-center gap-2">
+          <section
+            data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
+            className="mx-auto mt-5 flex w-full max-w-3xl flex-col items-center gap-2"
+          >
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>بطاقتاك</span>
               {me?.isDealer ? (
-                <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
-                  D
-                </span>
+                anim("dealerButton") ? (
+                  <motion.span
+                    layoutId="dealer-button"
+                    className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
+                  >
+                    D
+                  </motion.span>
+                ) : (
+                  <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
+                    D
+                  </span>
+                )
               ) : null}
               {me && me.committedTotal > 0 ? (
                 <span className="text-gold">
@@ -318,7 +350,9 @@ export function GameTable({
             </div>
             <div className="flex justify-center gap-3">
               {view.hole.length > 0 ? (
-                view.hole.map((c, i) => <FootballCard key={c.playerId} card={c} index={i} size="lg" />)
+                view.hole.map((c, i) => (
+                  <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" />
+                ))
               ) : (
                 <>
                   <FootballCard back size="lg" />
@@ -513,6 +547,8 @@ export function GameTable({
         ) : null}
       </AnimatePresence>
     </main>
+    </FxProvider>
+    </MotionConfig>
   );
 }
 
@@ -568,8 +604,15 @@ function ActionBar({
   // component only mounts on your turn, so the confirm self-resets when the turn
   // passes — a stale confirm can never fire a late action.
   const [foldConfirm, setFoldConfirm] = useState(false);
+  // #9 entrance + tap feedback (visual-only; off → no entrance, no tap scale).
+  const tap = anim("actionBar") ? "transition-transform active:scale-95" : "";
   return (
-    <div className="flex flex-col gap-3">
+    <motion.div
+      initial={anim("actionBar") ? { opacity: 0, y: 16 } : false}
+      animate={anim("actionBar") ? { opacity: 1, y: 0 } : undefined}
+      transition={{ duration: 0.28, ease: "easeOut" }}
+      className="flex flex-col gap-3"
+    >
       <div className="flex items-center justify-between text-sm">
         <span className="font-bold text-primary">دورك</span>
         {owed > 0 ? (
@@ -601,21 +644,21 @@ function ActionBar({
         <>
           <div className="grid grid-cols-3 gap-2">
             {owed <= 0 ? (
-              <Button variant="secondary" onClick={() => onAction("CHECK")}>
+              <Button variant="secondary" className={tap} onClick={() => onAction("CHECK")}>
                 تمرير
               </Button>
             ) : (
               <Button
                 onClick={() => onAction("CALL")}
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                className={cn("bg-accent text-accent-foreground hover:bg-accent/90", tap)}
               >
                 مساواة <span className="num">{owed}</span>
               </Button>
             )}
-            <Button variant="secondary" onClick={() => onAction("ALLIN")}>
+            <Button variant="secondary" className={tap} onClick={() => onAction("ALLIN")}>
               كل الرصيد
             </Button>
-            <Button variant="destructive" onClick={() => setFoldConfirm(true)}>
+            <Button variant="destructive" className={tap} onClick={() => setFoldConfirm(true)}>
               انسحاب
             </Button>
           </div>
@@ -633,14 +676,14 @@ function ActionBar({
             <Button
               onClick={() => onAction("RAISE", raiseTo)}
               disabled={raiseTo < minRaiseTo}
-              className="shrink-0"
+              className={cn("shrink-0", tap)}
             >
               رفع إلى <span className="num">{raiseTo}</span>
             </Button>
           </div>
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -756,6 +799,7 @@ function ResultOverlay({
   onContinue: () => void;
 }) {
   const [dealing, setDealing] = useState(false);
+  const { fly } = useFx();
 
   const nameOf = (seat: number) =>
     players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
@@ -766,6 +810,20 @@ function ResultOverlay({
     holeCards && holeCards.length > 0 ? [...holeCards, ...community] : null;
 
   const winners = results.filter((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
+
+  // #6 coin payout — fly coins from the (still-mounted) pot up to each winner's
+  // payout pill once the overlay has settled. Decorative; the real +amount is
+  // already shown. Skipped automatically when off / reduced-motion (fly no-ops).
+  useEffect(() => {
+    if (!anim("coinPayout") || winners.length === 0) return;
+    const t = setTimeout(() => {
+      winners.forEach((w) =>
+        fly({ from: '[data-fx="pot"]', to: `[data-fx="win-${w.seat}"]`, kind: "coin", count: 8 }),
+      );
+    }, 220);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const losers = results
     .filter((r) => r.outcome !== "WIN" && r.outcome !== "SPLIT")
     .sort((a, b) => a.coinsDelta - b.coinsDelta);
@@ -806,25 +864,38 @@ function ResultOverlay({
         >
           {winners.length > 0 ? (
             <div className="mb-1 flex justify-center">
-              <span className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl">
+              <motion.span
+                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
+                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
+                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
+                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
+              >
                 🏆
-              </span>
+              </motion.span>
             </div>
           ) : null}
           <div className="text-center text-sm font-bold text-gold">
             {winners.length > 1 ? "الفائزون" : "الفائز"}
           </div>
           {winners.length === 0 ? (
-            <p className="mt-2 text-center text-muted-foreground">لا يوجد فائز — استُردّت المساهمات.</p>
+            <p className="mt-2 text-center text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
           ) : (
             <div className="mt-3 space-y-3">
               {winners.map((w) => (
                 <div key={w.seat} className="space-y-1.5 text-center">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-xl font-extrabold text-foreground">
+                    <span
+                      className={cn(
+                        "text-xl font-extrabold text-foreground",
+                        anim("winnerReveal") && "badge-shine rounded px-1",
+                      )}
+                    >
                       {w.seat === yourSeat ? "أنت" : nameOf(w.seat)}
                     </span>
-                    <span className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-sm font-extrabold text-primary">
+                    <span
+                      data-fx={`win-${w.seat}`}
+                      className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-sm font-extrabold text-primary"
+                    >
                       +{w.coinsDelta}
                     </span>
                   </div>
@@ -837,7 +908,7 @@ function ResultOverlay({
                   {fullHand(w.holeCards) ? (
                     <div className="flex flex-wrap justify-center gap-1.5 pt-1">
                       {fullHand(w.holeCards)!.map((c, i) => (
-                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
+                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
                       ))}
                     </div>
                   ) : null}
@@ -863,15 +934,13 @@ function ResultOverlay({
                 {bestRank.cards.length > 0 ? (
                   <div className="flex flex-wrap justify-center gap-1.5 pt-1">
                     {bestRank.cards.map((c, i) => (
-                      <FootballCard key={`best-${c.playerId}-${i}`} card={c} index={i} variant="result" />
+                      <FootballCard key={`best-${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
                     ))}
                   </div>
                 ) : null}
               </div>
             ) : (
-              <p className="mt-1 text-center text-sm text-muted-foreground">
-                لا يوجد ترابط مكتمل في بطاقاتك.
-              </p>
+              <p className="mt-1 text-center text-sm text-muted-foreground">لا ترابط مكتمل</p>
             )}
           </motion.section>
         ) : null}
@@ -912,21 +981,18 @@ function ResultOverlay({
                       {r.coinsDelta}
                     </span>
                   </div>
-                  {r.outcome === "FOLD" ? (
-                    <div className="text-xs text-muted-foreground">انسحب من الجولة.</div>
-                  ) : invalidClaim ? (
+                  {r.outcome === "FOLD" ? null : invalidClaim ? (
                     <div className="text-xs text-destructive/90">
                       {r.claimedRankNameAr ? (
                         <>
-                          اختار <span className="text-foreground">{r.claimedRankNameAr}</span> — غير محقّق
+                          <span className="text-foreground">{r.claimedRankNameAr}</span> — غير محقّق
                         </>
                       ) : (
-                        "لم يختر ترابطًا محقّقًا"
+                        "بدون ترابط"
                       )}
                     </div>
                   ) : r.claimEvidence || r.claimedRankNameAr ? (
                     <div className="text-xs">
-                      <span className="text-muted-foreground">اختار: </span>
                       <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
                     </div>
                   ) : null}

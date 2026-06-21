@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import type { CardView, PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
+import { anim } from "@/lib/anim";
+import { TurnRing } from "./fx";
 
 // Rank display names are NOT hardcoded — they arrive in the showdown:start
 // payload as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
@@ -223,6 +225,7 @@ export function FootballCard({
   index = 0,
   size = "md",
   variant = "game",
+  reveal,
 }: {
   card?: CardView | null;
   back?: boolean;
@@ -231,6 +234,10 @@ export function FootballCard({
   /** "game" (default) reveals only photo/name/score on expand; "result" reveals
    *  the full player details. The card FACE is minimal in both contexts. */
   variant?: "game" | "result";
+  /** Entrance flavor for the face (visual-only): "deal" = slide in from the deck
+   *  (#5), "flip" = 3D flip reveal (#2). Falls back to the default drop-in when
+   *  the matching animation flag is off, so base behavior is preserved. */
+  reveal?: "deal" | "flip";
 }) {
   const [imgError, setImgError] = useState(false);
   // Click-to-expand: any face-up card opens the shared PlayerCardModal with the
@@ -259,12 +266,34 @@ export function FootballCard({
   const fame = card.fameScore;
   const legendary = fame != null && fame >= 100; // Messi (=100): special standout
 
+  // Entrance flavor (visual-only). Each falls back to the original drop-in when
+  // its flag is off, so the table looks unchanged with animations disabled.
+  const entrance =
+    reveal === "deal" && anim("dealFromDeck")
+      ? {
+          initial: { opacity: 0, y: -170, x: index % 2 === 0 ? -28 : 28, rotate: -10, scale: 0.82 },
+          animate: { opacity: 1, y: 0, x: 0, rotate: 0, scale: 1 },
+          transition: { duration: 0.5, delay: index * 0.09, ease: [0.22, 0.61, 0.36, 1] as const },
+        }
+      : reveal === "flip" && anim("cardFlip")
+        ? {
+            initial: { opacity: 0, rotateY: 90, scale: 0.92 },
+            animate: { opacity: 1, rotateY: 0, scale: 1 },
+            transition: { duration: 0.4, delay: index * 0.08, ease: "easeOut" as const },
+          }
+        : {
+            initial: { opacity: 0, y: -14, rotate: -4, scale: 0.92 },
+            animate: { opacity: 1, y: 0, rotate: 0, scale: 1 },
+            transition: { duration: 0.38, delay: index * 0.07, ease: [0.22, 0.61, 0.36, 1] as const },
+          };
+
   return (
     <>
     <motion.div
-      initial={{ opacity: 0, y: -14, rotate: -4, scale: 0.92 }}
-      animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
-      transition={{ duration: 0.38, delay: index * 0.07, ease: [0.22, 0.61, 0.36, 1] }}
+      initial={entrance.initial}
+      animate={entrance.animate}
+      transition={entrance.transition}
+      style={{ transformPerspective: 700 }}
       role="button"
       tabIndex={0}
       aria-label={`توسيع بطاقة ${card.name}`}
@@ -445,6 +474,7 @@ export function OpponentSeat({
 }) {
   const folded = player.status === "FOLDED";
   const allin = player.status === "ALLIN";
+  const remainingMs = useRemainingMs(deadlineTs ?? null);
   const ring = isActive
     ? "ring-2 ring-primary glow-primary"
     : allin
@@ -453,6 +483,7 @@ export function OpponentSeat({
   return (
     <motion.div
       layout
+      data-fx={`seat-${player.seat}`}
       role={onOpenProfile ? "button" : undefined}
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
@@ -465,16 +496,37 @@ export function OpponentSeat({
     >
       <div className="relative">
         <SeatAvatar playerNumber={player.playerNumber} seed={player.username} size={44} className={ring} />
+        {/* #1 depleting turn-timer ring around the active avatar */}
+        {isActive && anim("turnRing") ? <TurnRing remainingMs={remainingMs} size={52} /> : null}
         {player.isDealer ? (
-          <span
-            className="absolute -bottom-0.5 -left-0.5 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
-            title="الموزّع"
-          >
-            D
+          anim("dealerButton") ? (
+            // #8 dealer "D" glides between seats via shared layout
+            <motion.span
+              layoutId="dealer-button"
+              className="absolute -bottom-0.5 -left-0.5 z-10 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
+              title="الموزّع"
+            >
+              D
+            </motion.span>
+          ) : (
+            <span
+              className="absolute -bottom-0.5 -left-0.5 z-10 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
+              title="الموزّع"
+            >
+              D
+            </span>
+          )
+        ) : null}
+        {/* #7 fold stamp */}
+        {folded && anim("foldMuck") ? (
+          <span className="absolute inset-0 grid place-items-center">
+            <span className="-rotate-12 rounded border border-destructive/70 bg-[#070b14]/70 px-1.5 text-[0.55rem] font-black tracking-wider text-destructive">
+              انسحب
+            </span>
           </span>
         ) : null}
         {isActive ? (
-          <span className="absolute -top-1 -right-1 rounded-full bg-[#070b14] px-0.5">
+          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-[#070b14] px-0.5">
             <Countdown deadlineTs={deadlineTs ?? null} compact />
           </span>
         ) : null}
