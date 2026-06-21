@@ -164,50 +164,69 @@ export function FxProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ── #1 Turn-timer ring ───────────────────────────────────────────────────────
+// ── #1 Turn-timer FRAME ──────────────────────────────────────────────────────
 /**
- * SVG ring that depletes with the remaining turn time. Driven purely by the
- * server-authoritative `remainingMs` the seat already computes (no new timer),
- * so it can never desync or affect the round loop.
+ * A rounded-rectangle outline that traces the active player's profile-card
+ * border and depletes around the perimeter as the turn runs out. It overlays the
+ * whole seat card (absolute inset-0) and measures the card so it's pixel-aligned
+ * on every seat and at any size — never offset. `pathLength={100}` normalizes the
+ * stroke so the depletion math is correct without computing the real perimeter.
+ *
+ * Driven purely by the server-authoritative `remainingMs` the seat already
+ * computes (no new timer); GPU-friendly stroke-only; emits nothing to the server.
  */
-export function TurnRing({
+export function TurnFrame({
   remainingMs,
   totalMs = 60_000,
-  size = 52,
+  radius = 16, // matches the seat card's rounded-2xl (1rem)
+  stroke = 2.5,
 }: {
   remainingMs: number | null;
   totalMs?: number;
-  size?: number;
+  radius?: number;
+  stroke?: number;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const reduced = useReducedMotion();
+
+  useEffect(() => {
+    const card = ref.current?.parentElement; // the seat card (position: relative)
+    if (!card) return;
+    const measure = () => setSize({ w: card.clientWidth, h: card.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, []);
+
   if (remainingMs == null) return null;
   const pct = Math.max(0, Math.min(1, remainingMs / totalMs));
-  const stroke = 3;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
   const danger = remainingMs <= 10_000;
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-      aria-hidden
-      style={{ transform: "translate(-50%, -50%) rotate(-90deg)" }}
-    >
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={stroke} />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={danger ? "var(--destructive)" : "var(--primary)"}
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-        style={{ transition: "stroke-dashoffset 0.25s linear" }}
-      />
-    </svg>
+    <div ref={ref} className="pointer-events-none absolute inset-0" aria-hidden>
+      {size ? (
+        <svg width={size.w} height={size.h} className="absolute inset-0 overflow-visible">
+          <rect
+            x={stroke / 2}
+            y={stroke / 2}
+            width={Math.max(0, size.w - stroke)}
+            height={Math.max(0, size.h - stroke)}
+            rx={Math.max(0, radius - stroke / 2)}
+            ry={Math.max(0, radius - stroke / 2)}
+            fill="none"
+            stroke={danger ? "var(--destructive)" : "var(--primary)"}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={100}
+            strokeDashoffset={100 * (1 - pct)}
+            style={{ transition: reduced ? "none" : "stroke-dashoffset 0.25s linear" }}
+          />
+        </svg>
+      ) : null}
+    </div>
   );
 }
 

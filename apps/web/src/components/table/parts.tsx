@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import type { CardView, PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
-import { TurnRing } from "./fx";
+import { TurnFrame } from "./fx";
 
 // Rank display names are NOT hardcoded — they arrive in the showdown:start
 // payload as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
@@ -494,10 +494,10 @@ export function OpponentSeat({
         folded && "opacity-45 grayscale",
       )}
     >
+      {/* #1 depleting turn-timer frame tracing the whole profile card */}
+      {isActive && anim("turnRing") ? <TurnFrame remainingMs={remainingMs} /> : null}
       <div className="relative">
         <SeatAvatar playerNumber={player.playerNumber} seed={player.username} size={44} className={ring} />
-        {/* #1 depleting turn-timer ring around the active avatar */}
-        {isActive && anim("turnRing") ? <TurnRing remainingMs={remainingMs} size={52} /> : null}
         {player.isDealer ? (
           anim("dealerButton") ? (
             // #8 dealer "D" glides between seats via shared layout
