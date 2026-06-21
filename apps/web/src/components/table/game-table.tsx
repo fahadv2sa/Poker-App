@@ -20,7 +20,7 @@ import { Logo } from "@/components/logo";
 import { ConfirmButtons } from "@/components/confirm-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
+import { Countdown, FootballCard, OpponentSeat, SeatAvatar, PHASE_AR } from "./parts";
 import { OpponentProfileModal } from "./opponent-profile-modal";
 import { FxProvider, useFx, CountUp, StreetFlourish } from "./fx";
 import { anim } from "@/lib/anim";
@@ -815,6 +815,8 @@ function ResultOverlay({
 
   const nameOf = (seat: number) =>
     players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
+  // Profile lookup (avatar + name) from the existing player list — no duplicate data.
+  const playerOf = (seat: number) => players.find((p) => p.seat === seat);
 
   // A revealed player's full hand = their 2 hole cards + the 5 shared community
   // cards. Folders/last-standing have null holeCards (never revealed) → no cards.
@@ -866,160 +868,106 @@ function ResultOverlay({
         </div>
       ) : null}
 
-      <div className="relative z-10 my-auto w-full max-w-2xl space-y-4">
-        {/* Winner section (revealed first) */}
+      <div className="relative z-10 my-auto w-full max-w-2xl space-y-3">
+        {/* ── Winner HERO (focal celebration) ──────────────────────────────── */}
         <motion.section
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.28, ease: "easeOut" }}
-          className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 shadow-2xl"
+          className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 text-center shadow-2xl"
         >
-          {winners.length > 0 ? (
-            <div className="mb-1 flex justify-center">
-              <motion.span
-                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
-                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
-                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
-                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
-              >
-                🏆
-              </motion.span>
-            </div>
-          ) : null}
-          <div className="text-center text-sm font-bold text-gold">
-            {winners.length > 1 ? "الفائزون" : "الفائز"}
+          <div className="mb-1 flex justify-center">
+            <motion.span
+              initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
+              animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
+              transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
+              className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
+            >
+              🏆
+            </motion.span>
           </div>
+
           {winners.length === 0 ? (
-            <p className="mt-2 text-center text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
+            <p className="mt-1 text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
           ) : (
-            <div className="mt-3 space-y-3">
-              {winners.map((w) => (
-                <div key={w.seat} className="space-y-1.5 text-center">
-                  <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={cn(
-                        "text-xl font-extrabold text-foreground",
-                        anim("winnerReveal") && "badge-shine rounded px-1",
-                      )}
-                    >
-                      {w.seat === yourSeat ? "أنت" : nameOf(w.seat)}
-                    </span>
-                    <span
-                      data-fx={`win-${w.seat}`}
-                      className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-sm font-extrabold text-primary"
-                    >
-                      +{w.coinsDelta}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    <ClaimExplanation
-                      rankNameAr={winningRankNameAr ?? w.claimedRankNameAr}
-                      groups={w.claimEvidence}
-                    />
-                  </div>
-                  {fullHand(w.holeCards) ? (
-                    <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-                      {fullHand(w.holeCards)!.map((c, i) => (
-                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
-                      ))}
-                    </div>
-                  ) : null}
+            <>
+              <div className="text-xs font-bold tracking-[0.15em] text-gold/80">
+                {winners.length > 1 ? "الفائزون" : "الفائز"}
+              </div>
+              {/* winning rank — the headline */}
+              {(winningRankNameAr ?? winners[0]!.claimedRankNameAr) ? (
+                <div className="mt-0.5 text-2xl font-black text-gold">
+                  {winningRankNameAr ?? winners[0]!.claimedRankNameAr}
                 </div>
-              ))}
-            </div>
+              ) : null}
+              {/* winner profile(s): avatar + name + payout */}
+              <div className="mt-3 flex flex-col items-center gap-2">
+                {winners.map((w) => {
+                  const p = playerOf(w.seat);
+                  const you = w.seat === yourSeat;
+                  return (
+                    <div key={w.seat} className="flex items-center gap-2.5">
+                      {p ? (
+                        <SeatAvatar
+                          playerNumber={p.playerNumber}
+                          seed={p.username}
+                          size={46}
+                          className="glow-gold ring-2 ring-gold/50"
+                        />
+                      ) : null}
+                      <span
+                        className={cn(
+                          "text-lg font-extrabold",
+                          anim("winnerReveal") && "badge-shine rounded px-1",
+                        )}
+                      >
+                        {you ? "أنت" : p?.username ?? nameOf(w.seat)}
+                      </span>
+                      <span
+                        data-fx={`win-${w.seat}`}
+                        className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-base font-extrabold text-primary"
+                      >
+                        +{w.coinsDelta}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* concise "why" line (rank is already the headline above) */}
+              {winners[0]!.claimEvidence ? (
+                <div className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">
+                  <ClaimExplanation rankNameAr={null} groups={winners[0]!.claimEvidence} />
+                </div>
+              ) : null}
+              {/* only the winning hand's cards */}
+              {fullHand(winners[0]!.holeCards) ? (
+                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                  {fullHand(winners[0]!.holeCards)!.map((c, i) => (
+                    <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
+                  ))}
+                </div>
+              ) : null}
+            </>
           )}
         </motion.section>
 
-        {/* Your OWN strongest combination — private per-seat reveal, shown to
-            every dealt player (winner or not) on the winner screen only. */}
-        {bestRank ? (
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.24, ease: "easeOut", delay: 0.15 }}
-            className="rounded-2xl border border-primary/30 bg-primary/5 p-4"
-          >
-            <div className="text-center text-xs font-bold text-primary">أقوى ترابط لديك</div>
-            {bestRank.rankNameAr ? (
-              <div className="mt-2 space-y-2 text-center">
-                <ClaimExplanation rankNameAr={bestRank.rankNameAr} groups={bestRank.evidence} />
-                {bestRank.cards.length > 0 ? (
-                  <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-                    {bestRank.cards.map((c, i) => (
-                      <FootballCard key={`best-${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="mt-1 text-center text-sm text-muted-foreground">لا ترابط مكتمل</p>
-            )}
-          </motion.section>
-        ) : null}
-
-        {/* Losers section (revealed after) */}
+        {/* ── Everyone else: clean tappable profile rows (avatar + name) ────── */}
         {losers.length > 0 ? (
-          <div className="space-y-2">
-            <div className="px-1 text-xs font-semibold text-muted-foreground">الخاسرون</div>
-            {losers.map((r, i) => {
-              const mine = r.seat === yourSeat;
-              const invalidClaim =
-                r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
-              return (
-                <motion.div
-                  key={r.seat}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.22, ease: "easeOut", delay: 0.32 + i * 0.09 }}
-                  className={cn(
-                    "flex flex-col gap-1.5 rounded-xl border p-3",
-                    mine ? "border-primary/30 bg-primary/10" : "border-white/10 bg-card/80",
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">
-                      {mine ? "أنت" : nameOf(r.seat)}
-                      <span className="mr-2 text-xs font-normal text-muted-foreground">
-                        {OUTCOME_AR[r.outcome] ?? r.outcome}
-                      </span>
-                    </span>
-                    <span
-                      className={cn(
-                        "num font-extrabold",
-                        r.coinsDelta >= 0 ? "text-primary" : "text-destructive",
-                      )}
-                    >
-                      {r.coinsDelta >= 0 ? "+" : ""}
-                      {r.coinsDelta}
-                    </span>
-                  </div>
-                  {r.outcome === "FOLD" ? null : invalidClaim ? (
-                    <div className="text-xs text-destructive/90">
-                      {r.claimedRankNameAr ? (
-                        <>
-                          <span className="text-foreground">{r.claimedRankNameAr}</span> — غير محقّق
-                        </>
-                      ) : (
-                        "بدون ترابط"
-                      )}
-                    </div>
-                  ) : r.claimEvidence || r.claimedRankNameAr ? (
-                    <div className="text-xs">
-                      <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
-                    </div>
-                  ) : null}
-                  {fullHand(r.holeCards) ? (
-                    <div className="flex flex-wrap justify-center gap-1.5 pt-1">
-                      {fullHand(r.holeCards)!.map((c, i) => (
-                        <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
-                      ))}
-                    </div>
-                  ) : null}
-                </motion.div>
-              );
-            })}
+          <div className="space-y-1.5">
+            {losers.map((r) => (
+              <ResultRow
+                key={r.seat}
+                r={r}
+                you={r.seat === yourSeat}
+                player={playerOf(r.seat)}
+                community={community}
+              />
+            ))}
           </div>
         ) : null}
+
+        {/* Your own strongest combination — private reveal, tap to expand. */}
+        {bestRank ? <BestRankRow bestRank={bestRank} /> : null}
 
         {/* Post-round controls: the host advances/closes the table; players
             continue or exit. The host role transfers if the creator exits. */}
@@ -1048,6 +996,136 @@ function ResultOverlay({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/** One collapsed profile row for a non-hero player: avatar + name + outcome chip
+ *  + rank (claimed in Manual / computed in Auto — same field) + ±amount. Tapping
+ *  expands that player's cards + full evidence inline. Presentation only. */
+function ResultRow({
+  r,
+  you,
+  player,
+  community,
+}: {
+  r: GameResultEntry;
+  you: boolean;
+  player: PlayerView | undefined;
+  community: CardView[];
+}) {
+  const [open, setOpen] = useState(false);
+  const invalid = r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
+  const cards =
+    r.holeCards && r.holeCards.length > 0 ? [...r.holeCards, ...community] : null;
+  const hasDetails = Boolean(cards) || Boolean(r.claimEvidence) || Boolean(r.claimedRankNameAr);
+  const name = you ? "أنت" : player?.username ?? `مقعد ${r.seat}`;
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border",
+        you ? "border-primary/30 bg-primary/10" : "border-white/10 bg-card/80",
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => hasDetails && setOpen((o) => !o)}
+        disabled={!hasDetails}
+        className="flex w-full items-center gap-2.5 p-2.5 text-start disabled:cursor-default"
+      >
+        {player ? (
+          <SeatAvatar
+            playerNumber={player.playerNumber}
+            seed={player.username}
+            size={36}
+            className="shrink-0 ring-1 ring-white/15"
+          />
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-bold">{name}</span>
+            <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[0.62rem] text-muted-foreground">
+              {OUTCOME_AR[r.outcome] ?? r.outcome}
+            </span>
+          </div>
+          {r.outcome === "FOLD" ? null : r.claimedRankNameAr ? (
+            <div className="truncate text-xs">
+              <span className={invalid ? "text-destructive/90" : "text-gold"}>{r.claimedRankNameAr}</span>
+              {invalid ? <span className="text-destructive/80"> — غير محقّق</span> : null}
+            </div>
+          ) : invalid ? (
+            <div className="text-xs text-destructive/80">بدون ترابط</div>
+          ) : null}
+        </div>
+        <span
+          className={cn("num shrink-0 font-extrabold", r.coinsDelta >= 0 ? "text-primary" : "text-destructive")}
+        >
+          {r.coinsDelta >= 0 ? "+" : ""}
+          {r.coinsDelta}
+        </span>
+        {hasDetails ? (
+          <span aria-hidden className={cn("shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}>
+            ▾
+          </span>
+        ) : null}
+      </button>
+      {open && hasDetails ? (
+        <div className="border-t border-white/10 p-2.5 text-center">
+          {r.claimEvidence || r.claimedRankNameAr ? (
+            <div className="mb-2 text-xs">
+              <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
+            </div>
+          ) : null}
+          {cards ? (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {cards.map((c, i) => (
+                <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Your private strongest combination, collapsed to one row; tap to reveal the
+ *  evidence + cards. Always shown to the local player (winner or not). */
+function BestRankRow({ bestRank }: { bestRank: BestRankPayload }) {
+  const [open, setOpen] = useState(false);
+  const has = Boolean(bestRank.rankNameAr);
+  return (
+    <div className="overflow-hidden rounded-xl border border-primary/30 bg-primary/5">
+      <button
+        type="button"
+        onClick={() => has && setOpen((o) => !o)}
+        disabled={!has}
+        className="flex w-full items-center gap-2 p-2.5 text-start disabled:cursor-default"
+      >
+        <span aria-hidden className="text-base">🃏</span>
+        <span className="flex-1 text-xs font-bold text-primary">أقوى ترابط لديك</span>
+        <span className="truncate text-xs text-gold">{bestRank.rankNameAr ?? "لا ترابط مكتمل"}</span>
+        {has ? (
+          <span aria-hidden className={cn("text-muted-foreground transition-transform", open && "rotate-180")}>
+            ▾
+          </span>
+        ) : null}
+      </button>
+      {open && has ? (
+        <div className="border-t border-primary/20 p-2.5 text-center">
+          <div className="mb-2 text-xs">
+            <ClaimExplanation rankNameAr={bestRank.rankNameAr} groups={bestRank.evidence} />
+          </div>
+          {bestRank.cards.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {bestRank.cards.map((c, i) => (
+                <FootballCard key={`best-${c.playerId}-${i}`} card={c} index={i} variant="result" />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
