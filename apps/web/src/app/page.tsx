@@ -12,7 +12,7 @@ const MENU = [
   { href: "/bank", icon: "🏦", title: "البنك", desc: "اطلب 1000 كوين عند نفاد الرصيد" },
   { href: "/profile", icon: "👤", title: "الملف الشخصي", desc: "معلوماتك ورقمك التعريفي" },
   { href: "/friends", icon: "🤝", title: "الأصدقاء", desc: "قائمة أصدقائك وإدارتهم" },
-  { href: "/guide", icon: "📖", title: "دليل الترابطات", desc: "تعرف على جميع ترابطات اللعبة وشروط تحققها" },
+  { href: "/guide", icon: "📖", title: "كيف تلعب", desc: "دليل الترابطات وطريقة اللعب والشارات في مكان واحد" },
 ];
 
 export default async function HomePage() {
