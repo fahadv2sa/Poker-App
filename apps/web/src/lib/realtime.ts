@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { sound } from "./sound";
 import {
   CLIENT_EVENTS,
   SERVER_EVENTS,
@@ -95,6 +96,56 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.playerLeft, handlers.onPlayerLeft);
   bind(SERVER_EVENTS.roomClosed, handlers.onRoomClosed);
   bind(SERVER_EVENTS.error, handlers.onError);
+
+  // -------------------------------------------------------------- sound effects
+  // Audio reacts to the SAME server events as separate listeners (Socket.IO
+  // allows many per event), so it stays fully decoupled from the React view
+  // handlers above. `yourSeat` is tracked from state:sync so we can distinguish
+  // "your turn" from an opponent's. All playback is a client no-op until the
+  // user's first gesture unlocks audio (see sound.ts / GameTable).
+  let yourSeat: number | null = null;
+  let warnTimer: ReturnType<typeof setTimeout> | null = null;
+  const clearWarn = () => {
+    if (warnTimer) {
+      clearTimeout(warnTimer);
+      warnTimer = null;
+    }
+  };
+  socket.on(SERVER_EVENTS.stateSync, (p: StateSyncPayload) => {
+    if (p.yourSeat != null) yourSeat = p.yourSeat;
+  });
+  socket.on(SERVER_EVENTS.gameDealt, () => sound.play("deal"));
+  socket.on(SERVER_EVENTS.handStarted, () => sound.play("shuffle"));
+  socket.on(SERVER_EVENTS.phaseChanged, (p: PhaseChangedPayload) => {
+    if (p.phase === "FLOP" || p.phase === "TURN" || p.phase === "RIVER") sound.play("flip");
+  });
+  socket.on(SERVER_EVENTS.turnChanged, (p: TurnChangedPayload) => {
+    clearWarn();
+    if (yourSeat != null && p.seat === yourSeat) {
+      sound.play("your-turn");
+      // Warn ~5s before the turn deadline (only while it's still your turn).
+      const lead = p.deadlineTs - 5000 - Date.now();
+      if (lead > 0) warnTimer = setTimeout(() => sound.play("timer-warning"), lead);
+    }
+  });
+  socket.on(SERVER_EVENTS.betPlaced, (p: BetPlacedPayload) => {
+    if (p.action === "CHECK") sound.play("check");
+    else if (p.action === "ALLIN") sound.play("allin");
+    else if (p.action !== "FOLD") sound.play("chip"); // BET / CALL / RAISE
+  });
+  socket.on(SERVER_EVENTS.playerFolded, () => sound.play("fold"));
+  socket.on(SERVER_EVENTS.showdownStart, () => {
+    clearWarn();
+    sound.play("showdown");
+  });
+  socket.on(SERVER_EVENTS.claimReceived, () => sound.play("notify"));
+  socket.on(SERVER_EVENTS.gameResult, (p: GameResultPayload) => {
+    clearWarn();
+    if (p.yourDelta > 0) sound.play("win");
+    else if (p.yourDelta < 0) sound.play("lose");
+  });
+  socket.on(SERVER_EVENTS.playerLeft, () => sound.play("notify"));
+  socket.on("disconnect", clearWarn);
 
   return {
     socket,

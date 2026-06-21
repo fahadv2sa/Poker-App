@@ -13,7 +13,9 @@ import {
 } from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
 import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/tableView";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
+import { SoundControl } from "@/components/sound-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
@@ -72,6 +74,23 @@ export function GameTable({
   const base = view.balance ?? initialBalance;
   const shownBalance = view.result ? base : base - Number(me?.committedTotal ?? 0);
 
+  // Preload the sound clips once, and unlock audio on the first user gesture
+  // (browser autoplay policy: the AudioContext starts suspended). Entering a
+  // table needs clicks anyway, so audio is ready before the first hand.
+  useEffect(() => {
+    void sound.preload();
+    const unlock = () => sound.unlock();
+    const opts = { passive: true } as const;
+    window.addEventListener("pointerdown", unlock, opts);
+    window.addEventListener("keydown", unlock, opts);
+    window.addEventListener("touchstart", unlock, opts);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
   useEffect(() => {
     if (isMyTurn) setRaiseTo(minRaiseTo);
   }, [isMyTurn, minRaiseTo]);
@@ -98,6 +117,7 @@ export function GameTable({
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <SoundControl />
           <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
             🪙 <span className="num font-semibold">{shownBalance}</span>
           </span>
