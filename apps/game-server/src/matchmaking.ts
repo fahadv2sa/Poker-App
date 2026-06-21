@@ -28,14 +28,24 @@ export interface MatchmakingDeps {
   createQuickGame(tier: Difficulty, hostUserId: string): Promise<{ gameId: string; inviteCode: string }>;
   /** Deal the first hand once the matched players have joined the table. */
   startTable(gameId: string): Promise<void>;
+  /**
+   * OPTIONAL (bots, cold-start). When set, a tier with ≥1 human but fewer than
+   * `minPlayers` arms a SHORT fill window of this many seconds; on expiry the
+   * match starts and the empty seats are bot-filled at the table (startTable).
+   * Undefined ⇒ today's behavior exactly (a lone human waits for real humans).
+   */
+  botFillWindowSec?: number;
 }
 
 export class Matchmaking {
   private readonly queues = new Map<Difficulty, Entry[]>();
   private readonly timers = new Map<Difficulty, ReturnType<typeof setTimeout>>();
   private readonly deadlines = new Map<Difficulty, number>();
+  /** Cold-start bot-fill window (seconds), or null when bots are disabled. */
+  private readonly botFillWindowSec: number | null;
 
   constructor(private readonly deps: MatchmakingDeps) {
+    this.botFillWindowSec = deps.botFillWindowSec ?? null;
     for (const t of TIERS) this.queues.set(t, []);
   }
 
@@ -82,21 +92,30 @@ export class Matchmaking {
       return;
     }
     if (q.length >= QUICK_PLAY.minPlayers) {
-      if (!this.timers.has(tier)) {
-        const ms = QUICK_PLAY.fillWindowSec * 1000;
-        this.deadlines.set(tier, Date.now() + ms);
-        this.timers.set(
-          tier,
-          setTimeout(() => {
-            this.timers.delete(tier);
-            this.deadlines.delete(tier);
-            void this.startMatch(tier);
-          }, ms),
-        );
-      }
-    } else {
-      this.clearTimer(tier); // dropped below the minimum → stop the countdown
+      this.arm(tier, QUICK_PLAY.fillWindowSec); // enough humans → standard window
+      return;
     }
+    // Cold start: bots enabled and at least one human waiting → short fill window.
+    if (this.botFillWindowSec != null && q.length >= 1) {
+      this.arm(tier, this.botFillWindowSec);
+      return;
+    }
+    this.clearTimer(tier); // 0 players (or bots disabled below min) → stop the countdown
+  }
+
+  /** Arm the per-tier fill timer (keeps the earliest deadline if already armed). */
+  private arm(tier: Difficulty, seconds: number): void {
+    if (this.timers.has(tier)) return;
+    const ms = seconds * 1000;
+    this.deadlines.set(tier, Date.now() + ms);
+    this.timers.set(
+      tier,
+      setTimeout(() => {
+        this.timers.delete(tier);
+        this.deadlines.delete(tier);
+        void this.startMatch(tier);
+      }, ms),
+    );
   }
 
   private clearTimer(tier: Difficulty): void {
@@ -120,7 +139,12 @@ export class Matchmaking {
   private async startMatch(tier: Difficulty): Promise<void> {
     this.clearTimer(tier);
     const q = this.queues.get(tier)!;
-    if (q.length < QUICK_PLAY.minPlayers) {
+    // Start if either we have enough humans for a real table, OR bots are enabled
+    // and at least one human is waiting (the rest of the table is bot-filled at
+    // startTable). Otherwise keep waiting.
+    const humanOnly = q.length >= QUICK_PLAY.minPlayers;
+    const botFill = this.botFillWindowSec != null && q.length >= 1;
+    if (!humanOnly && !botFill) {
       this.broadcast(tier);
       return;
     }

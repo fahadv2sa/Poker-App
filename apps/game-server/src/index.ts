@@ -7,6 +7,8 @@ import { PrismaRoomPersistence } from "./persistence.js";
 import { reconcileOrphanedGames } from "./recovery.js";
 import { attachSocketHandlers } from "./socket.js";
 import { InMemoryRoomStore } from "./store.js";
+import { loadBotIdentities } from "./bots/identities.js";
+import { BotRuntime } from "./bots/runtime.js";
 
 /**
  * Authoritative game server (Socket.IO) — Phase 3. Owns in-memory room state,
@@ -56,7 +58,21 @@ async function main(): Promise<void> {
   // HandRanks are data-driven: load them once at boot (re-seedable at runtime).
   const ranks = await loadRanks();
   const store = new InMemoryRoomStore();
-  attachSocketHandlers(io, store, ranks);
+
+  // Quick Play bot fillers (cold-start, removable). Behind BOTS_ENABLED — when
+  // off (default) nothing is constructed and the game is exactly as before. When
+  // on, load the bot identities (the reserved player_number block; empty until
+  // the Phase 5 importer runs) and build the bot runtime.
+  let bots: BotRuntime | undefined;
+  if (process.env.BOTS_ENABLED === "true") {
+    const identities = await loadBotIdentities();
+    bots = new BotRuntime(identities);
+    console.log(`[bots] enabled — ${identities.length} identities loaded`);
+  } else {
+    console.log("[bots] disabled");
+  }
+
+  attachSocketHandlers(io, store, ranks, bots);
 
   httpServer.listen(port, () => {
     console.log(`Game server listening on :${port} (CORS origin ${origin})`);

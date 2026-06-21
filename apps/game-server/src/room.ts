@@ -15,6 +15,8 @@ import {
   type BettingSeat,
   type BettingState,
   type Card,
+  type HandRankDef,
+  type LegalActions,
   type PotSeat,
   type ResolveSeat,
   type WitnessGroup,
@@ -47,6 +49,37 @@ export interface RoomDeps {
   emitter: Emitter;
   timers: TimerService;
   clock: Clock;
+  /**
+   * OPTIONAL Quick Play bot driver. When a bot seat's turn opens, the room hands
+   * it to this port, which schedules a human-like delayed action via
+   * `placeAction`. Undefined in the base game (and whenever no bot is seated), so
+   * the seam is completely inert — the entire bot feature can be removed by
+   * deleting `src/bots/`, this field, and the single call site below. The port is
+   * defined here (not in ports.ts) because it references GameRoom; ports.ts must
+   * not import room.ts.
+   */
+  bots?: BotPort;
+}
+
+/** Optional bot turn-driver (see RoomDeps.bots). Implemented by src/bots. */
+export interface BotPort {
+  /** Invoked only for a bot seat when its turn opens, with the server's turn
+   *  deadline (epoch ms). The implementation must apply via `room.placeAction`. */
+  onTurn(room: GameRoom, seat: number, deadlineTs: number): void;
+  /** Drop any scheduled actions for a room (called on hand/room teardown). */
+  cancel?(gameId: string): void;
+}
+
+/** The read-only decision inputs a bot needs for its turn, assembled from the
+ *  SAME private helpers the engine path uses (no logic duplication). Returned by
+ *  `GameRoom.botTurnView`. `strength`/`potOdds` are derived by the bot module so
+ *  room.ts stays free of any dependency on src/bots. */
+export interface BotTurnView {
+  legal: LegalActions;
+  pool: Card[];
+  ranks: HandRankDef[];
+  street: "PREFLOP" | "FLOP" | "TURN" | "RIVER";
+  pot: bigint;
 }
 
 const TURN_KEY = "turn";
@@ -57,6 +90,14 @@ const NEXT_HAND_KEY = "nexthand";
  *  closing during one must refund those stakes. LOBBY/ENDED hold no live pot
  *  (ENDED = a just-resolved hand whose money is already settled). */
 const LIVE_HAND_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"]);
+
+/**
+ * Virtual stack a Quick Play bot plays each hand with. Fake coins — never sourced
+ * from or written to the wallet ledger. Re-set at every hand start (mirroring how
+ * humans re-source `available` from their wallet) so a filler bot never "busts".
+ * Tunable; only ever applied to `isBot` seats.
+ */
+const BOT_VIRTUAL_STACK = 5000n;
 
 /**
  * Authoritative game-room orchestrator (Section 8 state machine). Holds the
@@ -117,10 +158,17 @@ export class GameRoom {
     // cannot cover the mandatory ante — so the in-memory balance never goes
     // negative and stays in lockstep with the ledger.
     const ante = BigInt(this.state.config.ante);
+    // Bots play with a fake virtual stack and are never balance-checked; only
+    // humans are sourced/validated against the wallet ledger.
+    const humans = seated.filter((p) => !p.isBot);
     const balances = await this.deps.persistence.getBalances(
-      seated.map((p) => p.userId),
+      humans.map((p) => p.userId),
     );
     for (const p of seated) {
+      if (p.isBot) {
+        p.available = BOT_VIRTUAL_STACK;
+        continue;
+      }
       const balance = balances.get(p.userId);
       if (balance === undefined) {
         throw new Error(`تعذّر قراءة رصيد اللاعب في المقعد ${p.seat}`);
@@ -153,14 +201,23 @@ export class GameRoom {
       this.deps.timers.clear(NEXT_HAND_KEY);
       const ante = BigInt(this.state.config.ante);
       const present = this.state.players.filter((p) => p.connected);
+      // Humans are re-sourced from the wallet; bots get a fresh fake stack and
+      // are always eligible (their coins never touch the ledger).
+      const humans = present.filter((p) => !p.isBot);
       const balances = await this.deps.persistence.getBalances(
-        present.map((p) => p.userId),
+        humans.map((p) => p.userId),
       );
       for (const p of present) {
+        if (p.isBot) {
+          p.available = BOT_VIRTUAL_STACK;
+          continue;
+        }
         const b = balances.get(p.userId);
         if (b !== undefined) p.available = b;
       }
-      const eligible = present.filter((p) => (balances.get(p.userId) ?? 0n) >= ante);
+      const eligible = present.filter(
+        (p) => p.isBot || (balances.get(p.userId) ?? 0n) >= ante,
+      );
 
       if (eligible.length < 2) {
         this.parkSession(eligible.length);
@@ -221,6 +278,7 @@ export class GameRoom {
       const refundBySeat = new Map<number, bigint>();
       if (!this.resolved && LIVE_HAND_PHASES.has(this.state.phase)) {
         for (const p of this.state.players) {
+          if (p.isBot) continue; // bot stakes are fake — nothing to refund
           const stake = p.status === "FOLDED" ? p.forfeit : p.committedTotal;
           if (stake > 0n) {
             refundBySeat.set(p.seat, stake);
@@ -398,6 +456,26 @@ export class GameRoom {
     });
   }
 
+  /**
+   * Bot-only: the decision inputs for the seat whose turn it is, built from the
+   * SAME private helpers the engine path uses (no duplicated betting/pool logic).
+   * Returns null unless it is genuinely `seat`'s turn. Display/decision inputs
+   * only — never mutates state. Used solely by the optional BotController; safe to
+   * delete along with the bot feature.
+   */
+  botTurnView(seat: number): BotTurnView | null {
+    if (this.state.currentTurnSeat !== seat) return null;
+    if (!this.state.players.some((p) => p.seat === seat)) return null;
+    const street = this.roundForPhase();
+    return {
+      legal: legalActions(this.toBettingState(street), seat),
+      pool: this.poolFor(this.player(seat)),
+      ranks: this.state.ranks,
+      street,
+      pot: this.potTotal(),
+    };
+  }
+
   /** Charge the mandatory ante (decision 19.10) for every participant, updating
    *  in-memory betting state and the ledger together. Does NOT open the round —
    *  so hand:started can be emitted with the post-ante state before the turn. */
@@ -406,10 +484,14 @@ export class GameRoom {
     const movements: LedgerMovement[] = [];
     const bets: BetRecord[] = [];
     for (const p of seated) {
+      // In-memory ante for EVERY seat (incl. bots) so the pot/betting math is
+      // correct and the human-facing pot looks real.
       p.available -= ante;
       p.committedThisRound = ante;
       p.committedTotal += ante;
       p.lastBetAmount = ante;
+      // A bot's ante is fake: it never hits the ledger or the Bets log.
+      if (p.isBot) continue;
       movements.push({
         userId: p.userId,
         type: "ANTE",
@@ -463,7 +545,9 @@ export class GameRoom {
 
     const player = this.player(seat);
     const movements: LedgerMovement[] = [];
-    if (movement.amount > 0n) {
+    // A bot's wager is fake — it updates the in-memory betting state (applied
+    // above) but never produces a ledger movement or a Bets row.
+    if (!player.isBot && movement.amount > 0n) {
       const type =
         movement.action === "RAISE"
           ? "RAISE"
@@ -486,14 +570,17 @@ export class GameRoom {
       await this.handleFoldRefund(player);
     }
 
-    await this.deps.persistence.applyBetting(this.state.gameId, movements, [
-      {
-        seat,
-        round: this.roundForPhase(),
-        action: movement.action,
-        amount: movement.amount,
-      },
-    ]);
+    const bets: BetRecord[] = player.isBot
+      ? []
+      : [
+          {
+            seat,
+            round: this.roundForPhase(),
+            action: movement.action,
+            amount: movement.amount,
+          },
+        ];
+    await this.deps.persistence.applyBetting(this.state.gameId, movements, bets);
 
     this.deps.emitter.toRoom(SERVER_EVENTS.betPlaced, {
       seat,
@@ -508,20 +595,23 @@ export class GameRoom {
     }
 
     // Buffer the lightweight Layer-1 event (memory push; no I/O in the hot path).
-    this.pendingEvents.push({
-      playerId: player.userId,
-      gameId: this.state.gameId,
-      handNumber: this.state.handNumber,
-      type: movement.action as PlayEventType,
-      value: Number(movement.amount),
-      metadata: {
-        seat,
-        street,
-        potBefore,
-        betToPot: potBefore > 0 ? Number(movement.amount) / potBefore : 0,
-        responseMs,
-      },
-    });
+    // Bots are excluded — their play is never recorded in stats/XP/badges.
+    if (!player.isBot) {
+      this.pendingEvents.push({
+        playerId: player.userId,
+        gameId: this.state.gameId,
+        handNumber: this.state.handNumber,
+        type: movement.action as PlayEventType,
+        value: Number(movement.amount),
+        metadata: {
+          seat,
+          street,
+          potBefore,
+          betToPot: potBefore > 0 ? Number(movement.amount) / potBefore : 0,
+          responseMs,
+        },
+      });
+    }
 
     await this.afterAction();
   }
@@ -536,7 +626,10 @@ export class GameRoom {
     });
     player.forfeit = forfeit;
     if (refund > 0n) {
+      // In-memory refund for every seat (keeps the distributable pot correct).
       player.available += refund;
+      // A bot's refund is fake — it never hits the ledger.
+      if (player.isBot) return;
       await this.deps.persistence.applyBetting(
         this.state.gameId,
         [
@@ -583,6 +676,11 @@ export class GameRoom {
       seat: bs.currentTurnSeat,
       deadlineTs: deadline,
     });
+    // Bot seam: if the seat to act is a Quick Play bot, hand it to the optional
+    // controller (which schedules a human-like delayed placeAction). Inert for
+    // humans and whenever no controller is injected — the base game is unaffected.
+    const actor = this.state.players.find((p) => p.seat === bs.currentTurnSeat);
+    if (actor?.isBot) this.deps.bots?.onTurn(this, bs.currentTurnSeat, deadline);
   }
 
   /** Turn timed out (Section 9): auto-check if possible, otherwise auto-fold. */
@@ -746,16 +844,30 @@ export class GameRoom {
 
     const { settlements } = resolveShowdown(resolveSeats);
 
-    // Reflect resolve credits in the in-memory available snapshot.
+    // Reflect resolve credits in the in-memory available snapshot (every seat,
+    // incl. bots — a bot's stack is fake but kept consistent for the session).
     for (const m of settlements) {
       const p = this.state.players.find((x) => x.seat === m.seat);
       if (p && m.amount > 0n && m.type !== "FOLD_FORFEIT") p.available += m.amount;
     }
 
+    // ISOLATION (Phase 2): only HUMAN seats are persisted. A human winner's
+    // WIN/SPLIT_WIN credit is its share of the FULL pot — which already includes
+    // the bots' fake contributions — so the bot-funded portion is minted to the
+    // human through the normal, idempotent ledger credit, with no special path.
+    // Bot settlements (and bot GameResults/UserStats) are dropped entirely: their
+    // coins are fake and recorded nowhere. The engine math above still used every
+    // seat, so pots/side-pots/winners are computed correctly.
+    const botSeats = new Set(
+      this.state.players.filter((p) => p.isBot).map((p) => p.seat),
+    );
+    const humanPlayers = this.state.players.filter((p) => !p.isBot);
+    const humanSettlements = settlements.filter((s) => !botSeats.has(s.seat));
+
     await this.deps.persistence.persistResolve(
       this.state.gameId,
-      settlements,
-      this.state.players,
+      humanSettlements,
+      humanPlayers,
       this.state.handNumber,
     );
 
@@ -933,7 +1045,8 @@ export class GameRoom {
     settlements: readonly { seat: number; type: string; amount: bigint }[],
     isShowdown: boolean,
   ): Promise<void> {
-    const dealt = this.state.players.filter((p) => p.holeCards.length > 0);
+    // Bots are excluded entirely: no ROUND_SUMMARY, no metrics/badges/XP for them.
+    const dealt = this.state.players.filter((p) => p.holeCards.length > 0 && !p.isBot);
     if (dealt.length === 0) return;
 
     const pot = Number(this.potTotal());

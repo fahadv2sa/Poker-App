@@ -41,3 +41,9 @@ coverage/
 
 # docker volume (if mapped locally)
 .pgdata/
+
+# Quick Play bot avatar SOURCE images (large originals, ~85MB). The seed
+# (apps/game-server/src/bots/seed-bots.ts) downscales these into the DB, so the
+# originals only need to exist on the machine that runs the seed — never in git
+# or on the server. identities.json IS committed; the images are not.
+apps/game-server/src/bots/avatars/

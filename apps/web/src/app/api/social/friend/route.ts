@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
+import { isBotPlayerNumber } from "@fp/shared";
 import { auth } from "@/auth";
 import { friendStateOf, relationRow } from "@/lib/social";
 
@@ -23,6 +24,11 @@ async function target(req: Request): Promise<
   const num = Number(body.playerNumber);
   if (!Number.isInteger(num)) {
     return { error: NextResponse.json({ error: "BAD_ID", messageAr: "معرّف غير صالح" }, { status: 400 }) };
+  }
+  // Bots can't be friended (or have requests cancelled). Generic message — never
+  // reveals the target is a bot — for anti-detection.
+  if (isBotPlayerNumber(num)) {
+    return { error: NextResponse.json({ error: "FORBIDDEN", messageAr: "تعذّر تنفيذ هذا الإجراء" }, { status: 403 }) };
   }
   const t = await prisma.user.findUnique({ where: { playerNumber: num }, select: { id: true } });
   if (!t) {

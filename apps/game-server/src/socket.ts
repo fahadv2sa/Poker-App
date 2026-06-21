@@ -23,6 +23,7 @@ import { PrismaCardSource } from "./cards.js";
 import { PrismaRoomPersistence } from "./persistence.js";
 import { NodeTimerService, systemClock } from "./timers.js";
 import type { RoomStore } from "./store.js";
+import type { BotRuntime } from "./bots/runtime.js";
 import type { RankInfo, RoomPlayer, RoomState } from "./types.js";
 
 const roomKey = (gameId: string) => `game:${gameId}`;
@@ -71,6 +72,7 @@ export function attachSocketHandlers(
   io: Server,
   store: RoomStore,
   ranks: RankInfo[],
+  bots?: BotRuntime,
 ): void {
   const runtimes = new Map<string, RoomRuntime>();
 
@@ -80,6 +82,9 @@ export function attachSocketHandlers(
     emitter: new SocketEmitter(io, gameId, seats),
     timers: new NodeTimerService(),
     clock: systemClock,
+    // Optional bot turn-driver (only present when BOTS_ENABLED). Undefined here ⇒
+    // the room's bot seam is inert and the base game is unchanged.
+    bots: bots?.controller,
   });
 
   async function getRuntime(gameId: string): Promise<RoomRuntime | null> {
@@ -134,13 +139,25 @@ export function attachSocketHandlers(
     async startTable(gameId: string) {
       const rt = await getRuntime(gameId);
       if (!rt || rt.room.state.status !== "LOBBY") return; // already started / gone
-      if (rt.room.state.players.filter((p) => p.connected).length < 2) return; // too few joined
+      if (bots) {
+        const humans = rt.room.state.players.filter((p) => p.connected && !p.isBot);
+        // If everyone navigated away during the grace, don't spin up a bot-only
+        // table — tear it down so no empty/bot-only room lingers.
+        if (humans.length < 1) {
+          await closeAndTeardown(gameId, rt, "EMPTY");
+          return;
+        }
+        // Cold start: top up the remaining empty seats with bots before dealing.
+        bots.fill(rt.room.state);
+      }
+      if (rt.room.state.players.filter((p) => p.connected).length < 2) return; // still too few
       try {
         await rt.room.start();
       } catch (err) {
         console.error("[matchmaking] startTable failed", err);
       }
     },
+    botFillWindowSec: bots ? QUICK_PLAY.botFillWindowSec : undefined,
   });
 
   /**
@@ -158,6 +175,8 @@ export function attachSocketHandlers(
     closingGames.add(gameId);
     try {
       await rt.room.close();
+      // Return this table's bot identities to the pool + cancel pending bot actions.
+      bots?.release(rt.room.state);
       io.to(roomKey(gameId)).emit(SERVER_EVENTS.roomClosed, { reason });
       io.in(roomKey(gameId)).socketsLeave(roomKey(gameId));
       rt.seats.clear();

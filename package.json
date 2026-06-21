@@ -24,7 +24,8 @@
     "db:diff-import": "pnpm --filter @fp/db diff-import",
     "db:transliterate-names": "pnpm --filter @fp/db transliterate:names",
     "db:calculate-scores": "pnpm --filter @fp/db calculate:scores",
-    "db:reset": "pnpm --filter @fp/db migrate:reset"
+    "db:reset": "pnpm --filter @fp/db migrate:reset",
+    "db:seed-bots": "pnpm --filter @fp/game-server seed:bots"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -10,7 +10,8 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "smoke": "vitest run -c vitest.smoke.config.ts"
+    "smoke": "vitest run -c vitest.smoke.config.ts",
+    "seed:bots": "tsx --env-file=.env.local src/bots/seed-bots.ts"
   },
   "dependencies": {
     "@fp/db": "workspace:*",
@@ -22,6 +23,7 @@
     "tsx": "^4.19.1"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "socket.io-client": "^4.8.3",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"

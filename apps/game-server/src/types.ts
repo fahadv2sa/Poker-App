@@ -55,6 +55,15 @@ export interface RoomPlayer {
   claimValid: boolean;
   claimStrength: number;
   connected: boolean;
+  /**
+   * Quick Play bot filler (Phase 2 isolation). A bot seat plays through the pure
+   * engine in memory exactly like a human, but NEVER touches the wallet ledger,
+   * Bets, GameResults, UserStats, PlayEvents, or game_players rows. Its coins are
+   * fake (a virtual stack). Undefined/false ⇒ a real human player. The flag is
+   * only ever set when a bot is seated, so all the `isBot` guards are inert (and
+   * the base game behaves identically) whenever the bot feature is off.
+   */
+  isBot?: boolean;
 }
 
 export interface RoomState {

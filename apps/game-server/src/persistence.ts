@@ -47,7 +47,10 @@ export class PrismaRoomPersistence implements RoomPersistence {
       });
 
       for (const p of state.players) {
-        if (p.status === "WAITING" || p.status === "DISCONNECTED") continue;
+        // Bots are never persisted as participants: no game_players row and no
+        // hole game_cards. This (plus the room-level isolation) keeps bots out of
+        // the persisted game record, settlements, results, and stats entirely.
+        if (p.status === "WAITING" || p.status === "DISCONNECTED" || p.isBot) continue;
         await tx.gamePlayer.upsert({
           where: { gameId_seat: { gameId: state.gameId, seat: p.seat } },
           update: {

@@ -19,6 +19,23 @@ export const BANK_CLAIM_WINDOW_HOURS = 24;
 /** player_number sequence starts here, displayed as e.g. #100001 (Section 5). */
 export const PLAYER_NUMBER_START = 100001;
 
+/**
+ * Quick Play bot fillers (cold-start, removable). Bot user rows live in a RESERVED
+ * player_number block at or above this base — far above where the real
+ * autoincrement sequence (starting at 100001) will reach for the foreseeable
+ * future. "Is this a bot?" is therefore `playerNumber >= BOT_PLAYER_NUMBER_BASE`,
+ * needing NO schema column; full removal is `DELETE FROM users WHERE
+ * player_number >= BOT_PLAYER_NUMBER_BASE`. Shared so the runtime and the (Phase 5)
+ * importer agree.
+ */
+export const BOT_PLAYER_NUMBER_BASE = 900000;
+
+/** True if a public player number belongs to a Quick Play bot (reserved block).
+ *  Used to fence bots out of social surfaces (likes/friends/leaderboards). */
+export function isBotPlayerNumber(playerNumber: number): boolean {
+  return playerNumber >= BOT_PLAYER_NUMBER_BASE;
+}
+
 /** Default room config (Section 5 / 19.2). */
 export const DEFAULT_GAME_CONFIG = {
   ante: 50,
@@ -48,6 +65,17 @@ export const QUICK_PLAY = {
   startGraceSec: 4,
   resolveMode: "AUTO",
   entryByTier: { EASY: 50, MEDIUM: 100, ELITE: 200 } as Record<Difficulty, number>,
+  /**
+   * Cold-start bot filling (only active when BOTS_ENABLED on the game-server).
+   * When ≥1 human is queued but the table is below `minPlayers`, wait this short
+   * window to gather more humans, then fill the rest of the seats with bots and
+   * start. Distinct from `fillWindowSec` (the all-human path). Tables are filled
+   * to a randomized size in [botFillMin, botFillMax] (capped at maxSeats), so they
+   * aren't always full — harder to spot.
+   */
+  botFillWindowSec: 8,
+  botFillMin: 4,
+  botFillMax: 6,
 } as const;
 
 export type GameConfig = {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
+import { isBotPlayerNumber } from "@fp/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
   const action = body.action;
   if (!Number.isInteger(num) || (action !== "accept" && action !== "reject")) {
     return NextResponse.json({ error: "BAD_INPUT", messageAr: "مدخلات غير صحيحة" }, { status: 400 });
+  }
+  // Bots never send requests; reject any response targeting a bot for consistency.
+  if (isBotPlayerNumber(num)) {
+    return NextResponse.json({ error: "FORBIDDEN", messageAr: "تعذّر تنفيذ هذا الإجراء" }, { status: 403 });
   }
   const requester = await prisma.user.findUnique({ where: { playerNumber: num }, select: { id: true } });
   if (!requester) {

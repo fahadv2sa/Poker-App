@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
+import { isBotPlayerNumber } from "@fp/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";
@@ -22,6 +23,11 @@ export async function POST(req: Request) {
   const num = Number(body.playerNumber);
   if (!Number.isInteger(num)) {
     return NextResponse.json({ error: "BAD_ID", messageAr: "معرّف غير صالح" }, { status: 400 });
+  }
+  // Bots are not social entities — they can't be liked. Generic message (never
+  // reveals that the target is a bot) for anti-detection.
+  if (isBotPlayerNumber(num)) {
+    return NextResponse.json({ error: "FORBIDDEN", messageAr: "تعذّر تنفيذ هذا الإجراء" }, { status: 403 });
   }
   const target = await prisma.user.findUnique({ where: { playerNumber: num }, select: { id: true } });
   if (!target) {
