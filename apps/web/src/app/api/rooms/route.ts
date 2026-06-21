@@ -28,12 +28,15 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
   }
+  // Manual, open rooms only. Quick Play (kind=QUICK_PLAY) is matchmaking-only and
+  // never listed; private rooms appear but are flagged `locked` (the invite code
+  // is NOT exposed — entry requires the password, verified at the table).
   const rooms = await prisma.game.findMany({
-    where: { isPrivate: false, status: "LOBBY" },
+    where: { kind: "MANUAL", status: "LOBBY" },
     select: {
       id: true,
       roomName: true,
-      inviteCode: true,
+      passwordHash: true,
       maxPlayers: true,
       _count: { select: { players: true } },
     },
@@ -44,7 +47,7 @@ export async function GET() {
     rooms.map((r) => ({
       id: r.id,
       roomName: r.roomName,
-      inviteCode: r.inviteCode,
+      locked: r.passwordHash !== null,
       players: r._count.players,
       maxPlayers: r.maxPlayers,
     })),

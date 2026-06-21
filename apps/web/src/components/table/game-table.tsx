@@ -45,11 +45,12 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError } =
+  const { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError, submitPassword } =
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
   const [raiseTo, setRaiseTo] = useState(0);
+  const [password, setPassword] = useState("");
   const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   // "Continue Playing" dismisses the result overlay locally for this player; it
@@ -410,6 +411,49 @@ export function GameTable({
             role="alert"
           >
             {view.error}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Locked room: the server demands a password before seating. Prompt for it
+          and retry the join; on success a state:sync clears this overlay. */}
+      <AnimatePresence>
+        {view.needsPassword && !view.closed ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center bg-background/90 px-6 backdrop-blur"
+          >
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (password.trim()) submitPassword(password.trim());
+              }}
+              className="flex w-full max-w-sm flex-col gap-4 rounded-xl border bg-card p-6 text-center shadow-xl"
+            >
+              <div className="text-3xl">🔒</div>
+              <p className="text-lg font-black">غرفة خاصة</p>
+              <p className="text-sm text-muted-foreground">
+                {view.passwordMessage ?? "أدخل كلمة المرور للدخول"}
+              </p>
+              <Input
+                type="password"
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="كلمة المرور"
+                className="text-center"
+              />
+              <div className="flex gap-2">
+                <Button type="submit" disabled={!password.trim()} className="flex-1">
+                  دخول
+                </Button>
+                <Button type="button" variant="ghost" onClick={() => router.push("/")}>
+                  ← القائمة
+                </Button>
+              </div>
+            </form>
           </motion.div>
         ) : null}
       </AnimatePresence>

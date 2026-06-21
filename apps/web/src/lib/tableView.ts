@@ -41,6 +41,11 @@ export interface TableView {
    *  shows a notice and returns to the menu; null while the room is live. */
   closed: "CLOSED_BY_HOST" | "EMPTY" | null;
   error: string | null;
+  /** Set when the server rejects the join for a password-protected room. The
+   *  table shows a password prompt; `passwordMessage` carries the Arabic hint
+   *  (or "wrong password" after a failed attempt). Cleared once seated. */
+  needsPassword: boolean;
+  passwordMessage: string | null;
 }
 
 export const INITIAL_VIEW: TableView = {
@@ -56,6 +61,8 @@ export const INITIAL_VIEW: TableView = {
   waiting: false,
   closed: null,
   error: null,
+  needsPassword: false,
+  passwordMessage: null,
 };
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);

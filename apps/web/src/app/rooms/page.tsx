@@ -17,12 +17,15 @@ export default async function RoomsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const rooms = await prisma.game.findMany({
-    where: { isPrivate: false, status: "LOBBY" },
+  // Only manually-created rooms that are still open (LOBBY) are listed. Quick
+  // Play rooms (kind=QUICK_PLAY) are matchmaking-only and never appear here;
+  // closed rooms (ENDED/ABANDONED) and in-play rooms (IN_PROGRESS) drop off too.
+  const found = await prisma.game.findMany({
+    where: { kind: "MANUAL", status: "LOBBY" },
     select: {
       id: true,
       roomName: true,
-      isPrivate: true,
+      passwordHash: true, // used only to derive `locked` — never sent to client
       difficulty: true,
       maxPlayers: true,
       creator: { select: { username: true } },
@@ -31,6 +34,9 @@ export default async function RoomsPage() {
     orderBy: { createdAt: "desc" },
     take: 50,
   });
+  // A room is "locked" if it has a password; entry then requires it (verified
+  // server-side at the table). Strip the hash before it reaches the client.
+  const rooms = found.map(({ passwordHash, ...r }) => ({ ...r, locked: passwordHash !== null }));
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
@@ -77,7 +83,7 @@ export default async function RoomsPage() {
                       {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
                     </span>
                     <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
-                      {r.isPrivate ? "خاصة" : "عامة"}
+                      {r.locked ? "🔒 خاصة" : "عامة"}
                     </span>
                     <span className="rounded-full border px-2 py-0.5 text-muted-foreground">
                       <span className="num">{r._count.players}</span> /{" "}
@@ -86,7 +92,7 @@ export default async function RoomsPage() {
                   </div>
                 </div>
                 <span className="shrink-0 rounded-full border border-primary/40 px-3 py-1 text-sm text-primary">
-                  دخول →
+                  {r.locked ? "🔒 دخول" : "دخول →"}
                 </span>
               </Link>
             ))}

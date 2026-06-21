@@ -24,7 +24,10 @@ export async function joinByCode(
     select: { id: true, status: true },
   });
   if (!game) return { error: "لا توجد غرفة بهذا الكود" };
-  if (game.status === "ENDED" || game.status === "ABANDONED") {
+  // Only ABANDONED is terminal/closed. ENDED is transient (between hands of a
+  // still-live session), so a code holder can still rejoin an open room — the
+  // server re-seats existing members and gates new entry (password/Quick Play).
+  if (game.status === "ABANDONED") {
     return { error: "انتهت هذه الغرفة" };
   }
 

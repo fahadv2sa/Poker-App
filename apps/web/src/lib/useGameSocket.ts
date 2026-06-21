@@ -49,7 +49,13 @@ export function useGameSocket(token: string, inviteCode: string) {
       onDisconnect: () => setView((v) => ({ ...v, connected: false })),
       // Preserve our own seat: a broadcast sync (another player joining) carries
       // yourSeat=null and must not erase the seat we already hold (PROBLEM 1).
-      onState: (state) => setView((v) => applyStateSync(v, state)),
+      // A state:sync means we're seated in the room — clear any password prompt.
+      onState: (state) =>
+        setView((v) => ({
+          ...applyStateSync(v, state),
+          needsPassword: false,
+          passwordMessage: null,
+        })),
       onDealt: (p) => setView((v) => ({ ...v, hole: p.holeCards })),
       onPhase: (p) =>
         setView((v) =>
@@ -194,7 +200,13 @@ export function useGameSocket(token: string, inviteCode: string) {
         pushNoticeRef.current(`${p.username || `مقعد ${p.seat}`} غادر الطاولة`, "system"),
       // The room was closed (host or auto-empty): mark it so the table redirects.
       onRoomClosed: (p) => setView((v) => ({ ...v, closed: p.reason })),
-      onError: (e) => setView((v) => ({ ...v, error: e.messageAr })),
+      onError: (e) =>
+        setView((v) =>
+          // A locked room asks for a password instead of showing a fatal error.
+          e.code === "PASSWORD_REQUIRED"
+            ? { ...v, needsPassword: true, passwordMessage: e.messageAr }
+            : { ...v, error: e.messageAr },
+        ),
     });
     connRef.current = conn;
     return () => conn.disconnect();
@@ -214,6 +226,21 @@ export function useGameSocket(token: string, inviteCode: string) {
     [],
   );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
+  // Retry the join carrying the password for a locked room (server re-verifies).
+  const submitPassword = useCallback(
+    (password: string) => connRef.current?.join(inviteCode, password),
+    [inviteCode],
+  );
 
-  return { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError };
+  return {
+    view,
+    start,
+    nextHand,
+    closeTable,
+    leave,
+    placeAction,
+    selectClaim,
+    clearError,
+    submitPassword,
+  };
 }

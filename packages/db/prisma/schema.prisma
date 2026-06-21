@@ -54,6 +54,17 @@ enum GameStatus {
   @@map("game_status")
 }
 
+// How a room was created. MANUAL rooms (from إنشاء غرفة) are publicly listed and
+// allow rejoin while open; QUICK_PLAY rooms are matchmaking-only — never listed
+// and never rejoinable once a player leaves. This is the authoritative room-type
+// flag; never infer the type from isPrivate or the room name.
+enum GameKind {
+  MANUAL
+  QUICK_PLAY
+
+  @@map("game_kind")
+}
+
 enum GamePhase {
   LOBBY
   PREFLOP
@@ -600,6 +611,7 @@ model Game {
   id              String     @id @default(uuid()) @db.Uuid
   roomName        String     @map("room_name")
   isPrivate       Boolean    @default(false) @map("is_private")
+  kind            GameKind   @default(MANUAL)
   passwordHash    String?    @map("password_hash")
   maxPlayers      Int        @map("max_players")
   inviteCode      String     @unique @map("invite_code")
