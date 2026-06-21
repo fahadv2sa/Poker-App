@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QUICK_PLAY, type Difficulty } from "@fp/shared";
 import { connectQueue, type QueueConnection } from "@/lib/realtime";
+import { sound } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -57,6 +58,14 @@ export function QuickPlay({ token }: { token: string }) {
   }
 
   function joinTier(t: Difficulty) {
+    // Unlock + preload audio on THIS user gesture. Quick Play then navigates
+    // straight into a (bot) table the player may just watch without clicking, so
+    // this is the last guaranteed gesture before sounds must fire — the browser
+    // autoplay policy needs the AudioContext resumed inside a real gesture, else
+    // the table's sound hooks stay silent. (The sound manager is a module
+    // singleton, so the unlock persists across the client-side navigation.)
+    sound.unlock();
+    void sound.preload();
     setError(null);
     setTier(t);
     setState(null);

@@ -305,17 +305,29 @@ function sizeRaise(ctx: DecisionContext, rng: () => number): bigint {
 }
 
 /**
- * A human-like think time (ms). A base 0.7–2.5s, plus more for tanky
- * personalities and for bigger decisions (high pot odds), with an occasional
- * snap-quick action. Never instant, never a fixed cadence.
+ * A human-like think time (ms). Tuned to feel comfortable to play against (not
+ * rushed / robotic): a wider base, more for tanky personalities and for bigger
+ * decisions (high pot odds), an occasional deliberate long "tank", and an
+ * occasional snap on an obvious spot. Common band ~1.5–6s, floor 0.6s (rare snap),
+ * up to ~11s (rare tank), averaging ~4s — and varied per personality via
+ * `tankiness` (+ per-identity jitter), so bots don't pause identically. Always far
+ * under the 60s turn timer (and the controller additionally clamps to act before
+ * the deadline). Never instant, never a fixed cadence.
  */
 function computeDelayMs(ctx: DecisionContext, rng: () => number): number {
   const { personality: p } = ctx;
-  const base = 700 + rng() * 1800;
-  const tank = p.tankiness * rng() * 2500;
-  const bigDecision = ctx.potOdds * 1500;
-  const snap = rng() < 0.15 ? 0.4 : 1; // sometimes acts fast
-  return Math.round((base + tank + bigDecision) * snap);
+  // Base think time — a real beat, not a snap reaction.
+  let ms = 1200 + rng() * 2600; // ~1.2–3.8s
+  // Tanky personalities mull longer (conservative / tricky > aggressive).
+  ms += p.tankiness * rng() * 3500; // up to ~+3.5s
+  // Bigger decisions (facing pot-relative pressure) take longer.
+  ms += ctx.potOdds * 2500; // up to +2.5s
+  // Occasional deliberate long "tank" (~8% of the time).
+  if (rng() < 0.08) ms += 2000 + rng() * 4000; // +2–6s
+  // Occasional snap on an obvious spot (~12%).
+  if (rng() < 0.12) ms *= 0.5;
+  // Natural human bounds.
+  return Math.round(Math.min(11000, Math.max(600, ms)));
 }
 
 // ---------------------------------------------------------------------------

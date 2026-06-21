@@ -43,10 +43,55 @@ export class Matchmaking {
   private readonly deadlines = new Map<Difficulty, number>();
   /** Cold-start bot-fill window (seconds), or null when bots are disabled. */
   private readonly botFillWindowSec: number | null;
+  /**
+   * Cosmetic "table filling" ramp for the cold-start waiting lobby: while the
+   * bot-fill window counts down, the broadcast `count` rises (humans + a growing
+   * number of soon-to-be-seated players) so the lobby's seats visibly fill rather
+   * than showing the player alone. PRESENTATIONAL ONLY — the real queue and the
+   * matching/seating logic are untouched; bots are shown indistinguishably (just a
+   * count + seat dots, no labels), consistent with the bot-illusion design.
+   */
+  private readonly fillSim = new Map<
+    Difficulty,
+    { bots: number; target: number; timer: ReturnType<typeof setInterval> }
+  >();
 
   constructor(private readonly deps: MatchmakingDeps) {
     this.botFillWindowSec = deps.botFillWindowSec ?? null;
     for (const t of TIERS) this.queues.set(t, []);
+  }
+
+  /** Begin trickling simulated players into the lobby count over the fill window. */
+  private startFillSim(tier: Difficulty): void {
+    if (this.botFillWindowSec == null || this.fillSim.has(tier)) return;
+    const { botFillMin, botFillMax } = QUICK_PLAY;
+    // How many extra players to "gather" (alongside the waiting human(s)).
+    const target = botFillMin - 1 + Math.floor(Math.random() * (botFillMax - botFillMin + 1));
+    if (target <= 0) return;
+    const stepMs = Math.max(900, Math.floor((this.botFillWindowSec * 1000) / (target + 1)));
+    const timer = setInterval(() => {
+      const sim = this.fillSim.get(tier);
+      if (!sim) return;
+      if (sim.bots >= sim.target) {
+        clearInterval(sim.timer);
+        return;
+      }
+      sim.bots += 1;
+      this.broadcast(tier); // one more "player" appeared → seats fill
+    }, stepMs);
+    this.fillSim.set(tier, { bots: 0, target, timer });
+  }
+
+  private stopFillSim(tier: Difficulty): void {
+    const sim = this.fillSim.get(tier);
+    if (sim) {
+      clearInterval(sim.timer);
+      this.fillSim.delete(tier);
+    }
+  }
+
+  private simBots(tier: Difficulty): number {
+    return this.fillSim.get(tier)?.bots ?? 0;
   }
 
   /** Join a tier queue (leaving any other queue first — one queue per player). */
@@ -75,6 +120,7 @@ export class Matchmaking {
       if (i >= 0) {
         q.splice(i, 1);
         this.deps.io.sockets.sockets.get(socketId)?.leave(queueRoom(t));
+        if (q.length === 0) this.stopFillSim(t); // vacated tier → stop its ramp
         if (mode === "rebalance") {
           this.evaluate(t);
           this.broadcast(t);
@@ -88,18 +134,23 @@ export class Matchmaking {
   private evaluate(tier: Difficulty): void {
     const q = this.queues.get(tier)!;
     if (q.length >= QUICK_PLAY.maxSeats) {
+      this.stopFillSim(tier);
       void this.startMatch(tier);
       return;
     }
     if (q.length >= QUICK_PLAY.minPlayers) {
-      this.arm(tier, QUICK_PLAY.fillWindowSec); // enough humans → standard window
+      this.stopFillSim(tier); // a real all-human table — no simulated fill
+      this.arm(tier, QUICK_PLAY.fillWindowSec);
       return;
     }
-    // Cold start: bots enabled and at least one human waiting → short fill window.
+    // Cold start: bots enabled and at least one human waiting → short fill window,
+    // and ramp the lobby count so the table visibly fills up.
     if (this.botFillWindowSec != null && q.length >= 1) {
       this.arm(tier, this.botFillWindowSec);
+      this.startFillSim(tier);
       return;
     }
+    this.stopFillSim(tier);
     this.clearTimer(tier); // 0 players (or bots disabled below min) → stop the countdown
   }
 
@@ -127,9 +178,12 @@ export class Matchmaking {
 
   private broadcast(tier: Difficulty): void {
     const q = this.queues.get(tier)!;
+    // Real humans + the cold-start "filling" ramp (0 unless a bot-fill window is
+    // active), capped at the table size. Presentational only.
+    const count = Math.min(QUICK_PLAY.maxSeats, q.length + this.simBots(tier));
     this.deps.io.to(queueRoom(tier)).emit(SERVER_EVENTS.queueState, {
       difficulty: tier,
-      count: q.length,
+      count,
       min: QUICK_PLAY.minPlayers,
       max: QUICK_PLAY.maxSeats,
       deadlineTs: this.deadlines.get(tier) ?? null,
@@ -138,6 +192,7 @@ export class Matchmaking {
 
   private async startMatch(tier: Difficulty): Promise<void> {
     this.clearTimer(tier);
+    this.stopFillSim(tier); // the table is forming; clients navigate to it now
     const q = this.queues.get(tier)!;
     // Start if either we have enough humans for a real table, OR bots are enabled
     // and at least one human is waiting (the rest of the table is bot-filled at

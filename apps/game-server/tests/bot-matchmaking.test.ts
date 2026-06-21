@@ -1,4 +1,4 @@
-import { QUICK_PLAY } from "@fp/shared";
+import { QUICK_PLAY, SERVER_EVENTS } from "@fp/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Matchmaking, type MatchmakingDeps } from "../src/matchmaking.js";
 
@@ -63,6 +63,45 @@ describe("matchmaking — cold-start bot-fill window (bots ENABLED)", () => {
     for (let i = 0; i < QUICK_PLAY.maxSeats; i++) join(mm);
     await vi.advanceTimersByTimeAsync(1);
     expect(createQuickGame).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("matchmaking — waiting lobby fills (cosmetic ramp)", () => {
+  function capturingSetup(botFillWindowSec?: number) {
+    const states: { count: number }[] = [];
+    const socket = { join: vi.fn(), leave: vi.fn(), emit: vi.fn() };
+    const io = {
+      sockets: { sockets: { get: () => socket } },
+      to: () => ({
+        emit: (ev: string, p: { count: number }) => {
+          if (ev === SERVER_EVENTS.queueState) states.push(p);
+        },
+      }),
+    } as unknown as MatchmakingDeps["io"];
+    const mm = new Matchmaking({
+      io,
+      createQuickGame: vi.fn(async () => ({ gameId: "g1", inviteCode: "INV" })),
+      startTable: vi.fn(async () => {}),
+      botFillWindowSec,
+    });
+    return { mm, states };
+  }
+
+  it("ramps the lobby count above the lone human during the bot-fill window", async () => {
+    const { mm, states } = capturingSetup(QUICK_PLAY.botFillWindowSec);
+    join(mm); // 1 real human, cold start
+    // Advance through most of the window (not past it, so the match doesn't fire).
+    await vi.advanceTimersByTimeAsync(QUICK_PLAY.botFillWindowSec * 1000 - 300);
+    const maxCount = Math.max(...states.map((s) => s.count));
+    expect(maxCount).toBeGreaterThan(1); // seats visibly filled past "just me"
+    expect(maxCount).toBeLessThanOrEqual(QUICK_PLAY.maxSeats);
+  });
+
+  it("does NOT ramp when bots are disabled — count stays at the real humans", async () => {
+    const { mm, states } = capturingSetup(undefined);
+    join(mm);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(states.every((s) => s.count === 1)).toBe(true);
   });
 });
 

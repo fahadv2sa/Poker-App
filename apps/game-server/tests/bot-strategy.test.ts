@@ -255,13 +255,18 @@ describe("decide — sane bet sizing", () => {
 });
 
 describe("decide — human-like delay", () => {
-  it("returns a positive, bounded think time (never instant, never absurd)", () => {
+  it("returns a bounded, comfortably-paced think time (never instant, never absurd)", () => {
     const rng = seeded(77);
-    for (let i = 0; i < 2000; i++) {
+    let sum = 0;
+    const N = 4000;
+    for (let i = 0; i < N; i++) {
       const d = decide(ctx({ rng, potOdds: i % 2 ? 0.6 : 0 }));
-      expect(d.delayMs).toBeGreaterThan(150);
-      expect(d.delayMs).toBeLessThan(12000);
+      expect(d.delayMs).toBeGreaterThanOrEqual(600); // floor — never a snap robot
+      expect(d.delayMs).toBeLessThanOrEqual(11000); // cap — well under the 60s timer
+      sum += d.delayMs;
     }
+    // Humanized pacing: the average sits in a comfortable multi-second band, not rushed.
+    expect(sum / N).toBeGreaterThan(2500);
   });
 });
 
