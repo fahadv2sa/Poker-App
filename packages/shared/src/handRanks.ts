@@ -85,26 +85,14 @@ export interface HandRankDefinition {
   examples: string[];
 }
 
-// A single "pair-like" group: same nationality, position, or shared club.
-const pairAnyOf: AnyOfRule = {
-  type: "anyOf",
-  rules: [
-    { type: "group", attribute: "nationality", min: 2 },
-    { type: "group", attribute: "position", min: 2 },
-    { type: "group", attribute: "club", min: 2 },
-  ],
-};
+// A "pair" group for the club-based ranks: two cards sharing at least one
+// career club. Nationality and position NO LONGER trigger PAIR / TWO_PAIR /
+// TRIPLE / FULL_HOUSE — those four ranks are clubs-only.
+const pairClub: GroupRule = { type: "group", attribute: "club", min: 2 };
 
-// A single "triple-like" group: three cards sharing a nationality, a position,
-// or at least one career club. Used by TRIPLE and by each half of FULL_HOUSE.
-const tripleAnyOf: AnyOfRule = {
-  type: "anyOf",
-  rules: [
-    { type: "group", attribute: "nationality", min: 3 },
-    { type: "group", attribute: "position", min: 3 },
-    { type: "group", attribute: "club", min: 3 },
-  ],
-};
+// A "triple" group: three cards sharing at least one career club. Used by
+// TRIPLE and by the three-card half of FULL_HOUSE.
+const tripleClub: GroupRule = { type: "group", attribute: "club", min: 3 };
 
 /**
  * The 9 official hand ranks, strongest (9) to weakest (1). Seeded into
@@ -117,9 +105,9 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     nameAr: "رويال النادي",
     nameEn: "Club Royal",
     strength: 9,
-    rule: { type: "group", attribute: "club", min: HAND_SIZE, match: "identical" },
-    descriptionAr: `${HAND_SIZE} بطاقات بمجموعة أندية متطابقة تمامًا.`,
-    examples: ["خمسة لاعبين يشتركون في نفس مجموعة الأندية بالكامل"],
+    rule: { type: "group", attribute: "club", min: HAND_SIZE },
+    descriptionAr: `${HAND_SIZE} بطاقات تشترك في نادٍ واحد على الأقل.`,
+    examples: ["خمسة لاعبين مرّوا جميعًا بنادٍ واحد مشترك"],
   },
   {
     code: "ROYAL_NATION",
@@ -144,9 +132,9 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     nameAr: "فل هاوس كلوب",
     nameEn: "Club Full House",
     strength: 6,
-    rule: { type: "group", attribute: "club", min: HAND_SIZE },
-    descriptionAr: `${HAND_SIZE} بطاقات تشترك في نادٍ واحد على الأقل.`,
-    examples: ["خمسة لاعبين مرّوا جميعًا بنادٍ واحد مشترك"],
+    rule: { type: "group", attribute: "club", min: 4 },
+    descriptionAr: "4 بطاقات تشترك في نادٍ واحد على الأقل.",
+    examples: ["أربعة لاعبين مرّوا جميعًا بنادٍ واحد مشترك"],
   },
   {
     code: "LINEUP",
@@ -162,40 +150,39 @@ export const HAND_RANK_CATALOG: readonly HandRankDefinition[] = [
     nameAr: "فل هاوس",
     nameEn: "Full House",
     strength: 4,
-    // A group of 3 (sharing a club, position, or nationality) plus a DISJOINT
-    // group of 2 (likewise), with no shared cards between the two groups.
-    rule: { type: "allOf", disjoint: true, rules: [tripleAnyOf, pairAnyOf] },
+    // A group of 3 sharing a club plus a DISJOINT group of 2 sharing a club,
+    // with no shared cards between the two groups. Clubs only.
+    rule: { type: "allOf", disjoint: true, rules: [tripleClub, pairClub] },
     descriptionAr:
-      "ثلاثة لاعبين يجمعهم نادٍ مشترك أو مركز واحد أو جنسية واحدة، بالإضافة إلى لاعبَين آخرَين يجمعهما نادٍ مشترك أو مركز واحد أو جنسية واحدة. المجموعتان منفصلتان تماماً.",
-    examples: ["ثلاثة مدافعين + برازيليان", "ثلاثة برازيليين + مهاجمان"],
+      "ثلاثة لاعبين يجمعهم نادٍ مشترك، بالإضافة إلى لاعبَين يجمعهما نادٍ مشترك، والمجموعتان منفصلتان تماماً.",
+    examples: ["ثلاثة زملاء في نادٍ + ثنائي زملاء في نادٍ آخر"],
   },
   {
     code: "TRIPLE",
     nameAr: "ثلاثي",
     nameEn: "Triple",
     strength: 3,
-    // Three cards sharing a club, a position, or a nationality.
-    rule: tripleAnyOf,
-    descriptionAr:
-      "ثلاثة لاعبين يجمعهم نادٍ مشترك في مسيرتهم الاحترافية، أو مركز واحد، أو جنسية واحدة.",
-    examples: ["ثلاثة إيطاليين", "ثلاثة لاعبي وسط"],
+    // Three cards sharing at least one career club. Clubs only.
+    rule: tripleClub,
+    descriptionAr: "ثلاثة لاعبين يجمعهم نادٍ مشترك في مسيرتهم الاحترافية.",
+    examples: ["ثلاثة لاعبين مرّوا بنادٍ مشترك"],
   },
   {
     code: "TWO_PAIR",
     nameAr: "زوجين",
     nameEn: "Two Pair",
     strength: 2,
-    rule: { type: "allOf", disjoint: true, rules: [pairAnyOf, pairAnyOf] },
-    descriptionAr: "زوجان منفصلان، كل زوج بجنسية أو مركز أو نادٍ مشترك واحد.",
-    examples: ["زوج إسباني + زوج حُرّاس"],
+    rule: { type: "allOf", disjoint: true, rules: [pairClub, pairClub] },
+    descriptionAr: "زوجان منفصلان، كل زوج يجمعه نادٍ مشترك واحد.",
+    examples: ["زوج من زملاء نادٍ + زوج من زملاء نادٍ آخر"],
   },
   {
     code: "PAIR",
     nameAr: "زوج",
     nameEn: "Pair",
     strength: 1,
-    rule: pairAnyOf,
-    descriptionAr: "زوج واحد بجنسية أو مركز أو نادٍ مشترك واحد.",
-    examples: ["مهاجمان", "أرجنتينيان", "زميلان في النادي"],
+    rule: pairClub,
+    descriptionAr: "لاعبان يجمعهما نادٍ مشترك واحد.",
+    examples: ["زميلان في النادي"],
   },
 ];

@@ -3,102 +3,89 @@ import { evaluateRank } from "../src/index.js";
 import { card, ruleOf } from "./helpers.js";
 
 /**
- * One describe block per rank (Section 7.2), positive + negative + the tricky
- * boundary cases called out in Section 18: multi-club, shared vs identical,
- * coverage, disjoint for TWO_PAIR and FULL_HOUSE, min thresholds, and the
- * club-usage rules (PAIR/TWO_PAIR/FULL_HOUSE_CLUB/ROYAL_CLUB use club;
- * TRIPLE/FULL_HOUSE never do).
- *
- * Rules come from the canonical catalog via `ruleOf` — the engine is being
+ * One describe block per rank (Section 7.2). After the clubs-only rework,
+ * PAIR / TWO_PAIR / TRIPLE / FULL_HOUSE depend on SHARED CLUBS only — nationality
+ * and position no longer trigger them. ROYAL_CLUB = 5 share ≥1 club, and
+ * FULL_HOUSE_CLUB = 4 share ≥1 club. ROYAL_NATION, ROYAL_POSITION and LINEUP are
+ * unchanged. Rules come from the canonical catalog via `ruleOf` — the engine is
  * tested against the exact DSL that gets seeded into HandRanks.
  */
 
-describe("PAIR (strength 1) — one pair by nationality, position, or club", () => {
+describe("PAIR (strength 1) — two players sharing a club (clubs only)", () => {
   const PAIR = ruleOf("PAIR");
 
-  it("matches a nationality pair", () => {
-    const pool = [card("BR", "GK", ["A"]), card("BR", "DEF", ["B"])];
-    expect(evaluateRank(PAIR, pool)).toBe(true);
-  });
-
-  it("matches a position pair", () => {
-    const pool = [card("BR", "GK", ["A"]), card("AR", "GK", ["B"])];
-    expect(evaluateRank(PAIR, pool)).toBe(true);
-  });
-
-  it("matches a shared-club pair (club IS used for PAIR)", () => {
+  it("matches a shared-club pair", () => {
     const pool = [card("BR", "GK", ["RM"]), card("AR", "DEF", ["RM"])];
     expect(evaluateRank(PAIR, pool)).toBe(true);
   });
 
-  it("rejects two cards with nothing shared", () => {
+  it("rejects a nationality-only pair (nationality no longer counts)", () => {
+    const pool = [card("BR", "GK", ["A"]), card("BR", "DEF", ["B"])];
+    expect(evaluateRank(PAIR, pool)).toBe(false);
+  });
+
+  it("rejects a position-only pair (position no longer counts)", () => {
+    const pool = [card("BR", "GK", ["A"]), card("AR", "GK", ["B"])];
+    expect(evaluateRank(PAIR, pool)).toBe(false);
+  });
+
+  it("rejects two cards with no shared club", () => {
     const pool = [card("BR", "GK", ["A"]), card("AR", "DEF", ["B"])];
     expect(evaluateRank(PAIR, pool)).toBe(false);
   });
 
   it("rejects a single card (min 2 not met)", () => {
-    expect(evaluateRank(PAIR, [card("BR", "GK", ["A"])])).toBe(false);
+    expect(evaluateRank(PAIR, [card("BR", "GK", ["RM"])])).toBe(false);
   });
 });
 
-describe("TWO_PAIR (strength 2) — two DISJOINT pairs", () => {
+describe("TWO_PAIR (strength 2) — two DISJOINT club pairs (clubs only)", () => {
   const TWO_PAIR = ruleOf("TWO_PAIR");
 
-  it("matches two nationality pairs on four distinct cards", () => {
-    const pool = [
-      card("BR", "GK", ["A"]),
-      card("BR", "DEF", ["B"]),
-      card("AR", "MID", ["C"]),
-      card("AR", "FWD", ["D"]),
-    ];
-    expect(evaluateRank(TWO_PAIR, pool)).toBe(true);
-  });
-
-  it("matches a club pair plus a position pair (mixed attributes)", () => {
+  it("matches two club pairs on four distinct cards", () => {
     const pool = [
       card("BR", "GK", ["RM"]),
       card("AR", "DEF", ["RM"]), // pair by club RM
-      card("IT", "MID", ["X"]),
-      card("ES", "MID", ["Y"]), // pair by position MID
+      card("IT", "MID", ["BAR"]),
+      card("ES", "FWD", ["BAR"]), // pair by club BAR
     ];
     expect(evaluateRank(TWO_PAIR, pool)).toBe(true);
   });
 
-  it("rejects when both pairs would need to share a card (not disjoint)", () => {
-    // X is Brazilian GK; the only pairs are nat-BR {X,Y} and pos-GK {X,Z},
-    // which overlap on X — so no two disjoint pairs exist.
+  it("rejects nationality + position pairs (no shared clubs)", () => {
     const pool = [
-      card("BR", "GK", ["A"]), // X
-      card("BR", "DEF", ["B"]), // Y  (nat pair with X)
-      card("AR", "GK", ["C"]), // Z  (pos pair with X)
+      card("BR", "GK", ["A"]),
+      card("BR", "DEF", ["B"]), // nationality pair — no club
+      card("IT", "MID", ["C"]),
+      card("ES", "MID", ["D"]), // position pair — no club
     ];
     expect(evaluateRank(TWO_PAIR, pool)).toBe(false);
   });
 
-  it("rejects a single pair", () => {
+  it("rejects when both club pairs would need to share a card (not disjoint)", () => {
+    // X is the only RM/BAR bridge: pairs {X,Y} by RM and {X,Z} by BAR overlap on X.
     const pool = [
-      card("BR", "GK", ["A"]),
-      card("BR", "DEF", ["B"]),
-      card("IT", "MID", ["C"]),
+      card("BR", "GK", ["RM", "BAR"]), // X
+      card("AR", "DEF", ["RM"]), // Y (RM pair with X)
+      card("IT", "MID", ["BAR"]), // Z (BAR pair with X)
+    ];
+    expect(evaluateRank(TWO_PAIR, pool)).toBe(false);
+  });
+
+  it("rejects a single club pair", () => {
+    const pool = [
+      card("BR", "GK", ["RM"]),
+      card("AR", "DEF", ["RM"]),
+      card("IT", "MID", ["X"]),
     ];
     expect(evaluateRank(TWO_PAIR, pool)).toBe(false);
   });
 });
 
-describe("TRIPLE (strength 3) — three by nationality, position, or shared club", () => {
+describe("TRIPLE (strength 3) — three players sharing a club (clubs only)", () => {
   const TRIPLE = ruleOf("TRIPLE");
 
-  it("matches three of a nationality", () => {
-    const pool = [card("BR", "GK"), card("BR", "DEF"), card("BR", "MID")];
-    expect(evaluateRank(TRIPLE, pool)).toBe(true);
-  });
-
-  it("matches three of a position", () => {
-    const pool = [card("BR", "MID"), card("AR", "MID"), card("IT", "MID")];
-    expect(evaluateRank(TRIPLE, pool)).toBe(true);
-  });
-
-  it("matches three sharing only a club (club now counts for TRIPLE)", () => {
+  it("matches three sharing a club", () => {
     const pool = [
       card("BR", "GK", ["RM"]),
       card("AR", "DEF", ["RM"]),
@@ -107,8 +94,18 @@ describe("TRIPLE (strength 3) — three by nationality, position, or shared club
     expect(evaluateRank(TRIPLE, pool)).toBe(true);
   });
 
-  it("rejects only two of a nationality (min 3)", () => {
-    const pool = [card("BR", "GK"), card("BR", "DEF"), card("IT", "MID")];
+  it("rejects three of a nationality (nationality no longer counts)", () => {
+    const pool = [card("BR", "GK"), card("BR", "DEF"), card("BR", "MID")];
+    expect(evaluateRank(TRIPLE, pool)).toBe(false);
+  });
+
+  it("rejects three of a position (position no longer counts)", () => {
+    const pool = [card("BR", "MID"), card("AR", "MID"), card("IT", "MID")];
+    expect(evaluateRank(TRIPLE, pool)).toBe(false);
+  });
+
+  it("rejects only two sharing a club (min 3)", () => {
+    const pool = [card("BR", "GK", ["RM"]), card("AR", "DEF", ["RM"]), card("IT", "MID", ["X"])];
     expect(evaluateRank(TRIPLE, pool)).toBe(false);
   });
 });
@@ -150,73 +147,36 @@ describe("LINEUP (strength 5) — all four positions covered", () => {
   });
 });
 
-describe("FULL_HOUSE_CLUB (strength 6) — HAND_SIZE cards share ≥1 club", () => {
+describe("FULL_HOUSE_CLUB (strength 6) — 4 cards share ≥1 club", () => {
   const FHC = ruleOf("FULL_HOUSE_CLUB");
 
-  it("matches five cards all sharing one club, even as a secondary club", () => {
+  it("matches four cards all sharing one club, even as a secondary club", () => {
     const pool = [
       card("BR", "GK", ["RM", "BAR"]),
       card("AR", "DEF", ["RM", "JUV"]),
       card("IT", "MID", ["RM"]),
       card("ES", "FWD", ["RM", "PSG"]),
-      card("FR", "MID", ["RM", "MCI"]),
+      card("FR", "MID", ["X"]),
     ];
     expect(evaluateRank(FHC, pool)).toBe(true);
   });
 
-  it("rejects when only four cards share the club", () => {
+  it("rejects when only three cards share the club", () => {
     const pool = [
       card("BR", "GK", ["RM"]),
       card("AR", "DEF", ["RM"]),
       card("IT", "MID", ["RM"]),
-      card("ES", "FWD", ["RM"]),
-      card("FR", "MID", ["BAR"]),
-      card("EN", "GK", ["JUV"]),
-      card("PT", "DEF", ["PSG"]),
+      card("ES", "FWD", ["BAR"]),
+      card("FR", "MID", ["JUV"]),
     ];
     expect(evaluateRank(FHC, pool)).toBe(false);
   });
 });
 
-describe("FULL_HOUSE (strength 4) — 3+2 disjoint, by club/position/nationality", () => {
+describe("FULL_HOUSE (strength 4) — 3-of-a-club + 2-of-a-club, disjoint (clubs only)", () => {
   const FULL_HOUSE = ruleOf("FULL_HOUSE");
 
-  it("matches three of a position + two of a nationality (disjoint)", () => {
-    const pool = [
-      card("BR", "GK"),
-      card("AR", "GK"),
-      card("IT", "GK"), // three GK
-      card("ES", "DEF"),
-      card("ES", "MID"), // two Spanish, disjoint from the GKs
-    ];
-    expect(evaluateRank(FULL_HOUSE, pool)).toBe(true);
-  });
-
-  it("matches three of a nationality + two of a position (disjoint)", () => {
-    const pool = [
-      card("BR", "DEF"),
-      card("BR", "MID"),
-      card("BR", "FWD"), // three Brazilians
-      card("AR", "GK"),
-      card("ES", "GK"), // two GK, disjoint from the Brazilians
-    ];
-    expect(evaluateRank(FULL_HOUSE, pool)).toBe(true);
-  });
-
-  it("rejects when the pair is a subset of the triple (no disjoint witness)", () => {
-    // Three cards are each GK *and* Brazilian: there is a triple (by position
-    // or nationality) but the second group can only reuse those same cards.
-    const pool = [
-      card("BR", "GK"),
-      card("BR", "GK"),
-      card("BR", "GK"),
-      card("AR", "DEF"),
-      card("IT", "MID"), // leftovers share neither nat nor pos
-    ];
-    expect(evaluateRank(FULL_HOUSE, pool)).toBe(false);
-  });
-
-  it("counts clubs now (3-of-a-club + 2-of-a-club IS a full house)", () => {
+  it("matches three sharing a club + two sharing another club (disjoint)", () => {
     const pool = [
       card("AR", "GK", ["RM"]),
       card("BR", "DEF", ["RM"]),
@@ -225,6 +185,28 @@ describe("FULL_HOUSE (strength 4) — 3+2 disjoint, by club/position/nationality
       card("FR", "GK", ["BAR"]), // 2 share club BAR
     ];
     expect(evaluateRank(FULL_HOUSE, pool)).toBe(true);
+  });
+
+  it("rejects a nationality/position 3+2 with no shared clubs", () => {
+    const pool = [
+      card("BR", "GK"),
+      card("BR", "DEF"),
+      card("BR", "MID"), // three Brazilians, no clubs
+      card("ES", "FWD"),
+      card("ES", "GK"), // two Spanish, no clubs
+    ];
+    expect(evaluateRank(FULL_HOUSE, pool)).toBe(false);
+  });
+
+  it("rejects when only a club-triple exists with no disjoint club-pair", () => {
+    const pool = [
+      card("BR", "GK", ["RM"]),
+      card("AR", "DEF", ["RM"]),
+      card("IT", "MID", ["RM"]), // 3 share RM
+      card("ES", "FWD", ["BAR"]),
+      card("FR", "GK", ["JUV"]), // leftovers share no club
+    ];
+    expect(evaluateRank(FULL_HOUSE, pool)).toBe(false);
   });
 });
 
@@ -280,34 +262,11 @@ describe("ROYAL_NATION (strength 8) — HAND_SIZE same nationality", () => {
   });
 });
 
-describe("ROYAL_CLUB (strength 9) — HAND_SIZE cards with IDENTICAL club set", () => {
+describe("ROYAL_CLUB (strength 9) — 5 cards share ≥1 club", () => {
   const RC = ruleOf("ROYAL_CLUB");
   const FHC = ruleOf("FULL_HOUSE_CLUB");
 
-  it("matches five cards with the exact same club set", () => {
-    const pool = [
-      card("BR", "GK", ["RM", "BAR"]),
-      card("AR", "DEF", ["RM", "BAR"]),
-      card("IT", "MID", ["RM", "BAR"]),
-      card("ES", "FWD", ["RM", "BAR"]),
-      card("FR", "MID", ["RM", "BAR"]),
-    ];
-    expect(evaluateRank(RC, pool)).toBe(true);
-  });
-
-  it("treats club-set equality as order-independent", () => {
-    const pool = [
-      card("BR", "GK", ["RM", "BAR"]),
-      card("AR", "DEF", ["BAR", "RM"]),
-      card("IT", "MID", ["RM", "BAR"]),
-      card("ES", "FWD", ["BAR", "RM"]),
-      card("FR", "MID", ["RM", "BAR"]),
-    ];
-    expect(evaluateRank(RC, pool)).toBe(true);
-  });
-
-  it("shared-but-not-identical is FULL_HOUSE_CLUB, NOT ROYAL_CLUB", () => {
-    // All five share RM (full house club) but their full club sets differ.
+  it("matches five cards all sharing one club, even as a secondary club", () => {
     const pool = [
       card("BR", "GK", ["RM", "BAR"]),
       card("AR", "DEF", ["RM", "JUV"]),
@@ -315,18 +274,30 @@ describe("ROYAL_CLUB (strength 9) — HAND_SIZE cards with IDENTICAL club set", 
       card("ES", "FWD", ["RM", "PSG"]),
       card("FR", "MID", ["RM", "MCI"]),
     ];
-    expect(evaluateRank(FHC, pool)).toBe(true);
-    expect(evaluateRank(RC, pool)).toBe(false);
+    expect(evaluateRank(RC, pool)).toBe(true);
   });
 
-  it("rejects only four with an identical set", () => {
+  it("matches five with the exact same club set (identical is a special case of shared)", () => {
+    const set = ["RM", "BAR"];
     const pool = [
-      card("BR", "GK", ["RM", "BAR"]),
-      card("AR", "DEF", ["RM", "BAR"]),
-      card("IT", "MID", ["RM", "BAR"]),
-      card("ES", "FWD", ["RM", "BAR"]),
-      card("FR", "MID", ["RM"]),
+      card("BR", "GK", set),
+      card("AR", "DEF", [...set].reverse()),
+      card("IT", "MID", set),
+      card("ES", "FWD", set),
+      card("FR", "MID", set),
     ];
+    expect(evaluateRank(RC, pool)).toBe(true);
+  });
+
+  it("only four sharing a club is FULL_HOUSE_CLUB, NOT ROYAL_CLUB", () => {
+    const pool = [
+      card("BR", "GK", ["RM"]),
+      card("AR", "DEF", ["RM"]),
+      card("IT", "MID", ["RM"]),
+      card("ES", "FWD", ["RM"]),
+      card("FR", "MID", ["BAR"]),
+    ];
+    expect(evaluateRank(FHC, pool)).toBe(true);
     expect(evaluateRank(RC, pool)).toBe(false);
   });
 });

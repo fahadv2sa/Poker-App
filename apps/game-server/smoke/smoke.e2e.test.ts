@@ -16,10 +16,10 @@ import { DEFAULT_GAME_CONFIG } from "@fp/shared";
  * wallet ledger settles correctly, and the outcome is server-authoritative.
  *
  * It seeds a tiny TEST-SCOPED fixture (1 nationality + 9 midfielders) to
- * guarantee enough active players to deal, then both players claim PAIR — which
- * is valid for ANY 7-card pool (pigeonhole: 7 cards across 4 positions ⇒ two
- * share a position), so the split is deterministic regardless of which active
- * players the random deal pulls (the deck draws from the whole active table).
+ * guarantee enough active players to deal, then both players claim ROYAL_POSITION
+ * — which is valid for ANY pool drawn from this fixture (every player is a
+ * midfielder), so the split is deterministic regardless of which active players
+ * the random deal pulls (the deck draws from the whole active table).
  * It tears its fixture down afterward.
  */
 
@@ -385,13 +385,15 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
     // The first turn's event already passed before the responder attached — kick it.
     (ft.seat === A.seat ? A : B).socket.emit("action:place", { type: "CHECK" });
 
-    // --- showdown: BOTH players claim PAIR simultaneously, exercising the real
-    //     concurrent path (the single-resolve guard must hold). PAIR is always a
-    //     valid claim for any 7-card pool, so this is a deterministic split. ----
+    // --- showdown: BOTH players claim ROYAL_POSITION simultaneously, exercising
+    //     the real concurrent path (the single-resolve guard must hold). Every
+    //     fixture player is a midfielder, so ROYAL_POSITION is always valid for
+    //     any 7-card pool — a deterministic split. (PAIR is now clubs-only and the
+    //     fixture has no clubs, so it would not be a valid claim here.) ----------
     const showdown = await showdownP;
-    const pairId = showdown.availableHandRanks.find((r) => r.code === "PAIR")!.id;
-    A.socket.emit("claim:select", { handRankId: pairId });
-    B.socket.emit("claim:select", { handRankId: pairId });
+    const rankId = showdown.availableHandRanks.find((r) => r.code === "ROYAL_POSITION")!.id;
+    A.socket.emit("claim:select", { handRankId: rankId });
+    B.socket.emit("claim:select", { handRankId: rankId });
 
     const result = await resultP;
     expect(result.results).toHaveLength(2);
