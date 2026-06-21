@@ -1,5 +1,6 @@
 import {
   applyAction,
+  bestAchievableRank,
   buildSidePots,
   clearRoundCommitments,
   computeFold,
@@ -20,6 +21,7 @@ import {
 } from "@fp/engine";
 import {
   SERVER_EVENTS,
+  type BestRankPayload,
   type ClaimEvidenceGroup,
   type PlayerView,
   type PotView,
@@ -752,6 +754,15 @@ export class GameRoom {
       winningRankNameAr,
     });
 
+    // Winner-screen reveal: each dealt player's OWN strongest achievable rank,
+    // sent PRIVATELY per seat (toSeat) so a folder sees their own combination
+    // without exposing their cards to anyone else. Display only — computed by the
+    // same evaluator as the winner logic, never affects the outcome above.
+    for (const p of this.state.players) {
+      if (p.holeCards.length === 0) continue; // not dealt this hand
+      this.deps.emitter.toSeat(p.seat, SERVER_EVENTS.bestRank, this.buildBestRank(p));
+    }
+
     // Feature #7 / Batch 1: the hand ends but the room does NOT auto-deal. It
     // waits between hands (phase ENDED) with the result on screen; the next hand
     // begins only on an explicit trigger (startNextHand, host-initiated). No
@@ -816,6 +827,34 @@ export class GameRoom {
    * leaf; we name them from the DB-loaded cards. No rank logic here, and no
    * hardcoded football data. Null unless the player holds a valid claim.
    */
+  /**
+   * The player's STRONGEST achievable rank from their final 7-card pool, for the
+   * private winner-screen reveal. Reuses the same evaluator as the winner logic
+   * (`bestAchievableRank`/`explainRank`) — never re-implements rank rules and
+   * never changes the outcome. `rankNameAr` is null when no rank qualifies; the
+   * `cards` are exactly the witness cards that formed the rank.
+   */
+  private buildBestRank(player: RoomPlayer): BestRankPayload {
+    const dealt = this.dealtPoolFor(player);
+    const pool: Card[] = dealt.map((c) => ({
+      nationality: c.nationality,
+      position: c.position,
+      clubs: c.clubs,
+    }));
+    const best = bestAchievableRank(pool, this.state.ranks);
+    if (!best) return { rankNameAr: null, evidence: null, cards: [] };
+    const groups = explainRank(best.rule, pool);
+    const evidence = groups ? groups.map((g) => toEvidenceGroup(g, dealt)) : null;
+    const cardIdx = groups
+      ? [...new Set(groups.flatMap((g) => g.cardIndices))].sort((a, b) => a - b)
+      : [];
+    return {
+      rankNameAr: this.state.ranks.find((r) => r.id === best.id)?.nameAr ?? null,
+      evidence,
+      cards: cardIdx.map((i) => toCardView(dealt[i]!)),
+    };
+  }
+
   private buildClaimEvidence(player: RoomPlayer): ClaimEvidenceGroup[] | null {
     if (!player.claimRankId || !player.claimValid) return null;
     const rank = this.state.ranks.find((r) => r.id === player.claimRankId);

@@ -1,4 +1,5 @@
 import type {
+  BestRankPayload,
   BetPlacedPayload,
   CardView,
   GameResultPayload,
@@ -25,6 +26,9 @@ export interface TableView {
   hole: CardView[];
   showdown: ShowdownStartPayload | null;
   result: GameResultPayload | null;
+  /** The local player's OWN strongest rank for the winner screen (private,
+   *  per-seat reveal). null until the result arrives / between hands. */
+  bestRank: BestRankPayload | null;
   /** Seats that have submitted a showdown claim this hand (A3). */
   claimedSeats: number[];
   /** Auto-dismissing notices shown at the top of the table (A6, C10). */
@@ -45,6 +49,7 @@ export const INITIAL_VIEW: TableView = {
   hole: [],
   showdown: null,
   result: null,
+  bestRank: null,
   claimedSeats: [],
   notices: [],
   balance: null,

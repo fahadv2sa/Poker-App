@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   DEFAULT_GAME_CONFIG,
+  type BestRankPayload,
   type CardView,
   type ClaimEvidenceGroup,
   type GameResultEntry,
@@ -339,6 +340,7 @@ export function GameTable({
             players={players}
             community={(s?.communityCards ?? []).filter((c): c is CardView => c !== null)}
             yourSeat={yourSeat}
+            bestRank={view.bestRank}
             isHost={amHost}
             onNextHand={nextHand}
             onCloseTable={closeTable}
@@ -606,6 +608,7 @@ function ResultOverlay({
   players,
   community,
   yourSeat,
+  bestRank,
   isHost,
   onNextHand,
   onCloseTable,
@@ -617,6 +620,7 @@ function ResultOverlay({
   players: PlayerView[];
   community: CardView[];
   yourSeat: number | null;
+  bestRank: BestRankPayload | null;
   isHost: boolean;
   onNextHand: () => void;
   onCloseTable: () => void;
@@ -688,6 +692,35 @@ function ResultOverlay({
             </div>
           )}
         </motion.section>
+
+        {/* Your OWN strongest combination — private per-seat reveal, shown to
+            every dealt player (winner or not) on the winner screen only. */}
+        {bestRank ? (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, ease: "easeOut", delay: 0.15 }}
+            className="rounded-2xl border border-primary/30 bg-primary/5 p-4"
+          >
+            <div className="text-center text-xs font-bold text-primary">أقوى ترابط لديك</div>
+            {bestRank.rankNameAr ? (
+              <div className="mt-2 space-y-2 text-center">
+                <ClaimExplanation rankNameAr={bestRank.rankNameAr} groups={bestRank.evidence} />
+                {bestRank.cards.length > 0 ? (
+                  <div className="flex flex-wrap justify-center gap-1.5 pt-1">
+                    {bestRank.cards.map((c, i) => (
+                      <FootballCard key={`best-${c.playerId}-${i}`} card={c} index={i} variant="result" />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <p className="mt-1 text-center text-sm text-muted-foreground">
+                لا يوجد ترابط مكتمل في بطاقاتك.
+              </p>
+            )}
+          </motion.section>
+        ) : null}
 
         {/* Losers section (revealed after) */}
         {losers.length > 0 ? (

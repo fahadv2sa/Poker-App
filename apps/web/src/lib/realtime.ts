@@ -3,6 +3,7 @@ import { sound } from "./sound";
 import {
   CLIENT_EVENTS,
   SERVER_EVENTS,
+  type BestRankPayload,
   type BetPlacedPayload,
   type ClaimReceivedPayload,
   type GameDealtPayload,
@@ -37,6 +38,7 @@ export interface GameHandlers {
   onShowdown?: (p: ShowdownStartPayload) => void;
   onClaimReceived?: (p: ClaimReceivedPayload) => void;
   onResult?: (p: GameResultPayload) => void;
+  onBestRank?: (p: BestRankPayload) => void;
   onHandStarted?: (p: HandStartedPayload) => void;
   onSessionWaiting?: (p: SessionWaitingPayload) => void;
   onPlayerLeft?: (p: PlayerLeftPayload) => void;
@@ -93,6 +95,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.showdownStart, handlers.onShowdown);
   bind(SERVER_EVENTS.claimReceived, handlers.onClaimReceived);
   bind(SERVER_EVENTS.gameResult, handlers.onResult);
+  bind(SERVER_EVENTS.bestRank, handlers.onBestRank);
   bind(SERVER_EVENTS.handStarted, handlers.onHandStarted);
   bind(SERVER_EVENTS.sessionWaiting, handlers.onSessionWaiting);
   bind(SERVER_EVENTS.playerLeft, handlers.onPlayerLeft);

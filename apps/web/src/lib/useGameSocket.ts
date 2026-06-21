@@ -128,6 +128,7 @@ export function useGameSocket(token: string, inviteCode: string) {
         setView((v) => ({
           ...v,
           showdown,
+          bestRank: null,
           claimedSeats: [],
           state: v.state ? { ...v.state, phase: "SHOWDOWN", currentTurnSeat: null } : v.state,
         })),
@@ -146,12 +147,15 @@ export function useGameSocket(token: string, inviteCode: string) {
             state: v.state ? { ...v.state, phase: "ENDED" } : v.state,
           };
         }),
+      // Private per-seat winner-screen reveal: the local player's own best rank.
+      onBestRank: (p) => setView((v) => ({ ...v, bestRank: p })),
       // Feature #7: a new hand began in the same room — clear the previous
       // board/result, adopt the rotated dealer, and wait for the private deal.
       onHandStarted: (p) =>
         setView((v) => ({
           ...v,
           result: null,
+          bestRank: null,
           showdown: null,
           hole: [],
           waiting: false,
@@ -177,6 +181,7 @@ export function useGameSocket(token: string, inviteCode: string) {
         setView((v) => ({
           ...v,
           result: null,
+          bestRank: null,
           showdown: null,
           hole: [],
           waiting: true,

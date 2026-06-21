@@ -37,6 +37,9 @@ export const SERVER_EVENTS = {
   showdownStart: "showdown:start",
   claimReceived: "claim:received",
   gameResult: "game:result",
+  /** PRIVATE per-seat: the recipient's own strongest achievable rank, revealed on
+   *  the winner screen only (winner-announcement reveal, never mid-hand). */
+  bestRank: "result:best",
   /** A new hand began in the same room (feature #7: multi-hand session). */
   handStarted: "hand:started",
   /** The session can't deal a hand yet (fewer than 2 players can afford the ante). */
@@ -238,6 +241,20 @@ export interface GameResultPayload {
   /** The winning association (Arabic, from the DB), or null for a non-showdown
    *  (last-player-standing) ending. */
   winningRankNameAr: string | null;
+}
+
+/**
+ * PRIVATE per-seat winner-screen reveal: the recipient's OWN strongest achievable
+ * rank from their final cards (computed by the same engine evaluator as the
+ * winner logic — display only, never changes the outcome). `rankNameAr` is null
+ * when no rank qualifies (shown as "no rank"). `cards` are exactly the cards that
+ * formed the rank; `evidence` is the data-driven WHY. Sent only to the owner, so
+ * a folder sees their own without exposing their cards to anyone else.
+ */
+export interface BestRankPayload {
+  rankNameAr: string | null;
+  evidence: ClaimEvidenceGroup[] | null;
+  cards: CardView[];
 }
 
 /**
