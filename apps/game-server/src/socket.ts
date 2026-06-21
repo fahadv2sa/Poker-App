@@ -163,7 +163,7 @@ export function attachSocketHandlers(
       guard(socket, async () => {
         const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
-        if (rt.room.state.createdBy !== user.userId) {
+        if (rt.room.state.hostUserId !== user.userId) {
           return emitError(socket, "NOT_HOST", "المضيف فقط يبدأ اللعبة");
         }
         await rt.room.start();
@@ -177,7 +177,7 @@ export function attachSocketHandlers(
         if (!joinedGameId) return emitError(socket, "NO_ROOM", "لست في غرفة");
         const rt = runtimes.get(joinedGameId);
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
-        if (rt.room.state.createdBy !== user.userId) {
+        if (rt.room.state.hostUserId !== user.userId) {
           return emitError(socket, "NOT_HOST", "المضيف فقط يغلق الطاولة");
         }
         await closeAndTeardown(joinedGameId, rt, "CLOSED_BY_HOST");
@@ -191,7 +191,7 @@ export function attachSocketHandlers(
       guard(socket, async () => {
         const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
-        if (rt.room.state.createdBy !== user.userId) {
+        if (rt.room.state.hostUserId !== user.userId) {
           return emitError(socket, "NOT_HOST", "المضيف فقط يبدأ الجولة التالية");
         }
         await rt.room.startNextHand();
@@ -237,6 +237,15 @@ export function attachSocketHandlers(
         rt.room.handlePlayerLeft(seat);
         // Batch 2: tell the rest of the table so they can show a banner.
         socket.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
+      }
+      // Host may have transferred (handlePlayerLeft) — push a fresh snapshot so
+      // the new host's UI updates with the creator controls. Skip if the room is
+      // about to close (nobody connected left).
+      if (rt.room.state.players.some((p) => p.connected)) {
+        io.to(roomKey(joinedGameId)).emit(
+          SERVER_EVENTS.stateSync,
+          buildStateSync(rt.room.state, null),
+        );
       }
       // Auto-cleanup: once nobody connected remains, close the room (voiding +
       // refunding any live hand) and delete it — so an abandoned table never lingers.
@@ -333,6 +342,8 @@ function buildStateSync(state: RoomState, yourSeat: number | null): StateSyncPay
     currentTurnSeat: state.currentTurnSeat,
     turnDeadlineTs: state.turnDeadlineTs,
     yourSeat,
+    hostSeat:
+      state.players.find((p) => p.userId === state.hostUserId && p.connected)?.seat ?? null,
   };
 }
 

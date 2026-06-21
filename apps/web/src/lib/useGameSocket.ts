@@ -199,6 +199,7 @@ export function useGameSocket(token: string, inviteCode: string) {
   const start = useCallback(() => connRef.current?.start(), []);
   const nextHand = useCallback(() => connRef.current?.nextHand(), []);
   const closeTable = useCallback(() => connRef.current?.closeTable(), []);
+  const leave = useCallback(() => connRef.current?.leave(), []);
   const placeAction = useCallback(
     (type: string, amount?: number) => connRef.current?.placeAction(type, amount),
     [],
@@ -209,5 +210,5 @@ export function useGameSocket(token: string, inviteCode: string) {
   );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
 
-  return { view, start, nextHand, closeTable, placeAction, selectClaim, clearError };
+  return { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError };
 }

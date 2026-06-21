@@ -41,6 +41,7 @@ function sync(over: Partial<StateSyncPayload> = {}): StateSyncPayload {
     currentTurnSeat: 1,
     turnDeadlineTs: null,
     yourSeat: null,
+    hostSeat: 1,
     ...over,
   };
 }

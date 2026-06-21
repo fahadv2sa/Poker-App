@@ -50,6 +50,8 @@ export interface GameConnection {
   start: () => void;
   nextHand: () => void;
   closeTable: () => void;
+  /** Leave the table without closing it (host role transfers if you're host). */
+  leave: () => void;
   placeAction: (type: string, amount?: number) => void;
   selectClaim: (handRankId: string) => void;
   disconnect: () => void;
@@ -154,6 +156,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
     nextHand: () => socket.emit(CLIENT_EVENTS.nextHand, {}),
     closeTable: () => socket.emit(CLIENT_EVENTS.roomClose, {}),
+    leave: () => socket.emit(CLIENT_EVENTS.roomLeave, {}),
     placeAction: (type, amount) =>
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
     selectClaim: (handRankId) =>

@@ -62,6 +62,9 @@ export interface RoomState {
   roomName: string;
   inviteCode: string;
   createdBy: string;
+  /** Live host (table authority): starts as `createdBy`, transfers to another
+   *  connected seat if the host exits without closing. Drives start/next/close. */
+  hostUserId: string;
   maxPlayers: number;
   isPrivate: boolean;
   config: GameConfig;

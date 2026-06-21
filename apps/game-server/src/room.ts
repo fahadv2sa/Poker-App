@@ -176,6 +176,15 @@ export class GameRoom {
       p.holeCards = [];
       p.status = "WAITING";
     }
+    // Host transfer: if the host leaves but others remain, hand authority to the
+    // lowest-seat still-connected player. (If nobody connected remains, the
+    // socket layer auto-closes the room — so the host id can stay as-is here.)
+    if (p.userId === this.state.hostUserId) {
+      const next = this.state.players
+        .filter((x) => x.connected && x.userId !== p.userId)
+        .sort((a, b) => a.seat - b.seat)[0];
+      if (next) this.state.hostUserId = next.userId;
+    }
   }
 
   /**

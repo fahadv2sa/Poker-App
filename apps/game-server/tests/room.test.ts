@@ -155,6 +155,7 @@ function makeRoom(
     roomName: "Test Room",
     inviteCode: "INV1",
     createdBy: "u1",
+    hostUserId: "u1",
     maxPlayers: 6,
     isPrivate: false,
     config: { ...DEFAULT_GAME_CONFIG },

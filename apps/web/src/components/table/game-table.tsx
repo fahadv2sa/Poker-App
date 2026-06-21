@@ -43,13 +43,16 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, nextHand, closeTable, placeAction, selectClaim, clearError } =
+  const { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError } =
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
   const [raiseTo, setRaiseTo] = useState(0);
   const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
+  // "Continue Playing" dismisses the result overlay locally for this player; it
+  // resets whenever a new result arrives so the next round's winner shows again.
+  const [continued, setContinued] = useState(false);
 
   const players = useMemo(
     () => (s ? [...s.players].sort((a, b) => a.seat - b.seat) : []),
@@ -58,6 +61,16 @@ export function GameTable({
   const yourSeat = s?.yourSeat ?? null;
   const me = yourSeat != null ? players.find((p) => p.seat === yourSeat) : undefined;
   const opponents = players.filter((p) => p.seat !== yourSeat);
+  // Host authority is LIVE: it follows the server's hostSeat (which transfers if
+  // the creator exits without closing), falling back to the initial DB value
+  // until the first state:sync arrives.
+  const amHost = s?.hostSeat != null ? s.hostSeat === yourSeat : isHost;
+  // Leave the table (host role transfers server-side if we're host), then return
+  // to the menu. Disconnect on unmount is a backstop if the emit doesn't flush.
+  const onExit = () => {
+    leave();
+    router.replace("/");
+  };
 
   const phase = s?.phase ?? "LOBBY";
   const isBetting = BETTING_PHASES.has(phase);
@@ -97,6 +110,10 @@ export function GameTable({
   useEffect(() => {
     if (phase !== "SHOWDOWN") setClaimed(null);
   }, [phase]);
+  // A new round's result re-shows the winner screen for a player who "continued".
+  useEffect(() => {
+    setContinued(false);
+  }, [view.result]);
   // The room was closed (host or auto-empty): briefly show why, then return to
   // the menu. The server already evicted us and settled any refunds.
   useEffect(() => {
@@ -123,7 +140,7 @@ export function GameTable({
           </span>
           {/* Host-only Close Table (two-step confirm): ends any live hand,
               refunds bets, evicts everyone, deletes the room. */}
-          {isHost ? (
+          {amHost ? (
             confirmClose ? (
               <span className="flex items-center gap-1">
                 <Button variant="destructive" size="sm" onClick={() => closeTable()}>
@@ -315,15 +332,18 @@ export function GameTable({
       {/* Dedicated full-screen result page: rich, data-driven breakdown that
           stays until the host deals the next hand (no auto-dismiss). */}
       <AnimatePresence>
-        {view.result ? (
+        {view.result && !continued ? (
           <ResultOverlay
             results={view.result.results}
             winningRankNameAr={view.result.winningRankNameAr}
             players={players}
             community={(s?.communityCards ?? []).filter((c): c is CardView => c !== null)}
             yourSeat={yourSeat}
-            isHost={isHost}
+            isHost={amHost}
             onNextHand={nextHand}
+            onCloseTable={closeTable}
+            onExit={onExit}
+            onContinue={() => setContinued(true)}
           />
         ) : null}
       </AnimatePresence>
@@ -588,6 +608,9 @@ function ResultOverlay({
   yourSeat,
   isHost,
   onNextHand,
+  onCloseTable,
+  onExit,
+  onContinue,
 }: {
   results: GameResultEntry[];
   winningRankNameAr: string | null;
@@ -596,6 +619,9 @@ function ResultOverlay({
   yourSeat: number | null;
   isHost: boolean;
   onNextHand: () => void;
+  onCloseTable: () => void;
+  onExit: () => void;
+  onContinue: () => void;
 }) {
   const [dealing, setDealing] = useState(false);
 
@@ -730,28 +756,71 @@ function ResultOverlay({
           </div>
         ) : null}
 
-        {/* The page never auto-dismisses — only the host advances the round. */}
+        {/* Post-round controls: the host advances/closes the table; players
+            continue or exit. The host role transfers if the creator exits. */}
         <div className="pt-1">
           {isHost ? (
-            <Button
-              onClick={() => {
-                setDealing(true);
-                onNextHand();
-              }}
-              disabled={dealing}
-              className="w-full"
-              size="lg"
-            >
-              {dealing ? "يبدأ…" : "الجولة التالية"}
-            </Button>
+            <div className="grid grid-cols-3 gap-2">
+              <ResultAction
+                glyph="▶"
+                label="بدأ جولة جديدة"
+                variant="primary"
+                disabled={dealing}
+                onClick={() => {
+                  setDealing(true);
+                  onNextHand();
+                }}
+              />
+              <ResultAction glyph="✕" label="اغلاق الطاولة" variant="destructive" onClick={onCloseTable} />
+              <ResultAction glyph="⮐" label="الخروج" variant="neutral" onClick={onExit} />
+            </div>
           ) : (
-            <p className="text-center text-sm text-muted-foreground">
-              بانتظار أن يبدأ المضيف الجولة التالية…
-            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <ResultAction glyph="▶" label="اكمال اللعب" variant="primary" onClick={onContinue} />
+              <ResultAction glyph="⮐" label="الخروج" variant="neutral" onClick={onExit} />
+            </div>
           )}
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/** A single post-round control: stacked icon + Arabic label, tone by variant. */
+function ResultAction({
+  glyph,
+  label,
+  variant,
+  onClick,
+  disabled,
+}: {
+  glyph: string;
+  label: string;
+  variant: "primary" | "destructive" | "neutral";
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const tone =
+    variant === "primary"
+      ? "border-primary/50 bg-primary/15 text-primary hover:bg-primary/25"
+      : variant === "destructive"
+        ? "border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
+        : "border-white/15 bg-card/70 text-foreground/80 hover:border-white/30";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-3 text-center transition disabled:opacity-50",
+        tone,
+      )}
+    >
+      <span aria-hidden className="text-lg leading-none">
+        {glyph}
+      </span>
+      <span className="text-xs font-bold leading-tight">{label}</span>
+    </button>
   );
 }
 

@@ -163,6 +163,7 @@ function makeRoom(seats: Array<[number, string]>, balances: Record<string, bigin
     roomName: "Test Room",
     inviteCode: "INV1",
     createdBy: seats[0]![1],
+    hostUserId: seats[0]![1],
     maxPlayers: 6,
     isPrivate: false,
     config: { ...DEFAULT_GAME_CONFIG },

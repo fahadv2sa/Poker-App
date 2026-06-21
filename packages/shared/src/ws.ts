@@ -139,6 +139,10 @@ export interface StateSyncPayload {
   turnDeadlineTs: number | null;
   /** The recipient's own seat, or null if a spectator. */
   yourSeat: number | null;
+  /** Seat of the current host (table authority). Starts as the creator's seat and
+   *  transfers to another seated player if the creator exits without closing.
+   *  null when no connected host remains (the room is closing). */
+  hostSeat: number | null;
 }
 
 export interface GameDealtPayload {

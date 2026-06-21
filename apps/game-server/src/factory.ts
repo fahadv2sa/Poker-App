@@ -88,6 +88,7 @@ export async function hydrateRoom(
     roomName: game.roomName,
     inviteCode: game.inviteCode,
     createdBy: game.createdBy,
+    hostUserId: game.createdBy,
     maxPlayers: game.maxPlayers,
     isPrivate: game.isPrivate,
     config,
