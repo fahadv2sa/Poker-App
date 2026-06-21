@@ -35,9 +35,11 @@ type FxApi = { fly: (o: FlyOpts) => void };
 const FxContext = createContext<FxApi>({ fly: () => {} });
 export const useFx = () => useContext(FxContext);
 
-type Flight = { id: number; from: Pt; to: Pt; kind: "chip" | "coin"; label?: string; delay: number };
+type Flight = { id: number; from: Pt; to: Pt; kind: "chip" | "coin"; label?: string; delay: number; rot: number };
 
 const SIZE = 26; // px — half-size offset so the transform centres the sprite
+const MAX_SPRITES = 10; // hard safety cap on concurrent sprites per burst (mobile)
+const rand = (n: number) => (Math.random() - 0.5) * n;
 
 function ChipSprite({ label }: { label?: string }) {
   return (
@@ -79,19 +81,21 @@ export function FxProvider({ children }: { children: ReactNode }) {
       const from = rectCenter(o.from);
       const to = rectCenter(o.to);
       if (!from || !to) return; // anchor not on screen → skip silently
-      const count = Math.max(1, o.count ?? 1);
+      const count = Math.max(1, Math.min(MAX_SPRITES, o.count ?? 1));
+      const scatter = count > 1;
       setFlights((cur) => {
         const next = [...cur];
         for (let i = 0; i < count; i++) {
-          const jx = count > 1 ? (Math.random() - 0.5) * 26 : 0;
-          const jy = count > 1 ? (Math.random() - 0.5) * 26 : 0;
           next.push({
             id: ++idRef.current,
-            from: { x: from.x + jx, y: from.y + jy },
-            to,
+            // Fan out from the seat, and land slightly spread across the pot so
+            // chips don't perfectly stack — reads as a scatter, not one sprite.
+            from: { x: from.x + (scatter ? rand(34) : 0), y: from.y + (scatter ? rand(26) : 0) },
+            to: { x: to.x + (scatter ? rand(18) : 0), y: to.y + (scatter ? rand(14) : 0) },
             kind: o.kind,
             label: i === 0 ? o.label : undefined,
-            delay: i * 0.045,
+            delay: i * 0.05, // staggered timing
+            rot: scatter ? rand(50) : 0,
           });
         }
         return next;
@@ -100,12 +104,17 @@ export function FxProvider({ children }: { children: ReactNode }) {
     [active],
   );
 
-  // #3 chip travel + #12 all-in flash both ride the fx bus.
+  // #3 chip scatter (every coin-contributing action: bet / raise / call / all-in)
+  // + #12 all-in flash both ride the fx bus. All-in gets BOTH: the chips because
+  // it pushes money, plus the gold flash as its signature (different layers, no
+  // double-up of the same effect).
   useEffect(() => {
     if (!active) return;
     return fxBus.on((e) => {
       if (e.type === "bet" && anim("chipTravel")) {
-        fly({ from: `[data-fx="seat-${e.seat}"]`, to: `[data-fx="pot"]`, kind: "chip", label: `+${e.amount}` });
+        // A tasteful handful, scaling modestly with the amount but capped at 7.
+        const count = Math.max(3, Math.min(7, 3 + Math.floor(e.amount / 120)));
+        fly({ from: `[data-fx="seat-${e.seat}"]`, to: `[data-fx="pot"]`, kind: "chip", label: `+${e.amount}`, count });
       } else if (e.type === "allin" && anim("allInBeat")) {
         setFlash((n) => n + 1);
       }
@@ -124,14 +133,15 @@ export function FxProvider({ children }: { children: ReactNode }) {
           {flights.map((f) => (
             <motion.div
               key={f.id}
-              initial={{ x: f.from.x - SIZE / 2, y: f.from.y - SIZE / 2, opacity: 0, scale: 0.5 }}
+              initial={{ x: f.from.x - SIZE / 2, y: f.from.y - SIZE / 2, opacity: 0, scale: 0.4, rotate: 0 }}
               animate={{
                 x: f.to.x - SIZE / 2,
                 y: f.to.y - SIZE / 2,
                 opacity: [0, 1, 1, 0],
-                scale: [0.5, 1, 1, 0.7],
+                scale: [0.4, 1, 1, 0.7],
+                rotate: f.rot,
               }}
-              transition={{ duration: 0.6, delay: f.delay, ease: "easeInOut", times: [0, 0.18, 0.82, 1] }}
+              transition={{ duration: 0.6, delay: f.delay, ease: "easeOut", times: [0, 0.18, 0.82, 1] }}
               onAnimationComplete={() => remove(f.id)}
               style={{ position: "fixed", left: 0, top: 0 }}
             >
