@@ -5,6 +5,7 @@ import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 const MENU = [
+  { href: "/quick-play", icon: "⚡", title: "لعب سريع", desc: "انضمّ لطاولة عشوائية فورًا دون إنشاء غرفة" },
   { href: "/create-room", icon: "♠", title: "إنشاء غرفة", desc: "ابدأ طاولة جديدة وادعُ أصدقاءك" },
   { href: "/rooms", icon: "♣", title: "دخول غرفة", desc: "انضمّ بكود دعوة أو من الغرف العامة" },
   { href: "/stats", icon: "📊", title: "الإحصائيات", desc: "مبارياتك ونسبة فوزك" },

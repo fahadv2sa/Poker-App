@@ -3,7 +3,7 @@
  * default room config in Section 5. Defaults live here; per-room overrides are
  * stored in Games.config (jsonb).
  */
-import type { ResolveMode } from "./enums.js";
+import type { Difficulty, ResolveMode } from "./enums.js";
 
 /** Section 19.1 — HAND_SIZE = 5 for Royals and Full-House-Club. */
 export const HAND_SIZE = 5;
@@ -32,6 +32,22 @@ export const DEFAULT_GAME_CONFIG = {
   /** How showdown ranks resolve (table-level). Default keeps the current
    *  self-declaration behavior; AUTO lets the server decide automatically. */
   resolveMode: "MANUAL",
+} as const;
+
+/**
+ * Quick Play matchmaking (server-authoritative). One queue per difficulty tier;
+ * a table auto-starts once `minPlayers` are queued and the fill window elapses
+ * (or instantly at `maxSeats`). Quick Play reuses the normal table + wallet
+ * mechanics — `entryByTier` is just the table's fixed ANTE per tier (no separate
+ * buy-in charge; nothing is deducted while queued). All values tunable here.
+ */
+export const QUICK_PLAY = {
+  minPlayers: 3,
+  maxSeats: 6,
+  fillWindowSec: 20,
+  startGraceSec: 4,
+  resolveMode: "AUTO",
+  entryByTier: { EASY: 50, MEDIUM: 100, ELITE: 200 } as Record<Difficulty, number>,
 } as const;
 
 export type GameConfig = {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BET_ACTIONS, GAME_PHASES, RESULT_OUTCOMES } from "./enums.js";
+import { BET_ACTIONS, DIFFICULTIES, GAME_PHASES, RESULT_OUTCOMES } from "./enums.js";
 
 /**
  * WebSocket event contracts (Section 12). Client→server inputs are validated
@@ -25,6 +25,10 @@ export const CLIENT_EVENTS = {
   nextHand: "hand:next",
   actionPlace: "action:place",
   claimSelect: "claim:select",
+  /** Quick Play: join a tier's matchmaking queue. */
+  queueJoin: "queue:join",
+  /** Quick Play: leave the queue while waiting (no charge, clean state). */
+  queueLeave: "queue:leave",
 } as const;
 
 export const SERVER_EVENTS = {
@@ -49,6 +53,10 @@ export const SERVER_EVENTS = {
   /** The room was closed (host closed it, or it auto-deleted when it emptied).
    *  Clients should leave the table and return to the menu. */
   roomClosed: "room:closed",
+  /** Quick Play: the queue's waiting-lobby state (count + countdown). */
+  queueState: "queue:state",
+  /** Quick Play: matched into an auto-created table — go play. */
+  queueMatched: "queue:matched",
   error: "error",
 } as const;
 
@@ -85,6 +93,11 @@ export const claimSelectSchema = z.object({
   handRankId: z.string().uuid(),
 });
 export type ClaimSelectInput = z.infer<typeof claimSelectSchema>;
+
+export const queueJoinSchema = z.object({
+  difficulty: z.enum(DIFFICULTIES),
+});
+export type QueueJoinInput = z.infer<typeof queueJoinSchema>;
 
 // ---------------------------------------------------------------------------
 // Server → client (typed views)
@@ -286,6 +299,23 @@ export interface PlayerLeftPayload {
  *  `EMPTY` = it auto-deleted when the last player left. */
 export interface RoomClosedPayload {
   reason: "CLOSED_BY_HOST" | "EMPTY";
+}
+
+/** Quick Play waiting-lobby state for one tier's queue. `deadlineTs` (epoch ms)
+ *  is set once the fill window is armed (≥ min queued) so the client can count
+ *  down locally; null while still gathering below the minimum. */
+export interface QueueStatePayload {
+  difficulty: (typeof DIFFICULTIES)[number];
+  count: number;
+  min: number;
+  max: number;
+  deadlineTs: number | null;
+}
+
+/** Quick Play match found — the auto-created table to join. */
+export interface QueueMatchedPayload {
+  gameId: string;
+  inviteCode: string;
 }
 
 export interface ErrorPayload {

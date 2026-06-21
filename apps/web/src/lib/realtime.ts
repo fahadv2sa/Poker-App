@@ -12,6 +12,8 @@ import {
   type PhaseChangedPayload,
   type PlayerFoldedPayload,
   type PlayerLeftPayload,
+  type QueueMatchedPayload,
+  type QueueStatePayload,
   type RoomClosedPayload,
   type SessionWaitingPayload,
   type ShowdownStartPayload,
@@ -164,6 +166,46 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
     selectClaim: (handRankId) =>
       socket.emit(CLIENT_EVENTS.claimSelect, { handRankId }),
+    disconnect: () => socket.disconnect(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Quick Play queue — a lightweight identity-only connection (no table). Joins a
+// tier's matchmaking queue and listens for the waiting-lobby state + the match.
+// ---------------------------------------------------------------------------
+
+export interface QueueHandlers {
+  onConnect?: () => void;
+  onState?: (p: QueueStatePayload) => void;
+  onMatched?: (p: QueueMatchedPayload) => void;
+  onError?: (p: { code: string; messageAr: string }) => void;
+}
+
+export interface QueueConnection {
+  joinQueue: (difficulty: string) => void;
+  leaveQueue: () => void;
+  disconnect: () => void;
+}
+
+export function connectQueue(token: string, handlers: QueueHandlers): QueueConnection {
+  const socket = io(url(), { auth: { token }, withCredentials: true });
+
+  socket.on("connect", () => handlers.onConnect?.());
+  socket.on("connect_error", (err: Error) =>
+    handlers.onError?.({ code: "CONNECT_ERROR", messageAr: connectErrorMessage(err.message) }),
+  );
+  socket.on(SERVER_EVENTS.queueState, (p: unknown) => handlers.onState?.(p as QueueStatePayload));
+  socket.on(SERVER_EVENTS.queueMatched, (p: unknown) =>
+    handlers.onMatched?.(p as QueueMatchedPayload),
+  );
+  socket.on(SERVER_EVENTS.error, (p: unknown) =>
+    handlers.onError?.(p as { code: string; messageAr: string }),
+  );
+
+  return {
+    joinQueue: (difficulty) => socket.emit(CLIENT_EVENTS.queueJoin, { difficulty }),
+    leaveQueue: () => socket.emit(CLIENT_EVENTS.queueLeave, {}),
     disconnect: () => socket.disconnect(),
   };
 }

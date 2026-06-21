@@ -1,16 +1,22 @@
-import { getWalletBalance, prisma } from "@fp/db";
+import { randomBytes } from "node:crypto";
+import { Prisma, getWalletBalance, prisma } from "@fp/db";
 import type { Action } from "@fp/engine";
 import {
   CLIENT_EVENTS,
+  DEFAULT_GAME_CONFIG,
+  QUICK_PLAY,
   SERVER_EVENTS,
   actionPlaceSchema,
   claimSelectSchema,
+  queueJoinSchema,
   roomJoinSchema,
+  type Difficulty,
   type StateSyncPayload,
 } from "@fp/shared";
 import type { Server, Socket } from "socket.io";
 import { computeLivePots, GameRoom, type RoomDeps } from "./room.js";
 import type { Emitter } from "./ports.js";
+import { Matchmaking } from "./matchmaking.js";
 import { hydrateRoom } from "./factory.js";
 import { PrismaCardSource } from "./cards.js";
 import { PrismaRoomPersistence } from "./persistence.js";
@@ -94,6 +100,46 @@ export function attachSocketHandlers(
   // Per-game teardown guard: serializes the host-close and the auto-empty cleanup
   // so a room is closed (and its hand refunded) exactly once even if they race.
   const closingGames = new Set<string>();
+
+  // ── Quick Play matchmaking ───────────────────────────────────────────────
+  // Auto-creates a private table (reusing the normal Game row + lifecycle) when
+  // a tier queue fills, then deals once the matched players have joined.
+  const quickInviteCode = () =>
+    randomBytes(6).toString("base64url").replace(/[-_]/g, "").slice(0, 8).toUpperCase();
+
+  const matchmaking = new Matchmaking({
+    io,
+    async createQuickGame(tier: Difficulty, hostUserId: string) {
+      const game = await prisma.game.create({
+        data: {
+          roomName: `لعب سريع — ${tier}`,
+          isPrivate: true, // never listed in the public rooms list
+          maxPlayers: QUICK_PLAY.maxSeats,
+          passwordHash: null,
+          difficulty: tier,
+          inviteCode: quickInviteCode(),
+          createdBy: hostUserId, // first queued player hosts (host-transfer applies)
+          config: {
+            ...DEFAULT_GAME_CONFIG,
+            ante: QUICK_PLAY.entryByTier[tier],
+            resolveMode: QUICK_PLAY.resolveMode,
+          } as unknown as Prisma.InputJsonValue,
+        },
+        select: { id: true, inviteCode: true },
+      });
+      return { gameId: game.id, inviteCode: game.inviteCode };
+    },
+    async startTable(gameId: string) {
+      const rt = await getRuntime(gameId);
+      if (!rt || rt.room.state.status !== "LOBBY") return; // already started / gone
+      if (rt.room.state.players.filter((p) => p.connected).length < 2) return; // too few joined
+      try {
+        await rt.room.start();
+      } catch (err) {
+        console.error("[matchmaking] startTable failed", err);
+      }
+    },
+  });
 
   /**
    * Close a room and remove it: void+refund any live hand and mark the game
@@ -224,6 +270,22 @@ export function attachSocketHandlers(
       }),
     );
 
+    // ── Quick Play queue ───────────────────────────────────────────────────
+    socket.on(CLIENT_EVENTS.queueJoin, (raw: unknown) =>
+      guard(socket, async () => {
+        const { difficulty } = queueJoinSchema.parse(raw);
+        // Gate on affording the tier's entry (= the table ante). No charge here —
+        // the queue NEVER deducts; the first charge is the ante at the table's
+        // first deal. So leaving the queue costs nothing.
+        const balance = await getWalletBalance(user.userId);
+        if (balance < BigInt(QUICK_PLAY.entryByTier[difficulty])) {
+          return emitError(socket, "LOW_BALANCE", "رصيدك لا يكفي لرسوم الدخول");
+        }
+        matchmaking.join(socket.id, user, difficulty);
+      }),
+    );
+    socket.on(CLIENT_EVENTS.queueLeave, () => matchmaking.leave(socket.id));
+
     const leave = async () => {
       if (!joinedGameId) return;
       const rt = runtimes.get(joinedGameId);
@@ -257,6 +319,7 @@ export function attachSocketHandlers(
       void leave().catch((err) => console.error("room:leave cleanup failed", err));
     });
     socket.on("disconnect", () => {
+      matchmaking.leave(socket.id); // drop from any Quick Play queue, cleanly
       void leave().catch((err) => console.error("disconnect cleanup failed", err));
     });
   });
