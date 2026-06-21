@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth, signOut } from "@/auth";
-import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { CoinPill } from "@/components/coin-pill";
+import { LogoutConfirm } from "@/components/logout-confirm";
 import { cn } from "@/lib/utils";
 
 const MENU = [
@@ -46,16 +46,12 @@ export default async function HomePage() {
         </div>
         <div className="flex items-center gap-3">
           <CoinPill amount={balance} />
-          <form
+          <LogoutConfirm
             action={async () => {
               "use server";
               await signOut({ redirectTo: "/login" });
             }}
-          >
-            <Button type="submit" variant="ghost">
-              خروج
-            </Button>
-          </form>
+          />
         </div>
       </header>
 

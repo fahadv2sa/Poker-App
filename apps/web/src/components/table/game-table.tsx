@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,6 +17,7 @@ import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { SoundControl } from "@/components/sound-control";
 import { Logo } from "@/components/logo";
+import { ConfirmButtons } from "@/components/confirm-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
@@ -65,6 +65,7 @@ export function GameTable({
   const [password, setPassword] = useState("");
   const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   // "Continue Playing" dismisses the result overlay locally for this player; it
   // resets whenever a new result arrives so the next round's winner shows again.
   const [continued, setContinued] = useState(false);
@@ -91,6 +92,9 @@ export function GameTable({
 
   const phase = s?.phase ?? "LOBBY";
   const isBetting = BETTING_PHASES.has(phase);
+  // A hand is actually live (so leaving now has consequences) when we're past the
+  // lobby, the hand hasn't ended, and no result overlay is up.
+  const handInProgress = phase !== "LOBBY" && phase !== "ENDED" && !view.result;
   // Whose-turn / contender derived from the shared, unit-tested selectors so the
   // seat-1/host case can't silently regress (PROBLEM 1).
   const isMyTurn = selIsMyTurn(view);
@@ -178,11 +182,29 @@ export function GameTable({
               </Button>
             )
           ) : null}
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/">خروج</Link>
-          </Button>
+          {/* Leave the table — confirm first (mirrors the close-table flow). The
+              contextual consequence is shown in the banner just below. */}
+          {confirmLeave ? (
+            <ConfirmButtons
+              confirmLabel="تأكيد المغادرة"
+              onConfirm={() => router.push("/")}
+              onCancel={() => setConfirmLeave(false)}
+            />
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => setConfirmLeave(true)}>
+              خروج
+            </Button>
+          )}
         </div>
       </header>
+
+      {confirmLeave ? (
+        <p className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive-foreground sm:text-sm">
+          {handInProgress
+            ? "إذا غادرت الآن ستترك يدك الحالية، وتبقى رهاناتك ضمن المجمّع (لا تُسترد)، ويُسقَط مقعدك من اليد التالية."
+            : "هل تريد مغادرة الطاولة والعودة إلى القائمة؟"}
+        </p>
+      ) : null}
 
       {!s ? (
         <div className="grid flex-1 place-items-center text-muted-foreground">
@@ -541,6 +563,11 @@ function ActionBar({
   onAction: (type: string, amount?: number) => void;
   deadlineTs: number | null;
 }) {
+  // Fold needs a confirm step. The turn timer is server-authoritative, so it
+  // keeps running while this is open (the countdown stays visible above). This
+  // component only mounts on your turn, so the confirm self-resets when the turn
+  // passes — a stale confirm can never fire a late action.
+  const [foldConfirm, setFoldConfirm] = useState(false);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between text-sm">
@@ -556,45 +583,63 @@ function ActionBar({
 
       <Countdown deadlineTs={deadlineTs} />
 
-      <div className="grid grid-cols-3 gap-2">
-        {owed <= 0 ? (
-          <Button variant="secondary" onClick={() => onAction("CHECK")}>
-            تمرير
-          </Button>
-        ) : (
-          <Button
-            onClick={() => onAction("CALL")}
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
-          >
-            مساواة <span className="num">{owed}</span>
-          </Button>
-        )}
-        <Button variant="secondary" onClick={() => onAction("ALLIN")}>
-          كل الرصيد
-        </Button>
-        <Button variant="destructive" onClick={() => onAction("FOLD")}>
-          انسحاب
-        </Button>
-      </div>
+      {foldConfirm ? (
+        <div className="flex flex-col gap-2">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive-foreground sm:text-sm">
+            الانسحاب من هذه الجولة؟ تخسر جزءًا من رهانك ويُعاد لك الباقي. المؤقّت مستمر.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="destructive" onClick={() => onAction("FOLD")}>
+              تأكيد الانسحاب
+            </Button>
+            <Button variant="ghost" onClick={() => setFoldConfirm(false)}>
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2">
+            {owed <= 0 ? (
+              <Button variant="secondary" onClick={() => onAction("CHECK")}>
+                تمرير
+              </Button>
+            ) : (
+              <Button
+                onClick={() => onAction("CALL")}
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                مساواة <span className="num">{owed}</span>
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => onAction("ALLIN")}>
+              كل الرصيد
+            </Button>
+            <Button variant="destructive" onClick={() => setFoldConfirm(true)}>
+              انسحاب
+            </Button>
+          </div>
 
-      <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          min={minRaiseTo}
-          step={DEFAULT_GAME_CONFIG.minRaise}
-          value={raiseTo}
-          onChange={(e) => setRaiseTo(Number(e.target.value))}
-          className="num"
-          aria-label="مبلغ الرفع"
-        />
-        <Button
-          onClick={() => onAction("RAISE", raiseTo)}
-          disabled={raiseTo < minRaiseTo}
-          className="shrink-0"
-        >
-          رفع إلى <span className="num">{raiseTo}</span>
-        </Button>
-      </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={minRaiseTo}
+              step={DEFAULT_GAME_CONFIG.minRaise}
+              value={raiseTo}
+              onChange={(e) => setRaiseTo(Number(e.target.value))}
+              className="num"
+              aria-label="مبلغ الرفع"
+            />
+            <Button
+              onClick={() => onAction("RAISE", raiseTo)}
+              disabled={raiseTo < minRaiseTo}
+              className="shrink-0"
+            >
+              رفع إلى <span className="num">{raiseTo}</span>
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
