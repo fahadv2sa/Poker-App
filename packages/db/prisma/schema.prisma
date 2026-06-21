@@ -248,14 +248,31 @@ model Position {
   @@map("positions")
 }
 
+// Team entity type. Career history (player_clubs) holds ONLY kind=CLUB; national
+// teams (senior/youth) and youth-club academies are split into their own link
+// tables. Display/data only — the rank engine still keys on player_clubs.
+enum ClubKind {
+  CLUB
+  NATIONAL_TEAM
+  NATIONAL_YOUTH
+  YOUTH_CLUB
+
+  @@map("club_kind")
+}
+
 model Club {
   id          String       @id @default(uuid()) @db.Uuid
   name        String       @unique
   countryId   String?      @map("country_id") @db.Uuid
   logoUrl     String?      @map("logo_url")
+  // Entity type (see ClubKind): separates real clubs from national teams and
+  // youth-club academies so career history can be clubs-only.
+  kind        ClubKind     @default(CLUB)
 
-  country     Nationality? @relation(fields: [countryId], references: [id], onDelete: SetNull)
-  playerClubs PlayerClub[]
+  country       Nationality?         @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  playerClubs   PlayerClub[]
+  nationalTeams PlayerNationalTeam[]
+  youthClubs    PlayerYouthClub[]
 
   @@map("clubs")
 }
@@ -296,6 +313,8 @@ model Player {
   nationality     Nationality            @relation(fields: [nationalityId], references: [id], onDelete: Restrict)
   position        Position               @relation(fields: [positionId], references: [id], onDelete: Restrict)
   playerClubs     PlayerClub[]
+  nationalTeams   PlayerNationalTeam[]
+  youthClubs      PlayerYouthClub[]
   tournamentStats PlayerTournamentStat[]
   gameCards       GameCard[]
 
@@ -333,6 +352,39 @@ model PlayerClub {
   @@index([playerId])
   @@index([clubId])
   @@map("player_clubs")
+}
+
+// National-team appearances (المنتخب), split out of player_clubs. Each row's
+// club is a kind=NATIONAL_TEAM (senior) or NATIONAL_YOUTH entity. Preserved and
+// queryable; not part of the club career history and not seen by the engine.
+model PlayerNationalTeam {
+  id       String @id @default(uuid()) @db.Uuid
+  playerId String @map("player_id") @db.Uuid
+  clubId   String @map("club_id") @db.Uuid
+
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  club     Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, clubId])
+  @@index([playerId])
+  @@index([clubId])
+  @@map("player_national_teams")
+}
+
+// Youth-club academy appearances (e.g. "Real Madrid U19"), split out of
+// player_clubs. Each row's club is a kind=YOUTH_CLUB entity. Preserved.
+model PlayerYouthClub {
+  id       String @id @default(uuid()) @db.Uuid
+  playerId String @map("player_id") @db.Uuid
+  clubId   String @map("club_id") @db.Uuid
+
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  club     Club   @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, clubId])
+  @@index([playerId])
+  @@index([clubId])
+  @@map("player_youth_clubs")
 }
 
 // Game rules, seeded. rule (jsonb) holds the Rule DSL (Section 7.3/7.4).
