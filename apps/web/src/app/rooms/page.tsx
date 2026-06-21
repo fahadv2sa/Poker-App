@@ -4,6 +4,7 @@ import { prisma } from "@fp/db";
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { JoinForm } from "./join-form";
 
 /** Arabic labels for the room difficulty (display only). */
 const DIFFICULTY_AR: Record<string, string> = {
@@ -42,6 +43,11 @@ export default async function RoomsPage() {
           <Link href="/">← القائمة</Link>
         </Button>
       </header>
+
+      <Card className="mb-4 p-6 sm:p-8">
+        <h2 className="mb-4 text-xl">دخول بكود</h2>
+        <JoinForm />
+      </Card>
 
       <Card className="p-6 sm:p-8">
         <div className="mb-4 flex items-center justify-between">
