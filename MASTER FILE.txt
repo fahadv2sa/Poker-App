@@ -1,0 +1,1161 @@
+================================================================================
+FOOTBALL POKER (فوتبول بوكر) — MASTER REFERENCE FILE
+================================================================================
+A complete, self-contained onboarding reference for any future AI platform,
+external developer, or designer. Written to be accurate to the ACTUAL code in
+this monorepo (not the spec's intentions where the two have diverged — such
+divergences are called out explicitly).
+
+Generated: 2026-06-21
+Project root: C:\Users\Admin\OneDrive\Desktop\poker-app
+Authoritative spec (Arabic): C:\Users\Admin\OneDrive\Desktop\SPEC.md
+Quick reference card: CLAUDE.md (in the repo root — read it too; it is current)
+Current git branch (= the production deploy branch): feat/fame-score-system
+
+TABLE OF CONTENTS
+  1.  Overview — what this game is
+  2.  Architecture (the big picture)
+  3.  Tech stack & versions
+  4.  Project structure (monorepo layout)
+  5.  Game rules (the 9 hand-ranks, betting lifecycle, fold/all-in, showdown)
+  6.  Difficulty tiers, Auto/Manual mode, Quick Play matchmaking, room lifecycle
+  7.  Data model (database schema)
+  8.  The wallet ledger (critical — integrity rules)
+  9.  Stats / XP / badges / fame-score progression
+  10. Realtime layer (Socket.IO events + flow)
+  11. Key end-to-end flows
+  12. Authentication & security
+  13. Running locally
+  14. Deployment (Railway) + the migrate-first rule
+  15. Conventions
+  16. Known issues / important notes / fragile areas
+  17. File map (where the key code lives)
+  18. Quick Play bots (cold-start fillers — behind BOTS_ENABLED)
+
+
+================================================================================
+1. OVERVIEW — WHAT THIS GAME IS
+================================================================================
+Football Poker is a server-authoritative, online, multiplayer card game. It uses
+a Texas-Hold'em STRUCTURE (rooms, a mandatory opening bet, betting rounds,
+community cards, showdown, side pots) but the WINNING LOGIC is entirely
+different: instead of poker hand ranks, hands are scored by FOOTBALL KNOWLEDGE —
+the relationships between real football players by NATIONALITY, POSITION, and
+CLUB career history.
+
+  - Each "card" is a real football player (name, nationality, position, the
+    clubs they played for, photo, a fame score).
+  - A player holds 2 hole cards; 5 community cards are revealed across the
+    streets; the 7-card pool is evaluated against 9 "association" ranks
+    (e.g. "5 players who share a club", "all four positions covered", etc.).
+  - The UI is fully Arabic, right-to-left (RTL), premium dark theme.
+
+Two pieces are treated as critical and are heavily tested, in isolation:
+  1. The Football Hand Engine — a pure, data-driven rules interpreter (no I/O).
+  2. The Wallet / Betting integrity layer — an append-only ledger with DB
+     transactions, row locks, and idempotency keys.
+
+Coins economy (virtual, no real money):
+  - Signup grants 1000 Coins.
+  - When you run low you can claim 1000 more from the "bank", at most TWICE per
+    rolling 24h window.
+  - No buying/selling/transferring coins; no card ownership/inventory/shop; no
+    permanent collection. Cards are dealt randomly per hand from the player DB.
+  - Rooms are temporary (disappear after the session). Persistent data: users,
+    wallets, the ledger, stats, results, the football reference data.
+
+NON-NEGOTIABLE PRINCIPLES (enforced throughout the code):
+  1. The server is the ONLY referee. The browser decides nothing sensitive
+     (no bet validity, turn order, winner, hand evaluation, or balance change).
+  2. Fully DATA-DRIVEN football data: no player/club/nationality/rank name is
+     hardcoded. All football data lives in PostgreSQL; the engine reads the
+     ranks from the DB and interprets them dynamically.
+  3. Wallet integrity: every coin movement goes through an append-only ledger,
+     inside DB transactions with row locks and idempotency keys.
+  4. Card privacy: a player's two hole cards are sent ONLY to their owner and are
+     never broadcast until the official showdown reveal.
+  5. TypeScript everywhere; Zod validates every external input.
+
+
+================================================================================
+2. ARCHITECTURE (THE BIG PICTURE)
+================================================================================
+There are TWO separate server processes plus one database. They talk to the same
+PostgreSQL but serve different roles:
+
+  +-------------------+         HTTPS / REST          +--------------------+
+  |  Browser (RTL UI) | <---------------------------> |  apps/web (Next.js)|
+  |  Next.js client   |                               |  REST + SSR + Auth |
+  +---------+---------+                               +----------+---------+
+            |                                                    |
+            |  Socket.IO (WebSocket), token in handshake         | Prisma
+            v                                                    v
+  +-------------------+        Prisma (DB tx)          +--------------------+
+  | apps/game-server  | <----------------------------> |   PostgreSQL       |
+  | Socket.IO, the    |                                |   (Prisma schema)  |
+  | authoritative     |                                +--------------------+
+  | game engine +     |
+  | in-memory rooms   |
+  +-------------------+
+
+  - apps/web (Next.js 15, App Router): all REST/SSR — registration, login,
+    profile, stats, bank top-up, room create/list/join, the table UI. It mints
+    a short-lived signed token from the verified Auth.js session and hands it to
+    the browser, which uses it for the Socket.IO handshake. The web app is
+    STATELESS and may be scaled horizontally.
+
+  - apps/game-server (Node + Socket.IO): the authoritative game engine. Holds
+    in-memory room state and in-process turn/claim timers, runs the state
+    machine, and writes every money move to PostgreSQL inside transactions.
+    Because room state is in memory, it MUST run as a SINGLE always-on instance
+    (replicas = 1). Never serverless, never scaled horizontally.
+
+  - PostgreSQL: source of truth for everything persistent (the wallet ledger is
+    the financial source of truth).
+
+Shared logic lives in packages so both processes agree exactly:
+  - packages/shared  — enums, constants, Zod contracts, the WebSocket event
+    contracts, the 9-rank catalog + Rule DSL, the badge catalog, the rate
+    limiter. The single source of truth for cross-process types.
+  - packages/engine  — the pure Football Hand Engine + betting/pots/fold/resolve
+    math. NO I/O, no DB, no clock. Fully unit-testable.
+  - packages/db      — Prisma schema + migrations + seed + the wallet/bank
+    services + the stats aggregation. The only package that touches the DB.
+
+Key architectural idea: the game-server's GameRoom orchestrator depends on a set
+of PORTS (interfaces: CardSource, RoomPersistence, Emitter, TimerService, Clock).
+Real implementations do I/O (Prisma, Socket.IO, Node timers); tests inject fakes.
+This is what makes the full hand flow testable without a database or sockets.
+
+
+================================================================================
+3. TECH STACK & VERSIONS
+================================================================================
+Frontend (apps/web):
+  - Next.js ^15.1.6 (App Router), React 19, TypeScript ^5.6
+  - Tailwind CSS v4 (@tailwindcss/postcss) + shadcn/ui (radix-ui) + framer-motion
+  - next-auth 5.0.0-beta.25 (Auth.js), jose ^6 (JWT mint/verify)
+  - @node-rs/argon2 (argon2id password hashing), socket.io-client ^4.8
+  - zod ^3.23, lucide-react (icons)
+
+Game server (apps/game-server):
+  - Node 20 (engines pin "node":"20"; README notes it also runs on 24)
+  - socket.io ^4.8, tsx ^4.19 (runs the TypeScript source directly — no build
+    step at deploy), jose, @node-rs/argon2 (room-password verify), zod via shared
+
+Database (packages/db):
+  - PostgreSQL (14+); Prisma ^6.2 (@prisma/client + prisma CLI)
+  - Generated Prisma client output: packages/db/src/generated/client
+  - @anthropic-ai/sdk ^0.104 — used ONLY by the offline name-transliteration
+    script (Arabic player names), not by runtime gameplay.
+
+Tooling / monorepo:
+  - pnpm workspaces (pnpm@9.15.9) + Turborepo (turbo ^2.5)
+  - ESLint 10 (flat config, eslint.config.mjs), typescript-eslint
+  - vitest ^2.1 for all test suites
+  - Docker Compose for local PostgreSQL
+  - Hosting: Railway (NIXPACKS builder); DNS via Cloudflare
+
+Forbidden by the spec: Firebase / NoSQL as the game backbone; any sensitive
+logic in the browser.
+
+
+================================================================================
+4. PROJECT STRUCTURE (MONOREPO LAYOUT)
+================================================================================
+pnpm workspaces are defined in pnpm-workspace.yaml as apps/* and packages/*.
+
+poker-app/
+├─ apps/
+│  ├─ web/                  Next.js app (UI + REST)
+│  │  └─ src/
+│  │     ├─ app/            App Router pages + API routes
+│  │     │  ├─ api/         REST: auth, bank/claim, profile, rooms, social, stats
+│  │     │  ├─ table/[gameId]/page.tsx   the live table (mints realtime token)
+│  │     │  ├─ create-room, rooms, quick-play, bank, profile, stats, friends,
+│  │     │  │  guide, login, register   (pages)
+│  │     │  └─ layout.tsx, globals.css, manifest.ts, opengraph-image.tsx
+│  │     ├─ auth.ts         Auth.js (Credentials) config
+│  │     ├─ components/     UI: table/ (game-table, parts, fx), ui/ (shadcn),
+│  │     │                  profile-*, quick-play, auth-form, etc.
+│  │     ├─ lib/            realtime.ts (Socket.IO client), useGameSocket.ts
+│  │     │                  (event→view folding), tableView.ts (pure selectors),
+│  │     │                  realtime-token.ts (mint JWT), argon.ts, social.ts,
+│  │     │                  stats.ts, sound.ts, rate-limit.ts, anim.ts, fx-bus.ts
+│  │     └─ public/         icons, sounds/*.mp3
+│  └─ game-server/          Node + Socket.IO authoritative server
+│     ├─ src/
+│     │  ├─ index.ts        bootstrap: rate-limit + auth middleware, recovery,
+│     │  │                  load ranks, attach handlers, listen on PORT
+│     │  ├─ socket.ts       all Socket.IO handlers (the wire layer)
+│     │  ├─ room.ts         GameRoom — the authoritative state machine (BIG file)
+│     │  ├─ cards.ts        TableDeck (single-deck no-repeat) + PrismaCardSource
+│     │  ├─ matchmaking.ts  Quick Play queues (per difficulty tier)
+│     │  ├─ persistence.ts  PrismaRoomPersistence (DB transactions)
+│     │  ├─ recovery.ts     startup reconciliation of orphaned in-progress games
+│     │  ├─ factory.ts      hydrateRoom() + loadRanks() from the DB
+│     │  ├─ auth.ts         verifyRealtimeToken() (jose)
+│     │  ├─ store.ts        InMemoryRoomStore
+│     │  ├─ timers.ts       NodeTimerService + systemClock
+│     │  ├─ ports.ts        the interfaces GameRoom depends on
+│     │  └─ types.ts        RoomState / RoomPlayer / DealtCard / RankInfo
+│     ├─ tests/             unit + integration tests (room, multi-hand, recovery,
+│     │                     rate-limit, auth, table-deck)
+│     └─ smoke/             smoke.e2e.test.ts (full hand against a live server)
+├─ packages/
+│  ├─ shared/  src/         enums.ts, constants.ts, handRanks.ts (Rule DSL +
+│  │                        9-rank catalog), badges.ts, profile.ts,
+│  │                        auth.schemas.ts, ws.ts (event contracts),
+│  │                        rate-limit.ts, index.ts
+│  ├─ engine/  src/         engine.ts (public API), evaluate.ts (witness search),
+│  │                        betting.ts, pots.ts, fold.ts, resolve.ts, types.ts
+│  └─ db/      prisma/      schema.prisma, migrations/, seed.ts, seed-players.ts,
+│  │           src/         and the import/score scripts (see below)
+│  │                        client.ts, wallet.ts, bank.ts, metrics.ts,
+│  │                        errors.ts, index.ts, generated/client/
+│  └─ db/      scripts/     abandon-game.ts, grant-bonus.ts (ops scripts)
+├─ CLAUDE.md                current quick-reference (READ — has the deploy rule)
+├─ README.md                setup + run instructions
+├─ DEPLOY.md                Railway deployment runbook (step by step)
+├─ GAMEPLAY_AUDIT.md        a 2026-06-17 runtime audit (PARTLY OUTDATED — §16)
+├─ railway.toml             Railway build/deploy config (per-service notes)
+├─ docker-compose.yml       local PostgreSQL
+├─ turbo.json, tsconfig.base.json, eslint.config.mjs, pnpm-workspace.yaml
+└─ package.json             root scripts (db:*, build, test, lint, typecheck)
+
+Package import names: @fp/web, @fp/game-server, @fp/db, @fp/engine, @fp/shared.
+Dependency direction: web → {db, shared}; game-server → {db, engine, shared};
+db → shared; engine → shared. shared depends on nothing internal. The engine
+never imports db (it stays pure).
+
+
+================================================================================
+5. GAME RULES
+================================================================================
+
+5.1 THE 9 HAND-RANKS (associations)
+-----------------------------------
+Ranks are stored in the `hand_ranks` table (seeded from HAND_RANK_CATALOG in
+packages/shared/src/handRanks.ts) and interpreted at runtime by the engine. Each
+row has: code, name_ar (the Arabic display name shown at showdown — read LIVE
+from the DB), strength (orders the ranks; unique), and `rule` (jsonb Rule DSL).
+
+Strength  Code              Arabic name      Condition (as the code actually is)
+   9      ROYAL_CLUB        رويال النادي      5 cards sharing ≥1 club
+   8      ROYAL_NATION      رويال الجنسية     5 cards with the same nationality
+   7      ROYAL_POSITION    رويال المراكز     5 cards with the same position
+   6      FULL_HOUSE_CLUB   فل هاوس كلوب       4 cards sharing ≥1 club
+   5      LINEUP            تشكيلة            covers all 4 positions (GK/DEF/MID/FWD)
+   4      FULL_HOUSE        فل هاوس           3 sharing a club + a DISJOINT 2
+                                            sharing a club (clubs only)
+   3      TRIPLE            ثلاثي            3 cards sharing ≥1 club
+   2      TWO_PAIR          زوجين            two DISJOINT pairs, each sharing a club
+   1      PAIR              زوج              2 cards sharing ≥1 club
+
+HAND_SIZE = 5 (the "5" in the Royals and Full-House-Club derives from this
+constant).
+
+*** IMPORTANT DIVERGENCE FROM THE SPEC TABLE (accurate-to-code) ***
+The SPEC / CLAUDE.md table says PAIR/TWO_PAIR use nationality/position/club and
+that TRIPLE/FULL_HOUSE use nationality OR position (NOT club). THE CODE HAS
+EVOLVED: in packages/shared/src/handRanks.ts the four lower ranks
+(PAIR, TWO_PAIR, TRIPLE, FULL_HOUSE) are now CLUBS-ONLY — they trigger only on
+shared CLUB history, not on nationality/position. (See the `pairClub` /
+`tripleClub` definitions and the comment "Nationality and position NO LONGER
+trigger PAIR / TWO_PAIR / TRIPLE / FULL_HOUSE.") Whatever is seeded into
+`hand_ranks` from this catalog is what actually runs. If you need the older
+semantics, edit the catalog and re-seed.
+
+CONSEQUENCE (fragile): because the mid/low ranks key on CLUB career history, the
+game is only meaningful when players in the DB have rich, accurate `player_clubs`
+rows. A thin club history collapses most hands to "no rank". This is why full
+career data matters.
+
+5.2 THE RULE DSL (stored in hand_ranks.rule, validated by Zod ruleSchema)
+------------------------------------------------------------------------
+  { "type":"group", "attribute":"nationality"|"position"|"club",
+    "min":N, "match":"shared"|"identical" }
+      - shared (default): single-valued attrs ⇒ same value; club ⇒ ≥1 shared club
+      - identical: CLUB ONLY ⇒ an exactly-matching full club SET
+  { "type":"coverage", "attribute":"position", "values":"all" }  // GK+DEF+MID+FWD
+  { "type":"anyOf", "rules":[ ... ] }                            // OR
+  { "type":"allOf", "disjoint":true|false, "rules":[ ... ] }     // AND;
+        disjoint:true ⇒ each sub-rule must use its OWN cards (no overlap)
+
+How the engine evaluates (packages/engine/src/evaluate.ts): the whole engine
+reduces to "does a rule have a WITNESS in the pool?" — a minimal set of cards
+satisfying it (honoring disjointness). It enumerates witnesses lazily with
+generators and short-circuits on the first one. A parallel "explained" traversal
+yields the same witnesses tagged with attribute + shared value + the cards, used
+to build the data-driven "WHY you won" evidence shown at the result.
+
+Public engine API (packages/engine/src/engine.ts):
+  - parseRule(raw)                  parse+validate a jsonb rule
+  - achievableRanks(pool, ranks)    every rank a pool satisfies, strongest first
+  - bestAchievableRank(pool, ranks) the single strongest rank, or null
+  - validateClaim(pool, id, ranks)  { isValid, bestPossibleRankId } — a wrong
+                                    claim LOSES even if a stronger rank exists
+  - resolveByStrength(validClaims)  highest claimed strength wins; ties split
+
+5.3 THE ROUND / BETTING LIFECYCLE
+---------------------------------
+Phases (GamePhase): LOBBY → PREFLOP → FLOP → TURN → RIVER → SHOWDOWN → RESOLVE
+→ ENDED. Community reveal: FLOP=3, TURN=4, RIVER=5 cards.
+
+Defaults (DEFAULT_GAME_CONFIG in packages/shared/src/constants.ts; per-room
+overrides stored in games.config jsonb):
+  ante = 50, minRaise = 50, turnTimerSec = 60, claimTimerSec = 60,
+  handSize = 5, allInMode = "side_pots", nextHandDelaySec = 5,
+  resolveMode = "MANUAL".
+
+Lifecycle, as implemented in apps/game-server/src/room.ts (GameRoom):
+  - START (host): every present player must afford the mandatory ante or start
+    is refused. The dealer button starts at the lowest occupied seat; it rotates
+    each subsequent hand.
+  - DEAL: a fresh hand resets per-hand state, draws cards from the table's deck,
+    persists the deal, then POSTS ANTES, then emits `hand:started` (carrying the
+    post-ante betting state), then privately delivers each player's hole cards,
+    then opens PREFLOP.
+  - ANTE (decision 19.10): a mandatory opening bet posted by every participant at
+    PREFLOP start. No round starts without it. It is debited via the ledger.
+  - FIRST TO ACT (decision 19.9): the seat AFTER the dealer button.
+  - ACTIONS: CHECK, CALL, RAISE (raise-to total), FOLD, ALLIN. The server
+    validates turn + legality (engine `legalActions` / `applyAction`). A raise
+    REOPENS the round for every other active seat. A timer advances IMMEDIATELY
+    once a player acts (decision 19.2) — it never waits for the clock.
+  - TIMERS: 60s per turn. On timeout the server auto-CHECKs if legal, else
+    auto-FOLDs the player. A 60s claim timer runs at showdown (MANUAL mode).
+  - ADVANCE: when a betting round completes, advance to the next street; when
+    only one non-folder remains, the hand ends immediately (last-standing).
+  - SHOWDOWN: see 5.5.
+  - RESOLVE: settle the pot(s), write results + stats, set phase ENDED.
+  - NEXT HAND: the room does NOT auto-deal. The host explicitly triggers the next
+    hand (`hand:next`); only then are antes charged again. (See §16 — this is a
+    deliberate change from the older auto-deal behavior described in the audit.)
+
+5.4 FOLD ACCOUNTING (decision 19.3 — packages/engine/src/fold.ts)
+-----------------------------------------------------------------
+A folder loses ONLY a forfeit; the rest of what they committed is refunded to
+their wallet IMMEDIATELY (a REFUND ledger row).
+  - PREFLOP / FLOP: forfeit = half the ante.
+  - TURN / RIVER:   forfeit = half the player's last bet.
+  - The forfeit stays in the pot; refund = committedTotal − forfeit. Integer
+    (BigInt) math; halves floor (ante 50 → forfeit 25). Never forfeit more than
+    is actually in the pot.
+
+5.5 SHOWDOWN & RESOLUTION (decisions 19.5–19.7; resolve.ts + room.ts)
+--------------------------------------------------------------------
+  - LAST ACTIVE PLAYER STANDING (19.7): wins the pot automatically, no
+    association choice needed; no card reveal of others.
+  - MANUAL mode: the server emits `showdown:start` with all active ranks (id,
+    code, name_ar from the DB, strength). Each contender SELF-DECLARES a rank.
+    The engine validates it (a wrong claim is invalid and loses). A 60s claim
+    timer is armed; a contender who never chooses is NOT a winner (19.6) — their
+    contributions stay for the winner.
+  - AUTO mode: the server evaluates each contender's strongest actual rank with
+    the SAME engine evaluator and resolves immediately — no declaration step, no
+    claim UI, no claim timer.
+  - WINNER: highest claimed (MANUAL) / actual (AUTO) strength wins; ties split
+    (SPLIT_WIN); indivisible remainder coins go to the lowest-seat winner.
+  - OFFICIAL REVEAL (SPEC §2.4): only at a real showdown (not last-standing) do
+    remaining contenders' hole cards become public. Folders are NEVER revealed.
+  - PRIVATE per-seat reveal (MANUAL only): each dealt player privately receives
+    their OWN strongest achievable rank (the `result:best` event) for the winner
+    screen — display only, never changes the outcome.
+
+5.6 ALL-IN & SIDE POTS (decision 19.5 — packages/engine/src/pots.ts)
+--------------------------------------------------------------------
+All-in is enabled with layered side pots. buildSidePots() builds pots from each
+seat's standing contribution: each ascending distinct contribution level among
+non-folders opens a layer; only non-folders are eligible to win a pot; folder
+forfeits drop into the MAIN (lowest) pot as a pure sink. resolveShowdown()
+distributes each pot to the highest-strength eligible valid claimant; a pot with
+no eligible valid winner REFUNDs its layer contributions and surfaces any parked
+forfeit as a FOLD_FORFEIT sink.
+
+5.7 NO-WINNER CASE (decision 19.4)
+----------------------------------
+If no one wins (e.g. no valid claim in a pot), non-folders get their full
+contribution refunded; folders' forfeited shares leave the economy as
+FOLD_FORFEIT. The invariant Σ(coins_delta) = −Σ(FOLD_FORFEIT) is what makes the
+forfeit the only economic sink.
+
+
+================================================================================
+6. DIFFICULTY, AUTO/MANUAL, QUICK PLAY, ROOM LIFECYCLE
+================================================================================
+
+6.1 DIFFICULTY TIERS (the dealing pool — display only, never affects ranks)
+---------------------------------------------------------------------------
+A room has a Difficulty: EASY, MEDIUM, ELITE. It filters which players are
+eligible to be dealt, by fame_score floor (DIFFICULTY_MIN_SCORE in enums.ts):
+  EASY   → floor(fame_score) >= 70
+  MEDIUM → floor(fame_score) >= 50
+  ELITE  → 0 (every active player)
+The floors are CUMULATIVE toward 100 (EASY ⊂ MEDIUM ⊂ ELITE). The deck is built
+in cards.ts via a raw SQL filter on `floor(fame_score)`. If too few eligible
+players exist for the table size, the deal THROWS (see §16).
+
+6.2 AUTO vs MANUAL (resolveMode — table-level, chosen at room creation)
+----------------------------------------------------------------------
+MANUAL (default): players self-declare their association at showdown (claim UI +
+60s timer). AUTO: the server auto-evaluates and resolves (no claim step). Quick
+Play tables are always AUTO. See 5.5 for behavior.
+
+6.3 QUICK PLAY MATCHMAKING (apps/game-server/src/matchmaking.ts)
+----------------------------------------------------------------
+Server-authoritative, in-memory (safe because the game-server is single
+instance). One FIFO queue per difficulty tier. Config (QUICK_PLAY in
+constants.ts): minPlayers 3, maxSeats 6, fillWindowSec 20, startGraceSec 4,
+resolveMode AUTO, entryByTier { EASY:50, MEDIUM:100, ELITE:200 } (the table's
+fixed ante per tier — there is NO separate buy-in; nothing is charged while
+queued; leaving the queue costs nothing).
+
+Flow: a player joins a tier queue (gated only on affording that tier's ante).
+When a queue reaches maxSeats it starts instantly; otherwise once it has >=
+minPlayers a fill window is armed and it starts when the window elapses. On
+match: a private QUICK_PLAY Game row is created (first queued player is host),
+the matched sockets get `queue:matched` with the gameId+inviteCode, and after a
+short grace the server deals the first hand. Quick Play rooms are NEVER listed
+publicly and CANNOT be rejoined once a player leaves.
+
+6.4 ROOM TYPES & LIFECYCLE
+--------------------------
+games.kind (GameKind) is the AUTHORITATIVE room-type flag — never infer type
+from isPrivate or the name:
+  - MANUAL     — created via "create room"; publicly listed (GET /api/rooms,
+                 kind=MANUAL & status=LOBBY); rejoinable while open. Private
+                 (password-protected) MANUAL rooms appear in the list flagged
+                 `locked` (the invite code is NOT exposed; entry needs the
+                 password, verified server-side at the table).
+  - QUICK_PLAY — matchmaking-only; never listed; never rejoinable after leaving.
+
+Room status (GameStatus): LOBBY → IN_PROGRESS → ENDED (transient, between hands
+of a still-live session) / ABANDONED (terminal — closed for good; can never be
+resurrected, even from the DB). NOTE: ENDED is between-hands, NOT terminal; only
+ABANDONED is terminal.
+
+Host authority: starts as the room creator. If the host leaves without closing,
+authority transfers to the lowest-seat still-connected player. The host starts
+the game, deals the next hand, and can close the table.
+
+Closing / cleanup (room.ts close() + socket.ts closeAndTeardown()):
+  - Host "Close Table" or auto-cleanup when the room empties.
+  - Any LIVE hand is VOIDED, not resolved: every contributor's still-committed
+    stake is refunded (committedTotal for non-folders, the remaining forfeit for
+    folders), which sums exactly to the pot → nets to zero, no winner, no sink.
+  - Refunds + the ABANDONED flip commit in ONE DB transaction; latched +
+    idempotent so a host-close racing the empty-room cleanup runs the money path
+    exactly once.
+
+Crash recovery (apps/game-server/src/recovery.ts, run at boot BEFORE serving):
+in-memory round state is lost on restart, so any DB game still IN_PROGRESS is
+orphaned (antes/bets debited but never credited back). At startup every
+IN_PROGRESS game is reconciled: the wallet ledger is read in chronological order,
+the unresolved hand's commitments (everything after the last `:resolve:` row) are
+refunded, and the game is marked ABANDONED. Idempotent and safe on every boot.
+
+
+================================================================================
+7. DATA MODEL (DATABASE SCHEMA)
+================================================================================
+Defined in packages/db/prisma/schema.prisma. Conventions: all PKs are uuid; all
+timestamps are timestamptz; tables/columns are snake_case via @@map/@map. Only
+Positions, HandRanks, and Badges are ever seeded; NO real football player is
+seeded (owner-supplied, data-driven).
+
+IDENTITY / WALLET / SOCIAL
+  users               id (uuid), player_number (SERIAL, starts at 100001, shown
+                      as #100001), username (unique), nickname (display, NOT
+                      unique), password_hash (argon2id), avatar_seed,
+                      likes_received (denormalized), timestamps.
+  wallets             user_id (unique), balance (BigInt, DEFAULT 1000),
+                      highest_balance. DB CHECK: balance >= 0
+                      (wallets_balance_nonneg). balance is mutated ONLY in
+                      lockstep with a ledger insert.
+  wallet_transactions THE APPEND-ONLY LEDGER (financial source of truth):
+                      user_id, game_id?, type (WalletTxType), amount (signed
+                      BigInt), balance_after, reference (UNIQUE = idempotency
+                      key), metadata jsonb, created_at.
+  bank_claims         one row per bank top-up; used for the 2×/24h limit.
+  user_stats          simple per-user counters (games_played, wins, losses,
+                      folds, totals, net_profit_loss). Updated at resolve.
+  user_avatars        uploaded avatar bytes (DB-stored; Railway FS is ephemeral).
+  likes               one row per (liker, target); toggles likes_received.
+  friendships         directional request with status PENDING/ACCEPTED/REJECTED;
+                      a friendship is active only when ACCEPTED.
+
+STATS & PROGRESSION (4-layer system, keyed on user id)
+  play_events         Layer 1 — raw append-only event log. `seq` BigInt is a
+                      monotonic watermark. Types: BET/RAISE/CALL/CHECK/FOLD/
+                      ALLIN and ROUND_SUMMARY (one per dealt player at resolve,
+                      carrying derived per-hand facts in metadata).
+  player_metrics      Layer 2 — precomputed read model (matches/wins/losses,
+                      bluff/luck/streak sums, biggest pot/win/loss, plus Layer 4
+                      xp & level). `last_seq` is the aggregation watermark
+                      (incremental + idempotent).
+  badges              Layer 3 — DATA-DRIVEN badge defs (code, name_ar, icon,
+                      rule jsonb). Add a badge = insert a row.
+  player_badges       awarded badges; unique (user, badge) ⇒ granted once.
+
+FOOTBALL REFERENCE DATA (owner-supplied; only Positions are seeded)
+  nationalities       name (unique), iso_code, flag_emoji.
+  positions           code (GK/DEF/MID/FWD), name_ar, name_en. SEEDED.
+  clubs               name (unique), country_id?, logo_url, kind (ClubKind:
+                      CLUB / NATIONAL_TEAM / NATIONAL_YOUTH / YOUTH_CLUB).
+  players             name, name_ar?, external_ref? (unique; API-Football id,
+                      importer idempotency key), nationality_id, position_id,
+                      birth_year?, photo_url?, active, plus the fame system:
+                      top5_league_seasons, fame_score?, tier? (1–4), is_legend,
+                      legend_score?. The fame fields are DISPLAY/DIFFICULTY only
+                      — NEVER used by the rank engine.
+  player_clubs        CLUB CAREER HISTORY (kind=CLUB only): (player, club,
+                      from_year?, to_year?). *** This is what the rank engine
+                      keys on for the club-based ranks. ***
+  player_national_teams / player_youth_clubs  national-team & youth-academy
+                      appearances, split OUT of player_clubs so career history
+                      stays clubs-only. Preserved/queryable; the engine never
+                      sees them.
+  player_tournament_stats  per (player, tournament_type) appearance counts
+                      (WORLD_CUP / EURO_COPA / CHAMPIONS_LEAGUE) feeding the
+                      fame score.
+  hand_ranks          the 9 ranks (code, name_ar, name_en, strength unique, rule
+                      jsonb, description, examples, active). SEEDED + editable.
+
+GAME SESSION (rooms are temporary; results/ledger persist)
+  games               room_name, is_private, kind (GameKind), password_hash?,
+                      max_players, invite_code (unique), status (GameStatus),
+                      difficulty (Difficulty), created_by, config jsonb, phase,
+                      pot, pots jsonb (side pots at resolve), current_bet,
+                      dealer_seat, current_turn_seat, timestamps.
+  game_players        (game, seat) unique & (game, user) unique; status
+                      (GamePlayerStatus), hole_cards jsonb (SERVER ONLY — never
+                      broadcast), committed_total/this_round, last_bet_amount,
+                      joined_at, left_at.
+  game_cards          dealt cards: card_type HOLE/COMMUNITY, owner_seat?,
+                      community_index?, football_player_id, revealed.
+  bets                append log of every betting action (round, action, amount,
+                      sequence).
+  player_hand_claims  showdown claims: claimed_hand_rank_id?, is_valid,
+                      best_possible_rank_id?.
+  game_results        per-seat outcome (ResultOutcome WIN/SPLIT/LOSE/FOLD/REFUND),
+                      coins_delta, final_balance.
+
+Enums of note: WalletTxType (SIGNUP_BONUS, BANK_CLAIM, ANTE, BET, RAISE, ALLIN,
+WIN, SPLIT_WIN, REFUND, FOLD_FORFEIT), GamePhase, GamePlayerStatus, BetRound,
+BetAction, ResultOutcome, GameKind, Difficulty, ClubKind, TournamentType,
+FriendStatus, PlayEventType.
+
+Migrations (packages/db/prisma/migrations) trace the evolution: init →
+player name_ar → player external_ref → fame & tournament stats → difficulty &
+tier → is_legend → legend_score → merge very_easy into easy → split national
+teams from clubs → stats progression system → profile layer → social layer →
+friend requests → game_kind.
+
+
+================================================================================
+8. THE WALLET LEDGER (CRITICAL — INTEGRITY RULES)
+================================================================================
+This is one of the two heavily-protected subsystems. Code: packages/db/src/
+wallet.ts (applyWalletTransaction) + bank.ts. Read this section before touching
+ANY money path.
+
+RULES:
+  - The append-only `wallet_transactions` table is the financial SOURCE OF TRUTH.
+    `wallets.balance` is a cache, mutated ONLY in the same DB transaction as a
+    ledger insert — never written directly anywhere else.
+  - Every movement:
+        open tx → SELECT ... FOR UPDATE the wallet row (serializes concurrent
+        movements for the same user) → check sufficiency (balance + amount >= 0)
+        → insert a ledger row with a UNIQUE `reference` → update balance /
+        highest_balance → commit. Any failure → full rollback.
+  - IDEMPOTENCY: each action carries a SERVER-generated unique `reference`
+    (= actionId). Re-applying the same reference is a no-op (returns the existing
+    row, balance unchanged). References for betting actions are generated from
+    authoritative server state (gameId + seat + a monotonic server action seq),
+    never from client input, so a replayed client emit can never double-spend.
+    Per-hand references are salted with the hand number so successive hands in the
+    same room never collide.
+  - Balance is NEVER negative (enforced both in code AND by the DB CHECK
+    constraint wallets_balance_nonneg).
+  - Movement types: SIGNUP_BONUS | BANK_CLAIM | ANTE | BET | RAISE | ALLIN | WIN
+    | SPLIT_WIN | REFUND | FOLD_FORFEIT.
+  - INVARIANT: for a session, Σ(coins_delta) = −Σ(FOLD_FORFEIT). The forfeit is
+    the only sink that removes coins from the economy.
+
+COMPOSABILITY: applyWalletTransaction(tx, params) runs inside a caller-provided
+transaction so the game-server can chain several movements + Bet/Result/Stats
+writes atomically (see persistence.ts: applyBetting / persistResolve /
+closeGame). applyWalletTransactionAtomic() wraps a single movement in its own tx.
+
+REGISTRATION: registerUserWithWallet() creates the user + an empty Wallet (0) +
+UserStats and credits the 1000 SIGNUP_BONUS THROUGH the ledger, all in one
+transaction, so balance == Σ(ledger) holds from the very first row.
+
+BANK (bank.ts): claimFromBank() locks the wallet row, counts claims in the
+rolling 24h window inside the lock (race-free), then records a BankClaim and
+credits 1000 via the ledger — all in one transaction. Max 2 per 24h.
+
+RECONCILIATION (the fragile, important part — see §6.4): because round state is
+in memory, a crash mid-hand orphans the DB game with debited-but-not-returned
+coins. recovery.ts replays the ledger positionally (refund everything after the
+last `:resolve:` row) and marks the game ABANDONED. It is idempotent. Do not
+break the reference naming conventions (`:ante:`, `:act:`, `:foldrefund:`,
+`:resolve:`, `:abortrefund:`, `:recovery:refund:`) — the positional split and
+idempotency depend on them.
+
+
+================================================================================
+9. STATS / XP / BADGES / FAME-SCORE
+================================================================================
+
+9.1 IN-GAME STATS (4 layers) — written off the betting hot path
+---------------------------------------------------------------
+During a hand the GameRoom buffers lightweight Layer-1 events in MEMORY (zero
+added I/O while betting). At RESOLVE it flushes them plus one ROUND_SUMMARY per
+dealt player, then runs aggregation ONCE (packages/db/src/metrics.ts):
+  - Layer 1 (play_events): raw append-only log.
+  - Layer 2 (player_metrics): incremental read model, advanced past `last_seq`.
+  - Layer 3 (badges): data-driven; a badge rule (jsonb) is evaluated against a
+    derived MetricView; newly-earned badges are granted (idempotent).
+  - Layer 4 (xp/level): composite XP from wins + profit + badges + matches;
+    level = floor(sqrt(xp/50)) + 1.
+Aggregation is fully guarded — a stats failure NEVER affects the game. Seeded
+badges (BADGE_CATALOG): BLUFFER 🎭, LUCKY 🍀, ROCK 🪨, GAMBLER 🎲, FOX 🦊 (each
+gated by a minimum number of matches to avoid noisy triggers).
+
+9.2 FAME / LEGEND / TIER (display + difficulty only — NOT the rank engine)
+--------------------------------------------------------------------------
+players.fame_score / tier / legend_score are computed offline by
+packages/db/prisma/calculate-scores.ts (run via `pnpm db:calculate-scores`).
+They NEVER touch the rank engine, wallet, or card privacy.
+
+  - fame_score (0–100, every active player): six weighted components, each
+    normalized against MESSI as the sole benchmark (top-5 seasons 20%, club
+    strength 20%, big-tournament seasons 20%, national-team tier 20%, distinct
+    clubs 10%, legend 10% [currently 0 for everyone — reserved]). Per component:
+    0.99 × min(1, raw/messi_raw) × weight, so meeting/exceeding Messi sits 1%
+    below him; normalized max is 0.99×90 = 89.1. FIXED exceptions: Messi pinned
+    to 100; Cristiano Ronaldo = 99 (override only, never a benchmark).
+  - legend_score (ONLY players flagged is_legend): fame mapped into [80,95] via
+    80 + 15×(fame/100); Messi=100, Ronaldo=99 stay above the band. Non-legends:
+    NULL. Legends are flagged MANUALLY only (never auto-promoted).
+  - EFFECTIVE in-game card score = COALESCE(legend_score, fame_score) — the dealt
+    card (cards.ts) shows the legend score for legends, base score otherwise.
+  - tier (1–4) is derived from the fame_score ranking; it drives nothing in the
+    rank engine (the difficulty deal filter uses fame_score directly).
+
+9.3 DATA IMPORT / MAINTENANCE SCRIPTS (packages/db, run via pnpm db:*)
+---------------------------------------------------------------------
+  db:seed                  4 Positions + 9 HandRanks + the Badges (idempotent).
+  db:seed-players          (seed-players.ts) optional player seeding helper.
+  db:import-api-football   one-time importer of players/clubs/nationalities from
+                           API-Football (needs API_FOOTBALL_KEY; external_ref is
+                           the idempotency key).
+  db:import-tournament-stats  per-player tournament appearance counts.
+  db:diff-import           differential/incremental import.
+  db:transliterate-names   fills players.name_ar (uses @anthropic-ai/sdk).
+  db:calculate-scores      computes fame_score / tier / legend_score.
+  (prisma/sync-scores-to-prod.ts, topup-wallets.ts, backfill-fixes.ts and
+   scripts/abandon-game.ts, scripts/grant-bonus.ts are ops/one-off helpers.)
+
+
+================================================================================
+10. REALTIME LAYER (SOCKET.IO)
+================================================================================
+Contracts: packages/shared/src/ws.ts (CLIENT_EVENTS, SERVER_EVENTS, Zod input
+schemas, typed payload interfaces). Client: apps/web/src/lib/realtime.ts (typed
+socket.io-client) + useGameSocket.ts (folds events into one view model) +
+tableView.ts (pure selectors). Server wiring: apps/game-server/src/socket.ts.
+
+Coin amounts cross the wire as JS numbers (game balances are small); the server
+converts to/from BigInt at the boundary. Hole cards NEVER appear in any broadcast
+(state:sync) — only in the private per-seat game:dealt / result:best emits.
+
+CLIENT → SERVER (each validated with Zod):
+  room:join     { inviteCode, password? }   join/rejoin a room
+  room:leave    {}                          leave (host transfers if needed)
+  room:close    {}                          host closes the table (void+refund)
+  game:start    {}                          host starts the first hand
+  hand:next     {}                          host deals the next hand (no auto)
+  action:place  { type, amount? }           CHECK/CALL/RAISE/FOLD/ALLIN (ANTE is
+                                            server-posted; never client-sent)
+  claim:select  { handRankId }              showdown self-declaration (MANUAL)
+  queue:join    { difficulty }              Quick Play: join a tier queue
+  queue:leave   {}                          Quick Play: leave the queue
+
+SERVER → CLIENT:
+  state:sync       sanitized room snapshot (NO hole cards); carries yourSeat,
+                   hostSeat, players, community, pot/pots, currentBet, dealer,
+                   currentTurnSeat, turnDeadlineTs, status, phase.
+  hand:started     a new hand began (rotated dealer, reset+post-ante players).
+  game:dealt       PRIVATE per-seat: your 2 hole cards.
+  phase:changed    new street + revealed community cards.
+  turn:changed     { seat, deadlineTs } whose turn + the 60s deadline.
+  bet:placed       { seat, action, amount, pot, pots, currentBet }.
+  player:folded    { seat }.
+  showdown:start   { availableHandRanks[9], deadlineTs } (MANUAL only).
+  claim:received   { seat } — an opponent has chosen.
+  game:result      per-seat outcomes + the data-driven claim evidence (the WHY),
+                   the winning association name, and revealed hole cards for
+                   showdown contenders.
+  result:best      PRIVATE per-seat: your own strongest achievable rank +
+                   evidence (winner-screen reveal; MANUAL only).
+  session:waiting  the room is idle (fewer than 2 players can afford the ante).
+  player:left      { seat, username } — opponent-left banner.
+  room:closed      { reason: CLOSED_BY_HOST | EMPTY } — leave the table.
+  queue:state      Quick Play waiting-lobby (count, min, max, deadlineTs).
+  queue:matched    { gameId, inviteCode } — go to the auto-created table.
+  error            { code, messageAr } — localized error.
+
+The client also drives sound effects off the SAME server events via separate
+listeners (realtime.ts), decoupled from the React view handlers.
+
+
+================================================================================
+11. KEY END-TO-END FLOWS
+================================================================================
+
+REGISTER → PLAY:
+  1. POST /api/auth/register → registerUserWithWallet (user + wallet + 1000
+     SIGNUP_BONUS via ledger, one tx).
+  2. Login via Auth.js Credentials (argon2id verify) → JWT session in an
+     httpOnly cookie.
+  3. Create a room (POST /api/rooms) or join by code, or use Quick Play.
+  4. Open /table/[gameId]: the server component verifies the session and mints a
+     short-lived signed realtime token (jose, HS256, 12h, AUTH_SECRET) — the
+     browser never sends a raw userId.
+  5. Browser connects Socket.IO with the token; game-server verifies it,
+     room:join seats the player with their real wallet balance.
+  6. Host game:start → deal → antes → hand:started → game:dealt → betting →
+     showdown → result → (host) hand:next.
+
+A BETTING ACTION (server is the referee — socket.ts → room.placeAction):
+  validate it's your turn → engine legalActions/applyAction → clear turn timer →
+  generate a server-side idempotency reference → persist the wallet movement +
+  Bet row in one tx → broadcast bet:placed → buffer a stats event → advance
+  (resolve if hand over / next street if round complete / next turn otherwise).
+
+SHOWDOWN (MANUAL): showdown:start (9 ranks) → each contender claim:select →
+engine validates → claim:received → once all chose (or claim timer fires)
+resolveHand → settle side pots → game:result + private result:best.
+
+BANK TOP-UP: POST /api/bank/claim → claimFromBank (locked, 2×/24h, ledger
+credit).
+
+
+================================================================================
+12. AUTHENTICATION & SECURITY
+================================================================================
+  - Auth: Auth.js (next-auth v5 beta) Credentials provider; username + password;
+    JWT session strategy carried in an httpOnly cookie. Passwords hashed with
+    argon2id (@node-rs/argon2). Config: apps/web/src/auth.ts.
+  - Username rules (auth.schemas.ts): 3–24 chars, [a-zA-Z0-9_]. Password: 8–128.
+  - Realtime token: minted SERVER-SIDE only (lib/realtime-token.ts) from the
+    verified session, signed HS256 with AUTH_SECRET, TTL 12h. The game-server
+    verifies it (src/auth.ts) and takes identity ONLY from the verified claims —
+    never from raw handshake fields. AUTH_SECRET MUST be byte-identical on both
+    the web and the game-server, or every socket is rejected.
+  - The game-server has two middlewares before handlers: (1) a per-IP connection
+    rate limiter (30/min) so it throttles brute-force/bad-token attempts before
+    auth; (2) the token verification. An expired token returns SESSION_EXPIRED so
+    the client can prompt a refresh; otherwise UNAUTHENTICATED.
+  - Room passwords are argon2id-hashed and verified SERVER-SIDE on join (new
+    members only; members rejoining and Quick Play skip it). Invite codes are
+    unguessable random base64url. Private rooms never expose their invite code in
+    the public list.
+  - Card privacy: hole cards live only in server memory + the owner's private
+    emits; never in any broadcast. Verified by tests and the audit trace.
+  - All client inputs validated with Zod (every event + every REST body).
+  - Rate limiter is in-memory per process (adequate for the single-server v1;
+    swap for Redis when scaling out).
+
+
+================================================================================
+13. RUNNING LOCALLY
+================================================================================
+Prerequisites: Node >= 20, pnpm >= 9, Docker (for local Postgres) or any
+reachable PostgreSQL 14+.
+
+CORPORATE / TLS-INTERCEPTING NETWORKS: if `pnpm install` fails with
+UNABLE_TO_VERIFY_LEAF_SIGNATURE, set NODE_OPTIONS=--use-system-ca (keeps TLS
+verification ON). e.g. on Windows: setx NODE_OPTIONS "--use-system-ca". (This is
+a known requirement on the owner's machine — see the memory note.)
+
+Setup:
+  pnpm install
+  docker compose up -d                       # local PostgreSQL
+  # env files (see README "Environment variables" table):
+  cp packages/db/.env.example       packages/db/.env
+  cp apps/web/.env.example          apps/web/.env.local
+  cp apps/game-server/.env.example  apps/game-server/.env.local
+  #   generate ONE AUTH_SECRET (npx auth secret) and put the SAME value in BOTH
+  #   apps/web/.env.local AND apps/game-server/.env.local
+  #   locally also set DIRECT_URL = your DATABASE_URL in packages/db/.env
+  pnpm db:generate
+  pnpm db:deploy        # apply migrations
+  pnpm db:seed          # 4 Positions + 9 HandRanks + Badges ONLY
+
+Run the three processes (web + game-server are separate; both need the DB):
+  Terminal 1:  docker compose up                                   # Postgres
+  Terminal 2:  pnpm --filter @fp/game-server dev                   # Socket.IO :4000
+  Terminal 3:  pnpm --filter @fp/web dev                           # Next.js :3000
+Open http://localhost:3000, register (1000 Coins), create a room, share the code.
+
+*** DEALING NEEDS PLAYERS IN THE DB. *** With an empty `players` table the deal
+fails. You must import/seed football players (data-driven) before a hand can
+start. cards.ts needs (seats × 2 + 5) DISTINCT ELIGIBLE players for the room's
+difficulty (e.g. a 6-seat ELITE table needs 17). See §16.
+
+Environment variables (full table in README.md):
+  DATABASE_URL  — Postgres connection (web, game-server, db).
+  DIRECT_URL    — Prisma Migrate connection (same value on Railway PG; locally
+                  set = DATABASE_URL). Runtime uses DATABASE_URL only.
+  AUTH_SECRET   — MUST be identical in web AND game-server.
+  AUTH_URL                    — web base URL (e.g. http://localhost:3000).
+  NEXT_PUBLIC_GAME_SERVER_URL — Socket.IO URL the browser connects to; BAKED IN
+                                AT BUILD TIME for the web app.
+  GAME_SERVER_PORT / PORT     — game-server port (Railway injects PORT).
+  WEB_ORIGIN                  — allowed CORS origin on the game-server.
+  TEST_DATABASE_URL           — optional throwaway DB for wallet/bank tests.
+  API_FOOTBALL_KEY            — only for the one-time player importer.
+
+Quality gates:
+  pnpm typecheck        # tsc --noEmit, all packages
+  pnpm lint             # ESLint flat config, whole monorepo
+  pnpm test             # all vitest suites
+  pnpm --filter @fp/web build
+The wallet/bank suites hit a REAL PostgreSQL (the guarantees under test — FOR
+UPDATE locking, the balance CHECK, idempotency, the 2×/24h limit under
+concurrency — are database behavior). Start Postgres + db:deploy (or set
+TEST_DATABASE_URL) first.
+
+
+================================================================================
+14. DEPLOYMENT (RAILWAY) + THE MIGRATE-FIRST RULE
+================================================================================
+Target: one GitHub repo → THREE Railway services (full runbook in DEPLOY.md):
+  web         → apps/web (Next.js)            → poker.fmgtech.dev   (proxied)
+  game-server → apps/game-server (Socket.IO)  → poker-rt.fmgtech.dev (DNS-only)
+  Postgres    → Railway PostgreSQL plugin
+
+Service config (also documented in railway.toml comments):
+  web:         Root = repo root; Build `pnpm --filter @fp/web build`;
+               Start `pnpm --filter @fp/web start`; replicas may scale.
+               Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
+               NEXT_PUBLIC_GAME_SERVER_URL (NEXT_PUBLIC_* is baked at BUILD time).
+  game-server: Root = repo root; Build (none — tsx runs the TS source);
+               Start `pnpm --filter @fp/game-server start` (→ tsx src/index.ts);
+               *** replicas = EXACTLY 1 *** (in-memory room state + timers).
+               Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN.
+               Do NOT set PORT (Railway injects it).
+  AUTH_SECRET must be the SAME value across web and game-server.
+
+The root `postinstall` runs `prisma generate` on every install (the Prisma
+client is generated to a git-ignored path). Railway installs with a frozen
+lockfile, so commit an up-to-date pnpm-lock.yaml.
+
+DNS (Cloudflare, Full(strict) SSL): `poker` CNAME → web (proxied/orange);
+`poker-rt` CNAME → game-server (DNS-only/grey, so the browser WebSocket hits
+Railway's TLS endpoint directly).
+
+***** THE MIGRATE-FIRST RULE (NON-NEGOTIABLE — caused a real prod outage) *****
+Railway AUTO-DEPLOYS new code on every push to the deploy branch
+(feat/fame-score-system). Migrations are MANUAL — there is NO predeploy/release
+command in railway.toml, so a push deploys code but does NOT run
+`prisma migrate deploy`. Prisma Client SELECTs columns from the SCHEMA, not the
+DB — so code built from a schema with new columns will query columns that may not
+exist in prod and CRASH.
+
+THE RULE: a migration that runtime code depends on MUST be applied to prod BEFORE
+(or in the same step as) the code that reads/writes it is deployed.
+MIGRATE FIRST, DEPLOY SECOND — never the reverse. Because deploy = `git push`,
+"deploy second" means run the prod migration BEFORE you push the dependent code.
+
+  - Adding a column the new code reads → apply the migration to prod FIRST:
+        NODE_OPTIONS=--use-system-ca DIRECT_URL=<prod> DATABASE_URL=<prod> \
+        pnpm db:deploy
+    verify it applied, THEN push the code. (Additive ADD COLUMN is safe while old
+    code is live.)
+  - Removing/renaming a column old code reads → expand/contract over TWO deploys
+    (stop reading it, deploy; then migrate to drop).
+  - NOT NULL / new required relation → add nullable, backfill, then enforce,
+    across separate deploys.
+  - Verify with `prisma migrate status` = up to date and a sample query.
+
+A GREEN WEB APP DOES NOT MEAN A HEALTHY DEPLOY: the web service never queries the
+`players` table — only the game-server does, and only when a hand is dealt. After
+any players-schema change, verify by STARTING A HAND, not by loading the login
+page. (In the 2026-06-21 incident, is_legend/legend_score code shipped before the
+prod migration; the web stayed up but every hand crashed at card dealing.)
+
+The lasting fix is to add a release/predeploy `prisma migrate deploy` so a deploy
+migrates prod first and a failed migration aborts the deploy. Until that exists,
+the manual checklist above is mandatory.
+
+First-time data setup on a fresh Railway DB (DEPLOY.md STEP 4–5): db:deploy +
+db:seed against the prod URL, then import the player tables from the local Docker
+DB. *** STEP 5b is REQUIRED: remap players.position_id by position `code`,
+because positions are SEEDED on prod (different UUIDs) while imported players
+still point at local position UUIDs — otherwise every player.position resolves to
+null and the game crashes. *** nationalities/clubs are imported wholesale so
+their UUIDs match; only positions need the remap.
+
+Provider-agnostic by design: moving web to Vercel (Neon pooled+direct URLs) or
+game-server to Fly.io/a VPS needs only env-var changes, no code change.
+
+
+================================================================================
+15. CONVENTIONS
+================================================================================
+  - DB: snake_case tables/columns via @@map/@map; all PKs uuid; all timestamps
+    timestamptz. Migrations live in packages/db/prisma/migrations.
+  - Strict TypeScript everywhere; Zod for every external input.
+  - Money is BigInt end-to-end on the server/DB; only converted to Number at the
+    WebSocket boundary.
+  - The engine (packages/engine) stays PURE — no I/O, no DB, no clock. The wallet
+    primitive lives in packages/db (it needs Prisma). The game-server composes
+    them behind ports.
+  - Enums/constants/contracts have ONE home in packages/shared and are mirrored
+    by the Prisma enums; keep them in sync.
+  - The HandRank catalog in @fp/shared is the single source of truth: the seed
+    writes it to the DB and the engine interprets the same DSL — edit there and
+    re-seed to change behavior.
+  - Server-generated idempotency references follow strict naming (see §8); do not
+    change them casually.
+  - Arabic UI strings live in the code as fixed game vocabulary; football data
+    (names, nationalities, clubs) is never hardcoded — always from the DB.
+  - The repo lives under OneDrive: if node_modules sync causes EPERM/file-lock
+    issues, pause OneDrive sync for the folder or exclude node_modules.
+
+
+================================================================================
+16. KNOWN ISSUES / IMPORTANT NOTES / FRAGILE AREAS
+================================================================================
+Read these before changing related code.
+
+A. MIGRATE-FIRST DEPLOY (most important). Push = prod deploy; migrations are
+   manual; migrate FIRST. Verify a players-schema change by starting a HAND.
+   (Full detail in §14 and CLAUDE.md.)
+
+B. WALLET LEDGER IS THE SOURCE OF TRUTH; balance is a cache. Never write balance
+   outside applyWalletTransaction. Preserve the idempotency reference naming —
+   crash recovery's positional last-resolve split depends on it. (§8)
+
+C. CLUB-BASED RANKS NEED FULL CAREER DATA. PAIR/TWO_PAIR/TRIPLE/FULL_HOUSE are
+   CLUBS-ONLY in the current code (a divergence from the SPEC table — §5.1).
+   Without rich, accurate player_clubs rows, most hands evaluate to "no rank".
+   This is by design but data-fragile.
+
+D. ENOUGH ELIGIBLE PLAYERS TO DEAL. A hand needs (seats × 2 + 5) distinct
+   eligible players for the room's DIFFICULTY: 2p=9, 3p=11, 4p=13, 5p=15, 6p=17
+   (more in EASY/MEDIUM, which restrict the pool by fame_score). cards.ts THROWS
+   "Not enough eligible players ..." otherwise and the hand never starts. Seed
+   enough players, especially in high tiers.
+
+E. SINGLE GAME-SERVER INSTANCE. Room state + timers are in memory ⇒ replicas
+   MUST be 1. Scaling it horizontally would split-brain rooms. (The code is
+   structured for a later Redis swap, but that is not implemented.)
+
+F. AUTH_SECRET MUST MATCH between web and game-server, byte for byte, or every
+   socket handshake is rejected. WEB_ORIGIN must equal the web origin exactly or
+   the browser hits CORS.
+
+G. GAMEPLAY_AUDIT.md IS DATED 2026-06-17 AND PARTLY OUTDATED. It catalogs
+   client-side UX gaps observed then. Several have since been ADDRESSED in code:
+   antes are now posted BEFORE hand:started and that payload carries the
+   post-ante betting state (fixes the "shows call 50 when you should check"
+   bug); the client now resets committedThisRound on phase:changed (onPhase);
+   the room no longer auto-deals — the host explicitly triggers hand:next
+   (Batch 1 gate); reconnect re-sends private hole cards; player:left,
+   session:waiting, room:closed and a reconnect notice are wired. Treat the audit
+   as historical context; verify against the current code (room.ts / socket.ts /
+   useGameSocket.ts / realtime.ts) before acting on any item. Remaining/possible
+   UX polish noted there (richer side-pot display, claim-timer visibility,
+   whose-turn text) should be re-checked in apps/web/src/components/table/*.
+
+H. RATE LIMITER + MATCHMAKING ARE IN-MEMORY PER PROCESS. Fine for the
+   single-server v1; both need rework (Redis / shared store) before scaling out.
+
+I. CARD AMOUNTS AS NUMBERS ON THE WIRE. Safe because balances are small (far
+   under Number.MAX_SAFE_INTEGER), but never move large-value logic to the
+   client; the server keeps BigInt authority.
+
+
+================================================================================
+17. FILE MAP (WHERE THE KEY CODE LIVES)
+================================================================================
+GAME RULES / ENGINE (pure):
+  packages/shared/src/handRanks.ts      Rule DSL + the 9-rank catalog (source of
+                                        truth; note the clubs-only divergence)
+  packages/shared/src/constants.ts      defaults, HAND_SIZE, QUICK_PLAY config
+  packages/shared/src/enums.ts          all enums + DIFFICULTY_MIN_SCORE
+  packages/engine/src/evaluate.ts       witness search (boolean + explained)
+  packages/engine/src/engine.ts         achievable/best/validateClaim/resolve
+  packages/engine/src/betting.ts        legal actions + applyAction + round state
+  packages/engine/src/pots.ts           layered side pots
+  packages/engine/src/fold.ts           fold forfeit/refund accounting
+  packages/engine/src/resolve.ts        showdown settlement → wallet movements
+
+AUTHORITATIVE SERVER:
+  apps/game-server/src/room.ts          GameRoom state machine (the core)
+  apps/game-server/src/socket.ts        Socket.IO handlers (the wire)
+  apps/game-server/src/cards.ts         TableDeck + dealing (difficulty filter)
+  apps/game-server/src/matchmaking.ts   Quick Play queues
+  apps/game-server/src/persistence.ts   DB transactions for all game writes
+  apps/game-server/src/recovery.ts      orphaned-game reconciliation at boot
+  apps/game-server/src/factory.ts       hydrateRoom + loadRanks
+  apps/game-server/src/auth.ts          verify the realtime token
+  apps/game-server/src/index.ts         bootstrap + middlewares
+  apps/game-server/src/ports.ts/types.ts  interfaces + in-memory state types
+
+DATA / MONEY / STATS:
+  packages/db/prisma/schema.prisma      the full schema
+  packages/db/prisma/migrations/        ordered migrations
+  packages/db/prisma/seed.ts            Positions + HandRanks + Badges
+  packages/db/src/wallet.ts             the ledger primitive (CRITICAL)
+  packages/db/src/bank.ts               bank top-up (2×/24h)
+  packages/db/src/metrics.ts            stats aggregation (Layers 2–4)
+  packages/db/prisma/calculate-scores.ts  fame/legend/tier
+  packages/db/prisma/import-*.ts        data importers
+
+WEB / REALTIME CLIENT:
+  apps/web/src/auth.ts                  Auth.js Credentials config
+  apps/web/src/lib/realtime-token.ts    mint the signed realtime token (server)
+  apps/web/src/lib/realtime.ts          typed socket.io-client + sound
+  apps/web/src/lib/useGameSocket.ts     fold events into the table view model
+  apps/web/src/lib/tableView.ts         pure selectors (unit-tested)
+  apps/web/src/app/table/[gameId]/page.tsx   table entry (mints token)
+  apps/web/src/app/api/rooms/route.ts   create/list rooms
+  apps/web/src/app/api/bank/claim/route.ts   bank claim endpoint
+  apps/web/src/components/table/*       the live table UI (game-table, parts, fx)
+
+DOCS / CONFIG (root):
+  CLAUDE.md (current quick ref + deploy rule), README.md (setup/run),
+  DEPLOY.md (Railway runbook), GAMEPLAY_AUDIT.md (historical),
+  railway.toml, docker-compose.yml, turbo.json, pnpm-workspace.yaml,
+  tsconfig.base.json, eslint.config.mjs
+
+================================================================================
+18. QUICK PLAY BOTS (COLD-START FILLERS — behind BOTS_ENABLED)
+================================================================================
+Temporary, cleanly-removable AI bot players that fill Quick Play tables so early
+users (cold start) always find a lively game. QUICK PLAY ONLY — never seeded into
+manual rooms. All bot code lives under apps/game-server/src/bots/ so the feature
+can be removed by deleting that folder + a few wiring lines + the flag.
+
+18.1 ARCHITECTURE — one decision engine + an identity pool
+  - bots/strategy.ts (PURE): decide(ctx) -> { action, delayMs }. Reuses the real
+    engine evaluator (bestAchievableRank via handStrength). Four personalities —
+    conservative / aggressive / tricky / balanced (ARCHETYPES) — with per-identity
+    jitter (personalityForSeed, derived from the bot's player_number). Bots bluff
+    (bet strong on weak hands) at a personality-bounded rate. Strong hands never
+    fold; only legal actions are ever returned.
+  - bots/controller.ts: BotController implements the optional RoomDeps.bots port.
+    On a bot's turn (room.ts beginTurnOrAdvance calls deps.bots?.onTurn for isBot
+    seats) it reads room.botTurnView(seat), calls decide(), and schedules
+    room.placeAction after a randomized HUMAN-LIKE delay (~0.7–7s, clamped before
+    the 60s turn deadline). Race-safe (re-checks the turn before acting).
+  - bots/pool.ts (BotIdentityPool): hands out free identities, tracks in-use across
+    tables. bots/seating.ts: addBotSeats() + fillTarget(). bots/runtime.ts
+    (BotRuntime): the facade the wiring touches — fill(state) (cold-start only) +
+    release(state). Constructed only when the flag is on (index.ts).
+
+18.2 IDENTITIES — "Model B" (reserved player_number block)
+  - Each bot is a lightweight real `users` row in the RESERVED block player_number
+    >= 900000 (BOT_PLAYER_NUMBER_BASE in @fp/shared). "Is a bot?" = that comparison
+    — NO schema column, NO migration. So the web client resolves a bot's name/
+    avatar/profile through the SAME by-number endpoints as any human, unchanged.
+  - Each bot gets a fabricated, believable player_metrics row (level/matches/wins/
+    losses/net/biggest/etc., internally consistent; level from the real XP curve)
+    and a webp avatar in user_avatars. NO wallet row, NO user_stats row.
+  - Seeded by bots/seed-bots.ts (run: `pnpm db:seed-bots`) from
+    bots/identities.json (nickname + avatar filename per entry) + bots/avatars/.
+    sharp auto-downscales each image to <=256x256 webp under AVATAR_MAX_BYTES
+    (256KB); if an image is missing/corrupt/oversized it substitutes the game logo
+    (icon-512.png), never a random generated avatar. Idempotent (upsert by
+    username bot_<playerNumber>; player_number by identity order). Personalities +
+    stats derive deterministically from player_number.
+  - CURRENT STATE: 46 identities seeded (local + production), all 46 with real
+    photos, 0 logo fallback. Reserved block in use: 900001…900046. Fills toward
+    100 over time (re-run the seed after adding entries; idempotent).
+  - The 85MB avatar SOURCE images are gitignored (apps/game-server/src/bots/
+    avatars/) — the seed downscales them into the DB, so the originals only need to
+    exist on the machine that runs the seed. identities.json IS committed.
+
+18.3 COLD-START FILL TIMING
+  - QUICK_PLAY (packages/shared/constants.ts): botFillWindowSec=8, botFillMin=4,
+    botFillMax=6. When >=1 human is queued but below minPlayers(3) and bots are
+    enabled, matchmaking.ts arms an 8s fill window (distinct from the 20s all-human
+    window). On expiry the match starts; socket.ts startTable then (after the
+    startGraceSec grace, once the human has joined) calls bots.fill() to top the
+    table up to a RANDOMIZED 4–6 seats. Healthy all-human tables (>= minPlayers)
+    get NO bots. If 0 humans actually joined by deal time, the table is torn down
+    (no bot-only table is created at deal time).
+
+18.4 LEDGER / STATS ISOLATION (CRITICAL — verified on prod)
+  - A bot seat NEVER writes wallet_transactions, game_players, bets, GameResults,
+    UserStats, or PlayEvents. Enforced in room.ts (skip bot ledger movements in
+    postAntes/placeAction/handleFoldRefund/close; skip bot stats in flushHandStats;
+    persistResolve receives only HUMAN settlements/players) and persistence.ts
+    (persistDeal skips bot game_players + hole game_cards). Bots play with a fake
+    in-memory virtual stack (BOT_VIRTUAL_STACK), never the wallet.
+  - The MINT: a human who wins a pot containing bot antes/bets is credited the FULL
+    pot through the normal idempotent ledger — the bot-funded portion is newly
+    minted real coins to the human (no special minting code; it falls out of
+    persisting only the human winner's WIN). The BURN: a bot beating a human
+    removes the human's already-debited real coins (recorded nowhere for the bot).
+  - CONSEQUENCE: the per-game invariant Σ(coins_delta) = −Σ(FOLD_FORFEIT) does NOT
+    hold for bot-containing games (by design). Any ledger-sum monitor/test must
+    scope to human-only games. Crash recovery (recovery.ts) is unaffected (bots
+    never wrote ledger rows). Verified on prod: 0 bot wallets, 0 bot game_players.
+
+18.5 SOCIAL FENCING
+  - player_number >= 900000 is excluded from the social surfaces
+    (apps/web/src/app/api/social/{like,friend,friend/respond}). Attempts return a
+    GENERIC 403 ("تعذّر تنفيذ هذا الإجراء") that never reveals the target is a bot
+    (anti-detection). Guard: isBotPlayerNumber() in @fp/shared. Bot PROFILES remain
+    viewable (the table needs name/avatar/stats); only the social actions are
+    fenced. No leaderboard endpoint exists yet — fence it there too if one is added.
+
+18.6 THE FLAG + KILL-SWITCH
+  - BOTS_ENABLED (env var on the game-server). When != "true": no BotRuntime is
+    built, no fill window arms, no bot ever seats — base game byte-for-byte
+    unchanged (the in-memory isBot guards are inert). Boot log: "[bots] enabled — N
+    identities loaded" (on) vs "[bots] disabled" (off). Read in index.ts.
+  - KILL-SWITCH (instant): set BOTS_ENABLED=false (or delete it) on the game-server
+    service in Railway → it restarts and logs "[bots] disabled". No code change /
+    redeploy needed. Bot rows can stay harmlessly; to also purge:
+    DELETE FROM users WHERE player_number >= 900000.
+  - PRODUCTION STATE (as of this writing): code deployed (commit 5e54d85 on
+    feat/fame-score-system), prod DB seeded with 46 bots, and the operator has set
+    BOTS_ENABLED=true on the prod game-server. Quick Play on game1.fmgtech.dev
+    therefore fills cold-start tables with bots.
+
+18.7 KNOWN ISSUE — abandoned bot tables are NOT torn down (resource leak)
+  *** Found by audit; NOT yet fixed (documented for a future change). ***
+  - The room teardown (socket.ts leave(), the check
+    `!rt.room.state.players.some((p) => p.connected)` at ~line 366) counts ANY
+    player whose in-memory `connected` flag is true. Bots are seated with
+    connected:true (bots/seating.ts) and that flag is never flipped to false
+    (room.ts handlePlayerLeft only flips the LEAVING seat). So once all HUMANS
+    leave a bot-containing table, `some(connected)` stays true (the bots) and
+    closeAndTeardown("EMPTY") is NEVER called.
+  - Effect: the table does NOT keep playing hands by itself (there is NO auto-deal;
+    NEXT_HAND_KEY is never armed; startNextHand is host-triggered only and bots have
+    no socket). It finishes the in-flight hand (the departed human auto-folds on the
+    60s turn timeout, bots play out) then sits IDLE in phase ENDED. But it never
+    closes: the room object, its shuffled deck, and its bot identities LEAK in
+    process memory, the Game row never flips to ABANDONED, and the bot identity pool
+    is never released (in-use grows → can eventually exhaust). No continuous CPU
+    burn; an unbounded MEMORY/pool leak that only clears on a game-server restart
+    (boot recovery then marks orphaned IN_PROGRESS games ABANDONED in the DB).
+  - RECOMMENDED FIX (one place): make the teardown count connected HUMANS only —
+    `players.some((p) => p.connected && !p.isBot)` at socket.ts leave() (~lines 358
+    & 366). startTable already uses this human-only pattern (socket.ts ~143), so
+    this is a consistency fix; closeAndTeardown already voids/refunds + releases
+    bots + deletes the room. (Report-only here — not applied.)
+
+================================================================================
+END OF MASTER FILE
+================================================================================

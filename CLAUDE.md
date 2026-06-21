@@ -232,6 +232,55 @@ A green web app does **not** mean a healthy deploy. The web service never querie
 only the **game-server** does (and only when a hand is dealt). After any players-schema
 change, verify by **starting a hand**, not by loading the login page.
 
+## Quick Play bots (cold-start fillers — behind `BOTS_ENABLED`)
+
+Temporary, cleanly-removable AI fillers so early users always find a Quick Play game.
+**Quick Play ONLY** (never manual rooms). All under `apps/game-server/src/bots/`.
+
+- **One decision engine + an identity pool.** `bots/strategy.ts` = pure `decide()`
+  (reuses the engine evaluator; 4 personalities — conservative/aggressive/tricky/
+  balanced — with per-identity jitter from `player_number`; bluffs; strong hands
+  never fold; only legal actions). `bots/controller.ts` drives a bot's turn via the
+  optional `RoomDeps.bots` seam (`room.ts beginTurnOrAdvance` → `deps.bots?.onTurn`)
+  with human-like delays. `bots/{pool,seating,runtime}.ts` manage identities + fill.
+- **Identities = "Model B".** Real `users` rows in the **reserved `player_number`
+  block ≥ 900000** (`BOT_PLAYER_NUMBER_BASE` in `@fp/shared`) — no schema column, no
+  migration; the web resolves bot name/avatar/profile via the normal by-number
+  endpoints. Each has a fabricated `player_metrics` row + a webp avatar; **NO wallet,
+  NO user_stats**. Seeded by `bots/seed-bots.ts` (`pnpm db:seed-bots`) from
+  `bots/identities.json` + `bots/avatars/` (sharp downscale to ≤256×256 webp, game-
+  logo fallback; idempotent). **46 seeded (local + prod)**; fills toward 100 later.
+  The 85MB avatar sources are gitignored; `identities.json` is committed.
+- **Cold-start fill.** `QUICK_PLAY.botFillWindowSec`=8: when ≥1 human queues but
+  below `minPlayers`, an 8s window then fills to a **randomized 4–6 seats**
+  (`matchmaking.ts` + `socket.ts startTable` → `bots.fill`). Healthy all-human
+  tables get no bots.
+- **Ledger/stats isolation (critical).** A bot seat **never** writes
+  `wallet_transactions`, `game_players`, `bets`, `GameResults`, `UserStats`, or
+  `PlayEvents` (enforced in `room.ts` + `persistence.ts`). A human winner is credited
+  the **full pot** (incl. bots' fake antes) — a real **mint** — via the normal
+  idempotent ledger; a bot beating a human **burns** the human's real coins. ⇒ the
+  per-game invariant Σ(delta) = −Σ(FOLD_FORFEIT) **does not hold** for bot games
+  (scope any ledger-sum check to human-only). Bots play a fake in-memory stack.
+- **Social fencing.** `player_number ≥ 900000` can't be liked/friended
+  (`apps/web/src/app/api/social/*`) — generic 403, never reveals "bot"
+  (`isBotPlayerNumber` in `@fp/shared`). Profiles stay viewable.
+- **Flag + kill-switch.** `BOTS_ENABLED=true` on the game-server enables it (boot log
+  `[bots] enabled — N identities loaded`); unset/`false` = byte-for-byte base game
+  (`[bots] disabled`). Read in `index.ts`. **Kill-switch:** set `BOTS_ENABLED=false`
+  in Railway → restart. **Prod state:** code deployed (`5e54d85`), 46 bots seeded,
+  `BOTS_ENABLED=true` set by the operator.
+- **KNOWN ISSUE (resource leak — not yet fixed).** A bot-containing table is **not**
+  torn down when all humans leave: the teardown check `players.some(p => p.connected)`
+  (`socket.ts` `leave()`, ~lines 358 & 366) counts bots (seated `connected:true`,
+  never flipped). It does **not** keep playing (no auto-deal) but the room/deck/bot-
+  identities **leak in memory** until a restart (boot recovery then ABANDONs orphaned
+  games). **Fix:** count connected **humans** only — `p.connected && !p.isBot` — in
+  `socket.ts leave()` (matches the human-only pattern already in `startTable`).
+- **Remove entirely:** delete `apps/game-server/src/bots/`, the `deps.bots?` seam +
+  call in `room.ts`, the social fence + `isBot` guards, and
+  `DELETE FROM users WHERE player_number >= 900000`.
+
 ## Conventions
 
 - DB: snake_case tables/columns via `@@map`/`@map`; all PKs `uuid`; all timestamps `timestamptz`.
