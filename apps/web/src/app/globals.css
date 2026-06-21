@@ -322,3 +322,21 @@
   *, ::before, ::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   .confetti-pc { display: none; }
 }
+
+/*
+ * Shared top safe-area for the non-gameplay pages (home, auth, rooms, profile,
+ * friends, bank, lobbies, …). Keeps the header clear of the phone's status bar /
+ * notch using env(safe-area-inset-top) (available because layout.tsx sets
+ * viewport-fit=cover) + comfortable breathing room. Unlayered so it cleanly owns
+ * padding-top; the pages use pb-* for the bottom. Zero inset on desktop, where
+ * the sm: rule restores the original 2.5rem — so desktop is unchanged.
+ * (The in-play table screen handles its own tighter safe area; not affected.)
+ */
+.page-top {
+  padding-top: max(1.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));
+}
+@media (min-width: 640px) {
+  .page-top {
+    padding-top: 2.5rem;
+  }
+}

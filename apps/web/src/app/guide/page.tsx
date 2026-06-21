@@ -29,7 +29,7 @@ export default async function GuidePage() {
     .map((h) => ({ code: h.code, nameAr: h.nameAr, nameEn: h.nameEn, descriptionAr: h.descriptionAr }));
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-3xl px-4 pb-6 sm:px-6 sm:pb-10 page-top">
       <header className="mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xl font-black">
           <span className="size-3 rounded-full bg-primary glow-primary" />

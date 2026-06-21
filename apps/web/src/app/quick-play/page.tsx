@@ -19,7 +19,7 @@ export default async function QuickPlayPage() {
   });
 
   return (
-    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 pb-6 sm:px-6 sm:pb-10 page-top">
       <div aria-hidden className="arena-rail" />
 
       <PageHeader icon="⚡" title="لعب سريع" subtitle="انضمّ لطاولة عشوائية فورًا" />

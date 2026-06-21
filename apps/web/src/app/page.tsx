@@ -36,7 +36,7 @@ export default async function HomePage() {
   const balance = user?.wallet?.balance.toString() ?? "0";
 
   return (
-    <main className="relative mx-auto max-w-5xl overflow-hidden px-4 py-6 sm:px-6 sm:py-10">
+    <main className="relative mx-auto max-w-5xl overflow-hidden px-4 pb-6 sm:px-6 sm:pb-10 page-top">
       <div aria-hidden className="arena-rail" />
 
       <header className="relative z-10 mb-8 flex items-center justify-between gap-4">
