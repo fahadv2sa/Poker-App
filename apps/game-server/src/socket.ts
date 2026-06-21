@@ -24,6 +24,7 @@ import { PrismaRoomPersistence } from "./persistence.js";
 import { NodeTimerService, systemClock } from "./timers.js";
 import type { RoomStore } from "./store.js";
 import type { BotRuntime } from "./bots/runtime.js";
+import { hasConnectedHuman } from "./presence.js";
 import type { RankInfo, RoomPlayer, RoomState } from "./types.js";
 
 const roomKey = (gameId: string) => `game:${gameId}`;
@@ -352,18 +353,23 @@ export function attachSocketHandlers(
         // Batch 2: tell the rest of the table so they can show a banner.
         socket.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
       }
-      // Host may have transferred (handlePlayerLeft) — push a fresh snapshot so
-      // the new host's UI updates with the creator controls. Skip if the room is
-      // about to close (nobody connected left).
-      if (rt.room.state.players.some((p) => p.connected)) {
+      // A table is kept alive only while a real HUMAN is still connected. Bots are
+      // seated connected:true (they have no socket) and must NOT keep an abandoned
+      // table alive — otherwise a bot-containing table would never tear down once
+      // its humans leave (leaking the room/deck/bot-identities until a restart).
+      const humanConnected = hasConnectedHuman(rt.room.state.players);
+      // Host may have transferred (handlePlayerLeft) — push a fresh snapshot to the
+      // remaining humans. Skip if the room is about to close (no humans left).
+      if (humanConnected) {
         io.to(roomKey(joinedGameId)).emit(
           SERVER_EVENTS.stateSync,
           buildStateSync(rt.room.state, null),
         );
       }
-      // Auto-cleanup: once nobody connected remains, close the room (voiding +
-      // refunding any live hand) and delete it — so an abandoned table never lingers.
-      if (!rt.room.state.players.some((p) => p.connected)) {
+      // Auto-cleanup: once no HUMAN remains, close the room (voiding + refunding any
+      // live hand, releasing the bot identities, deleting it) — so an abandoned
+      // bot-containing table never lingers.
+      if (!humanConnected) {
         await closeAndTeardown(joinedGameId, rt, "EMPTY");
       }
     };
