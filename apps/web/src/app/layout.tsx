@@ -52,6 +52,9 @@ export const viewport: Viewport = {
   themeColor: "#080b13",
   width: "device-width",
   initialScale: 1,
+  // Let the table use the full screen and expose env(safe-area-inset-*) so the
+  // pinned header/action bar can avoid the notch / home indicator.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

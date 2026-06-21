@@ -149,9 +149,13 @@ export function GameTable({
     <MotionConfig reducedMotion="user">
     <FxProvider>
     {anim("streetFlourish") ? <StreetFlourish phase={phase} /> : null}
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-3 py-4 sm:px-6 sm:py-6">
+    {/* Mobile: a fixed 100dvh flex column (no page scroll during a hand) with the
+        header pinned top, the play area flexing, and the action bar pinned bottom;
+        safe-area insets keep clear of the notch / home indicator. Desktop keeps
+        the original scrollable, centered layout via sm: breakpoints. */}
+    <main className="mx-auto flex h-[100dvh] max-w-5xl flex-col overflow-hidden px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:h-auto sm:min-h-screen sm:overflow-visible sm:px-6 sm:py-6">
       {/* ---------------------------------------------------------- top bar */}
-      <header className="mb-4 flex items-center justify-between gap-3">
+      <header className="mb-2 flex shrink-0 items-center justify-between gap-3 sm:mb-4">
         <div className="flex min-w-0 items-center gap-2">
           <Logo className="size-7 shrink-0" />
           <span className="truncate text-lg font-black">{roomName}</span>
@@ -217,9 +221,12 @@ export function GameTable({
         </div>
       ) : (
         <>
+          {/* Play area — flexes to fill the space between the pinned header and
+              action bar on mobile; normal flow on desktop. */}
+          <div className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto sm:flex-none sm:gap-0 sm:overflow-visible">
           {/* ------------------------------------------------ table centerpiece */}
           <section
-            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-5 overflow-hidden rounded-[44px] border border-primary/15 px-4 py-6 sm:px-8 sm:py-9"
+            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-2 overflow-hidden rounded-[28px] border border-primary/15 px-4 py-3 sm:gap-5 sm:rounded-[44px] sm:px-8 sm:py-9"
             style={{ boxShadow: "inset 0 0 0 1px rgba(46,230,166,0.06), inset 0 0 70px rgba(0,0,0,0.5), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
             {/* Pitch markings — the felt reads as a football pitch (decorative,
@@ -256,7 +263,7 @@ export function GameTable({
             </div>
 
             {/* focal point: pot scoreboard + community + timer */}
-            <div className="relative flex flex-1 flex-col items-center justify-center gap-4 py-2">
+            <div className="relative flex flex-1 flex-col items-center justify-center gap-2 py-1 sm:gap-4 sm:py-2">
               <motion.div
                 key={anim("potCountUp") ? "pot" : s.pot}
                 data-fx="pot"
@@ -315,8 +322,12 @@ export function GameTable({
                 ))}
               </div>
 
+              {/* Hidden on mobile to save height — the active seat's depleting
+                  ring (and the action bar's own timer on your turn) convey it. */}
               {isBetting && s.currentTurnSeat != null ? (
-                <Countdown deadlineTs={s.turnDeadlineTs} />
+                <div className="hidden sm:block">
+                  <Countdown deadlineTs={s.turnDeadlineTs} />
+                </div>
               ) : null}
             </div>
           </section>
@@ -324,7 +335,7 @@ export function GameTable({
           {/* ----------------------------------------------- my hole cards */}
           <section
             data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
-            className="mx-auto mt-5 flex w-full max-w-3xl flex-col items-center gap-2"
+            className="mx-auto mt-2 flex w-full max-w-3xl flex-col items-center gap-1 sm:mt-5 sm:gap-2"
           >
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>بطاقتاك</span>
@@ -361,10 +372,11 @@ export function GameTable({
               )}
             </div>
           </section>
+          </div>
 
           {/* ------------------------------------------------- action zone */}
-          <div className="sticky bottom-2 z-20 mx-auto mt-5 w-full max-w-3xl">
-            <div className="rounded-2xl border bg-card/85 p-4 shadow-2xl backdrop-blur">
+          <div className="mx-auto mt-2 w-full max-w-3xl shrink-0 sm:sticky sm:bottom-2 sm:z-20 sm:mt-5">
+            <div className="rounded-2xl border bg-card/85 p-2.5 shadow-2xl backdrop-blur sm:p-4">
               {phase === "LOBBY" ? (
                 <div className="flex flex-col gap-3">
                   {view.waiting ? (
@@ -611,7 +623,7 @@ function ActionBar({
       initial={anim("actionBar") ? { opacity: 0, y: 16 } : false}
       animate={anim("actionBar") ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.28, ease: "easeOut" }}
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-2 sm:gap-3"
     >
       <div className="flex items-center justify-between text-sm">
         <span className="font-bold text-primary">دورك</span>

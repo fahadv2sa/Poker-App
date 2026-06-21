@@ -243,7 +243,9 @@ export function FootballCard({
   // Click-to-expand: any face-up card opens the shared PlayerCardModal with the
   // full player details. UI-only, local state — no gameplay impact.
   const [expanded, setExpanded] = useState(false);
-  const width = size === "lg" ? "w-[120px]" : "w-[80px] sm:w-[88px]";
+  // Smaller on mobile so the 5-card board fits one row and the hand fits one
+  // screen; full size on desktop (sm:) — keeps cards recognizable and crisp.
+  const width = size === "lg" ? "w-[88px] sm:w-[120px]" : "w-[52px] sm:w-[88px]";
 
   if (back || !card) {
     return (
@@ -488,7 +490,7 @@ export function OpponentSeat({
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
-        "relative flex w-[84px] flex-col items-center gap-1 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1.5 py-2 backdrop-blur transition",
+        "relative flex w-[78px] flex-col items-center gap-0.5 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1.5 py-1.5 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:py-2",
         onOpenProfile && "cursor-pointer hover:border-primary/40 hover:bg-[#0a1020]/80",
         isActive && "animate-turn border-primary/50",
         folded && "opacity-45 grayscale",
