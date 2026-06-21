@@ -114,13 +114,21 @@ class SoundManager {
     if (this.muted) return;
     const ctx = this.ctx;
     if (!ctx || !this.master) return;
-    if (ctx.state === "suspended") void ctx.resume();
     const buf = this.buffers.get(name);
     if (!buf) return;
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(this.master);
-    src.start(0);
+    const start = () => {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.master!);
+      src.start(0);
+    };
+    // The browser can SUSPEND/interrupt the AudioContext after the first hand
+    // (notably on mobile). Firing a buffer into a suspended context is silently
+    // dropped — which is why sounds died after round 1. So resume first (sticky
+    // activation from the initial unlock lets resume() succeed without a fresh
+    // gesture), then play once the context is running again.
+    if (ctx.state === "running") start();
+    else void ctx.resume().then(start).catch(() => {});
   }
 
   setMuted(m: boolean): void {

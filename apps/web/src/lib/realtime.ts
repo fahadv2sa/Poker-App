@@ -148,8 +148,12 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   socket.on(SERVER_EVENTS.claimReceived, () => sound.play("notify"));
   socket.on(SERVER_EVENTS.gameResult, (p: GameResultPayload) => {
     clearWarn();
-    if (p.yourDelta > 0) sound.play("win");
-    else if (p.yourDelta < 0) sound.play("lose");
+    // `yourDelta` is always 0 on the wire (the client recomputes balance from
+    // `results`), so derive the win/lose cue from THIS seat's outcome instead —
+    // otherwise the win/lose sound never fired.
+    const mine = yourSeat != null ? p.results.find((r) => r.seat === yourSeat) : undefined;
+    if (mine && (mine.outcome === "WIN" || mine.outcome === "SPLIT")) sound.play("win");
+    else if (mine && mine.outcome === "LOSE") sound.play("lose");
   });
   socket.on(SERVER_EVENTS.playerLeft, () => sound.play("notify"));
   socket.on("disconnect", clearWarn);

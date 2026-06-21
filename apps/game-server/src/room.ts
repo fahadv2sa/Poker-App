@@ -92,12 +92,16 @@ const NEXT_HAND_KEY = "nexthand";
 const LIVE_HAND_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"]);
 
 /**
- * Virtual stack a Quick Play bot plays each hand with. Fake coins — never sourced
- * from or written to the wallet ledger. Re-set at every hand start (mirroring how
- * humans re-source `available` from their wallet) so a filler bot never "busts".
- * Tunable; only ever applied to `isBot` seats.
+ * A bot's FAKE virtual stack each hand is CALIBRATED to the humans at the table so
+ * a bot never out-chips / over-pressures them: it equals the largest human stack,
+ * clamped to [BOT_MIN_STACK, BOT_MAX_STACK]. The band tracks the human economy — a
+ * 1000 floor (≈ a fresh signup balance) and a ceiling ≈ signup 1000 + the 2000/24h
+ * bank cap — so bots can't bet amounts a normal human couldn't have. Re-derived
+ * every hand (humans' real balances change); never sourced from / written to the
+ * wallet ledger. Only ever applied to `isBot` seats. Tunable.
  */
-const BOT_VIRTUAL_STACK = 5000n;
+const BOT_MIN_STACK = 1000n;
+const BOT_MAX_STACK = 3000n;
 
 /**
  * Authoritative game-room orchestrator (Section 8 state machine). Holds the
@@ -158,17 +162,12 @@ export class GameRoom {
     // cannot cover the mandatory ante — so the in-memory balance never goes
     // negative and stays in lockstep with the ledger.
     const ante = BigInt(this.state.config.ante);
-    // Bots play with a fake virtual stack and are never balance-checked; only
-    // humans are sourced/validated against the wallet ledger.
+    // Only humans are sourced/validated against the wallet ledger.
     const humans = seated.filter((p) => !p.isBot);
     const balances = await this.deps.persistence.getBalances(
       humans.map((p) => p.userId),
     );
-    for (const p of seated) {
-      if (p.isBot) {
-        p.available = BOT_VIRTUAL_STACK;
-        continue;
-      }
+    for (const p of humans) {
       const balance = balances.get(p.userId);
       if (balance === undefined) {
         throw new Error(`تعذّر قراءة رصيد اللاعب في المقعد ${p.seat}`);
@@ -178,6 +177,9 @@ export class GameRoom {
       }
       p.available = balance;
     }
+    // Bots get a fake stack calibrated to the humans (never out-chipping them).
+    const botStack = this.botStackFor(humans);
+    for (const p of seated) if (p.isBot) p.available = botStack;
 
     // First hand: the button starts at the lowest occupied seat (19.9); it
     // rotates from the next hand onward.
@@ -201,20 +203,18 @@ export class GameRoom {
       this.deps.timers.clear(NEXT_HAND_KEY);
       const ante = BigInt(this.state.config.ante);
       const present = this.state.players.filter((p) => p.connected);
-      // Humans are re-sourced from the wallet; bots get a fresh fake stack and
-      // are always eligible (their coins never touch the ledger).
+      // Humans are re-sourced from the wallet; bots get a fresh fake stack
+      // calibrated to the humans (always eligible; coins never touch the ledger).
       const humans = present.filter((p) => !p.isBot);
       const balances = await this.deps.persistence.getBalances(
         humans.map((p) => p.userId),
       );
-      for (const p of present) {
-        if (p.isBot) {
-          p.available = BOT_VIRTUAL_STACK;
-          continue;
-        }
+      for (const p of humans) {
         const b = balances.get(p.userId);
         if (b !== undefined) p.available = b;
       }
+      const botStack = this.botStackFor(humans);
+      for (const p of present) if (p.isBot) p.available = botStack;
       const eligible = present.filter(
         (p) => p.isBot || (balances.get(p.userId) ?? 0n) >= ante,
       );
@@ -394,6 +394,17 @@ export class GameRoom {
     const cur = this.state.dealerSeat;
     if (cur === null) return sorted[0]!;
     return sorted.find((s) => s > cur) ?? sorted[0]!;
+  }
+
+  /** A bot's fake stack for the hand: the largest human stack at the table,
+   *  clamped to [BOT_MIN_STACK, BOT_MAX_STACK] so bots never out-chip the humans
+   *  (or bet amounts a normal human couldn't have). Humans must be sourced first. */
+  private botStackFor(humans: readonly RoomPlayer[]): bigint {
+    let maxHuman = 0n;
+    for (const p of humans) if (p.available > maxHuman) maxHuman = p.available;
+    if (maxHuman < BOT_MIN_STACK) return BOT_MIN_STACK;
+    if (maxHuman > BOT_MAX_STACK) return BOT_MAX_STACK;
+    return maxHuman;
   }
 
   /** Reset a seat's per-hand betting + claim state (keeps wallet `available`). */

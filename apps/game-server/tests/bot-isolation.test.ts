@@ -326,6 +326,24 @@ describe("bot isolation — closing a live hand with bots", () => {
   });
 });
 
+describe("bot stack is calibrated to the humans (not a flat 5000)", () => {
+  // After start(), the ante has moved from `available` into `committedTotal`, so the
+  // seeded bot stack = available + committedTotal.
+  const seededBotStack = async (humanBalance: bigint) => {
+    const players = [basePlayer(1, "u1"), basePlayer(2, "bot2", true)];
+    const { room } = makeRoom(players, riggedDeck(), { balances: { u1: humanBalance } });
+    await room.start();
+    const bot = room.state.players.find((p) => p.seat === 2)!;
+    return bot.available + bot.committedTotal;
+  };
+
+  it("tracks the largest human stack, clamped to [1000, 3000]", async () => {
+    expect(await seededBotStack(2500n)).toBe(2500n); // tracks the human
+    expect(await seededBotStack(600n)).toBe(1000n); // floored (human below the floor)
+    expect(await seededBotStack(9000n)).toBe(3000n); // capped at the economy ceiling
+  });
+});
+
 describe("flag-off parity — a human-only hand is unaffected by the bot guards", () => {
   it("debits both antes, records both seats' stats, and settles both", async () => {
     // 2 humans, all-midfielder deck ⇒ both pools are ROYAL_POSITION ⇒ split.
