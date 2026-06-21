@@ -23,6 +23,15 @@
  * Cristiano Ronaldo is a FIXED final-score exception at 99 (override only, NOT a
  * benchmark — it never affects how any other player is normalized).
  *
+ * TWO-TRACK OUTPUT:
+ *   - fame_score   = the base score above, written for EVERY active player.
+ *   - legend_score = a second "legend-card" score, ONLY for players manually
+ *       flagged players.is_legend: the base score mapped into [80, 95] via
+ *       80 + 15*(base/100) (Messi=100, Ronaldo=99 stay fixed). NON-legends get
+ *       legend_score = NULL. A newly added player defaults to the normal system
+ *       (no flag → null) and never gets the legend track automatically. Re-running
+ *       preserves the split: legends keep the legend track, everyone else the base.
+ *
  * Missing inputs contribute 0 (no skip/throw). Tournament inputs come from the
  * tournament-stats import; players not yet imported get 0 there. Re-run after the
  * import completes to fold the remaining tournament data in.
@@ -68,6 +77,7 @@ interface Row {
   id: string;
   name: string;
   externalRef: number | null;
+  isLegend: boolean;
   nationality: string;
   clubs: string[]; // distinct club names
   top5: number;
@@ -117,10 +127,11 @@ const benchmarkOf = (r: Row): Benchmark => ({
 });
 
 /**
- * One component, normalized against Messi. Below Messi → linear share of the
- * weight; MEET OR EXCEED Messi (ratio >= 1) → hard-capped to 10% below him
- * (0.9 * weight), so no one can equal/exceed Messi on the component. A zero
- * benchmark (e.g. legend, until defined) contributes 0 for everyone.
+ * One component, normalized against Messi. Below Messi → linear share scaled to
+ * the ceiling; MEET OR EXCEED Messi (ratio >= 1) → ceiling*weight (1% below him),
+ * smoothly (continuous at ratio=1, no discontinuity), so no one can equal/exceed
+ * Messi on the component. A zero benchmark (e.g. legend, until defined)
+ * contributes 0 for everyone.
  */
 function componentScore(raw: number, messiRaw: number, weight: number): number {
   if (messiRaw <= 0) return 0;
@@ -157,6 +168,19 @@ function finalScore(r: Row, m: Benchmark): number {
   return Math.round(s * 100) / 100;
 }
 
+// Legend track: only players manually flagged is_legend get a legend_score —
+// the base score mapped into [80, 95] via 80 + 15*(base/100). Messi=100 and
+// Ronaldo=99 stay fixed. Non-legends → null (base track only); a new player is
+// never a legend unless flagged, so it defaults to the normal system.
+const LEGEND_FLOOR = 80;
+const LEGEND_SPAN = 15; // ceiling = 80 + 15 = 95
+function legendScoreFor(r: Row, baseScore: number): number | null {
+  if (!r.isLegend) return null;
+  if (isMessi(r)) return 100;
+  if (isRonaldo(r)) return 99;
+  return Math.round((LEGEND_FLOOR + LEGEND_SPAN * (baseScore / 100)) * 100) / 100;
+}
+
 async function main() {
   const players = await prisma.player.findMany({
     where: { active: true },
@@ -164,6 +188,7 @@ async function main() {
       id: true,
       name: true,
       externalRef: true,
+      isLegend: true,
       top5LeagueSeasons: true,
       nationality: { select: { name: true } },
       playerClubs: { select: { club: { select: { name: true } } } },
@@ -182,6 +207,7 @@ async function main() {
       id: p.id,
       name: p.name,
       externalRef: p.externalRef,
+      isLegend: p.isLegend,
       // Missing inputs default to zero for their component (no skip/throw):
       // nationality → "" (0 pts), clubs → [] (0 pts), tournament stats → 0.
       nationality: p.nationality?.name ?? "",
@@ -204,7 +230,10 @@ async function main() {
     `Messi benchmark — top5:${M.top5} club:${M.club} tourn:${M.tournament} nation:${M.nation} clubs:${M.distinctClubs} legend:${M.legend}`,
   );
 
-  const rows = baseRows.map((r) => ({ ...r, score: finalScore(r, M) }));
+  const rows = baseRows.map((r) => {
+    const score = finalScore(r, M);
+    return { ...r, score, legendScore: legendScoreFor(r, score) };
+  });
 
   // Tiers — rank by fame_score DESC (name as a stable tiebreaker): top 200 → 1,
   // next 500 → 2, next 500 → 3, the rest → 4.
@@ -222,7 +251,9 @@ async function main() {
         rows.slice(i, i + CHUNK).map((r) =>
           prisma.player.update({
             where: { id: r.id },
-            data: { fameScore: r.score, tier: tierOf.get(r.id)! },
+            // Base track for everyone (fame_score); legend track only for flagged
+            // legends (legend_score), null otherwise — split enforced every run.
+            data: { fameScore: r.score, tier: tierOf.get(r.id)!, legendScore: r.legendScore },
           }),
         ),
       );
@@ -232,6 +263,7 @@ async function main() {
   }
 
   const messiCount = rows.filter((r) => isMessi(r)).length;
+  const legendCount = rows.filter((r) => r.legendScore !== null).length;
   const ronaldoScore = rows.find((r) => isRonaldo(r))?.score ?? null;
   // Top of the NORMALIZED field (excluding the two fixed exceptions).
   const topNormalized = sorted.find((r) => !isMessi(r) && !isRonaldo(r))?.score ?? 0;
@@ -240,6 +272,7 @@ async function main() {
   console.log(`scored                 : ${rows.length}`);
   console.log(`Messi (=100) rows      : ${messiCount}`);
   console.log(`Ronaldo (=99)          : ${ronaldoScore}`);
+  console.log(`legends (legend track) : ${legendCount}`);
   console.log(`top normalized / min   : ${topNormalized} / ${sorted.at(-1)?.score}`);
   console.log(
     `tiers 1/2/3/4          : ${tierCount(1)} / ${tierCount(2)} / ${tierCount(3)} / ${tierCount(4)}`,

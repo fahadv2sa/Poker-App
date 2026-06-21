@@ -127,6 +127,111 @@ Monorepo lives at `C:\Users\Admin\OneDrive\Desktop\poker-app` (chosen by the use
 if `node_modules` sync ever causes file-lock/EPERM issues, pause OneDrive sync for this folder or exclude
 `node_modules`. The spec lives at `C:\Users\Admin\OneDrive\Desktop\SPEC.md`.
 
+## Fame & Legend scoring (display/difficulty only — NOT the rank engine)
+
+`players.fame_score` / `tier` / `legend_score` are a **display + difficulty** system
+(`packages/db/prisma/calculate-scores.ts`, run with `pnpm db:calculate-scores`). They
+**never** touch the rank engine, wallet, or card privacy. Two tracks:
+
+**Base track — `fame_score` (every active player), 0–100.** Six weighted components,
+each **normalized against Messi** (the sole benchmark): top-5 seasons 20%, club
+strength 20% (Σ over distinct clubs: elite 10 / other 1, elite list in the script),
+big-tournament seasons 20% (WC×8 + Euro/Copa×5 + UCL×3), national-team tier 20%
+(10/7/4/0), distinct clubs 10%, legend 10% (**0 for everyone** — reserved, not yet
+activated). Per component: `0.99 × min(1, raw / messi_raw) × weight` — i.e. meeting
+or exceeding Messi sits **1% below him** (smooth, continuous at ratio=1, no
+discontinuity, ordering preserved), so no one reaches Messi on any component or
+overall (normalized max 0.99×90 = 89.1). **Fixed exceptions:** Messi pinned to **100**
+(the reference), **Cristiano Ronaldo = 99** (override only, NOT a benchmark — never
+affects anyone's normalization). Missing inputs → 0. *(This replaced the old C1–C5
+formula and the Saudi +30 bonus, both removed.)*
+
+**Legend track — `legend_score` (ONLY players flagged `is_legend`).** The base score
+mapped into **[80, 95]** via `80 + 15 × (fame_score / 100)`; Messi=100, Ronaldo=99 stay
+fixed above the band. Non-legends get `legend_score = NULL`. Legends are flagged
+**manually only** — a newly added player defaults to the base track and is never
+auto-promoted. Re-running `calculate-scores` writes both and preserves the split.
+
+**Effective score** used in-game = `COALESCE(legend_score, fame_score)`: the dealt
+player card (`apps/game-server/src/cards.ts`) shows the legend score for legends and
+the base score for everyone else.
+
+## Deploy safety — schema/code ordering (READ before ANY schema change)
+
+**This section exists because of a real prod outage (2026-06-21). Follow the rule below
+and it cannot recur.**
+
+### What happened (the incident)
+
+The branch added two columns to `players` (`is_legend`, `legend_score`) via migrations and
+shipped runtime code that reads them (`apps/game-server/src/cards.ts` →
+`prisma.player.findMany`). The code was committed and **pushed**; the **prod migration was
+never applied**. Railway **auto-deploys the deploy branch on push**, so the new game-server
+went live querying columns the prod DB didn't have. Result: every hand crashed at card
+dealing with `The column players.is_legend does not exist in the current database`. The
+**web app stayed up** (it never queries the `players` table — only users/wallets/stats/
+rooms), which masked the problem until someone actually started a hand.
+
+Fix was two phases: **(1)** apply the pending migrations to prod (`pnpm db:deploy` with the
+prod URL — additive `ADD COLUMN`, instant, non-destructive) → crash gone; **(2)** sync the
+display columns local→prod (`packages/db/prisma/sync-scores-to-prod.ts`).
+
+### Root cause (the trap, stated plainly)
+
+1. **Railway auto-deploys code on push** to the deploy branch (`feat/fame-score-system`).
+2. **Migrations are MANUAL** — there is **no release/predeploy command** in `railway.toml`,
+   so a push deploys new code but does **not** run `prisma migrate deploy`.
+3. **Prisma Client selects columns from the SCHEMA, not the DB.** Any `player.findMany`
+   built from a schema that has `is_legend`/`legend_score` emits SQL naming those columns;
+   if the DB lacks them, the query throws — it is NOT a silent/ignored mismatch.
+
+So: **push schema-dependent code → prod runs it immediately → if prod isn't migrated, it
+crashes.** Tests/local pass because local IS migrated.
+
+### THE RULE (non-negotiable ordering)
+
+> **A migration that runtime code depends on MUST be applied to prod BEFORE (or in the same
+> step as) the code that reads/writes it is deployed. Migrate first, deploy second. Never
+> the reverse.**
+
+Because deploy = `git push`, "deploy second" means: **run the prod migration before you push
+the code**, or push to a branch Railway does not auto-deploy until the migration is done.
+
+### Checklist — any change that touches `schema.prisma`
+
+Before pushing, ask: *does this change add/rename/drop a column, table, enum, or required
+relation that runtime code (game-server `cards.ts`, or any `apps/**` Prisma query) reads?*
+If yes:
+
+- [ ] **Adding** a column/table the new code reads → **apply the migration to prod FIRST**
+      (`NODE_OPTIONS=--use-system-ca DIRECT_URL=<prod> DATABASE_URL=<prod> pnpm db:deploy`),
+      verify it applied, **then** push the code. Additive `ADD COLUMN` is safe to apply
+      while the old code is still live (old code just ignores the new column).
+- [ ] **Removing/renaming** a column the old code reads → do it in TWO deploys
+      (expand/contract): first deploy code that no longer references it, **then** migrate to
+      drop. Never drop a column the currently-deployed code still selects.
+- [ ] **NOT NULL / new required relation** → migrate as nullable + backfill + only then
+      enforce, across separate deploys. A bare `ADD COLUMN ... NOT NULL` with no default
+      against a populated table will fail or block.
+- [ ] After migrating prod, confirm: `pnpm prisma migrate status` → "up to date", and a
+      sample `player.findMany({ select: { <new cols> } })` succeeds against prod.
+- [ ] Remember **`git push` IS the prod deploy** (Railway, branch `feat/fame-score-system`).
+      There is no separate "deploy" gate. Treat every push to that branch as going live.
+
+### Stronger guarantee (do this to make the rule automatic)
+
+The manual ordering is the current safeguard. To make it impossible to deploy ahead of the
+schema, add a **release/predeploy command** that runs `prisma migrate deploy` before the new
+process starts serving — e.g. in `railway.toml [deploy]` set a `preDeployCommand` (or fold
+`pnpm db:deploy` into the service start) so each deploy migrates prod first and a failed
+migration aborts the deploy. Until that exists, the checklist above is mandatory and manual.
+
+### Why the web app didn't crash (don't be fooled again)
+
+A green web app does **not** mean a healthy deploy. The web service never queries `players`;
+only the **game-server** does (and only when a hand is dealt). After any players-schema
+change, verify by **starting a hand**, not by loading the login page.
+
 ## Conventions
 
 - DB: snake_case tables/columns via `@@map`/`@map`; all PKs `uuid`; all timestamps `timestamptz`.
