@@ -380,18 +380,25 @@ export function OpponentSeat({
   isActive,
   deadlineTs,
   hasClaimed = false,
+  onOpenProfile,
 }: {
   player: PlayerView;
   isActive: boolean;
   deadlineTs?: number | null;
   hasClaimed?: boolean;
+  /** Tap the seat to open this opponent's public profile (on-demand read). */
+  onOpenProfile?: (playerNumber: number) => void;
 }) {
   return (
     <motion.div
       layout
+      role={onOpenProfile ? "button" : undefined}
+      title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
+      onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
         "flex min-w-[120px] flex-col gap-0.5 rounded-xl border px-3 py-2 backdrop-blur transition",
         "border-white/10 bg-[#070b14]/70",
+        onOpenProfile && "cursor-pointer hover:border-primary/50",
         isActive && "border-primary bg-primary/10 glow-primary animate-turn ring-2 ring-primary/60",
         player.status === "FOLDED" && "opacity-40 grayscale",
         player.status === "ALLIN" && "border-gold/70 glow-gold",

@@ -149,6 +149,8 @@ model User {
   nickname     String?
   passwordHash String   @map("password_hash") // argon2id
   avatarSeed   String?  @map("avatar_seed")
+  // Social layer: denormalized total likes received (source of truth = Like rows).
+  likesReceived Int     @default(0) @map("likes_received")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -162,8 +164,45 @@ model User {
   gamePlayers  GamePlayer[]
   playEvents   PlayEvent[]
   playerBadges PlayerBadge[]
+  likesGiven    Like[]       @relation("LikesGiven")
+  likesGot      Like[]       @relation("LikesGot")
+  friendshipsA  Friendship[] @relation("FriendshipA")
+  friendshipsB  Friendship[] @relation("FriendshipB")
 
   @@map("users")
+}
+
+// Social — likes (one row per (liker, target); one-per-user toggle). Denormalized
+// count lives on User.likesReceived, moved in lockstep with these rows.
+model Like {
+  id        String   @id @default(uuid()) @db.Uuid
+  likerId   String   @map("liker_id") @db.Uuid
+  targetId  String   @map("target_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  liker     User     @relation("LikesGiven", fields: [likerId], references: [id], onDelete: Cascade)
+  target    User     @relation("LikesGot", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([likerId, targetId])
+  @@index([targetId])
+  @@map("likes")
+}
+
+// Social — symmetric friendship, stored canonically (userAId < userBId) so a pair
+// can't duplicate. Auto-accepted (no request flow). Self-friend is rejected in code.
+model Friendship {
+  id        String   @id @default(uuid()) @db.Uuid
+  userAId   String   @map("user_a_id") @db.Uuid
+  userBId   String   @map("user_b_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  userA     User     @relation("FriendshipA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User     @relation("FriendshipB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+  @@map("friendships")
 }
 
 model Wallet {

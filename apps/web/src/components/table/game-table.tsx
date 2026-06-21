@@ -20,6 +20,7 @@ import { SoundControl } from "@/components/sound-control";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Countdown, FootballCard, OpponentSeat, PHASE_AR } from "./parts";
+import { OpponentProfileModal } from "./opponent-profile-modal";
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 
@@ -54,6 +55,8 @@ export function GameTable({
   // "Continue Playing" dismisses the result overlay locally for this player; it
   // resets whenever a new result arrives so the next round's winner shows again.
   const [continued, setContinued] = useState(false);
+  // Opponent profile open during play (by playerNumber) — on-demand read.
+  const [profileNum, setProfileNum] = useState<number | null>(null);
 
   const players = useMemo(
     () => (s ? [...s.players].sort((a, b) => a.seat - b.seat) : []),
@@ -191,6 +194,7 @@ export function GameTable({
                     isActive={s.currentTurnSeat === p.seat}
                     deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
                     hasClaimed={phase === "SHOWDOWN" && view.claimedSeats.includes(p.seat)}
+                    onOpenProfile={setProfileNum}
                   />
                 ))
               )}
@@ -347,6 +351,13 @@ export function GameTable({
             onExit={onExit}
             onContinue={() => setContinued(true)}
           />
+        ) : null}
+      </AnimatePresence>
+
+      {/* Opponent profile (tap a seat). On-demand read; never reveals cards. */}
+      <AnimatePresence>
+        {profileNum != null ? (
+          <OpponentProfileModal playerNumber={profileNum} onClose={() => setProfileNum(null)} />
         ) : null}
       </AnimatePresence>
 
