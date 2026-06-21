@@ -144,6 +144,9 @@ model User {
   // displayed as e.g. #100001.
   playerNumber Int      @unique @default(autoincrement()) @map("player_number")
   username     String   @unique
+  // Editable display name (profile layer). NOT unique — `username`/`playerNumber`
+  // remain the identifiers; null falls back to `username` for display.
+  nickname     String?
   passwordHash String   @map("password_hash") // argon2id
   avatarSeed   String?  @map("avatar_seed")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -152,6 +155,7 @@ model User {
   wallet       Wallet?
   stats        UserStats?
   metrics      PlayerMetrics?
+  avatar       UserAvatar?
   transactions WalletTransaction[]
   bankClaims   BankClaim[]
   gamesCreated Game[]              @relation("GamesCreatedBy")
@@ -224,6 +228,20 @@ model UserStats {
   @@map("user_stats")
 }
 
+// Uploaded profile avatar (profile layer). Stored in the DB (Railway's filesystem
+// is ephemeral) — small images only. Served by user_id so other players' avatars
+// work later. Absent ⇒ the UI shows a generated avatar from `avatar_seed`.
+model UserAvatar {
+  userId    String   @id @map("user_id") @db.Uuid
+  data      Bytes
+  mimeType  String   @map("mime_type")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_avatars")
+}
+
 // ============================================================================
 // Statistics & progression (4-layer system). All keyed on the stable User.id,
 // independent of any future profile layer. Append-only events (Layer 1) →
@@ -289,6 +307,9 @@ model PlayerMetrics {
   luckSum           Float    @default(0) @map("luck_sum")
   luckRounds        Int      @default(0) @map("luck_rounds")
   biggestPot        BigInt   @default(0) @map("biggest_pot")
+  // Biggest single-hand net win / loss (profile layer; filled by the aggregator).
+  biggestWin        BigInt   @default(0) @map("biggest_win")
+  biggestLoss       BigInt   @default(0) @map("biggest_loss")
   currentWinStreak  Int      @default(0) @map("current_win_streak")
   longestWinStreak  Int      @default(0) @map("longest_win_streak")
   // Layer 4 — composite progression.

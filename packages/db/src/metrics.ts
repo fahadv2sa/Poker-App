@@ -93,6 +93,8 @@ export async function aggregatePlayer(userId: string): Promise<void> {
     };
     let totalWon = n(m.totalWon);
     let totalLost = n(m.totalLost);
+    let biggestWin = n(m.biggestWin);
+    let biggestLoss = n(m.biggestLoss);
     let currentStreak = m.currentWinStreak;
     let lastSeq = m.lastSeq;
 
@@ -107,8 +109,13 @@ export async function aggregatePlayer(userId: string): Promise<void> {
       if (md.folded) c.folds += 1;
 
       c.netProfit += delta;
-      if (delta > 0) totalWon += delta;
-      else if (delta < 0) totalLost += -delta;
+      if (delta > 0) {
+        totalWon += delta;
+        if (delta > biggestWin) biggestWin = delta; // biggest single-hand win
+      } else if (delta < 0) {
+        totalLost += -delta;
+        if (-delta > biggestLoss) biggestLoss = -delta; // biggest single-hand loss
+      }
 
       if (md.showdown) c.showdownCount += 1;
       if (md.isBluff) c.bluffCount += 1;
@@ -158,6 +165,8 @@ export async function aggregatePlayer(userId: string): Promise<void> {
         netProfit: BigInt(Math.round(c.netProfit)),
         totalWon: BigInt(Math.round(totalWon)),
         totalLost: BigInt(Math.round(totalLost)),
+        biggestWin: BigInt(Math.round(biggestWin)),
+        biggestLoss: BigInt(Math.round(biggestLoss)),
         showdownCount: c.showdownCount,
         bluffCount: c.bluffCount,
         bluffSuccessCount: c.bluffSuccessCount,

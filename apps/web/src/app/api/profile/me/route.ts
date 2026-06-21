@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@fp/db";
+import { validateNickname } from "@fp/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";
@@ -43,5 +44,37 @@ export async function GET() {
     createdAt: user.createdAt,
     balance: user.wallet?.balance.toString() ?? "0",
     highestBalance: user.wallet?.highestBalance.toString() ?? "0",
+  });
+}
+
+/** PATCH /api/profile/me — edit the signed-in user's own profile (nickname).
+ *  Server-authoritative: the target is the SESSION user, never the request body. */
+export async function PATCH(req: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return NextResponse.json({ error: "UNAUTHENTICATED", messageAr: "يجب تسجيل الدخول" }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "BAD_JSON", messageAr: "تعذّر قراءة الطلب" }, { status: 400 });
+  }
+
+  const result = validateNickname((body as { nickname?: unknown })?.nickname);
+  if ("error" in result) {
+    return NextResponse.json({ error: "VALIDATION", messageAr: result.error }, { status: 422 });
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { nickname: result.value },
+    select: { nickname: true, username: true },
+  });
+  return NextResponse.json({
+    nickname: updated.nickname,
+    displayName: updated.nickname ?? updated.username,
   });
 }
