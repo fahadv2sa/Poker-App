@@ -16,11 +16,10 @@ import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/ta
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { SoundControl } from "@/components/sound-control";
-import { Logo } from "@/components/logo";
 import { ConfirmButtons } from "@/components/confirm-buttons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Countdown, FootballCard, OpponentSeat, SeatAvatar, PHASE_AR } from "./parts";
+import { Countdown, FootballCard, OpponentSeat, SeatAvatar } from "./parts";
 import { OpponentProfileModal } from "./opponent-profile-modal";
 import { FxProvider, useFx, CountUp, StreetFlourish } from "./fx";
 import { anim } from "@/lib/anim";
@@ -49,13 +48,11 @@ const OUTCOME_AR: Record<string, string> = {
 export function GameTable({
   token,
   inviteCode,
-  roomName,
   isHost,
   initialBalance,
 }: {
   token: string;
   inviteCode: string;
-  roomName: string;
   isHost: boolean;
   initialBalance: number;
 }) {
@@ -154,57 +151,49 @@ export function GameTable({
         safe-area insets keep clear of the notch / home indicator. Desktop keeps
         the original scrollable, centered layout via sm: breakpoints. */}
     <main className="mx-auto flex h-[100dvh] max-w-5xl flex-col overflow-hidden px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:h-auto sm:min-h-screen sm:overflow-visible sm:px-6 sm:py-6">
-      {/* ---------------------------------------------------------- top bar */}
-      <header className="mb-2 flex shrink-0 items-center justify-between gap-3 sm:mb-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <Logo className="size-7 shrink-0" />
-          <span className="truncate text-lg font-black">{roomName}</span>
-          <span className="hidden rounded-full border px-2.5 py-0.5 text-xs text-muted-foreground sm:inline">
-            {PHASE_AR[phase] ?? phase}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <SoundControl />
-          <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-sm text-gold">
-            🪙 <span className="num font-semibold">{shownBalance}</span>
-          </span>
-          {/* Host-only Close Table (two-step confirm): ends any live hand,
-              refunds bets, evicts everyone, deletes the room. */}
-          {amHost ? (
-            confirmClose ? (
-              <span className="flex items-center gap-1">
-                <Button variant="destructive" size="sm" onClick={() => closeTable()}>
-                  تأكيد الإغلاق
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setConfirmClose(false)}>
-                  إلغاء
-                </Button>
-              </span>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setConfirmClose(true)}
-              >
-                إغلاق الطاولة
+      {/* ---------------------------------------------------------- top bar
+          During play this stays minimal: ONLY mute, host-only Close Table, and
+          Exit. The logo, room name, phase chip and coins were removed to
+          declutter (the player's balance still shows at their own seat). Both
+          the close and exit confirmations are preserved. */}
+      <header className="mb-2 flex shrink-0 items-center justify-end gap-2 sm:mb-4">
+        <SoundControl />
+        {/* Host-only Close Table (two-step confirm): ends any live hand,
+            refunds bets, evicts everyone, deletes the room. */}
+        {amHost ? (
+          confirmClose ? (
+            <span className="flex items-center gap-1">
+              <Button variant="destructive" size="sm" onClick={() => closeTable()}>
+                تأكيد الإغلاق
               </Button>
-            )
-          ) : null}
-          {/* Leave the table — confirm first (mirrors the close-table flow). The
-              contextual consequence is shown in the banner just below. */}
-          {confirmLeave ? (
-            <ConfirmButtons
-              confirmLabel="تأكيد المغادرة"
-              onConfirm={() => router.push("/")}
-              onCancel={() => setConfirmLeave(false)}
-            />
+              <Button variant="ghost" size="sm" onClick={() => setConfirmClose(false)}>
+                إلغاء
+              </Button>
+            </span>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => setConfirmLeave(true)}>
-              خروج
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => setConfirmClose(true)}
+            >
+              إغلاق الطاولة
             </Button>
-          )}
-        </div>
+          )
+        ) : null}
+        {/* Leave the table — confirm first (mirrors the close-table flow). The
+            contextual consequence is shown in the banner just below. */}
+        {confirmLeave ? (
+          <ConfirmButtons
+            confirmLabel="تأكيد المغادرة"
+            onConfirm={() => router.push("/")}
+            onCancel={() => setConfirmLeave(false)}
+          />
+        ) : (
+          <Button variant="ghost" size="sm" onClick={() => setConfirmLeave(true)}>
+            خروج
+          </Button>
+        )}
       </header>
 
       {confirmLeave ? (

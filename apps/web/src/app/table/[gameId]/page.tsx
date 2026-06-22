@@ -37,7 +37,6 @@ export default async function TablePage({
     <GameTable
       token={token}
       inviteCode={game.inviteCode}
-      roomName={game.roomName}
       isHost={game.createdBy === session.user.id}
       initialBalance={Number(wallet?.balance ?? 0n)}
     />
