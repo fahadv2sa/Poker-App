@@ -230,6 +230,7 @@ export function FootballCard({
   size = "md",
   variant = "game",
   reveal,
+  widthClass,
 }: {
   card?: CardView | null;
   back?: boolean;
@@ -242,6 +243,10 @@ export function FootballCard({
    *  (#5), "flip" = 3D flip reveal (#2). Falls back to the default drop-in when
    *  the matching animation flag is off, so base behavior is preserved. */
   reveal?: "deal" | "flip";
+  /** Optional responsive width override (e.g. the in-felt community board sizes
+   *  its 5 cards to fill the freed green space). When unset the `size` preset
+   *  applies — so existing call sites are unchanged. Aspect ratio is fixed. */
+  widthClass?: string;
 }) {
   const [imgError, setImgError] = useState(false);
   // Click-to-expand: any face-up card opens the shared PlayerCardModal with the
@@ -249,7 +254,8 @@ export function FootballCard({
   const [expanded, setExpanded] = useState(false);
   // Smaller on mobile so the 5-card board fits one row and the hand fits one
   // screen; full size on desktop (sm:) — keeps cards recognizable and crisp.
-  const width = size === "lg" ? "w-[68px] sm:w-[120px]" : "w-[52px] sm:w-[88px]";
+  // A caller may override the preset via `widthClass` (e.g. the larger board).
+  const width = widthClass ?? (size === "lg" ? "w-[68px] sm:w-[120px]" : "w-[52px] sm:w-[88px]");
 
   if (back || !card) {
     return (

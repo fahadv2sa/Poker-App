@@ -223,10 +223,43 @@ export function GameTable({
         <>
           {/* Play area — flexes to fill the space between the pinned header and
               action bar on mobile; normal flow on desktop. */}
-          <div className="flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto sm:flex-none sm:gap-0 sm:overflow-visible">
-          {/* ------------------------------------------------ table centerpiece */}
+          <div className="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto sm:flex-none sm:gap-0 sm:overflow-visible">
+          {/* opponents ring — a gentle top ARC hugging the felt's OUTER rim
+              (outside the green, overlapping the edge via the negative margin).
+              A subtle per-seat translateY makes the row read as players seated
+              around the far edge of the table, so the felt is freed for play. */}
+          <div className="relative z-10 -mb-5 flex w-full max-w-3xl flex-nowrap items-end justify-center gap-1 px-1 sm:-mb-7 sm:gap-3">
+            {opponents.length === 0 ? (
+              <span className="mb-5 rounded-full border border-white/10 bg-[#070b14]/70 px-3 py-1.5 text-xs text-white/50 sm:mb-7">
+                بانتظار لاعبين آخرين…
+              </span>
+            ) : (
+              opponents.map((p, i) => {
+                const n = opponents.length;
+                // Distance from the row center → a small downward offset, so the
+                // middle seats sit highest (top of the arc) and the edges dip
+                // toward the felt's upper corners.
+                const offset = Math.round(Math.abs(i - (n - 1) / 2) * 6);
+                return (
+                  <div key={p.seat} style={{ transform: `translateY(${offset}px)` }}>
+                    <OpponentSeat
+                      player={p}
+                      isActive={s.currentTurnSeat === p.seat}
+                      deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
+                      hasClaimed={phase === "SHOWDOWN" && view.claimedSeats.includes(p.seat)}
+                      onOpenProfile={setProfileNum}
+                    />
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* ------------------------------------------------ table felt: now
+              holds all 7 cards (board + your hole), the pot, in-felt toasts and
+              the play animations. Flexes to fill the freed vertical space. */}
           <section
-            className="felt relative mx-auto flex w-full max-w-3xl flex-col items-center gap-2 overflow-hidden rounded-[28px] border border-primary/15 px-4 py-3 sm:gap-5 sm:rounded-[44px] sm:px-8 sm:py-9"
+            className="felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] border border-primary/15 px-3 pb-3 pt-8 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
             style={{ boxShadow: "inset 0 0 0 1px rgba(46,230,166,0.06), inset 0 0 70px rgba(0,0,0,0.5), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
             {/* Pitch markings — the felt reads as a football pitch (decorative,
@@ -244,24 +277,27 @@ export function GameTable({
               style={{ background: "radial-gradient(60% 100% at 50% 0%, color-mix(in oklch, var(--accent) 22%, transparent), transparent)" }}
             />
 
-            {/* opponents around the rim — a single non-wrapping row on mobile
-                (compact seats fit ≤5 opponents within a phone width); wraps on
-                desktop where the seats are larger. */}
-            <div className="flex w-full flex-nowrap items-start justify-center gap-1 sm:flex-wrap sm:gap-2">
-              {opponents.length === 0 ? (
-                <span className="py-2 text-sm text-white/50">بانتظار لاعبين آخرين…</span>
-              ) : (
-                opponents.map((p) => (
-                  <OpponentSeat
-                    key={p.seat}
-                    player={p}
-                    isActive={s.currentTurnSeat === p.seat}
-                    deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
-                    hasClaimed={phase === "SHOWDOWN" && view.claimedSeats.includes(p.seat)}
-                    onOpenProfile={setProfileNum}
-                  />
-                ))
-              )}
+            {/* In-felt toasts/notices (your turn, raise, fold…) — feedback now
+                lives ON the table instead of a fixed page overlay. */}
+            <div className="pointer-events-none absolute inset-x-0 top-8 z-30 flex flex-col items-center gap-1.5 px-3 sm:top-12">
+              <AnimatePresence>
+                {view.notices.map((n) => (
+                  <motion.div
+                    key={n.id}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className={cn(
+                      "rounded-full border px-4 py-1.5 text-sm shadow-lg backdrop-blur",
+                      n.kind === "system"
+                        ? "border-gold/40 bg-gold/10 text-gold"
+                        : "border-white/15 bg-card/90 text-foreground",
+                    )}
+                  >
+                    {n.text}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
 
             {/* focal point: pot scoreboard + community + timer */}
@@ -312,7 +348,7 @@ export function GameTable({
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+              <div className="flex flex-nowrap justify-center gap-1 sm:gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <FootballCard
                     key={i}
@@ -320,6 +356,7 @@ export function GameTable({
                     card={s.communityCards[i] ?? null}
                     back={!s.communityCards[i]}
                     reveal="flip"
+                    widthClass="w-[56px] sm:w-[104px]"
                   />
                 ))}
               </div>
@@ -332,48 +369,77 @@ export function GameTable({
                 </div>
               ) : null}
             </div>
+            {/* your hole cards — INSIDE the felt at your seat, so all 7 cards
+                sit on the table. Larger than the board so your two stand out. */}
+            <section
+              data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
+              className="relative z-10 flex flex-col items-center gap-1"
+            >
+              <div className="flex items-center gap-2 text-[0.7rem] text-white/75 sm:text-xs">
+                <span>بطاقتاك</span>
+                {me?.isDealer ? (
+                  anim("dealerButton") ? (
+                    <motion.span
+                      layoutId="dealer-button"
+                      className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
+                    >
+                      D
+                    </motion.span>
+                  ) : (
+                    <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
+                      D
+                    </span>
+                  )
+                ) : null}
+                {me && me.committedTotal > 0 ? (
+                  <span className="text-gold">
+                    · رهانك 🪙 <span className="num">{me.committedTotal}</span>
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex justify-center gap-2 sm:gap-3">
+                {view.hole.length > 0 ? (
+                  view.hole.map((c, i) => (
+                    <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" />
+                  ))
+                ) : (
+                  <>
+                    <FootballCard back size="lg" />
+                    <FootballCard back size="lg" />
+                  </>
+                )}
+              </div>
+            </section>
           </section>
 
-          {/* ----------------------------------------------- my hole cards */}
-          <section
-            data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
-            className="mx-auto mt-2 flex w-full max-w-3xl flex-col items-center gap-1 sm:mt-5 sm:gap-2"
-          >
-            <div className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
-              <span>بطاقتاك</span>
-              {me?.isDealer ? (
-                anim("dealerButton") ? (
-                  <motion.span
-                    layoutId="dealer-button"
-                    className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
-                  >
-                    D
-                  </motion.span>
-                ) : (
-                  <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
-                    D
-                  </span>
-                )
-              ) : null}
-              {me && me.committedTotal > 0 ? (
-                <span className="text-gold">
-                  · رهانك 🪙 <span className="num">{me.committedTotal}</span>
-                </span>
-              ) : null}
+          {/* your seat — profile + live balance, pulled down into the space that
+              used to be empty below the felt, so nothing floats and the column
+              stays balanced between the table and the action bar. */}
+          {me ? (
+            <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-center justify-center sm:mt-3">
+              <div
+                className={cn(
+                  "flex items-center gap-2.5 rounded-2xl border bg-[#070b14]/70 px-3 py-1.5 backdrop-blur transition",
+                  isMyTurn ? "border-primary/50 glow-primary" : "border-white/10",
+                )}
+              >
+                <SeatAvatar
+                  playerNumber={me.playerNumber}
+                  seed={me.username}
+                  size={34}
+                  sizeClass="size-9 sm:size-10"
+                  className={cn("ring-1", isMyTurn ? "ring-2 ring-primary" : "ring-white/15")}
+                />
+                <div className="flex flex-col leading-tight">
+                  <span className="text-xs font-bold sm:text-sm">أنت</span>
+                  <span className="num text-[0.66rem] text-gold sm:text-xs">🪙 {shownBalance}</span>
+                </div>
+                {isMyTurn ? (
+                  <span className="ms-1 text-[0.62rem] font-bold text-primary sm:text-xs">دورك…</span>
+                ) : null}
+              </div>
             </div>
-            <div className="flex justify-center gap-2 sm:gap-3">
-              {view.hole.length > 0 ? (
-                view.hole.map((c, i) => (
-                  <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" />
-                ))
-              ) : (
-                <>
-                  <FootballCard back size="lg" />
-                  <FootballCard back size="lg" />
-                </>
-              )}
-            </div>
-          </section>
+          ) : null}
           </div>
 
           {/* ------------------------------------------------- action zone */}
@@ -460,27 +526,8 @@ export function GameTable({
         ) : null}
       </AnimatePresence>
 
-      {/* A6 + C10: auto-dismissing notices (actions, opponent left, reconnect). */}
-      <div className="pointer-events-none fixed inset-x-0 top-16 z-30 flex flex-col items-center gap-1.5">
-        <AnimatePresence>
-          {view.notices.map((n) => (
-            <motion.div
-              key={n.id}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm shadow-lg backdrop-blur",
-                n.kind === "system"
-                  ? "border-gold/40 bg-gold/10 text-gold"
-                  : "border-white/15 bg-card/90 text-foreground",
-              )}
-            >
-              {n.text}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      {/* A6 + C10 notices (actions, opponent left, reconnect) now render INSIDE
+          the felt (see the table section above) so feedback lives on the table. */}
 
       <AnimatePresence>
         {view.error ? (
