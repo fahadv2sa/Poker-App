@@ -7,7 +7,6 @@ import {
   DEFAULT_GAME_CONFIG,
   NEW_ROUND_GRACE_SEC,
   type BestRankPayload,
-  type CardView,
   type ClaimEvidenceGroup,
   type GameResultEntry,
   type PlayerView,
@@ -508,7 +507,6 @@ export function GameTable({
             results={view.result.results}
             winningRankNameAr={view.result.winningRankNameAr}
             players={players}
-            community={(s?.communityCards ?? []).filter((c): c is CardView => c !== null)}
             yourSeat={yourSeat}
             bestRank={view.bestRank}
             isHost={amHost}
@@ -841,7 +839,6 @@ function ResultOverlay({
   results,
   winningRankNameAr,
   players,
-  community,
   yourSeat,
   bestRank,
   isHost,
@@ -853,7 +850,6 @@ function ResultOverlay({
   results: GameResultEntry[];
   winningRankNameAr: string | null;
   players: PlayerView[];
-  community: CardView[];
   yourSeat: number | null;
   bestRank: BestRankPayload | null;
   isHost: boolean;
@@ -873,11 +869,6 @@ function ResultOverlay({
     players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
   // Profile lookup (avatar + name) from the existing player list — no duplicate data.
   const playerOf = (seat: number) => players.find((p) => p.seat === seat);
-
-  // A revealed player's full hand = their 2 hole cards + the 5 shared community
-  // cards. Folders/last-standing have null holeCards (never revealed) → no cards.
-  const fullHand = (holeCards: CardView[] | null): CardView[] | null =>
-    holeCards && holeCards.length > 0 ? [...holeCards, ...community] : null;
 
   const winners = results.filter((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
 
@@ -1026,10 +1017,10 @@ function ResultOverlay({
                   <ClaimExplanation rankNameAr={null} groups={winners[0]!.claimEvidence} />
                 </div>
               ) : null}
-              {/* only the winning hand's cards */}
-              {fullHand(winners[0]!.holeCards) ? (
+              {/* only the cards forming the winning combination (never all 7) */}
+              {winners[0]!.combinationCards && winners[0]!.combinationCards.length > 0 ? (
                 <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                  {fullHand(winners[0]!.holeCards)!.map((c, i) => (
+                  {winners[0]!.combinationCards.map((c, i) => (
                     <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" reveal="flip" />
                   ))}
                 </div>
@@ -1047,7 +1038,6 @@ function ResultOverlay({
                 r={r}
                 you={r.seat === yourSeat}
                 player={playerOf(r.seat)}
-                community={community}
               />
             ))}
           </div>
@@ -1067,17 +1057,16 @@ function ResultRow({
   r,
   you,
   player,
-  community,
 }: {
   r: GameResultEntry;
   you: boolean;
   player: PlayerView | undefined;
-  community: CardView[];
 }) {
   const [open, setOpen] = useState(false);
   const invalid = r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
-  const cards =
-    r.holeCards && r.holeCards.length > 0 ? [...r.holeCards, ...community] : null;
+  // Only the cards forming this player's strongest combination (engine witness) —
+  // never the full 7.
+  const cards = r.combinationCards && r.combinationCards.length > 0 ? r.combinationCards : null;
   const hasDetails = Boolean(cards) || Boolean(r.claimEvidence) || Boolean(r.claimedRankNameAr);
   const name = you ? "أنت" : player?.username ?? `مقعد ${r.seat}`;
 

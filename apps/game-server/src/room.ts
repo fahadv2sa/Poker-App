@@ -1066,9 +1066,11 @@ export class GameRoom {
       .map((p) => {
         const folded = p.status === "FOLDED";
         const revealed = isShowdown && !folded;
+        const outcome = outcomeFor(p, settlements);
+        const isWinner = outcome === "WIN" || outcome === "SPLIT";
         return {
           seat: p.seat,
-          outcome: outcomeFor(p, settlements),
+          outcome,
           coinsDelta: Number(coinsDelta(p, settlements)),
           finalBalance: Number(p.available),
           // Folders have no claim context (null); otherwise expose whether the
@@ -1079,6 +1081,9 @@ export class GameRoom {
           // valid showdown claim; null for folders/invalid/last-standing.
           claimEvidence: folded || !isShowdown ? null : this.buildClaimEvidence(p),
           holeCards: revealed ? p.holeCards.map(toCardView) : null,
+          // Only the cards forming the shown combination (winner → winning/claimed
+          // rank; others → their strongest achievable rank) — never all 7.
+          combinationCards: revealed ? this.combinationFor(p, isWinner) : null,
         };
       });
 
@@ -1217,6 +1222,31 @@ export class GameRoom {
       evidence,
       cards: cardIdx.map((i) => toCardView(dealt[i]!)),
     };
+  }
+
+  /**
+   * The cards that FORM a player's shown combination on the winner screen, taken
+   * from the engine witness (never re-implemented): the WINNING (claimed) rank
+   * for a winner, otherwise the player's STRONGEST achievable rank. Returns a
+   * subset of the 7-card pool (so the UI shows only the connected cards), or `[]`
+   * when no rank qualifies.
+   */
+  private combinationFor(player: RoomPlayer, useClaim: boolean) {
+    const dealt = this.dealtPoolFor(player);
+    const pool: Card[] = dealt.map((c) => ({
+      nationality: c.nationality,
+      position: c.position,
+      clubs: c.clubs,
+    }));
+    const rule =
+      useClaim && player.claimRankId && player.claimValid
+        ? this.state.ranks.find((r) => r.id === player.claimRankId)?.rule
+        : bestAchievableRank(pool, this.state.ranks)?.rule;
+    if (!rule) return [];
+    const groups = explainRank(rule, pool);
+    if (!groups) return [];
+    const idx = [...new Set(groups.flatMap((g) => g.cardIndices))].sort((a, b) => a - b);
+    return idx.map((i) => toCardView(dealt[i]!));
   }
 
   /**
