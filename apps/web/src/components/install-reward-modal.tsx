@@ -142,15 +142,23 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
             </div>
 
             {ios ? (
-              // iOS: no install prompt — concise visual instructions.
+              // iOS: no install prompt — a clear numbered step list (one per line).
               <div className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-sm">
-                <p className="leading-relaxed">
-                  اضغط زر المشاركة <span aria-hidden>􀈂</span> <span className="font-bold">⬆️</span>{" "}
-                  ثم <span className="font-bold text-foreground">«إضافة إلى الشاشة الرئيسية»</span>
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  ستصلك المكافأة عند فتح التطبيق من الشاشة الرئيسية.
-                </p>
+                <ol className="flex flex-col gap-2 text-start">
+                  {[
+                    "اضغط زر المشاركة من متصفح سفاري",
+                    "إضافة إلى الشاشة الرئيسية / الهوم سكرين",
+                    "افتح التطبيق من الأيقونة التي ستظهر مع التطبيقات",
+                    "ستحصل تلقائيًا على 10 آلاف كوين كهدية",
+                  ].map((step, i) => (
+                    <li key={i} className="flex items-start gap-2 leading-relaxed">
+                      <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-gold/15 text-[0.7rem] font-bold text-gold">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
             ) : canPrompt ? (
               <Button onClick={onInstall} disabled={busy} size="lg" className="btn-gold-cta w-full">
