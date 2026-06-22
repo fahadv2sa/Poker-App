@@ -66,6 +66,18 @@ export interface RoomPlayer {
   isBot?: boolean;
 }
 
+/**
+ * A human who entered an in-progress Quick Play room from the room list. They
+ * spectate until the current round ends, then are seated at the next hand by
+ * replacing a bot (or taking a free seat). Empty in every other case, so it has
+ * zero effect on manual rooms or quick-play rooms nobody is waiting to join.
+ */
+export interface PendingJoin {
+  userId: string;
+  username: string;
+  playerNumber: number;
+}
+
 export interface RoomState {
   gameId: string;
   roomName: string;
@@ -98,6 +110,10 @@ export interface RoomState {
   turnDeadlineTs: number | null;
   /** HandRanks loaded from the DB (data-driven) — claim validation + display name. */
   ranks: RankInfo[];
+  /** Humans waiting to be seated at the next hand (Quick Play "join after the
+   *  current round" — they replace a bot). Optional/empty by default, so it
+   *  changes nothing for rooms nobody is waiting to join. */
+  pendingJoins?: PendingJoin[];
 }
 
 /** Maps a betting round to its phase. */

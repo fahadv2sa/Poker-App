@@ -39,6 +39,11 @@ export class BotIdentityPool {
   release(identities: Iterable<{ playerNumber: number }>): void {
     for (const i of identities) this.inUse.delete(i.playerNumber);
   }
+
+  /** Return a single identity to the pool (when a human replaces that bot). */
+  releaseOne(playerNumber: number): void {
+    this.inUse.delete(playerNumber);
+  }
 }
 
 /** Fisher–Yates in place. */

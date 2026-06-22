@@ -210,13 +210,20 @@ export function useGameSocket(token: string, inviteCode: string) {
         pushNoticeRef.current(`${p.username || `مقعد ${p.seat}`} غادر الطاولة`, "system"),
       // The room was closed (host or auto-empty): mark it so the table redirects.
       onRoomClosed: (p) => setView((v) => ({ ...v, closed: p.reason })),
-      onError: (e) =>
+      onError: (e) => {
+        // Quick Play "join after the current round": a calm system notice, not a
+        // fatal error — the player is spectating until the next hand seats them.
+        if (e.code === "SPECTATING") {
+          pushNoticeRef.current(e.messageAr, "system");
+          return;
+        }
         setView((v) =>
           // A locked room asks for a password instead of showing a fatal error.
           e.code === "PASSWORD_REQUIRED"
             ? { ...v, needsPassword: true, passwordMessage: e.messageAr }
             : { ...v, error: e.messageAr },
-        ),
+        );
+      },
       // Inactivity logout / invalid token: the session is gone — flag it so the
       // table redirects to /login (retrying the handshake can't recover it).
       onAuthExpired: () => setView((v) => ({ ...v, authExpired: true })),

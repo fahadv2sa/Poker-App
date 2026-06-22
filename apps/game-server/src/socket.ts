@@ -51,6 +51,9 @@ interface RoomRuntime {
   room: GameRoom;
   /** seat → connected socket id, for private emits. */
   seats: Map<number, string>;
+  /** userId → socket id for humans WAITING to be seated (Quick Play join-after-
+   *  round spectators). Promoted into `seats` when the room seats them. */
+  pending: Map<string, string>;
 }
 
 /** Identity attached to a socket (set during authentication). */
@@ -77,7 +80,11 @@ export function attachSocketHandlers(
 ): void {
   const runtimes = new Map<string, RoomRuntime>();
 
-  const buildDeps = (gameId: string, seats: Map<number, string>): RoomDeps => ({
+  const buildDeps = (
+    gameId: string,
+    seats: Map<number, string>,
+    pending: Map<string, string>,
+  ): RoomDeps => ({
     cards: new PrismaCardSource(),
     persistence: new PrismaRoomPersistence(),
     emitter: new SocketEmitter(io, gameId, seats),
@@ -86,6 +93,18 @@ export function attachSocketHandlers(
     // Optional bot turn-driver (only present when BOTS_ENABLED). Undefined here ⇒
     // the room's bot seam is inert and the base game is unchanged.
     bots: bots?.controller,
+    // Quick Play join-after-round: when the room seats a waiting human, bind their
+    // spectator socket to the new seat and send them a private snapshot carrying
+    // their seat (so the client knows yourSeat before hand:started / game:dealt).
+    bindSeat: (userId, seat) => {
+      const sid = pending.get(userId);
+      if (!sid) return;
+      seats.set(seat, sid);
+      pending.delete(userId);
+      const rt = runtimes.get(gameId);
+      if (rt) io.to(sid).emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, seat));
+    },
+    releaseBot: bots ? (playerNumber) => bots.releaseOne(playerNumber) : undefined,
   });
 
   async function getRuntime(gameId: string): Promise<RoomRuntime | null> {
@@ -97,8 +116,9 @@ export function attachSocketHandlers(
     const state = await hydrateRoom(gameId, ranks);
     if (!state) return null;
     const seats = new Map<number, string>();
-    const room = new GameRoom(state, buildDeps(gameId, seats));
-    const rt: RoomRuntime = { room, seats };
+    const pending = new Map<string, string>();
+    const room = new GameRoom(state, buildDeps(gameId, seats, pending));
+    const rt: RoomRuntime = { room, seats, pending };
     store.set(room);
     runtimes.set(gameId, rt);
     return rt;
@@ -241,6 +261,29 @@ export function attachSocketHandlers(
           }
         }
 
+        // Quick Play "join after the current round": a NEW human entering a LIVE
+        // quick-play room (from the room list) can't take a seat mid-hand. Hold
+        // them as a spectator and queue them; the next hand seats them by
+        // replacing a bot (room.admitPendingJoins). Manual rooms and quick-play
+        // LOBBY rooms fall through to the normal seating path below.
+        if (game.kind === "QUICK_PLAY" && !existing && rt.room.state.status !== "LOBBY") {
+          if (!rt.room.canAdmit()) {
+            return emitError(socket, "ROOM_FULL", "الطاولة ممتلئة — لا يوجد مقعد متاح");
+          }
+          rt.pending.set(user.userId, socket.id);
+          rt.room.enqueueJoin({
+            userId: user.userId,
+            username: user.username,
+            playerNumber: user.playerNumber,
+          });
+          joinedGameId = game.id;
+          await socket.join(roomKey(game.id));
+          socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, null));
+          // Informational — the client renders SPECTATING as a calm notice.
+          emitError(socket, "SPECTATING", "ستنضمّ إلى اللعب بعد انتهاء الجولة الحالية");
+          return;
+        }
+
         // FIX #2: seat the player with their real wallet balance as `available`.
         const balance = await getWalletBalance(user.userId);
         const player = seatPlayer(rt.room.state, user, balance);
@@ -347,6 +390,10 @@ export function attachSocketHandlers(
       if (!joinedGameId) return;
       const rt = runtimes.get(joinedGameId);
       if (!rt) return;
+      // A still-waiting spectator (Quick Play join-after-round) who leaves before
+      // being seated: drop them from the queue. No-op for seated players.
+      rt.pending.delete(user.userId);
+      rt.room.cancelPendingJoin(user.userId);
       const seat = seatOf(rt, socket.id);
       if (seat !== null) {
         rt.seats.delete(seat);

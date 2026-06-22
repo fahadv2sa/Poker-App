@@ -8,6 +8,8 @@ import type { GameRoom } from "./room.js";
 export interface RoomStore {
   get(gameId: string): GameRoom | undefined;
   getByInvite(inviteCode: string): GameRoom | undefined;
+  /** All live rooms (for the internal live-occupancy read used by the room list). */
+  list(): GameRoom[];
   set(room: GameRoom): void;
   delete(gameId: string): void;
 }
@@ -22,6 +24,10 @@ export class InMemoryRoomStore implements RoomStore {
 
   getByInvite(inviteCode: string): GameRoom | undefined {
     return this.byInvite.get(inviteCode);
+  }
+
+  list(): GameRoom[] {
+    return [...this.byId.values()];
   }
 
   set(room: GameRoom): void {

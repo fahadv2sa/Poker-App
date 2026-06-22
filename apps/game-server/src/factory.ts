@@ -104,5 +104,6 @@ export async function hydrateRoom(
     currentBet: 0n,
     turnDeadlineTs: null,
     ranks,
+    pendingJoins: [],
   };
 }

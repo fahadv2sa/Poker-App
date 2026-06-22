@@ -22,7 +22,45 @@ async function main(): Promise<void> {
   const port = Number(process.env.PORT ?? process.env.GAME_SERVER_PORT ?? 4000);
   const origin = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 
-  const httpServer = createServer();
+  // Authoritative in-memory room registry (also read by the internal endpoint).
+  const store = new InMemoryRoomStore();
+
+  // Internal live-occupancy endpoint for the room list. The web reads it
+  // server-side to show real filled/max (incl. in-memory bots) for Quick Play
+  // rooms. Returns ONLY non-sensitive aggregate seat counts. Optionally gated by
+  // INTERNAL_API_TOKEN. Socket.IO delegates non-engine.io requests to this
+  // handler, so a plain createServer(handler) is the correct pattern.
+  const internalToken = process.env.INTERNAL_API_TOKEN;
+  const httpServer = createServer((req, res) => {
+    const url = req.url ?? "";
+    if (req.method === "GET" && url.startsWith("/internal/rooms")) {
+      if (internalToken && req.headers["x-internal-token"] !== internalToken) {
+        res.writeHead(401, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "unauthorized" }));
+        return;
+      }
+      const rooms = store.list().map((room) => {
+        const s = room.state;
+        const connected = s.players.filter((p) => p.connected);
+        const bots = connected.filter((p) => p.isBot).length;
+        return {
+          gameId: s.gameId,
+          filled: connected.length,
+          max: s.maxPlayers,
+          bots,
+          humans: connected.length - bots,
+          phase: s.phase,
+          status: s.status,
+        };
+      });
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ rooms }));
+      return;
+    }
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "not_found" }));
+  });
+
   const io = new Server(httpServer, {
     cors: { origin, credentials: true },
   });
@@ -68,7 +106,6 @@ async function main(): Promise<void> {
 
   // HandRanks are data-driven: load them once at boot (re-seedable at runtime).
   const ranks = await loadRanks();
-  const store = new InMemoryRoomStore();
 
   // Quick Play bot fillers (cold-start, removable). Behind BOTS_ENABLED — when
   // off (default) nothing is constructed and the game is exactly as before. When

@@ -41,7 +41,7 @@ import type {
   RoomPersistence,
   TimerService,
 } from "./ports.js";
-import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
+import type { DealtCard, PendingJoin, RoomPlayer, RoomState } from "./types.js";
 
 export interface RoomDeps {
   cards: CardSource;
@@ -59,6 +59,14 @@ export interface RoomDeps {
    * not import room.ts.
    */
   bots?: BotPort;
+  /**
+   * OPTIONAL (Quick Play "join after the current round"). When a pending human is
+   * seated at the next hand, the room calls this so the socket layer can bind that
+   * user's (spectator) socket to its new seat. Inert when unset.
+   */
+  bindSeat?: (userId: string, seat: number) => void;
+  /** OPTIONAL: return a bot's identity to the pool when a human takes its seat. */
+  releaseBot?: (playerNumber: number) => void;
 }
 
 /** Optional bot turn-driver (see RoomDeps.bots). Implemented by src/bots. */
@@ -201,6 +209,11 @@ export class GameRoom {
     this.startingHand = true;
     try {
       this.deps.timers.clear(NEXT_HAND_KEY);
+      // Quick Play "join after the current round": admit any humans who were
+      // waiting (they replace a bot / take a free seat) BEFORE balances are
+      // sourced, so they're dealt into this upcoming hand like any other seat.
+      // No-op when nobody is waiting → existing behavior is unchanged.
+      this.admitPendingJoins();
       const ante = BigInt(this.state.config.ante);
       const present = this.state.players.filter((p) => p.connected);
       // Humans are re-sourced from the wallet; bots get a fresh fake stack
@@ -253,6 +266,91 @@ export class GameRoom {
         .sort((a, b) => a.seat - b.seat)[0];
       if (next) this.state.hostUserId = next.userId;
     }
+  }
+
+  // -- Quick Play "join after the current round" ---------------------------
+
+  /**
+   * A human (from the room list) asked to join an in-progress Quick Play room.
+   * They wait (spectate) and are seated at the next hand by `admitPendingJoins`.
+   * Idempotent: a no-op if they're already seated or already queued.
+   */
+  enqueueJoin(join: PendingJoin): void {
+    this.state.pendingJoins ??= [];
+    if (this.state.players.some((p) => p.userId === join.userId)) return;
+    if (this.state.pendingJoins.some((j) => j.userId === join.userId)) return;
+    this.state.pendingJoins.push(join);
+  }
+
+  /** Drop a still-waiting joiner (they disconnected before being seated). */
+  cancelPendingJoin(userId: string): void {
+    if (!this.state.pendingJoins) return;
+    this.state.pendingJoins = this.state.pendingJoins.filter((j) => j.userId !== userId);
+  }
+
+  /** Can a new human be admitted after the current round? True if there's a bot
+   *  to replace or a genuinely free seat. Used to reject a truly-full room. */
+  canAdmit(): boolean {
+    const connected = this.state.players.filter((p) => p.connected);
+    return connected.length < this.state.maxPlayers || connected.some((p) => p.isBot);
+  }
+
+  /**
+   * Seat the waiting humans (called at the next hand). Each REPLACES a connected
+   * bot (keeping the "human takes a bot's seat" semantic); if no bot remains but a
+   * seat is free, takes the free seat; otherwise stays queued for a later round.
+   * The new seat's wallet `available` is sourced right after, in startNextHand.
+   */
+  private admitPendingJoins(): void {
+    const pending = this.state.pendingJoins;
+    if (!pending || pending.length === 0) return;
+    this.state.pendingJoins = [];
+    const requeue: PendingJoin[] = [];
+
+    for (const join of pending) {
+      if (this.state.players.some((p) => p.userId === join.userId)) continue; // raced reconnect
+      const bot = this.state.players.find((p) => p.isBot && p.connected);
+      if (bot) {
+        // Replace the bot in place: keep its seat number, swap the identity.
+        this.deps.releaseBot?.(bot.playerNumber);
+        bot.userId = join.userId;
+        bot.username = join.username;
+        bot.playerNumber = join.playerNumber;
+        bot.isBot = false;
+        bot.connected = true;
+        bot.available = 0n; // sourced from the ledger in startNextHand
+        this.resetHandState(bot);
+        bot.holeCards = [];
+        bot.status = "WAITING";
+        this.deps.bindSeat?.(join.userId, bot.seat);
+      } else if (this.state.players.filter((p) => p.connected).length < this.state.maxPlayers) {
+        const used = new Set(this.state.players.map((p) => p.seat));
+        let seat = 1;
+        while (used.has(seat)) seat++;
+        this.state.players.push({
+          seat,
+          userId: join.userId,
+          username: join.username,
+          playerNumber: join.playerNumber,
+          status: "WAITING",
+          available: 0n,
+          committedThisRound: 0n,
+          committedTotal: 0n,
+          lastBetAmount: 0n,
+          hasActed: false,
+          forfeit: 0n,
+          holeCards: [],
+          claimRankId: null,
+          claimValid: false,
+          claimStrength: 0,
+          connected: true,
+        });
+        this.deps.bindSeat?.(join.userId, seat);
+      } else {
+        requeue.push(join); // table full of humans — keep spectating
+      }
+    }
+    if (requeue.length > 0) this.state.pendingJoins = requeue;
   }
 
   /**

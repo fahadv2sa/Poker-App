@@ -31,6 +31,12 @@ export class BotRuntime {
     return this.pool.available;
   }
 
+  /** Return one bot identity to the pool — used when a human takes a bot's seat
+   *  (Quick Play "join after the current round"). */
+  releaseOne(playerNumber: number): void {
+    this.pool.releaseOne(playerNumber);
+  }
+
   /**
    * Cold-start fill: seat bots into a LOBBY Quick Play room to reach a randomized
    * target, but ONLY when the human count is below minPlayers (true cold start).
