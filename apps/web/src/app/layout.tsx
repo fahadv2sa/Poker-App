@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
+import { InteractionSound } from "@/components/interaction-sound";
 
 // Fonts delivered via next/font (audit #6): Tajawal for Arabic UI, Inter for
 // Latin numerals. Exposed as CSS variables consumed by globals.css.
@@ -60,7 +61,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className={`${tajawal.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <InteractionSound />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,7 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/back-button";
 
 /**
  * Unified page header (Arena Felt): an accent icon-chip + title + optional
@@ -45,9 +44,7 @@ export function PageHeader({
       </div>
       <div className="ms-auto flex shrink-0 items-center gap-2">
         {action}
-        <Button asChild variant="ghost" size="sm">
-          <Link href={backHref}>← القائمة</Link>
-        </Button>
+        <BackButton backHref={backHref} />
       </div>
     </header>
   );

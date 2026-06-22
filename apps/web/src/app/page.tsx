@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
+import { BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/logo";
 import { HomeMenu } from "@/components/home-menu";
@@ -67,6 +68,47 @@ function SatButton({ href, icon, label }: { href: string; icon: string; label: s
   );
 }
 
+/** A clearly-square nav tile shown just above the bottom bar (global rank /
+ *  friends): icon + a value badge + title. Pure navigation (Link). */
+function SquareTile({
+  href,
+  icon,
+  title,
+  badge,
+  tone,
+}: {
+  href: string;
+  icon: string;
+  title: string;
+  badge: string;
+  tone: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="home-square group flex flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center"
+    >
+      <span
+        className="relative grid size-12 place-items-center rounded-xl text-2xl"
+        style={{
+          background: `color-mix(in oklch, ${tone} 16%, transparent)`,
+          border: `1px solid color-mix(in oklch, ${tone} 32%, transparent)`,
+        }}
+        aria-hidden
+      >
+        {icon}
+        <span
+          className="num absolute -end-2 -top-2 rounded-full bg-[#0b0f1a] px-1.5 py-0.5 text-[0.62rem] font-bold"
+          style={{ border: `1px solid color-mix(in oklch, ${tone} 50%, transparent)`, color: tone }}
+        >
+          {badge}
+        </span>
+      </span>
+      <span className="text-sm font-bold">{title}</span>
+    </Link>
+  );
+}
+
 /** One item in the fixed bottom bar. `active` marks the current screen. */
 function BottomItem({
   href,
@@ -115,7 +157,7 @@ export default async function HomePage() {
         wallet: { select: { balance: true } },
       },
     }),
-    prisma.playerMetrics.findUnique({ where: { userId }, select: { level: true } }),
+    prisma.playerMetrics.findUnique({ where: { userId }, select: { level: true, xp: true } }),
     prisma.userAvatar.findUnique({ where: { userId }, select: { updatedAt: true } }),
     prisma.friendship.count({
       where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
@@ -123,10 +165,22 @@ export default async function HomePage() {
   ]);
   if (!user) redirect("/login");
 
+  // Global rank = position among all HUMAN players by XP (bots excluded). A
+  // single cheap count — no leaderboard page is added; the tile links to /stats.
+  const rankNum =
+    (await prisma.playerMetrics.count({
+      where: {
+        xp: { gt: metrics?.xp ?? 0n },
+        user: { playerNumber: { lt: BOT_PLAYER_NUMBER_BASE } },
+      },
+    })) + 1;
+
   const coins = Number(user.wallet?.balance ?? 0n).toLocaleString("en-US");
   const likes = user.likesReceived.toLocaleString("en-US");
   const friends = friendCount.toLocaleString("en-US");
   const level = (metrics?.level ?? 1).toLocaleString("en-US");
+  const xp = Number(metrics?.xp ?? 0n).toLocaleString("en-US");
+  const rank = `#${rankNum.toLocaleString("en-US")}`;
   const displayName = user.nickname ?? user.username;
   const avatarUrl = avatar
     ? `/api/profile/avatar/${userId}?v=${avatar.updatedAt.getTime()}`
@@ -158,10 +212,10 @@ export default async function HomePage() {
               likes+friends (left). Equal-size stat chips throughout. ──────── */}
       <section className="panel panel-accent fade-rise relative z-10 mt-6 overflow-hidden p-5 sm:p-6">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          {/* right cell */}
+          {/* right cell — Level + XP */}
           <div className="flex flex-col items-center gap-4">
-            <StatCard icon="🪙" value={coins} label="كوين" tone="var(--gold)" />
             <StatCard icon="⭐" value={level} label="المستوى" tone="var(--gold)" />
+            <StatCard icon="✨" value={xp} label="XP" tone="var(--accent)" />
           </div>
 
           {/* center cell — avatar (tap → profile) + name */}
@@ -197,9 +251,16 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── golden coins band between the profile and the play area. ──────── */}
+      <div className="coins-bar relative z-10 mt-4 flex items-center justify-center gap-2.5 rounded-2xl px-5 py-3">
+        <span aria-hidden className="text-xl">🪙</span>
+        <span className="num text-2xl font-black text-gold">{coins}</span>
+        <span className="text-sm font-bold text-gold/80">كوين</span>
+      </div>
+
       {/* ── 3) center play stage — lit orb flanked by two icons per side. RTL: the
               first stack (create/join) sits on the RIGHT, the last on the LEFT. */}
-      <section className="play-stage relative z-10 my-auto flex items-center justify-center gap-3 py-8 sm:gap-6">
+      <section className="play-stage relative z-10 flex flex-1 items-center justify-center gap-3 py-8 sm:gap-6">
         <div className="relative z-10 flex flex-col gap-7">
           <SatButton href="/create-room" icon="♠" label="إنشاء غرفة" />
           <SatButton href="/rooms" icon="♣" label="دخول غرفة" />
@@ -208,6 +269,7 @@ export default async function HomePage() {
         <Link
           href="/quick-play"
           aria-label="اللعب السريع"
+          data-sound="quick-play"
           className="play-orb relative z-10 grid size-44 shrink-0 place-items-center rounded-full text-center text-primary-foreground sm:size-52"
         >
           <span className="flex flex-col items-center gap-1 leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]">
@@ -225,6 +287,13 @@ export default async function HomePage() {
           <SatButton href="/bank" icon="🏦" label="البنك" />
         </div>
       </section>
+
+      {/* ── two square nav tiles just above the bottom bar: global rank + friends.
+              Both dynamic (computed rank / accepted-friends count). ────────── */}
+      <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
+        <SquareTile href="/stats" icon="🏆" title="الرانك العام" badge={rank} tone="var(--gold)" />
+        <SquareTile href="/friends" icon="👥" title="الأصدقاء" badge={friends} tone="var(--accent)" />
+      </div>
 
       {/* ── 4) fixed bottom bar — guide · home · settings(profile). Centered to
               the same column width on desktop; safe-area aware on mobile. ──── */}

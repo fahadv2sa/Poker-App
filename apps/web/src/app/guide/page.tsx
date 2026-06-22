@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HAND_RANK_CATALOG } from "@fp/shared";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/back-button";
 import { HowToPlay } from "./how-to-play";
 
 /**
@@ -35,9 +34,7 @@ export default async function GuidePage() {
           <span className="size-3 rounded-full bg-primary glow-primary" />
           كيف تلعب
         </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
+        <BackButton />
       </header>
 
       <p className="mb-6 text-sm leading-relaxed text-muted-foreground">

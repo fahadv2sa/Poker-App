@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { deriveMetricView, type MetricCounters } from "@fp/shared";
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/back-button";
 import { cn } from "@/lib/utils";
 import { deriveStats } from "@/lib/stats";
 
@@ -118,9 +117,7 @@ export default async function StatsPage() {
           <span className="size-3 rounded-full bg-primary glow-primary" />
           الإحصائيات
         </div>
-        <Button asChild variant="ghost">
-          <Link href="/">← القائمة</Link>
-        </Button>
+        <BackButton />
       </header>
 
       {/* ── Identity + rank emblem (the hero) ─────────────────────────────── */}

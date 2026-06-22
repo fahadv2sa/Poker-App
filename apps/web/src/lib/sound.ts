@@ -95,6 +95,25 @@ class SoundManager {
     return this.loading;
   }
 
+  /** Fetch + decode only the named clips (idempotent). Lets non-game pages load
+   *  just the UI sounds (e.g. the unified click) instead of the full game set. */
+  async ensure(names: readonly SoundName[]): Promise<void> {
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    await Promise.all(
+      names.map(async (name) => {
+        if (this.buffers.has(name)) return;
+        try {
+          const res = await fetch(`/sounds/${name}.mp3`);
+          if (!res.ok) return;
+          this.buffers.set(name, await ctx.decodeAudioData(await res.arrayBuffer()));
+        } catch {
+          /* a missing/failed clip just stays silent — never throws */
+        }
+      }),
+    );
+  }
+
   /** Resume the context on a user gesture (autoplay policy); also nudges iOS. */
   unlock(): void {
     const ctx = this.ensureCtx();
