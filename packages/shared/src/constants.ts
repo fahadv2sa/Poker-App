@@ -16,6 +16,14 @@ export const BANK_CLAIM_AMOUNT = 1000n;
 export const BANK_CLAIM_MAX_PER_WINDOW = 2;
 export const BANK_CLAIM_WINDOW_HOURS = 24;
 
+/**
+ * Between hands, the winner screen runs a server-authoritative "ready check": the
+ * next round starts as soon as ALL connected humans press "New Round" (bots are
+ * auto-ready), or automatically once this grace period elapses — so a table can
+ * never hang waiting on someone who left or went idle.
+ */
+export const NEW_ROUND_GRACE_SEC = 15;
+
 /** player_number sequence starts here, displayed as e.g. #100001 (Section 5). */
 export const PLAYER_NUMBER_START = 100001;
 
@@ -62,7 +70,7 @@ export function isBotPlayerNumber(playerNumber: number): boolean {
 export const DEFAULT_GAME_CONFIG = {
   ante: 50,
   minRaise: 50,
-  turnTimerSec: 60,
+  turnTimerSec: 30,
   claimTimerSec: 60,
   handSize: HAND_SIZE,
   allInMode: "side_pots",

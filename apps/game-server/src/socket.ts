@@ -370,6 +370,19 @@ export function attachSocketHandlers(
       }),
     );
 
+    // Winner screen "New Round": mark this player's seat ready. The room starts
+    // the next hand once all connected humans are ready (bots auto-ready) or when
+    // the grace elapses — fully server-authoritative.
+    socket.on(CLIENT_EVENTS.roundReady, () =>
+      guard(socket, async () => {
+        const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
+        if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
+        const seat = seatOf(rt, socket.id);
+        if (seat === null) return emitError(socket, "NO_SEAT", "لا مقعد لك");
+        rt.room.markReady(seat);
+      }),
+    );
+
     // ── Quick Play queue ───────────────────────────────────────────────────
     socket.on(CLIENT_EVENTS.queueJoin, (raw: unknown) =>
       guard(socket, async () => {

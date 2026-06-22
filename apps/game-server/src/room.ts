@@ -23,6 +23,7 @@ import {
 } from "@fp/engine";
 import {
   BLUFF_BET_TO_POT,
+  NEW_ROUND_GRACE_SEC,
   SERVER_EVENTS,
   WEAK_RANK_MAX_STRENGTH,
   type BestRankPayload,
@@ -137,6 +138,12 @@ export class GameRoom {
    *  startNextHand (e.g. auto-timer racing an explicit trigger) from double-dealing. */
   private startingHand = false;
 
+  /** Winner-screen ready-check (between hands): seats that pressed "New Round",
+   *  and the grace deadline after which the next hand auto-advances. Bots are
+   *  never added (they're auto-ready). Cleared at each deal. */
+  private readySeats = new Set<number>();
+  private readyDeadlineTs: number | null = null;
+
   /** Close latches: `closing` blocks a concurrent close mid-await; `closed` makes
    *  close() a permanent no-op once done (host-close racing the auto-empty cleanup). */
   private closing = false;
@@ -203,12 +210,15 @@ export class GameRoom {
    * With fewer than 2 able players the room stays open but idle (no deal).
    */
   async startNextHand(): Promise<void> {
-    if (this.startingHand) return;
+    if (this.startingHand || this.closed) return;
     // Only between hands — never re-deal over a live hand.
     if (this.state.phase !== "ENDED" && this.state.phase !== "LOBBY") return;
     this.startingHand = true;
     try {
       this.deps.timers.clear(NEXT_HAND_KEY);
+      // The ready-check is consumed by this deal — reset it for the next round.
+      this.readySeats.clear();
+      this.readyDeadlineTs = null;
       // Quick Play "join after the current round": admit any humans who were
       // waiting (they replace a bot / take a free seat) BEFORE balances are
       // sourced, so they're dealt into this upcoming hand like any other seat.
@@ -265,6 +275,18 @@ export class GameRoom {
         .filter((x) => x.connected && x.userId !== p.userId)
         .sort((a, b) => a.seat - b.seat)[0];
       if (next) this.state.hostUserId = next.userId;
+    }
+    // Ready-check: a leaver no longer counts toward "all ready". If the remaining
+    // humans are now all ready, roll forward immediately; otherwise refresh the
+    // status. (Only between hands on a real room. If the last human left, the
+    // socket layer tears the room down — allHumansReady is false with 0 humans.)
+    if (this.state.phase === "ENDED" && this.state.kind) {
+      this.readySeats.delete(seat);
+      if (this.allHumansReady()) {
+        void this.startNextHand().catch((err) => console.error("[ready] start failed", err));
+      } else {
+        this.emitReadyStatus();
+      }
     }
   }
 
@@ -351,6 +373,53 @@ export class GameRoom {
       }
     }
     if (requeue.length > 0) this.state.pendingJoins = requeue;
+  }
+
+  // -- winner-screen ready-check -------------------------------------------
+
+  /** Start the between-hands ready check: reset readiness, set the grace
+   *  deadline, arm the auto-advance timer, and broadcast the initial status. */
+  private armReadyCheck(): void {
+    this.readySeats.clear();
+    this.readyDeadlineTs = this.deps.clock.now() + NEW_ROUND_GRACE_SEC * 1000;
+    this.deps.timers.arm(NEXT_HAND_KEY, NEW_ROUND_GRACE_SEC * 1000, () => {
+      void this.startNextHand().catch((err) =>
+        console.error("[ready] auto-advance failed", err),
+      );
+    });
+    this.emitReadyStatus();
+  }
+
+  /** A player pressed "New Round". Marks their seat ready and rolls into the next
+   *  hand immediately once every connected human is ready (bots are auto-ready). */
+  markReady(seat: number): void {
+    if (this.state.phase !== "ENDED") return; // only between hands
+    const p = this.state.players.find((x) => x.seat === seat);
+    if (!p || !p.connected || p.isBot) return;
+    this.readySeats.add(seat);
+    if (this.allHumansReady()) {
+      void this.startNextHand().catch((err) => console.error("[ready] start failed", err));
+      return;
+    }
+    this.emitReadyStatus();
+  }
+
+  /** True once every CONNECTED HUMAN seat is ready (bots excluded). False with no
+   *  humans, so an empty/bot-only room is handled by teardown, never auto-dealt. */
+  private allHumansReady(): boolean {
+    const humans = this.state.players.filter((p) => p.connected && !p.isBot);
+    return humans.length > 0 && humans.every((p) => this.readySeats.has(p.seat));
+  }
+
+  /** Broadcast the current ready status (X/Y ready + the auto-advance deadline). */
+  private emitReadyStatus(): void {
+    const humans = this.state.players.filter((p) => p.connected && !p.isBot);
+    const humanSeats = new Set(humans.map((h) => h.seat));
+    this.deps.emitter.toRoom(SERVER_EVENTS.roundStatus, {
+      readySeats: [...this.readySeats].filter((s) => humanSeats.has(s)),
+      totalHumans: humans.length,
+      deadlineTs: this.readyDeadlineTs,
+    });
   }
 
   /**
@@ -1052,20 +1121,15 @@ export class GameRoom {
       console.error("[stats] hand aggregation failed", err);
     }
 
-    // MANUAL rooms do NOT auto-deal: they wait between hands (phase ENDED) with
-    // the result on screen for the host's explicit hand:next, so no antes are
-    // charged without consent. QUICK_PLAY (Public) rooms DO auto-advance after a
-    // short delay, so the table stays live and any human waiting to join is
-    // seated promptly (replacing a bot at the next hand). startNextHand is
-    // re-entrancy- and phase-guarded, and is cleared on close/park, so a manual
-    // host trigger racing this timer can't double-deal.
-    if (this.state.kind === "QUICK_PLAY") {
-      const delayMs = this.state.config.nextHandDelaySec * 1000;
-      this.deps.timers.arm(NEXT_HAND_KEY, delayMs, () => {
-        void this.startNextHand().catch((err) =>
-          console.error("[auto-next] startNextHand failed", err),
-        );
-      });
+    // Winner-screen ready-check (server-authoritative). Real rooms (loaded with a
+    // `kind`) start a grace timer and wait for all connected humans to press "New
+    // Round"; bots are auto-ready. All-ready OR the grace elapsing rolls into the
+    // next hand — so a quick-play waiter is seated promptly and the table can
+    // never hang. startNextHand is re-entrancy/phase/closed-guarded and clears the
+    // timer, so a press racing the grace can't double-deal. (Bare engine-test
+    // rooms have no `kind` and keep the explicit-trigger-only behavior.)
+    if (this.state.kind) {
+      this.armReadyCheck();
     }
   }
 

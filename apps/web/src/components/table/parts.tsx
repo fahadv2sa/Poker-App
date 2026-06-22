@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import type { CardView, PlayerView } from "@fp/shared";
+import { DEFAULT_GAME_CONFIG, type CardView, type PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
 import { TurnFrame } from "./fx";
@@ -594,7 +594,10 @@ export function useRemainingMs(deadlineTs: number | null): number | null {
  */
 export function Countdown({
   deadlineTs,
-  totalMs = 60_000,
+  // Default to the turn timer so the draining bar is scaled correctly (the shown
+  // seconds come from the server's deadlineTs regardless). Callers with a
+  // different window (e.g. the claim timer / ready grace) pass their own totalMs.
+  totalMs = DEFAULT_GAME_CONFIG.turnTimerSec * 1000,
   compact = false,
 }: {
   deadlineTs: number | null;

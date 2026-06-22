@@ -15,6 +15,7 @@ import {
   type QueueMatchedPayload,
   type QueueStatePayload,
   type RoomClosedPayload,
+  type RoundStatusPayload,
   type SessionWaitingPayload,
   type ShowdownStartPayload,
   type StateSyncPayload,
@@ -42,6 +43,7 @@ export interface GameHandlers {
   onResult?: (p: GameResultPayload) => void;
   onBestRank?: (p: BestRankPayload) => void;
   onHandStarted?: (p: HandStartedPayload) => void;
+  onRoundStatus?: (p: RoundStatusPayload) => void;
   onSessionWaiting?: (p: SessionWaitingPayload) => void;
   onPlayerLeft?: (p: PlayerLeftPayload) => void;
   onRoomClosed?: (p: RoomClosedPayload) => void;
@@ -57,6 +59,8 @@ export interface GameConnection {
   join: (inviteCode: string, password?: string) => void;
   start: () => void;
   nextHand: () => void;
+  /** Winner screen: mark this player ready for the next round (round:ready). */
+  ready: () => void;
   closeTable: () => void;
   /** Leave the table without closing it (host role transfers if you're host). */
   leave: () => void;
@@ -109,6 +113,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.gameResult, handlers.onResult);
   bind(SERVER_EVENTS.bestRank, handlers.onBestRank);
   bind(SERVER_EVENTS.handStarted, handlers.onHandStarted);
+  bind(SERVER_EVENTS.roundStatus, handlers.onRoundStatus);
   bind(SERVER_EVENTS.sessionWaiting, handlers.onSessionWaiting);
   bind(SERVER_EVENTS.playerLeft, handlers.onPlayerLeft);
   bind(SERVER_EVENTS.roomClosed, handlers.onRoomClosed);
@@ -174,6 +179,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
       socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode, password }),
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
     nextHand: () => socket.emit(CLIENT_EVENTS.nextHand, {}),
+    ready: () => socket.emit(CLIENT_EVENTS.roundReady, {}),
     closeTable: () => socket.emit(CLIENT_EVENTS.roomClose, {}),
     leave: () => socket.emit(CLIENT_EVENTS.roomLeave, {}),
     placeAction: (type, amount) =>

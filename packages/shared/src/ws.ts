@@ -23,6 +23,9 @@ export const CLIENT_EVENTS = {
   gameStart: "game:start",
   /** Host explicitly deals the next hand of the session (Batch 1: no auto-deal). */
   nextHand: "hand:next",
+  /** Winner screen: this player pressed "New Round" (ready for the next hand). The
+   *  server starts once all connected humans are ready, or when the grace elapses. */
+  roundReady: "round:ready",
   actionPlace: "action:place",
   claimSelect: "claim:select",
   /** Quick Play: join a tier's matchmaking queue. */
@@ -46,6 +49,8 @@ export const SERVER_EVENTS = {
   bestRank: "result:best",
   /** A new hand began in the same room (feature #7: multi-hand session). */
   handStarted: "hand:started",
+  /** Winner screen ready-check status: who's ready + the auto-advance deadline. */
+  roundStatus: "round:status",
   /** The session can't deal a hand yet (fewer than 2 players can afford the ante). */
   sessionWaiting: "session:waiting",
   /** A player disconnected / left the room (Batch 2: opponent-left banner). */
@@ -93,6 +98,9 @@ export const claimSelectSchema = z.object({
   handRankId: z.string().uuid(),
 });
 export type ClaimSelectInput = z.infer<typeof claimSelectSchema>;
+
+export const roundReadySchema = z.object({});
+export type RoundReadyInput = z.infer<typeof roundReadySchema>;
 
 export const queueJoinSchema = z.object({
   difficulty: z.enum(DIFFICULTIES),
@@ -281,6 +289,18 @@ export interface HandStartedPayload {
   players: PlayerView[];
   pot: number;
   currentBet: number;
+}
+
+/**
+ * Winner-screen ready-check status. `readySeats` are the seats that pressed "New
+ * Round"; `totalHumans` is how many connected humans must be ready (bots are
+ * auto-ready and excluded); `deadlineTs` (epoch ms) is when the round
+ * auto-advances regardless. The next hand starts at all-ready OR the deadline.
+ */
+export interface RoundStatusPayload {
+  readySeats: number[];
+  totalHumans: number;
+  deadlineTs: number | null;
 }
 
 /** The session is open but idle: not enough players can afford the next ante. */

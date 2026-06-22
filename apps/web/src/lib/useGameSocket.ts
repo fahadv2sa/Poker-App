@@ -176,6 +176,7 @@ export function useGameSocket(token: string, inviteCode: string) {
           hole: [],
           waiting: false,
           claimedSeats: [],
+          roundReady: null,
           state: v.state
             ? {
                 ...v.state,
@@ -192,6 +193,13 @@ export function useGameSocket(token: string, inviteCode: string) {
               }
             : v.state,
         })),
+      // Winner-screen ready-check: who's pressed "New Round" + the auto-advance
+      // deadline. Server-authoritative; drives the overlay's ready UI/countdown.
+      onRoundStatus: (p) =>
+        setView((v) => ({
+          ...v,
+          roundReady: { readySeats: p.readySeats, total: p.totalHumans, deadlineTs: p.deadlineTs },
+        })),
       // Not enough players can afford the next ante — the room idles, open.
       onSessionWaiting: () =>
         setView((v) => ({
@@ -201,6 +209,7 @@ export function useGameSocket(token: string, inviteCode: string) {
           showdown: null,
           hole: [],
           waiting: true,
+          roundReady: null,
           state: v.state
             ? { ...v.state, phase: "LOBBY", status: "LOBBY", currentTurnSeat: null }
             : v.state,
@@ -235,6 +244,7 @@ export function useGameSocket(token: string, inviteCode: string) {
 
   const start = useCallback(() => connRef.current?.start(), []);
   const nextHand = useCallback(() => connRef.current?.nextHand(), []);
+  const ready = useCallback(() => connRef.current?.ready(), []);
   const closeTable = useCallback(() => connRef.current?.closeTable(), []);
   const leave = useCallback(() => connRef.current?.leave(), []);
   const placeAction = useCallback(
@@ -256,6 +266,7 @@ export function useGameSocket(token: string, inviteCode: string) {
     view,
     start,
     nextHand,
+    ready,
     closeTable,
     leave,
     placeAction,

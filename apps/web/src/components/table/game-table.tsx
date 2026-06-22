@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
   DEFAULT_GAME_CONFIG,
+  NEW_ROUND_GRACE_SEC,
   type BestRankPayload,
   type CardView,
   type ClaimEvidenceGroup,
@@ -59,7 +60,7 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, nextHand, closeTable, leave, placeAction, selectClaim, clearError, submitPassword } =
+  const { view, start, ready, closeTable, leave, placeAction, selectClaim, clearError, submitPassword } =
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
@@ -68,9 +69,6 @@ export function GameTable({
   const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
-  // "Continue Playing" dismisses the result overlay locally for this player; it
-  // resets whenever a new result arrives so the next round's winner shows again.
-  const [continued, setContinued] = useState(false);
   // Opponent profile open during play (by playerNumber) — on-demand read.
   const [profileNum, setProfileNum] = useState<number | null>(null);
 
@@ -133,10 +131,6 @@ export function GameTable({
   useEffect(() => {
     if (phase !== "SHOWDOWN") setClaimed(null);
   }, [phase]);
-  // A new round's result re-shows the winner screen for a player who "continued".
-  useEffect(() => {
-    setContinued(false);
-  }, [view.result]);
   // The room was closed (host or auto-empty): briefly show why, then return to
   // the menu. The server already evicted us and settled any refunds.
   useEffect(() => {
@@ -509,7 +503,7 @@ export function GameTable({
       {/* Dedicated full-screen result page: rich, data-driven breakdown that
           stays until the host deals the next hand (no auto-dismiss). */}
       <AnimatePresence>
-        {view.result && !continued ? (
+        {view.result ? (
           <ResultOverlay
             results={view.result.results}
             winningRankNameAr={view.result.winningRankNameAr}
@@ -518,10 +512,10 @@ export function GameTable({
             yourSeat={yourSeat}
             bestRank={view.bestRank}
             isHost={amHost}
-            onNextHand={nextHand}
+            roundReady={view.roundReady}
+            onReady={ready}
             onCloseTable={closeTable}
             onExit={onExit}
-            onContinue={() => setContinued(true)}
           />
         ) : null}
       </AnimatePresence>
@@ -775,7 +769,7 @@ function ClaimPanel({
         <span className="text-muted-foreground"> — الاختيار الخاطئ يُخرجك من المنافسة</span>
       </div>
 
-      <Countdown deadlineTs={deadlineTs} />
+      <Countdown deadlineTs={deadlineTs} totalMs={DEFAULT_GAME_CONFIG.claimTimerSec * 1000} />
       {!claimed ? (
         <p className="text-center text-xs text-destructive/90">
           إن لم تختر قبل انتهاء الوقت ستفقد حقّك في المطالبة بالمجمّع
@@ -851,10 +845,10 @@ function ResultOverlay({
   yourSeat,
   bestRank,
   isHost,
-  onNextHand,
+  roundReady,
+  onReady,
   onCloseTable,
   onExit,
-  onContinue,
 }: {
   results: GameResultEntry[];
   winningRankNameAr: string | null;
@@ -863,13 +857,17 @@ function ResultOverlay({
   yourSeat: number | null;
   bestRank: BestRankPayload | null;
   isHost: boolean;
-  onNextHand: () => void;
+  roundReady: { readySeats: number[]; total: number; deadlineTs: number | null } | null;
+  onReady: () => void;
   onCloseTable: () => void;
   onExit: () => void;
-  onContinue: () => void;
 }) {
-  const [dealing, setDealing] = useState(false);
   const { fly } = useFx();
+  // Winner-screen ready state (server-authoritative): has THIS player pressed
+  // "New Round"? The next hand starts at all-ready or when the grace elapses.
+  const youReady = yourSeat != null && (roundReady?.readySeats.includes(yourSeat) ?? false);
+  const readyCount = roundReady?.readySeats.length ?? 0;
+  const readyTotal = roundReady?.total ?? 0;
 
   const nameOf = (seat: number) =>
     players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
@@ -927,6 +925,37 @@ function ResultOverlay({
       ) : null}
 
       <div className="relative z-10 my-auto w-full max-w-2xl space-y-3">
+        {/* ── Post-round controls — ABOVE the announcement. "New Round" is a
+            per-player ready vote: the next hand starts when ALL connected humans
+            are ready (bots auto-ready) or when the grace countdown elapses
+            (server-authoritative). Host also gets Close Table; everyone Exit. */}
+        <div className="space-y-2">
+          {roundReady ? (
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">
+                الاستعداد للجولة: <span className="num font-bold text-foreground">{readyCount}</span>
+                /<span className="num">{readyTotal}</span>
+              </span>
+              {roundReady.deadlineTs ? (
+                <Countdown deadlineTs={roundReady.deadlineTs} totalMs={NEW_ROUND_GRACE_SEC * 1000} />
+              ) : null}
+            </div>
+          ) : null}
+          <div className={cn("grid gap-2", isHost ? "grid-cols-3" : "grid-cols-2")}>
+            <ResultAction
+              glyph={youReady ? "✓" : "▶"}
+              label={youReady ? "جاهز" : "جولة جديدة"}
+              variant="primary"
+              disabled={youReady}
+              onClick={onReady}
+            />
+            {isHost ? (
+              <ResultAction glyph="✕" label="اغلاق الطاولة" variant="destructive" onClick={onCloseTable} />
+            ) : null}
+            <ResultAction glyph="⮐" label="الخروج" variant="neutral" onClick={onExit} />
+          </div>
+        </div>
+
         {/* ── Winner HERO (focal celebration) ──────────────────────────────── */}
         <motion.section
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -1026,32 +1055,6 @@ function ResultOverlay({
 
         {/* Your own strongest combination — private reveal, tap to expand. */}
         {bestRank ? <BestRankRow bestRank={bestRank} /> : null}
-
-        {/* Post-round controls: the host advances/closes the table; players
-            continue or exit. The host role transfers if the creator exits. */}
-        <div className="pt-1">
-          {isHost ? (
-            <div className="grid grid-cols-3 gap-2">
-              <ResultAction
-                glyph="▶"
-                label="بدأ جولة جديدة"
-                variant="primary"
-                disabled={dealing}
-                onClick={() => {
-                  setDealing(true);
-                  onNextHand();
-                }}
-              />
-              <ResultAction glyph="✕" label="اغلاق الطاولة" variant="destructive" onClick={onCloseTable} />
-              <ResultAction glyph="⮐" label="الخروج" variant="neutral" onClick={onExit} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <ResultAction glyph="▶" label="اكمال اللعب" variant="primary" onClick={onContinue} />
-              <ResultAction glyph="⮐" label="الخروج" variant="neutral" onClick={onExit} />
-            </div>
-          )}
-        </div>
       </div>
     </motion.div>
   );

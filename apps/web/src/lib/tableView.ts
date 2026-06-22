@@ -49,6 +49,9 @@ export interface TableView {
   /** Set when the handshake is rejected for a gone session (inactivity logout or
    *  an invalid token). The table sends the user to /login to re-authenticate. */
   authExpired: boolean;
+  /** Winner-screen ready-check status (between hands): who pressed "New Round",
+   *  how many humans must, and the auto-advance deadline. null during a hand. */
+  roundReady: { readySeats: number[]; total: number; deadlineTs: number | null } | null;
 }
 
 export const INITIAL_VIEW: TableView = {
@@ -67,6 +70,7 @@ export const INITIAL_VIEW: TableView = {
   needsPassword: false,
   passwordMessage: null,
   authExpired: false,
+  roundReady: null,
 };
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
