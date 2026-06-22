@@ -60,7 +60,6 @@ export function GameTable({
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
-  const [raiseTo, setRaiseTo] = useState(0);
   const [password, setPassword] = useState("");
   const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -103,6 +102,10 @@ export function GameTable({
   // live hand we subtract what's committed. The server is always the real source.
   const base = view.balance ?? initialBalance;
   const shownBalance = view.result ? base : base - Number(me?.committedTotal ?? 0);
+  // Cap for the manual raise input: the most you could put in this round = your
+  // remaining balance plus what you've already committed this round (i.e. your
+  // all-in total). A raise-to can never exceed this.
+  const maxRaiseTo = shownBalance + Number(me?.committedThisRound ?? 0);
 
   // Preload the sound clips once, and unlock audio on the first user gesture
   // (browser autoplay policy: the AudioContext starts suspended). Entering a
@@ -121,9 +124,6 @@ export function GameTable({
     };
   }, []);
 
-  useEffect(() => {
-    if (isMyTurn) setRaiseTo(minRaiseTo);
-  }, [isMyTurn, minRaiseTo]);
   useEffect(() => {
     if (phase !== "SHOWDOWN") setClaimed(null);
   }, [phase]);
@@ -452,8 +452,7 @@ export function GameTable({
                 <ActionBar
                   owed={owed}
                   minRaiseTo={minRaiseTo}
-                  raiseTo={raiseTo}
-                  setRaiseTo={setRaiseTo}
+                  maxRaiseTo={maxRaiseTo}
                   onAction={placeAction}
                   deadlineTs={s.turnDeadlineTs}
                 />
@@ -636,15 +635,13 @@ function LobbyPanel({
 function ActionBar({
   owed,
   minRaiseTo,
-  raiseTo,
-  setRaiseTo,
+  maxRaiseTo,
   onAction,
   deadlineTs,
 }: {
   owed: number;
   minRaiseTo: number;
-  raiseTo: number;
-  setRaiseTo: (n: number) => void;
+  maxRaiseTo: number;
   onAction: (type: string, amount?: number) => void;
   deadlineTs: number | null;
 }) {
@@ -653,6 +650,14 @@ function ActionBar({
   // component only mounts on your turn, so the confirm self-resets when the turn
   // passes — a stale confirm can never fire a late action.
   const [foldConfirm, setFoldConfirm] = useState(false);
+  // Manual raise amount — EMPTY by default (no pre-fill). Kept as a digits-only
+  // string so the field can be blank; the component remounts each turn, so it
+  // resets to empty every turn. A raise is only allowed when the value is a
+  // valid number within [minRaiseTo, maxRaiseTo].
+  const [raiseStr, setRaiseStr] = useState("");
+  const raiseNum = raiseStr === "" ? NaN : Number(raiseStr);
+  const raiseValid =
+    Number.isFinite(raiseNum) && raiseNum >= minRaiseTo && raiseNum <= maxRaiseTo;
   // #9 entrance + tap feedback (visual-only; off → no entrance, no tap scale).
   const tap = anim("actionBar") ? "transition-transform active:scale-95" : "";
   // Compact controls on mobile (shorter/tighter), full size on desktop (sm:).
@@ -716,20 +721,27 @@ function ActionBar({
 
           <div className="flex items-center gap-2">
             <Input
-              type="number"
-              min={minRaiseTo}
-              step={DEFAULT_GAME_CONFIG.minRaise}
-              value={raiseTo}
-              onChange={(e) => setRaiseTo(Number(e.target.value))}
+              // Digits-only + numeric mobile keypad. type=text (not number) so we
+              // fully control the value: strip non-digits and cap at the balance.
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={raiseStr}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "");
+                // Empty stays empty; otherwise cap at the max (can't exceed balance).
+                setRaiseStr(digits === "" ? "" : String(Math.min(Number(digits), maxRaiseTo)));
+              }}
+              placeholder={`الحد الأدنى ${minRaiseTo}`}
               className="num h-8 sm:h-9"
               aria-label="مبلغ الرفع"
             />
             <Button
-              onClick={() => onAction("RAISE", raiseTo)}
-              disabled={raiseTo < minRaiseTo}
+              onClick={() => onAction("RAISE", raiseNum)}
+              disabled={!raiseValid}
               className={cn("shrink-0", tap, sz)}
             >
-              رفع إلى <span className="num">{raiseTo}</span>
+              رفع{raiseValid ? <> إلى <span className="num">{raiseNum}</span></> : null}
             </Button>
           </div>
         </>
