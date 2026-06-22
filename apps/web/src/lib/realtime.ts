@@ -46,6 +46,10 @@ export interface GameHandlers {
   onPlayerLeft?: (p: PlayerLeftPayload) => void;
   onRoomClosed?: (p: RoomClosedPayload) => void;
   onError?: (p: { code: string; messageAr: string }) => void;
+  /** The handshake was rejected because the session is gone (inactivity logout
+   *  or an invalid/expired token). Retrying can't fix it — the caller should
+   *  force re-authentication (send the user to /login). */
+  onAuthExpired?: (reason: "SESSION_EXPIRED" | "UNAUTHENTICATED") => void;
 }
 
 export interface GameConnection {
@@ -82,12 +86,18 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   socket.on("connect", () => handlers.onConnect?.());
   socket.on("disconnect", () => handlers.onDisconnect?.());
   // Handshake rejection (bad/expired token, server down) — fail cleanly.
-  socket.on("connect_error", (err: Error) =>
+  socket.on("connect_error", (err: Error) => {
+    // A gone session (inactivity logout / invalid token) can't be fixed by
+    // retrying — stop reconnecting and let the caller force re-authentication.
+    if (err.message === "SESSION_EXPIRED" || err.message === "UNAUTHENTICATED") {
+      socket.disconnect();
+      handlers.onAuthExpired?.(err.message);
+    }
     handlers.onError?.({
       code: "CONNECT_ERROR",
       messageAr: connectErrorMessage(err.message),
-    }),
-  );
+    });
+  });
   bind(SERVER_EVENTS.stateSync, handlers.onState);
   bind(SERVER_EVENTS.gameDealt, handlers.onDealt);
   bind(SERVER_EVENTS.phaseChanged, handlers.onPhase);

@@ -13,3 +13,4 @@ export * from "./errors";
 export * from "./wallet";
 export * from "./bank";
 export * from "./metrics";
+export * from "./session";

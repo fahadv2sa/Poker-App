@@ -162,6 +162,12 @@ model User {
   avatarSeed   String?  @map("avatar_seed")
   // Social layer: denormalized total likes received (source of truth = Like rows).
   likesReceived Int     @default(0) @map("likes_received")
+  // Inactivity auto-logout: last time this human showed activity (HTTP request or
+  // socket event). Advanced by touchUserActivity (throttled); read at access to
+  // expire sessions idle > SESSION_INACTIVITY_MS. Defaults to now() so existing
+  // rows backfill to migration time (nobody is logged out on deploy). Bots have
+  // a row too but it is never updated or checked (they never authenticate).
+  lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz(6)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

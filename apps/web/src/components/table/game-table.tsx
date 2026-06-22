@@ -144,6 +144,13 @@ export function GameTable({
     const t = setTimeout(() => router.replace("/"), 1400);
     return () => clearTimeout(t);
   }, [view.closed, router]);
+  // Inactivity auto-logout (or an invalid token) rejected the handshake: the
+  // session is gone, so re-authenticate. The web cookie has expired in the same
+  // 2-day window, so /login won't bounce back to the table.
+  useEffect(() => {
+    if (!view.authExpired) return;
+    router.replace("/login");
+  }, [view.authExpired, router]);
 
   return (
     <MotionConfig reducedMotion="user">

@@ -46,6 +46,9 @@ export interface TableView {
    *  (or "wrong password" after a failed attempt). Cleared once seated. */
   needsPassword: boolean;
   passwordMessage: string | null;
+  /** Set when the handshake is rejected for a gone session (inactivity logout or
+   *  an invalid token). The table sends the user to /login to re-authenticate. */
+  authExpired: boolean;
 }
 
 export const INITIAL_VIEW: TableView = {
@@ -63,6 +66,7 @@ export const INITIAL_VIEW: TableView = {
   error: null,
   needsPassword: false,
   passwordMessage: null,
+  authExpired: false,
 };
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);

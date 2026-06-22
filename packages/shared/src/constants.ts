@@ -20,6 +20,28 @@ export const BANK_CLAIM_WINDOW_HOURS = 24;
 export const PLAYER_NUMBER_START = 100001;
 
 /**
+ * Inactivity auto-logout. A HUMAN session is invalidated after this much time
+ * with no activity (no HTTP request and no socket event). Single source of truth
+ * for the threshold — used as the rolling Auth.js JWT `maxAge` (web) AND as the
+ * window the game-server checks `users.last_active_at` against at the Socket.IO
+ * handshake. Change the threshold here and both layers follow.
+ *
+ * Bots (player_number >= BOT_PLAYER_NUMBER_BASE) are never subject to this — they
+ * have no login and no socket, and the enforcement helpers skip them explicitly.
+ */
+export const SESSION_INACTIVITY_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+export const SESSION_INACTIVITY_SECONDS = SESSION_INACTIVITY_MS / 1000;
+
+/**
+ * Write-coalescing for activity tracking: `last_active_at` is advanced at most
+ * once per user per this window (a conditional UPDATE no-ops otherwise), so the
+ * hot paths (every authed request, every socket event) cost at most one cheap,
+ * usually-zero-row write. Far smaller than SESSION_INACTIVITY_MS, so it never
+ * affects whether a session is considered expired.
+ */
+export const ACTIVITY_WRITE_THROTTLE_MS = 10 * 60 * 1000; // 10 minutes
+
+/**
  * Quick Play bot fillers (cold-start, removable). Bot user rows live in a RESERVED
  * player_number block at or above this base — far above where the real
  * autoincrement sequence (starting at 100001) will reach for the foreseeable

@@ -217,6 +217,9 @@ export function useGameSocket(token: string, inviteCode: string) {
             ? { ...v, needsPassword: true, passwordMessage: e.messageAr }
             : { ...v, error: e.messageAr },
         ),
+      // Inactivity logout / invalid token: the session is gone — flag it so the
+      // table redirects to /login (retrying the handshake can't recover it).
+      onAuthExpired: () => setView((v) => ({ ...v, authExpired: true })),
     });
     connRef.current = conn;
     return () => conn.disconnect();

@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { rateLimit, type RateStore } from "@fp/shared";
+import { isSessionInactive, touchUserActivity } from "@fp/db";
 import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { PrismaRoomPersistence } from "./persistence.js";
@@ -42,7 +43,17 @@ async function main(): Promise<void> {
   io.use(async (socket, next) => {
     try {
       const token = (socket.handshake.auth as { token?: unknown })?.token;
-      socket.data.user = await verifyRealtimeToken(token);
+      const claims = await verifyRealtimeToken(token);
+      // Inactivity auto-logout: reject a human idle past the shared window (bots
+      // are exempt inside isSessionInactive). The token's own TTL bounds stale
+      // tokens; this enforces the unified 2-day window via users.last_active_at,
+      // so the socket layer agrees with the web cookie. Fails OPEN on DB error.
+      if (await isSessionInactive(claims.userId)) {
+        return next(new Error("SESSION_EXPIRED"));
+      }
+      socket.data.user = claims;
+      // Establishing the connection counts as activity (throttled + guarded).
+      await touchUserActivity(claims.userId);
       next();
     } catch (err) {
       next(new Error(err instanceof SessionExpiredError ? "SESSION_EXPIRED" : "UNAUTHENTICATED"));

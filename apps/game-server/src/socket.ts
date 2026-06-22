@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { verify as verifyPassword } from "@node-rs/argon2";
-import { Prisma, getWalletBalance, prisma } from "@fp/db";
+import { Prisma, getWalletBalance, prisma, touchUserActivity } from "@fp/db";
 import type { Action } from "@fp/engine";
 import {
   CLIENT_EVENTS,
@@ -200,6 +200,7 @@ export function attachSocketHandlers(
 
     socket.on(CLIENT_EVENTS.roomJoin, (raw: unknown) =>
       guard(socket, async () => {
+        void touchUserActivity(user.userId); // joining/rejoining counts as activity
         const input = roomJoinSchema.parse(raw);
         const game = await prisma.game.findUnique({
           where: { inviteCode: input.inviteCode },
@@ -299,6 +300,9 @@ export function attachSocketHandlers(
 
     socket.on(CLIENT_EVENTS.actionPlace, (raw: unknown) =>
       guard(socket, async () => {
+        // Active play keeps the session alive so a long, continuously-connected
+        // hand never trips the inactivity window (throttled + guarded, no await).
+        void touchUserActivity(user.userId);
         const input = actionPlaceSchema.parse(raw);
         const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
