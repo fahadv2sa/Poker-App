@@ -5,6 +5,7 @@ import { BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/logo";
 import { HomeMenu } from "@/components/home-menu";
+import { UiSoundToggle } from "@/components/ui-sound-toggle";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -165,13 +166,15 @@ export default async function HomePage() {
   ]);
   if (!user) redirect("/login");
 
-  // Global rank = position among all HUMAN players by XP (bots excluded). A
-  // single cheap count — no leaderboard page is added; the tile links to /stats.
+  // Global rank = position among all HUMAN players by LEVEL (XP tiebreak; bots
+  // excluded) — matches the /rank leaderboard the tile opens. One cheap count.
+  const myLevel = metrics?.level ?? 1;
+  const myXp = metrics?.xp ?? 0n;
   const rankNum =
     (await prisma.playerMetrics.count({
       where: {
-        xp: { gt: metrics?.xp ?? 0n },
         user: { playerNumber: { lt: BOT_PLAYER_NUMBER_BASE } },
+        OR: [{ level: { gt: myLevel } }, { level: myLevel, xp: { gt: myXp } }],
       },
     })) + 1;
 
@@ -205,7 +208,10 @@ export default async function HomePage() {
           <Logo glow className="size-9" />
           <span>فوتبول بي</span>
         </div>
-        <HomeMenu logoutAction={logout} />
+        <div className="flex items-center gap-2">
+          <UiSoundToggle />
+          <HomeMenu logoutAction={logout} />
+        </div>
       </header>
 
       {/* ── 2) profile area — framed panel. coins+level (right), avatar (center),
@@ -291,7 +297,7 @@ export default async function HomePage() {
       {/* ── two square nav tiles just above the bottom bar: global rank + friends.
               Both dynamic (computed rank / accepted-friends count). ────────── */}
       <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
-        <SquareTile href="/stats" icon="🏆" title="الرانك العام" badge={rank} tone="var(--gold)" />
+        <SquareTile href="/rank" icon="🏆" title="الرانك العام" badge={rank} tone="var(--gold)" />
         <SquareTile href="/friends" icon="👥" title="الأصدقاء" badge={friends} tone="var(--accent)" />
       </div>
 

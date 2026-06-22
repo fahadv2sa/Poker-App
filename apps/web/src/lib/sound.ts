@@ -33,6 +33,9 @@ export type SoundName = (typeof SOUND_NAMES)[number];
 
 const LS_MUTED = "fp.sound.muted";
 const LS_VOLUME = "fp.sound.volume";
+// Separate mute for the app-wide UI tap sounds (outside the game table). The
+// game table's audio uses `muted` above; these two are fully independent.
+const LS_UI_MUTED = "fp.sound.ui.muted";
 const DEFAULT_VOLUME = 0.7;
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
@@ -40,16 +43,21 @@ const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 class SoundManager {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  // Separate output bus for UI tap sounds, so the table mute (master) and the
+  // outside-table mute (uiGain) never affect each other.
+  private uiGain: GainNode | null = null;
   private buffers = new Map<SoundName, AudioBuffer>();
   private loading: Promise<void> | null = null;
   private unlocked = false;
   muted = false;
+  uiMuted = false;
   volume = DEFAULT_VOLUME;
   private listeners = new Set<() => void>();
 
   constructor() {
     if (typeof window === "undefined") return;
     this.muted = window.localStorage.getItem(LS_MUTED) === "1";
+    this.uiMuted = window.localStorage.getItem(LS_UI_MUTED) === "1";
     const v = Number.parseFloat(window.localStorage.getItem(LS_VOLUME) ?? "");
     if (!Number.isNaN(v)) this.volume = clamp01(v);
   }
@@ -72,6 +80,10 @@ class SoundManager {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.muted ? 0 : this.volume;
     this.master.connect(this.ctx.destination);
+    // Independent UI bus (parallel to master) for the app-wide tap sounds.
+    this.uiGain = this.ctx.createGain();
+    this.uiGain.gain.value = this.uiMuted ? 0 : this.volume;
+    this.uiGain.connect(this.ctx.destination);
     return this.ctx;
   }
 
@@ -150,6 +162,24 @@ class SoundManager {
     else void ctx.resume().then(start).catch(() => {});
   }
 
+  /** Play a UI tap sound through the independent UI bus — gated by `uiMuted`
+   *  only, so the game table's mute (master) never silences it and vice versa. */
+  playUi(name: SoundName): void {
+    if (this.uiMuted) return;
+    const ctx = this.ctx;
+    if (!ctx || !this.uiGain) return;
+    const buf = this.buffers.get(name);
+    if (!buf) return;
+    const start = () => {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(this.uiGain!);
+      src.start(0);
+    };
+    if (ctx.state === "running") start();
+    else void ctx.resume().then(start).catch(() => {});
+  }
+
   setMuted(m: boolean): void {
     this.muted = m;
     if (typeof window !== "undefined") window.localStorage.setItem(LS_MUTED, m ? "1" : "0");
@@ -157,10 +187,19 @@ class SoundManager {
     this.emit();
   }
 
+  /** Mute/unmute the app-wide UI tap sounds (outside the game table only). */
+  setUiMuted(m: boolean): void {
+    this.uiMuted = m;
+    if (typeof window !== "undefined") window.localStorage.setItem(LS_UI_MUTED, m ? "1" : "0");
+    if (this.uiGain) this.uiGain.gain.value = m ? 0 : this.volume;
+    this.emit();
+  }
+
   setVolume(v: number): void {
     this.volume = clamp01(v);
     if (typeof window !== "undefined") window.localStorage.setItem(LS_VOLUME, String(this.volume));
     if (this.master && !this.muted) this.master.gain.value = this.volume;
+    if (this.uiGain && !this.uiMuted) this.uiGain.gain.value = this.volume;
     this.emit();
   }
 }
@@ -185,4 +224,14 @@ export function useSoundSettings() {
     setMuted: (m: boolean) => sound.setMuted(m),
     setVolume: (v: number) => sound.setVolume(v),
   };
+}
+
+/** Reactive view of the outside-table UI-sound mute (the top-bar toggle). */
+export function useUiSound() {
+  const uiMuted = useSyncExternalStore(
+    sound.subscribe,
+    () => sound.uiMuted,
+    () => false,
+  );
+  return { uiMuted, setUiMuted: (m: boolean) => sound.setUiMuted(m) };
 }
