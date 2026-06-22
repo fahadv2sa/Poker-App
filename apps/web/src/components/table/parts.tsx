@@ -249,7 +249,7 @@ export function FootballCard({
   const [expanded, setExpanded] = useState(false);
   // Smaller on mobile so the 5-card board fits one row and the hand fits one
   // screen; full size on desktop (sm:) — keeps cards recognizable and crisp.
-  const width = size === "lg" ? "w-[88px] sm:w-[120px]" : "w-[52px] sm:w-[88px]";
+  const width = size === "lg" ? "w-[68px] sm:w-[120px]" : "w-[52px] sm:w-[88px]";
 
   if (back || !card) {
     return (
@@ -366,7 +366,7 @@ export function FootballCard({
             legendary
               ? "bg-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.7)]"
               : "border-y border-gold/30 bg-linear-to-b from-gold/30 to-gold/10 text-gold",
-            size === "lg" ? "py-0.5 text-[0.72rem]" : "py-px text-[0.56rem]",
+            size === "lg" ? "py-0.5 text-[0.6rem] sm:text-[0.72rem]" : "py-px text-[0.56rem]",
           )}
           title={`درجة الشهرة: ${Math.round(fame)}/100`}
         >
@@ -376,13 +376,13 @@ export function FootballCard({
       ) : null}
 
       {/* Text block (centred): EN name · AR name · club, each soft-divided. */}
-      <div className={cn("flex flex-col items-center", size === "lg" ? "gap-0.5 p-2" : "gap-0.5 p-1.5")}>
+      <div className={cn("flex flex-col items-center", size === "lg" ? "gap-0.5 p-1.5 sm:p-2" : "gap-0.5 p-1.5")}>
         <CardDivider />
         {/* English name (slightly smaller than Arabic) */}
         <span
           className={cn(
             "w-full truncate font-bold leading-tight text-white/90",
-            size === "lg" ? "text-[0.78rem]" : "text-[0.6rem]",
+            size === "lg" ? "text-[0.64rem] sm:text-[0.78rem]" : "text-[0.6rem]",
           )}
         >
           {card.name}
@@ -392,7 +392,7 @@ export function FootballCard({
         <span
           className={cn(
             "w-full truncate font-extrabold leading-tight",
-            size === "lg" ? "text-[0.95rem]" : "text-[0.74rem]",
+            size === "lg" ? "text-[0.8rem] sm:text-[0.95rem]" : "text-[0.74rem]",
           )}
         >
           {card.nameAr ?? card.name}
@@ -426,19 +426,23 @@ export function SeatAvatar({
   playerNumber,
   seed,
   size = 44,
+  sizeClass,
   className,
 }: {
   playerNumber: number;
   seed: string;
   size?: number;
+  /** Responsive box dimensions via Tailwind (e.g. "size-9 sm:size-11"). When set
+   *  it drives the size and `size` is used only for the fallback glyph font. */
+  sizeClass?: string;
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
   const hue = hueFromSeed(seed);
   return (
     <div
-      className={cn("overflow-hidden rounded-full bg-[#0b1120]", className)}
-      style={{ width: size, height: size }}
+      className={cn("overflow-hidden rounded-full bg-[#0b1120]", sizeClass, className)}
+      style={sizeClass ? undefined : { width: size, height: size }}
     >
       {!failed ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -496,7 +500,7 @@ export function OpponentSeat({
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
-        "relative flex w-[78px] flex-col items-center gap-0.5 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1.5 py-1.5 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:py-2",
+        "relative flex w-[58px] flex-col items-center gap-0.5 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1 py-1 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:px-1.5 sm:py-2",
         onOpenProfile && "cursor-pointer hover:border-primary/40 hover:bg-[#0a1020]/80",
         isActive && "animate-turn border-primary/50",
         folded && "opacity-45 grayscale",
@@ -505,7 +509,13 @@ export function OpponentSeat({
       {/* #1 depleting turn-timer frame tracing the whole profile card */}
       {isActive && anim("turnRing") ? <TurnFrame remainingMs={remainingMs} /> : null}
       <div className="relative">
-        <SeatAvatar playerNumber={player.playerNumber} seed={player.username} size={44} className={ring} />
+        <SeatAvatar
+          playerNumber={player.playerNumber}
+          seed={player.username}
+          size={36}
+          sizeClass="size-9 sm:size-11"
+          className={ring}
+        />
         {player.isDealer ? (
           anim("dealerButton") ? (
             // #8 dealer "D" glides between seats via shared layout
@@ -539,8 +549,8 @@ export function OpponentSeat({
           </span>
         ) : null}
       </div>
-      <span className="max-w-full truncate text-[0.72rem] font-bold leading-tight">{player.username}</span>
-      <span className="text-[0.6rem] leading-none">
+      <span className="max-w-full truncate text-[0.6rem] font-bold leading-tight sm:text-[0.72rem]">{player.username}</span>
+      <span className="text-[0.55rem] leading-none sm:text-[0.6rem]">
         {isActive ? (
           <span className="font-bold text-primary">يلعب…</span>
         ) : hasClaimed ? (
@@ -550,7 +560,7 @@ export function OpponentSeat({
         )}
       </span>
       {player.committedTotal > 0 ? (
-        <span className="rounded-full bg-gold/10 px-1.5 text-[0.6rem] text-gold">
+        <span className="rounded-full bg-gold/10 px-1 text-[0.55rem] text-gold sm:px-1.5 sm:text-[0.6rem]">
           🪙 <span className="num">{player.committedTotal}</span>
         </span>
       ) : null}

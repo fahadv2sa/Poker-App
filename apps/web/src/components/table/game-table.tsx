@@ -244,8 +244,10 @@ export function GameTable({
               style={{ background: "radial-gradient(60% 100% at 50% 0%, color-mix(in oklch, var(--accent) 22%, transparent), transparent)" }}
             />
 
-            {/* opponents around the rim */}
-            <div className="flex w-full flex-wrap items-start justify-center gap-2">
+            {/* opponents around the rim — a single non-wrapping row on mobile
+                (compact seats fit ≤5 opponents within a phone width); wraps on
+                desktop where the seats are larger. */}
+            <div className="flex w-full flex-nowrap items-start justify-center gap-1 sm:flex-wrap sm:gap-2">
               {opponents.length === 0 ? (
                 <span className="py-2 text-sm text-white/50">بانتظار لاعبين آخرين…</span>
               ) : (
@@ -337,7 +339,7 @@ export function GameTable({
             data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
             className="mx-auto mt-2 flex w-full max-w-3xl flex-col items-center gap-1 sm:mt-5 sm:gap-2"
           >
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
               <span>بطاقتاك</span>
               {me?.isDealer ? (
                 anim("dealerButton") ? (
@@ -359,7 +361,7 @@ export function GameTable({
                 </span>
               ) : null}
             </div>
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-2 sm:gap-3">
               {view.hole.length > 0 ? (
                 view.hole.map((c, i) => (
                   <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" />
@@ -376,7 +378,7 @@ export function GameTable({
 
           {/* ------------------------------------------------- action zone */}
           <div className="mx-auto mt-2 w-full max-w-3xl shrink-0 sm:sticky sm:bottom-2 sm:z-20 sm:mt-5">
-            <div className="rounded-2xl border bg-card/85 p-2.5 shadow-2xl backdrop-blur sm:p-4">
+            <div className="rounded-2xl border bg-card/85 p-2 shadow-2xl backdrop-blur sm:p-4">
               {phase === "LOBBY" ? (
                 <div className="flex flex-col gap-3">
                   {view.waiting ? (
@@ -618,14 +620,16 @@ function ActionBar({
   const [foldConfirm, setFoldConfirm] = useState(false);
   // #9 entrance + tap feedback (visual-only; off → no entrance, no tap scale).
   const tap = anim("actionBar") ? "transition-transform active:scale-95" : "";
+  // Compact controls on mobile (shorter/tighter), full size on desktop (sm:).
+  const sz = "h-8 px-2 text-xs sm:h-9 sm:px-4 sm:text-sm";
   return (
     <motion.div
       initial={anim("actionBar") ? { opacity: 0, y: 16 } : false}
       animate={anim("actionBar") ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.28, ease: "easeOut" }}
-      className="flex flex-col gap-2 sm:gap-3"
+      className="flex flex-col gap-1.5 sm:gap-3"
     >
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-xs sm:text-sm">
         <span className="font-bold text-primary">دورك</span>
         {owed > 0 ? (
           <span className="text-muted-foreground">
@@ -644,10 +648,10 @@ function ActionBar({
             الانسحاب من هذه الجولة؟ تخسر جزءًا من رهانك ويُعاد لك الباقي. المؤقّت مستمر.
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="destructive" onClick={() => onAction("FOLD")}>
+            <Button variant="destructive" className={sz} onClick={() => onAction("FOLD")}>
               تأكيد الانسحاب
             </Button>
-            <Button variant="ghost" onClick={() => setFoldConfirm(false)}>
+            <Button variant="ghost" className={sz} onClick={() => setFoldConfirm(false)}>
               إلغاء
             </Button>
           </div>
@@ -656,21 +660,21 @@ function ActionBar({
         <>
           <div className="grid grid-cols-3 gap-2">
             {owed <= 0 ? (
-              <Button variant="secondary" className={tap} onClick={() => onAction("CHECK")}>
+              <Button variant="secondary" className={cn(tap, sz)} onClick={() => onAction("CHECK")}>
                 تمرير
               </Button>
             ) : (
               <Button
                 onClick={() => onAction("CALL")}
-                className={cn("bg-accent text-accent-foreground hover:bg-accent/90", tap)}
+                className={cn("bg-accent text-accent-foreground hover:bg-accent/90", tap, sz)}
               >
                 مساواة <span className="num">{owed}</span>
               </Button>
             )}
-            <Button variant="secondary" className={tap} onClick={() => onAction("ALLIN")}>
+            <Button variant="secondary" className={cn(tap, sz)} onClick={() => onAction("ALLIN")}>
               كل الرصيد
             </Button>
-            <Button variant="destructive" className={tap} onClick={() => setFoldConfirm(true)}>
+            <Button variant="destructive" className={cn(tap, sz)} onClick={() => setFoldConfirm(true)}>
               انسحاب
             </Button>
           </div>
@@ -682,13 +686,13 @@ function ActionBar({
               step={DEFAULT_GAME_CONFIG.minRaise}
               value={raiseTo}
               onChange={(e) => setRaiseTo(Number(e.target.value))}
-              className="num"
+              className="num h-8 sm:h-9"
               aria-label="مبلغ الرفع"
             />
             <Button
               onClick={() => onAction("RAISE", raiseTo)}
               disabled={raiseTo < minRaiseTo}
-              className={cn("shrink-0", tap)}
+              className={cn("shrink-0", tap, sz)}
             >
               رفع إلى <span className="num">{raiseTo}</span>
             </Button>
