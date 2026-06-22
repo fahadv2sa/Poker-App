@@ -41,7 +41,7 @@ export function HomeMenu({ logoutAction }: { logoutAction: () => void | Promise<
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="grid size-10 place-items-center rounded-full border border-border/70 bg-card/70 text-2xl leading-none text-foreground/80 backdrop-blur transition hover:border-primary/45 hover:text-foreground"
+        className="kebab-btn grid size-11 place-items-center rounded-2xl text-2xl leading-none text-foreground/85 hover:text-foreground"
       >
         ⋯
       </button>
@@ -49,14 +49,11 @@ export function HomeMenu({ logoutAction }: { logoutAction: () => void | Promise<
       {open ? (
         <div
           role="menu"
-          // RTL: anchor the menu's start (right) edge under the trigger so it
-          // expands inward and never overflows the viewport's right edge.
+          // The trigger sits on the LEFT of the top bar, so anchor the menu's end
+          // (left) edge under it and expand inward — never off the viewport edge.
           className="panel absolute z-30 mt-2 flex w-52 flex-col overflow-hidden p-1.5 text-sm"
-          style={{ insetInlineStart: 0 }}
+          style={{ insetInlineEnd: 0 }}
         >
-          <Link role="menuitem" href="/friends" onClick={() => setOpen(false)} className={item}>
-            <span aria-hidden>👥</span> الأصدقاء
-          </Link>
           <Link role="menuitem" href="/guide" onClick={() => setOpen(false)} className={item}>
             <span aria-hidden>📖</span> دليل اللعب
           </Link>
