@@ -148,24 +148,53 @@ export default async function StatsPage() {
             </div>
           </div>
 
-          {/* rank emblem with XP progress ring */}
-          <div className="flex items-center gap-3">
-            <div className="rank-ring shrink-0" style={{ ["--p" as string]: progress * 360 }}>
-              <div className="grid size-16 place-items-center">
-                <div className="flex flex-col items-center leading-none">
-                  <span className="text-[0.5rem] tracking-[0.2em] text-gold/70">LVL</span>
-                  <span className="num text-2xl font-black text-gold">{level}</span>
-                </div>
+          {/* level emblem — the XP progress also traces the ring around it */}
+          <div className="rank-ring shrink-0" style={{ ["--p" as string]: progress * 360 }}>
+            <div className="grid size-16 place-items-center">
+              <div className="flex flex-col items-center leading-none">
+                <span className="text-[0.5rem] tracking-[0.2em] text-gold/70">LVL</span>
+                <span className="num text-2xl font-black text-gold">{level}</span>
               </div>
             </div>
-            <div className="flex flex-col">
-              <span className="num text-base font-bold">
-                {xp} <span className="text-xs font-normal text-muted-foreground">XP</span>
-              </span>
-              <span className="text-[0.7rem] text-muted-foreground">
-                للمستوى {level + 1}: <span className="num">{xpToNext}</span> XP
-              </span>
+          </div>
+        </div>
+
+        {/* ── XP progress toward the next level — premium labeled bar ───────── */}
+        <div className="mt-5">
+          <div className="mb-2 flex items-end justify-between gap-2">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[0.6rem] font-bold tracking-[0.18em] text-gold/70">الإكس بي</span>
+              <span className="num text-xl font-black text-gold">{xp.toLocaleString("en-US")}</span>
+              <span className="text-xs font-bold text-muted-foreground">XP</span>
             </div>
+            <span className="num rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-xs font-bold text-gold">
+              {Math.round(progress * 100)}%
+            </span>
+          </div>
+
+          <div
+            className="relative h-3 overflow-hidden rounded-full border border-white/10"
+            style={{ background: "color-mix(in oklch, var(--background) 55%, var(--card))" }}
+          >
+            <div
+              className="bar-fill h-full rounded-full"
+              style={{
+                width: `${progress * 100}%`,
+                background: "linear-gradient(90deg, var(--primary), var(--accent))",
+                boxShadow:
+                  "0 0 12px color-mix(in oklch, var(--primary) 45%, transparent), inset 0 1px 0 rgba(255,255,255,0.35)",
+              }}
+            />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between text-[0.72rem]">
+            <span className="text-muted-foreground">
+              المستوى <span className="num font-bold text-foreground">{level}</span>
+            </span>
+            <span className="text-muted-foreground">
+              تبقّى <span className="num font-bold text-gold">{xpToNext.toLocaleString("en-US")}</span>{" "}
+              للمستوى <span className="num font-bold text-foreground">{level + 1}</span>
+            </span>
           </div>
         </div>
       </section>
