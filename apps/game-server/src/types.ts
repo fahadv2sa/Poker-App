@@ -88,6 +88,10 @@ export interface RoomState {
   hostUserId: string;
   maxPlayers: number;
   isPrivate: boolean;
+  /** Room type (authoritative — from games.kind). QUICK_PLAY (Public) rooms
+   *  auto-advance to the next hand; MANUAL rooms wait for the host. Optional so
+   *  test-constructed states default to the manual (host-triggered) behavior. */
+  kind?: "MANUAL" | "QUICK_PLAY";
   config: GameConfig;
   /** Room difficulty — which fame tier the deal draws from (Part 3). Defaults to
    *  MEDIUM at the deal if unset (e.g. in tests). */

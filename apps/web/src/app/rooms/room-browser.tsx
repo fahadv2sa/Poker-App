@@ -11,10 +11,13 @@ export interface RoomCardData {
   creator: string;
   difficulty: string;
   maxPlayers: number;
-  /** Seats currently filled (live incl. bots for Public; humans for Friends). */
+  /**
+   * Seats currently filled, as the USER perceives them. For Public (Quick Play)
+   * rooms this is the live occupancy INCLUDING bots, so bot-held seats read as
+   * taken and the table looks appropriately full — bots are never labeled or
+   * surfaced as available. For Friends (manual) rooms it's the human count.
+   */
   filled: number;
-  /** Bots present (Public rooms only). */
-  bots: number;
   mode: "MANUAL" | "AUTO";
   /** Password-protected (Friends/manual rooms only). */
   locked: boolean;
@@ -91,11 +94,6 @@ function RoomCard({ r }: { r: RoomCardData }) {
         >
           مستوى اللعب: {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
         </span>
-        {isPublic && r.bots > 0 ? (
-          <span className="rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-bold text-gold">
-            مقعد بوت متاح
-          </span>
-        ) : null}
         {!isPublic && r.locked ? (
           <span className="rounded-full border border-border/70 px-2.5 py-1 text-muted-foreground">
             خاصة

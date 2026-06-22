@@ -1052,10 +1052,21 @@ export class GameRoom {
       console.error("[stats] hand aggregation failed", err);
     }
 
-    // Feature #7 / Batch 1: the hand ends but the room does NOT auto-deal. It
-    // waits between hands (phase ENDED) with the result on screen; the next hand
-    // begins only on an explicit trigger (startNextHand, host-initiated). No
-    // antes are charged without that consent.
+    // MANUAL rooms do NOT auto-deal: they wait between hands (phase ENDED) with
+    // the result on screen for the host's explicit hand:next, so no antes are
+    // charged without consent. QUICK_PLAY (Public) rooms DO auto-advance after a
+    // short delay, so the table stays live and any human waiting to join is
+    // seated promptly (replacing a bot at the next hand). startNextHand is
+    // re-entrancy- and phase-guarded, and is cleared on close/park, so a manual
+    // host trigger racing this timer can't double-deal.
+    if (this.state.kind === "QUICK_PLAY") {
+      const delayMs = this.state.config.nextHandDelaySec * 1000;
+      this.deps.timers.arm(NEXT_HAND_KEY, delayMs, () => {
+        void this.startNextHand().catch((err) =>
+          console.error("[auto-next] startNextHand failed", err),
+        );
+      });
+    }
   }
 
   // -- helpers -------------------------------------------------------------

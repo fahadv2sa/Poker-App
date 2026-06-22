@@ -85,8 +85,10 @@ export default async function RoomsPage() {
       creator: r.creator.username,
       difficulty: r.difficulty,
       maxPlayers: r.maxPlayers,
+      // Live occupancy INCLUDING bots so the table reads as full; bots are never
+      // exposed as such. Falls back to the DB human count if the game-server is
+      // unreachable.
       filled: l?.filled ?? r._count.players,
-      bots: l?.bots ?? 0,
       mode: modeOf(r.config),
       locked: false,
       kind: "PUBLIC",
@@ -100,7 +102,6 @@ export default async function RoomsPage() {
     difficulty: r.difficulty,
     maxPlayers: r.maxPlayers,
     filled: r._count.players,
-    bots: 0,
     mode: modeOf(r.config),
     locked: r.passwordHash !== null,
     kind: "FRIENDS",
