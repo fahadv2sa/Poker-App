@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
-import { BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fp/shared";
+import { BANK_CLAIM_PER_LEVEL, BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fp/shared";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/logo";
 import { HomeMenu } from "@/components/home-menu";
 import { UiSoundToggle } from "@/components/ui-sound-toggle";
 import { InstallRewardModal } from "@/components/install-reward-modal";
+import { LevelUpModal } from "@/components/level-up-modal";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -160,7 +161,10 @@ export default async function HomePage() {
         wallet: { select: { balance: true } },
       },
     }),
-    prisma.playerMetrics.findUnique({ where: { userId }, select: { level: true, xp: true } }),
+    prisma.playerMetrics.findUnique({
+      where: { userId },
+      select: { level: true, xp: true, celebratedLevel: true },
+    }),
     prisma.userAvatar.findUnique({ where: { userId }, select: { updatedAt: true } }),
     prisma.friendship.count({
       where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
@@ -189,6 +193,12 @@ export default async function HomePage() {
   // One-time "add to home screen" reward state (server-authoritative flag).
   const installRewardClaimed = user.installRewardAt != null;
   const installRewardAmount = Number(INSTALL_REWARD_AMOUNT).toLocaleString("en-US");
+  // Level-up celebration: pending when the current level is above the highest
+  // already-celebrated level (both server-authoritative). Shows the FINAL new
+  // level + the new daily bank amount (level × 1000).
+  const levelNum = metrics?.level ?? 1;
+  const leveledUp = levelNum > (metrics?.celebratedLevel ?? 1);
+  const dailyBankAmount = (Number(BANK_CLAIM_PER_LEVEL) * levelNum).toLocaleString("en-US");
   const displayName = user.nickname ?? user.username;
   const avatarUrl = avatar
     ? `/api/profile/avatar/${userId}?v=${avatar.updatedAt.getTime()}`
@@ -316,6 +326,10 @@ export default async function HomePage() {
         <BottomItem href="/" icon="🏠" label="الرئيسية" active />
         <BottomItem href="/profile" icon="⚙️" label="الإعدادات" />
       </nav>
+
+      {/* Level-up celebration (takes priority over the install prompt; on a
+          higher z-index). Server-authoritative; only mounted when pending. */}
+      {leveledUp ? <LevelUpModal newLevel={levelNum} dailyBank={dailyBankAmount} /> : null}
 
       {/* One-time "add to home screen" reward — shows only in a browser tab to
           users who haven't claimed; the reward is granted server-side. */}

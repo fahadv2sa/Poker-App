@@ -392,6 +392,12 @@ model PlayerMetrics {
   // Layer 4 — composite progression.
   xp                BigInt   @default(0)
   level             Int      @default(1)
+  // Highest level the player has already seen the "level up" celebration for.
+  // The web shows the celebration when `level > celebrated_level`, then advances
+  // this (server-authoritative, once per level-up). Defaults to 1; the migration
+  // backfills existing rows to their current level so nobody is celebrated
+  // retroactively.
+  celebratedLevel   Int      @default(1) @map("celebrated_level")
   // Watermark: the highest PlayEvent.seq folded in so far (idempotent/incremental).
   lastSeq           BigInt   @default(0) @map("last_seq")
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)

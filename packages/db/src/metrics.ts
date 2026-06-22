@@ -191,5 +191,16 @@ export async function aggregatePlayers(userIds: string[]): Promise<void> {
   for (const id of [...new Set(userIds)]) await aggregatePlayer(id);
 }
 
+/**
+ * Mark the player's current level as celebrated — consumes the level-up modal
+ * (server-authoritative, once per level-up). Advances `celebrated_level` to the
+ * current `level` in one statement; idempotent and a no-op if already caught up.
+ */
+export async function acknowledgeLevelUp(userId: string): Promise<void> {
+  await prisma.$executeRaw`
+    UPDATE player_metrics SET celebrated_level = level WHERE user_id = ${userId}::uuid
+  `;
+}
+
 // Re-export the badge seed list so the seed script + UI share one source.
 export { BADGE_CATALOG };
