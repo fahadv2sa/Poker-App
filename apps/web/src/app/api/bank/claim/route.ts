@@ -6,9 +6,10 @@ import { bankRateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 
 /**
- * POST /api/bank/claim (Section 13) — credit 1000 Coins, max 2× per rolling 24h.
- * Session-protected; the limit + credit run atomically through the ledger with a
- * row lock (claimFromBank). Never bypasses applyWalletTransaction.
+ * POST /api/bank/claim (Section 13) — credit the level-based daily amount
+ * (level × 1000), once per Riyadh day. Session-protected; the once-per-day rule +
+ * credit run atomically through the ledger with a row lock (claimFromBank). Never
+ * bypasses applyWalletTransaction.
  */
 export async function POST() {
   const session = await auth();
@@ -31,9 +32,8 @@ export async function POST() {
     return NextResponse.json({
       amount: res.amount.toString(),
       balance: res.balance.toString(),
-      claimsInWindow: res.claimsInWindow,
-      remaining: res.remaining,
-      nextResetAt: res.nextResetAt?.toISOString() ?? null,
+      level: res.level,
+      nextResetAt: res.nextResetAt.toISOString(),
     });
   } catch (err) {
     if (err instanceof BankLimitError) {

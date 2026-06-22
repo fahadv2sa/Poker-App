@@ -270,6 +270,11 @@ model BankClaim {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @map("user_id") @db.Uuid
   amount    BigInt   @default(1000)
+  // Claim-log fields (level-based daily claim): the player's level at claim time
+  // and the wallet balance right after crediting. Nullable — rows created before
+  // this was introduced have neither. Filled by claimFromBank.
+  level         Int?
+  balanceAfter  BigInt?  @map("balance_after")
   claimedAt DateTime @default(now()) @map("claimed_at") @db.Timestamptz(6)
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -4,8 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-/** Requests a 1000-coin top-up; the server enforces the 2×/24h limit. */
-export function ClaimButton({ canClaim }: { canClaim: boolean }) {
+/**
+ * Requests the level-based daily top-up. The server is authoritative for both the
+ * amount (level × 1000) and the once-per-day rule; this only triggers it and
+ * reflects the result.
+ */
+export function ClaimButton({ amount, claimedToday }: { amount: string; claimedToday: boolean }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -29,6 +33,7 @@ export function ClaimButton({ canClaim }: { canClaim: boolean }) {
     }
   }
 
+  const canClaim = !claimedToday;
   return (
     <div className="flex flex-col gap-3">
       <Button
@@ -37,7 +42,11 @@ export function ClaimButton({ canClaim }: { canClaim: boolean }) {
         size="lg"
         className={canClaim ? "btn-gold-cta w-full" : "w-full"}
       >
-        {pending ? "جارٍ الطلب…" : canClaim ? "🪙 اطلب 1000 كوين" : "بلغت الحد لهذه الفترة"}
+        {pending
+          ? "جارٍ الطلب…"
+          : canClaim
+            ? `🪙 اسحب ${amount} كوين`
+            : "تم سحب مكافأة اليوم"}
       </Button>
       {msg ? (
         <div

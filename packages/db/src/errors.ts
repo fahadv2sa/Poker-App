@@ -33,6 +33,6 @@ export class UsernameTakenError extends WalletError {
 
 export class BankLimitError extends WalletError {
   constructor(public readonly retryAt: Date) {
-    super("بلغت الحد الأقصى لطلبات البنك (مرتان كل 24 ساعة)", "BANK_LIMIT_REACHED");
+    super("لقد سحبت مكافأتك اليومية من البنك — عُد غدًا", "BANK_LIMIT_REACHED");
   }
 }

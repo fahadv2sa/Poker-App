@@ -12,9 +12,25 @@ export const HAND_SIZE = 5;
 export const SIGNUP_BONUS = 1000n;
 export const BANK_CLAIM_AMOUNT = 1000n;
 
-/** Bank: max 2 claims per rolling 24h window (Section 1, 19). */
+/** Bank: max 2 claims per rolling 24h window (legacy; superseded by the
+ *  level-based daily claim below — kept for any external reference). */
 export const BANK_CLAIM_MAX_PER_WINDOW = 2;
 export const BANK_CLAIM_WINDOW_HOURS = 24;
+
+/**
+ * Daily bank claim, level-scaled: a player may claim ONCE per day, for
+ * `level × BANK_CLAIM_PER_LEVEL` coins (level 1 → 1000, level 2 → 2000, …).
+ * Server-authoritative (the level is read at claim time, the once-per-day rule
+ * enforced under a row lock).
+ */
+export const BANK_CLAIM_PER_LEVEL = 1000n;
+
+/**
+ * The bank's "daily" reset is anchored to Asia/Riyadh (UTC+3). Saudi Arabia
+ * observes NO daylight saving, so this fixed offset is exact year-round — a claim
+ * is allowed once per Riyadh calendar day, resetting at 00:00 Riyadh.
+ */
+export const BANK_RESET_TZ_OFFSET_HOURS = 3;
 
 /**
  * Between hands, the winner screen runs a server-authoritative "ready check": the

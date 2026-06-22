@@ -1,23 +1,30 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/client";
-import { claimFromBank, getBankStatus } from "../src/bank";
+import { claimFromBank, getBankHistory, getBankStatus } from "../src/bank";
 import { registerUserWithWallet } from "../src/wallet";
 import { BankLimitError } from "../src/errors";
 
 /**
- * Bank top-up integrity (Section 1/13/18): 1000 Coins, max 2× per rolling 24h,
- * every credit on the append-only ledger, the limit holding under concurrency.
- * Hits a real PostgreSQL because the guarantee under test is the FOR UPDATE row
- * lock that serializes concurrent claims.
+ * Bank top-up integrity: level-based daily claim (level × 1000), ONCE per Riyadh
+ * day, every credit on the append-only ledger, the once-per-day rule holding
+ * under concurrency, and the claim log persisting. Hits a real PostgreSQL because
+ * the guarantee under test is the FOR UPDATE row lock that serializes claims.
  */
 
 const createdUserIds: string[] = [];
 
-async function freshUser() {
+async function freshUser(level?: number) {
   const username = `bk_${randomUUID().replace(/-/g, "").slice(0, 15)}`;
   const user = await registerUserWithWallet({ username, passwordHash: "argon2id$test" });
   createdUserIds.push(user.id);
+  if (level != null) {
+    await prisma.playerMetrics.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, level },
+      update: { level },
+    });
+  }
   return user;
 }
 
@@ -26,13 +33,6 @@ async function balanceOf(userId: string): Promise<bigint> {
 }
 async function claimCount(userId: string): Promise<number> {
   return prisma.bankClaim.count({ where: { userId } });
-}
-async function bankCreditedSum(userId: string): Promise<bigint> {
-  const agg = await prisma.walletTransaction.aggregate({
-    where: { userId, type: "BANK_CLAIM" },
-    _sum: { amount: true },
-  });
-  return agg._sum.amount ?? 0n;
 }
 
 beforeAll(async () => {
@@ -54,49 +54,53 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("bank claim — 2× / 24h limit", () => {
-  it("allows exactly two 1000-coin claims, then blocks the third", async () => {
-    const user = await freshUser();
+describe("bank claim — level-based daily", () => {
+  it("claims level × 1000 once, then blocks the same day", async () => {
+    const user = await freshUser(); // default level 1
     expect(await balanceOf(user.id)).toBe(1000n);
 
-    const first = await claimFromBank(user.id);
-    expect(first.amount).toBe(1000n);
-    expect(first.balance).toBe(2000n);
-    expect(first.remaining).toBe(1);
+    const status0 = await getBankStatus(user.id);
+    expect(status0.level).toBe(1);
+    expect(status0.amount).toBe(1000n);
+    expect(status0.claimedToday).toBe(false);
 
-    const second = await claimFromBank(user.id);
-    expect(second.balance).toBe(3000n);
-    expect(second.remaining).toBe(0);
+    const res = await claimFromBank(user.id);
+    expect(res.amount).toBe(1000n);
+    expect(res.balance).toBe(2000n);
+    expect(res.level).toBe(1);
 
+    // Second claim the same day is blocked.
     await expect(claimFromBank(user.id)).rejects.toBeInstanceOf(BankLimitError);
-
-    // No third credit: balance, claim rows, and ledger all show exactly two.
-    expect(await balanceOf(user.id)).toBe(3000n);
-    expect(await claimCount(user.id)).toBe(2);
-    expect(await bankCreditedSum(user.id)).toBe(2000n);
+    expect(await balanceOf(user.id)).toBe(2000n);
+    expect(await claimCount(user.id)).toBe(1);
+    expect((await getBankStatus(user.id)).claimedToday).toBe(true);
   });
 
-  it("does not count claims older than the 24h window (rolling)", async () => {
+  it("scales the amount with the player's level (level × 1000)", async () => {
+    const user = await freshUser(3);
+    const status = await getBankStatus(user.id);
+    expect(status.level).toBe(3);
+    expect(status.amount).toBe(3000n);
+
+    const res = await claimFromBank(user.id);
+    expect(res.amount).toBe(3000n);
+    expect(res.level).toBe(3);
+    expect(await balanceOf(user.id)).toBe(4000n); // 1000 signup + 3000
+  });
+
+  it("a claim from a previous Riyadh day does not block today", async () => {
     const user = await freshUser();
-    const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
-    await prisma.bankClaim.createMany({
-      data: [
-        { userId: user.id, amount: 1000n, claimedAt: old },
-        { userId: user.id, amount: 1000n, claimedAt: old },
-      ],
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    await prisma.bankClaim.create({
+      data: { userId: user.id, amount: 1000n, claimedAt: twoDaysAgo },
     });
 
-    const status = await getBankStatus(user.id);
-    expect(status.claimsInWindow).toBe(0);
-    expect(status.remaining).toBe(2);
-
-    // A fresh claim is allowed despite two (expired) claims on record.
+    expect((await getBankStatus(user.id)).claimedToday).toBe(false);
     const res = await claimFromBank(user.id);
-    expect(res.remaining).toBe(1);
-    expect(await balanceOf(user.id)).toBe(2000n);
+    expect(res.balance).toBe(2000n);
   });
 
-  it("serializes concurrent claims so the limit can't be exceeded", async () => {
+  it("serializes concurrent claims so only one succeeds per day", async () => {
     const user = await freshUser();
 
     const results = await Promise.allSettled(
@@ -107,23 +111,28 @@ describe("bank claim — 2× / 24h limit", () => {
       (r): r is PromiseRejectedResult => r.status === "rejected",
     );
 
-    expect(fulfilled).toHaveLength(2);
-    expect(rejected).toHaveLength(3);
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(4);
     expect(rejected.every((r) => r.reason instanceof BankLimitError)).toBe(true);
 
-    // Exactly two credits of 1000 — never more, even under the race.
-    expect(await balanceOf(user.id)).toBe(3000n);
-    expect(await claimCount(user.id)).toBe(2);
-    expect(await bankCreditedSum(user.id)).toBe(2000n);
+    expect(await balanceOf(user.id)).toBe(2000n); // 1000 signup + one 1000 claim
+    expect(await claimCount(user.id)).toBe(1);
   });
 
-  it("keeps balance equal to the ledger sum after a claim", async () => {
-    const user = await freshUser();
+  it("persists the claim log and keeps balance = ledger sum", async () => {
+    const user = await freshUser(2);
     await claimFromBank(user.id);
+
+    const history = await getBankHistory(user.id);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.amount).toBe(2000n);
+    expect(history[0]!.level).toBe(2);
+    expect(history[0]!.balanceAfter).toBe(3000n); // 1000 signup + 2000
+
     const agg = await prisma.walletTransaction.aggregate({
       where: { userId: user.id },
       _sum: { amount: true },
     });
-    expect(await balanceOf(user.id)).toBe(agg._sum.amount ?? 0n); // 1000 signup + 1000 bank
+    expect(await balanceOf(user.id)).toBe(agg._sum.amount ?? 0n);
   });
 });
