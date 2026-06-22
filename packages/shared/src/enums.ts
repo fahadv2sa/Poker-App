@@ -16,6 +16,8 @@ export const WALLET_TX_TYPES = [
   "SPLIT_WIN",
   "REFUND",
   "FOLD_FORFEIT",
+  // One-time reward for adding the app to the home screen (PWA install).
+  "INSTALL_REWARD",
 ] as const;
 export type WalletTxType = (typeof WALLET_TX_TYPES)[number];
 

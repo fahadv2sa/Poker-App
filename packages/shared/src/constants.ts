@@ -12,6 +12,10 @@ export const HAND_SIZE = 5;
 export const SIGNUP_BONUS = 1000n;
 export const BANK_CLAIM_AMOUNT = 1000n;
 
+/** One-time reward for adding the app to the home screen (installing the PWA).
+ *  Granted exactly once per account, server-side, only after a real install. */
+export const INSTALL_REWARD_AMOUNT = 10000n;
+
 /** Bank: max 2 claims per rolling 24h window (legacy; superseded by the
  *  level-based daily claim below — kept for any external reference). */
 export const BANK_CLAIM_MAX_PER_WINDOW = 2;

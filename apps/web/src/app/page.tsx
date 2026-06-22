@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
-import { BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
+import { BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fp/shared";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/logo";
 import { HomeMenu } from "@/components/home-menu";
 import { UiSoundToggle } from "@/components/ui-sound-toggle";
+import { InstallRewardModal } from "@/components/install-reward-modal";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -155,6 +156,7 @@ export default async function HomePage() {
         nickname: true,
         avatarSeed: true,
         likesReceived: true,
+        installRewardAt: true,
         wallet: { select: { balance: true } },
       },
     }),
@@ -184,6 +186,9 @@ export default async function HomePage() {
   const level = (metrics?.level ?? 1).toLocaleString("en-US");
   const xp = Number(metrics?.xp ?? 0n).toLocaleString("en-US");
   const rank = `#${rankNum.toLocaleString("en-US")}`;
+  // One-time "add to home screen" reward state (server-authoritative flag).
+  const installRewardClaimed = user.installRewardAt != null;
+  const installRewardAmount = Number(INSTALL_REWARD_AMOUNT).toLocaleString("en-US");
   const displayName = user.nickname ?? user.username;
   const avatarUrl = avatar
     ? `/api/profile/avatar/${userId}?v=${avatar.updatedAt.getTime()}`
@@ -311,6 +316,10 @@ export default async function HomePage() {
         <BottomItem href="/" icon="🏠" label="الرئيسية" active />
         <BottomItem href="/profile" icon="⚙️" label="الإعدادات" />
       </nav>
+
+      {/* One-time "add to home screen" reward — shows only in a browser tab to
+          users who haven't claimed; the reward is granted server-side. */}
+      <InstallRewardModal claimed={installRewardClaimed} amount={installRewardAmount} />
     </main>
   );
 }

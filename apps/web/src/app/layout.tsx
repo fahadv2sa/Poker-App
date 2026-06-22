@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
 import { InteractionSound } from "@/components/interaction-sound";
+import { SwRegister } from "@/components/sw-register";
 
 // Fonts delivered via next/font (audit #6): Tajawal for Arabic UI, Inter for
 // Latin numerals. Exposed as CSS variables consumed by globals.css.
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className={`${tajawal.variable} ${inter.variable}`}>
       <body>
+        <SwRegister />
         <InteractionSound />
         {children}
       </body>

@@ -32,6 +32,7 @@ enum WalletTxType {
   SPLIT_WIN
   REFUND
   FOLD_FORFEIT
+  INSTALL_REWARD
 
   @@map("wallet_tx_type")
 }
@@ -168,6 +169,10 @@ model User {
   // rows backfill to migration time (nobody is logged out on deploy). Bots have
   // a row too but it is never updated or checked (they never authenticate).
   lastActiveAt DateTime @default(now()) @map("last_active_at") @db.Timestamptz(6)
+  // One-time "add to home screen" reward: set when the 10k install reward is
+  // granted (null = never claimed). Persists across uninstall/reinstall so the
+  // reward can be granted at most once per account.
+  installRewardAt DateTime? @map("install_reward_at") @db.Timestamptz(6)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
