@@ -6,7 +6,10 @@
  */
 export type FxEvent =
   | { type: "bet"; seat: number; amount: number; action: string }
-  | { type: "allin"; seat: number };
+  | { type: "allin"; seat: number }
+  /** An opponent acted — transforms their seat into the action label (CHECK /
+   *  CALL / RAISE / ALLIN) then reverts. Replaces the old center-table toast. */
+  | { type: "action"; seat: number; action: string };
 
 type Handler = (e: FxEvent) => void;
 const handlers = new Set<Handler>();

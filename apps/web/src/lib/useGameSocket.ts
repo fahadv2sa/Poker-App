@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { StateSyncPayload } from "@fp/shared";
 import { connectGame, type GameConnection } from "./realtime";
-import { actionNotice, applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
+import { applyStateSync, INITIAL_VIEW, type TableView } from "./tableView";
 import { ANIMATIONS_ENABLED } from "./anim";
 import { fxBus } from "./fx-bus";
 
@@ -19,10 +18,8 @@ export function useGameSocket(token: string, inviteCode: string) {
   const [view, setView] = useState<TableView>(INITIAL_VIEW);
   const connRef = useRef<GameConnection | null>(null);
 
-  // Latest state (for name lookups inside event handlers) + a stable notice
-  // pusher, both kept in refs so the connect effect runs once per (token, room).
-  const stateRef = useRef<StateSyncPayload | null>(null);
-  stateRef.current = view.state;
+  // A stable notice pusher kept in a ref so the connect effect runs once per
+  // (token, room).
   const noticeIdRef = useRef(0);
   const connectedBeforeRef = useRef(false);
   const pushNoticeRef = useRef<(text: string, kind: "action" | "system") => void>(() => {});
@@ -34,9 +31,6 @@ export function useGameSocket(token: string, inviteCode: string) {
       3500,
     );
   };
-  const nameOf = (seat: number) =>
-    stateRef.current?.players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
-
   useEffect(() => {
     const conn = connectGame(token, {
       onConnect: () => {
@@ -107,10 +101,20 @@ export function useGameSocket(token: string, inviteCode: string) {
             state: { ...v.state, players, pot: p.pot, pots: p.pots, currentBet: p.currentBet },
           };
         });
-        // C10: announce the action to the whole table (works for every seat).
-        pushNoticeRef.current(actionNotice(nameOf(p.seat), p), "action");
-        // Visual-only FX cue (state already applied above). No-op when nobody is
-        // listening (animations off). Never goes to the server.
+        // The action now transforms the acting OPPONENT's seat (see OpponentSeat's
+        // action overlay) instead of a center-table toast. Emitted for the four
+        // wager actions only; always emitted (it is the primary feedback now) —
+        // only opponent seats render it, and reduced-motion is handled by framer.
+        if (
+          p.action === "CHECK" ||
+          p.action === "CALL" ||
+          p.action === "RAISE" ||
+          p.action === "ALLIN"
+        ) {
+          fxBus.emit({ type: "action", seat: p.seat, action: p.action });
+        }
+        // Visual-only chip / all-in FX (state already applied above). No-op when
+        // nobody is listening (animations off). Never goes to the server.
         if (ANIMATIONS_ENABLED) {
           if (p.action === "ALLIN") fxBus.emit({ type: "allin", seat: p.seat });
           if (p.action !== "FOLD" && p.action !== "CHECK") {

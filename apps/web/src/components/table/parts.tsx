@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { DEFAULT_GAME_CONFIG, type CardView, type PlayerView } from "@fp/shared";
 import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
+import { fxBus } from "@/lib/fx-bus";
 import { TurnFrame } from "./fx";
 
 // Rank display names are NOT hardcoded — they arrive in the game:result payload
@@ -474,6 +475,34 @@ export function SeatAvatar({
   );
 }
 
+/** The cinematic per-seat action labels + tone. FOLD is intentionally absent —
+ *  it keeps its persistent greyed-out + «انسحب» seat state instead of a flash. */
+const SEAT_ACTION_FX: Record<string, { label: string; cls: string }> = {
+  CHECK: { label: "مرّر", cls: "border-sky-300/60 bg-sky-500/90 text-white" },
+  CALL: { label: "ساوى", cls: "border-emerald-300/60 bg-emerald-500/90 text-white" },
+  RAISE: { label: "رفع", cls: "border-gold/70 bg-gold/95 text-black" },
+  ALLIN: { label: "كل الرصيد", cls: "border-red-300/70 bg-destructive/95 text-white" },
+};
+
+/** Subscribe to a seat's transient action cue (fxBus). Returns the latest action
+ *  with a monotonic id (so repeats re-trigger the animation), auto-clearing after
+ *  a short hold so the seat reverts to its normal profile. */
+function useSeatAction(seat: number): { action: string; id: number } | null {
+  const [state, setState] = useState<{ action: string; id: number } | null>(null);
+  useEffect(() => {
+    let n = 0;
+    return fxBus.on((e) => {
+      if (e.type === "action" && e.seat === seat) setState({ action: e.action, id: ++n });
+    });
+  }, [seat]);
+  useEffect(() => {
+    if (!state) return;
+    const t = setTimeout(() => setState(null), 1500);
+    return () => clearTimeout(t);
+  }, [state]);
+  return state;
+}
+
 /** A seated opponent: avatar (floodlight ring encoding state), name, status and
  *  committed chips. Tap to open the rich profile. The ring color is the state. */
 export function OpponentSeat({
@@ -491,6 +520,7 @@ export function OpponentSeat({
   const folded = player.status === "FOLDED";
   const allin = player.status === "ALLIN";
   const remainingMs = useRemainingMs(deadlineTs ?? null);
+  const actionFx = useSeatAction(player.seat);
   const ring = isActive
     ? "ring-2 ring-primary glow-primary"
     : allin
@@ -566,6 +596,30 @@ export function OpponentSeat({
           🪙 <span className="num">{player.committedTotal}</span>
         </span>
       ) : null}
+
+      {/* Cinematic action transform: the whole seat briefly BECOMES the action
+          (مرّر / ساوى / رفع / كل الرصيد), then reverts — replacing the old
+          center-table toast. Decorative (pointer-events-none); reduced-motion is
+          handled by the table's MotionConfig. */}
+      <AnimatePresence>
+        {actionFx && SEAT_ACTION_FX[actionFx.action] ? (
+          <motion.div
+            key={actionFx.id}
+            initial={{ opacity: 0, scale: 0.5, rotateX: -55 }}
+            animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+            exit={{ opacity: 0, scale: 1.12 }}
+            transition={{ type: "spring", stiffness: 340, damping: 18 }}
+            className={cn(
+              "pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-2xl border text-center font-black shadow-lg",
+              SEAT_ACTION_FX[actionFx.action]!.cls,
+            )}
+          >
+            <span className="px-1 text-[0.66rem] leading-tight sm:text-sm">
+              {SEAT_ACTION_FX[actionFx.action]!.label}
+            </span>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }
