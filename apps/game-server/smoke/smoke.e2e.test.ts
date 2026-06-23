@@ -405,26 +405,36 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
 
     // === ASSERTION 1 — CARD PRIVACY (live) =================================
     // Privacy holds DURING the hand: hole cards reach only their owner via the
-    // private game:dealt — never any other broadcast. The one exception is the
+    // PRIVATE per-seat channels (game:dealt, and result:best — the owner's own
+    // winner-screen reveal) — never any broadcast. The one exception is the
     // OFFICIAL REVEAL in game:result at showdown (SPEC §2.4), asserted below.
     const aHole = A.hole.map((c) => c.playerId);
     const bHole = B.hole.map((c) => c.playerId);
     const allHole = [...aHole, ...bHole];
     expect(new Set(allHole).size).toBe(4); // 4 distinct hole players
 
-    const isPrivateOrReveal = (ev: string) => ev === "game:dealt" || ev === "game:result";
+    // result:best is a PRIVATE per-seat emit (toSeat) carrying the recipient's OWN
+    // winning combination — which can include their own hole cards — so it is an
+    // allowed private channel here, exactly like game:dealt. Cross-player leakage
+    // via result:best (or anything else) is still caught by the per-player check
+    // below, which forbids a client from ever seeing the OTHER player's hole cards.
+    const isPrivateOrReveal = (ev: string) =>
+      ev === "game:dealt" || ev === "result:best" || ev === "game:result";
     for (const c of [A, B]) {
       const dealt = c.events.filter((e) => e.event === "game:dealt");
       expect(dealt).toHaveLength(1); // each got exactly ONE private deal
       for (const e of c.events) {
-        if (isPrivateOrReveal(e.event)) continue; // private channel + official reveal
+        if (isPrivateOrReveal(e.event)) continue; // private per-seat channels + official reveal
         const json = JSON.stringify(e.payload ?? {});
         for (const id of allHole) {
-          expect(json.includes(id)).toBe(false); // no hole card in any other broadcast
+          expect(json.includes(id)).toBe(false); // no hole card in any broadcast
         }
       }
     }
-    // Before the reveal, A never saw B's cards and vice versa (exclude game:result).
+    // Cross-player privacy (the real leak check): across ALL of a client's events
+    // except the official game:result reveal — INCLUDING its private result:best —
+    // A must never contain any of B's hole cards, and vice versa. This still fails
+    // if result:best (or any channel) ever leaked the OTHER player's private cards.
     const aSeen = JSON.stringify(A.events.filter((e) => e.event !== "game:result"));
     const bSeen = JSON.stringify(B.events.filter((e) => e.event !== "game:result"));
     for (const id of bHole) expect(aSeen.includes(id)).toBe(false);

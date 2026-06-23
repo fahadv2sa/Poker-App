@@ -58,13 +58,23 @@ The committed `apps/game-server/smoke/smoke.e2e.test.ts` (run with `RUN_SMOKE=1`
 
 ## Findings (documented, NOT fixed — per scope)
 
-### Finding 1 — Committed smoke test (`smoke.e2e.test.ts`) has an over-strict privacy assertion (test bug, not a product bug)
+### Finding 1 — Over-strict privacy assertion in the committed smoke test (test bug, not a product bug) → **RESOLVED (2026-06-23)**
 
-- **Where:** `apps/game-server/smoke/smoke.e2e.test.ts:415` (`isPrivateOrReveal`) and the assertion at `:423`.
-- **What happens:** The test excludes only `game:dealt` and `game:result` from its "no hole card in any broadcast" check, but **omits `result:best`** — a **private per-seat** emit (`room.ts` → `emitter.toSeat(... SERVER_EVENTS.bestRank ...)`) that legitimately contains the **owner's own** combination cards (which can include their hole cards). So the test fails when a player's *own* card appears in their *own* private winner-screen reveal.
-- **Why it only surfaces now:** The test was written to run against a DB seeded with *only* its 9-midfielder fixture; the local DB now has 8,228 active players, so the deck draws real players and a best-rank witness commonly includes a hole card — tripping the gap.
-- **Severity:** **Low** (test-only). The **product behavior is correct** — independently verified by live Scenario 7: `result:best` is per-seat and carries only the owner's own cards; no cross-player leakage; broadcasts carry none.
-- **Recommendation (not done here):** add `result:best` to the smoke test's private-channel exclusion (and, like Scenario 7, assert that private channels carry only the owner's own ids). This makes the committed smoke green again without weakening the privacy guarantee.
+- **Original issue:** `apps/game-server/smoke/smoke.e2e.test.ts` (`isPrivateOrReveal` at original `:415`, assertion at `:423`) excluded only `game:dealt` and `game:result` from its "no hole card in any broadcast" check, but **omitted `result:best`** — a **private per-seat** emit (`room.ts` → `emitter.toSeat(... SERVER_EVENTS.bestRank ...)`) that legitimately contains the **owner's own** combination cards (which can include their hole cards). So the test wrongly failed when a player's *own* card appeared in their *own* private winner-screen reveal. It only surfaced because the dev DB has 8,228 active players, so a best-rank witness commonly includes a hole card. The **product was always correct** (independently verified by live Scenario 7: `result:best` is per-seat and carries only the owner's own cards).
+- **Severity:** Low (test-only).
+- **Fix applied — `apps/game-server/smoke/smoke.e2e.test.ts`, the card-privacy block (now ~`:422-423`):** `result:best` is added to the private-channel exclusion, so a seat may see its **own** cards in its **own** winner reveal.
+  - **before:**
+    ```ts
+    const isPrivateOrReveal = (ev: string) => ev === "game:dealt" || ev === "game:result";
+    ```
+  - **after:**
+    ```ts
+    const isPrivateOrReveal = (ev: string) =>
+      ev === "game:dealt" || ev === "result:best" || ev === "game:result";
+    ```
+  - **No weakening — cross-player leaks still caught:** the broadcast check still forbids **any** hole-card id in **any** non-private event; and the existing per-player block (`:438-441`) still asserts that across **all** of a client's events *except* the official `game:result` reveal — **including its `result:best`** — A never contains any of **B's** hole cards (and vice versa). So a genuine leak (one player seeing another's private cards via `result:best` or any channel) still fails the test. Only "a seat seeing its **own** cards in its **own** private reveal" is now (correctly) allowed. Comments updated to document this.
+  - Scope: only this test assertion changed. No product code, engine, socket, schema, or config was touched.
+- **Re-test result:** ran the smoke (`RUN_SMOKE=1`) live (real web + game-server + Postgres). The test now **passes the entire card-privacy block** — including the official-reveal check at `:453` — and the failure point **moved off privacy** to the later, unrelated line `:454` (`expect(typeof winningRankNameAr).toBe("string")`). That later failure is the smoke's **separate, pre-existing fixture-only assumption** (it expects the active `players` table to be just its 9-midfielder fixture so both can claim `ROYAL_POSITION`; on this dev DB's full 8,228-player import the random deal yields no valid claim → `winningRankNameAr` is null). That is **out of scope for finding #1** (a different assertion about the deal dataset, not privacy). Typecheck **pass**; full-repo lint **clean (exit 0)**.
 
 ### Finding 2 — Leaving / disconnecting mid-hand did not fold the player when no bet was owed → **RESOLVED (2026-06-23)**
 
@@ -110,9 +120,9 @@ A real, server-authoritative game **runs correctly end to end** under live socke
 The live test changes nothing about the launch blockers from the prior audit (red lint gate; migrate-first discipline; seed enough eligible players per tier).
 
 - **Finding 2 (Medium) — RESOLVED 2026-06-23:** a departed (left/disconnected) player is now folded on timeout and can no longer win the in-flight hand; verified live (13/13) with money integrity intact.
-- **Finding 1 (Low) — still open, non-blocking:** fix the committed smoke test's privacy-assertion exclusion list (add `result:best`) so `RUN_SMOKE=1` is green — the product is already correct.
+- **Finding 1 (Low) — RESOLVED 2026-06-23:** the smoke test's privacy assertion now allows a seat to see its own cards in its own `result:best` reveal while still catching any cross-player leak; verified live (the failure point moved off the privacy block). Note: the committed smoke still requires a **fixture-only active `players` table** to pass end-to-end (its winning-association / wallet-split assertions) — a separate pre-existing design assumption, not a privacy issue.
 
-The remaining follow-up does not affect money integrity, card privacy, or crash safety — all of which **passed live**. Live gameplay is ready for launch once the prior audit's blockers (lint, migrations, player seeding) are cleared.
+Both findings are resolved; neither ever affected money integrity, card privacy, or crash safety — all of which **passed live**. Live gameplay is ready for launch once the prior audit's blockers (lint, migrations, player seeding) are cleared.
 
 ---
 
