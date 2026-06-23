@@ -3,6 +3,7 @@ import type {
   BetPlacedPayload,
   CardView,
   GameResultPayload,
+  PlayerView,
   StateSyncPayload,
 } from "@fp/shared";
 
@@ -17,6 +18,24 @@ export interface Notice {
   id: number;
   text: string;
   kind: "action" | "system";
+}
+
+/**
+ * A completed round, captured for the end-of-session table summary. We snapshot
+ * the winner-announcement payload (plus the players/yourSeat at that moment) as
+ * each hand resolves, so the summary can replay every round's announcement
+ * exactly as it appeared. Accumulated client-side for this table session — only
+ * rounds the player took part in while connected.
+ */
+export interface RoundSummary {
+  /** 1-based round number, in the order the player took part. */
+  round: number;
+  result: GameResultPayload;
+  players: PlayerView[];
+  yourSeat: number | null;
+  /** The local player's private best-rank reveal for that round (MANUAL mode
+   *  only; null otherwise) — attached when it arrives just after the result. */
+  bestRank: BestRankPayload | null;
 }
 
 export interface TableView {
@@ -48,6 +67,9 @@ export interface TableView {
   /** Winner-screen ready-check status (between hands): who pressed "New Round",
    *  how many humans must, and the auto-advance deadline. null during a hand. */
   roundReady: { readySeats: number[]; total: number; deadlineTs: number | null } | null;
+  /** Every completed round this session, oldest first — replayed in the table
+   *  summary shown when the player leaves or the table closes. */
+  rounds: RoundSummary[];
 }
 
 export const INITIAL_VIEW: TableView = {
@@ -65,6 +87,7 @@ export const INITIAL_VIEW: TableView = {
   passwordMessage: null,
   authExpired: false,
   roundReady: null,
+  rounds: [],
 };
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);

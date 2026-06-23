@@ -137,9 +137,19 @@ export function useGameSocket(token: string, inviteCode: string) {
           const mine = v.state
             ? result.results.find((r) => r.seat === v.state!.yourSeat)
             : undefined;
+          // Snapshot this completed round for the end-of-session table summary,
+          // numbered by the order the player took part (oldest first).
+          const round = {
+            round: v.rounds.length + 1,
+            result,
+            players: v.state?.players ?? [],
+            yourSeat: v.state?.yourSeat ?? null,
+            bestRank: null,
+          };
           return {
             ...v,
             result,
+            rounds: [...v.rounds, round],
             // A7: keep the header balance authoritative — adopt the server's
             // finalBalance for our seat as the new base going into the next hand.
             balance: mine ? mine.finalBalance : v.balance,
@@ -147,7 +157,19 @@ export function useGameSocket(token: string, inviteCode: string) {
           };
         }),
       // Private per-seat winner-screen reveal: the local player's own best rank.
-      onBestRank: (p) => setView((v) => ({ ...v, bestRank: p })),
+      // It arrives just AFTER the result, so also attach it to the round we just
+      // pushed, so the summary replays the round exactly as it appeared.
+      onBestRank: (p) =>
+        setView((v) => ({
+          ...v,
+          bestRank: p,
+          rounds:
+            v.rounds.length > 0
+              ? v.rounds.map((r, i) =>
+                  i === v.rounds.length - 1 ? { ...r, bestRank: p } : r,
+                )
+              : v.rounds,
+        })),
       // Feature #7: a new hand began in the same room — clear the previous
       // board/result, adopt the rotated dealer, and wait for the private deal.
       onHandStarted: (p) =>

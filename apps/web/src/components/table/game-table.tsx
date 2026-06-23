@@ -12,7 +12,7 @@ import {
   type PlayerView,
 } from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
-import { isMyTurn as selIsMyTurn } from "@/lib/tableView";
+import { isMyTurn as selIsMyTurn, type RoundSummary } from "@/lib/tableView";
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { SoundControl } from "@/components/sound-control";
@@ -154,6 +154,9 @@ export function GameTable({
   const [password, setPassword] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  // Once the player leaves or the table closes, show the end-of-session table
+  // summary (every completed round) instead of navigating away immediately.
+  const [showSummary, setShowSummary] = useState(false);
   // Opponent profile open during play (by playerNumber) — on-demand read.
   const [profileNum, setProfileNum] = useState<number | null>(null);
 
@@ -172,7 +175,10 @@ export function GameTable({
   // to the menu. Disconnect on unmount is a backstop if the emit doesn't flush.
   const onExit = () => {
     leave();
-    router.replace("/");
+    // Show the table summary if there's at least one completed round to browse;
+    // otherwise there's nothing to show, so go straight home.
+    if (view.rounds.length > 0) setShowSummary(true);
+    else router.replace("/");
   };
 
   const phase = s?.phase ?? "LOBBY";
@@ -216,13 +222,18 @@ export function GameTable({
     };
   }, []);
 
-  // The room was closed (host or auto-empty): briefly show why, then return to
-  // the menu. The server already evicted us and settled any refunds.
+  // The room was closed (host or auto-empty). If there are completed rounds to
+  // browse, show the table summary (X → home). Otherwise briefly show why, then
+  // return to the menu. The server already evicted us and settled any refunds.
   useEffect(() => {
     if (!view.closed) return;
+    if (view.rounds.length > 0) {
+      setShowSummary(true);
+      return;
+    }
     const t = setTimeout(() => router.replace("/"), 1400);
     return () => clearTimeout(t);
-  }, [view.closed, router]);
+  }, [view.closed, view.rounds.length, router]);
   // Inactivity auto-logout (or an invalid token) rejected the handshake: the
   // session is gone, so re-authenticate. The web cookie has expired in the same
   // 2-day window, so /login won't bounce back to the table.
@@ -275,7 +286,7 @@ export function GameTable({
         {confirmLeave ? (
           <ConfirmButtons
             confirmLabel="تأكيد المغادرة"
-            onConfirm={() => router.push("/")}
+            onConfirm={onExit}
             onCancel={() => setConfirmLeave(false)}
           />
         ) : (
@@ -582,7 +593,7 @@ export function GameTable({
       {/* Dedicated full-screen result page: rich, data-driven breakdown that
           stays until the host deals the next hand (no auto-dismiss). */}
       <AnimatePresence>
-        {view.result ? (
+        {view.result && !showSummary ? (
           <ResultOverlay
             results={view.result.results}
             players={players}
@@ -665,9 +676,10 @@ export function GameTable({
         ) : null}
       </AnimatePresence>
 
-      {/* Room closed (host closed it, or it auto-emptied): explain, then redirect. */}
+      {/* Room closed with no rounds to browse: explain briefly, then redirect.
+          (With completed rounds, the table summary below takes over instead.) */}
       <AnimatePresence>
-        {view.closed ? (
+        {view.closed && !showSummary ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -683,6 +695,18 @@ export function GameTable({
               </p>
             </div>
           </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Table summary: a collapsed card per completed round, expanding to that
+          round's full winner announcement. X closes to home. */}
+      <AnimatePresence>
+        {showSummary ? (
+          <TableSummary
+            rounds={view.rounds}
+            closedReason={view.closed}
+            onClose={() => router.replace("/")}
+          />
         ) : null}
       </AnimatePresence>
     </main>
@@ -907,30 +931,12 @@ function ResultOverlay({
   const readyCount = roundReady?.readySeats.length ?? 0;
   const readyTotal = roundReady?.total ?? 0;
 
-  // Profile lookup (avatar + name) from the existing player list — no duplicate data.
-  const playerOf = (seat: number) => players.find((p) => p.seat === seat);
-
-  // Celebrated ONLY = won a pot (the combination) AND came out NET-POSITIVE on
-  // money. A player can win a pot/combination yet still be a net money loser
-  // (e.g. takes a small side pot worth less than they paid in) — they are NOT
-  // celebrated; they drop into the list below. Ordered by combination strength
-  // (strongest first), then players-power as the tiebreaker — mirrors resolution.
-  const celebrated = results
-    .filter((r) => (r.outcome === "WIN" || r.outcome === "SPLIT") && r.coinsDelta > 0)
-    .sort(
-      (a, b) => (b.strength ?? 0) - (a.strength ?? 0) || (b.scoreSum ?? 0) - (a.scoreSum ?? 0),
-    );
-  // Any pot winner at all? Distinguishes a genuine no-winner refund (slate "draw")
-  // from a hand whose pot winners simply weren't net-positive.
-  const hasPotWinner = results.some((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
-  // Everyone else — pure losers, folders, refunds, and any net-≤0 pot winner —
-  // best money result first; rendered as collapsed cards below.
-  const others = results
-    .filter((r) => !celebrated.includes(r))
-    .sort((a, b) => b.coinsDelta - a.coinsDelta);
-  // Pots are only called out on the rows when MORE THAN ONE player is celebrated
-  // (a single winner needs no pot label at all).
-  const showPots = celebrated.length > 1;
+  // Celebrated winners (won the combination AND net money) — recomputed here only
+  // to gate the confetti + coin-fly. The announcement body itself is rendered by
+  // <RoundAnnouncement>, which derives its own celebrated/others/slate sections.
+  const celebrated = results.filter(
+    (r) => (r.outcome === "WIN" || r.outcome === "SPLIT") && r.coinsDelta > 0,
+  );
 
   // #6 coin payout — fly coins from the (still-mounted) pot up to each celebrated
   // winner's amount once the overlay settles. Decorative; the real +amount already
@@ -1004,99 +1010,243 @@ function ResultOverlay({
           </div>
         </div>
 
-        {/* ── TOP celebrated section — ONLY players who won the combination AND
-            the money, ordered by hand strength (strongest first). Each is a
-            consistent card, expanded by default (the glory). When there's no pot
-            winner at all → the slate "draw" card instead. */}
-        {celebrated.length > 0 ? (
-          <motion.section
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-4 shadow-2xl"
-          >
-            <div className="mb-3 flex flex-col items-center">
-              <motion.span
-                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
-                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
-                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
-                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
-              >
-                🏆
-              </motion.span>
-              <div className="mt-1 text-xs font-bold tracking-[0.15em] text-gold/80">
-                {celebrated.length > 1 ? "الفائزون" : "الفائز"}
-              </div>
-            </div>
-            <div className="space-y-2">
-              {celebrated.map((w) => (
-                <PlayerResultCard
-                  key={w.seat}
-                  r={w}
-                  you={w.seat === yourSeat}
-                  player={playerOf(w.seat)}
-                  tone="gold"
-                  showPots={showPots}
-                  defaultOpen
-                />
-              ))}
-            </div>
-          </motion.section>
-        ) : !hasPotWinner ? (
-          <motion.section
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-400/15 to-card/90 p-5 text-center shadow-2xl"
-          >
-            <div className="mb-1 flex justify-center">
-              <span className="grid size-12 place-items-center rounded-full border border-slate-300/40 bg-slate-400/10 text-2xl">
-                🤝
-              </span>
-            </div>
-            <div className="text-3xl font-black tracking-wide text-slate-200">تعادل!</div>
-            <p className="mt-1 text-sm text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
-            {/* All players side by side. */}
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-              {players.map((pl) => (
-                <div key={pl.seat} className="flex w-[64px] flex-col items-center gap-1">
-                  <SeatAvatar
-                    playerNumber={pl.playerNumber}
-                    seed={pl.username}
-                    size={44}
-                    className="ring-1 ring-slate-300/30"
-                  />
-                  <span className="max-w-full truncate text-[0.68rem] text-muted-foreground">
-                    {pl.seat === yourSeat ? "أنت" : pl.username}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        ) : null}
+        {/* The announcement itself — identical to what the table summary replays. */}
+        <RoundAnnouncement
+          results={results}
+          players={players}
+          yourSeat={yourSeat}
+          bestRank={bestRank}
+        />
+      </div>
+    </motion.div>
+  );
+}
 
-        {/* ── Everyone else: collapsed cards (key info on the outside), tap to
-            expand for the cards + the settlement math. Same card as above. */}
-        {others.length > 0 ? (
-          <div className="space-y-1.5">
-            {others.map((r) => (
+/**
+ * The winner-announcement body — the exact content shown when a round ends,
+ * reused verbatim by the live result overlay AND by each expanded round in the
+ * table summary. Pure presentation: the celebrated (gold) winners, the slate
+ * "draw" card when no one won, everyone-else (red) cards, and the local player's
+ * private best-rank row. No controls/confetti/ready-check (those are live-only).
+ */
+function RoundAnnouncement({
+  results,
+  players,
+  yourSeat,
+  bestRank,
+}: {
+  results: GameResultEntry[];
+  players: PlayerView[];
+  yourSeat: number | null;
+  bestRank: BestRankPayload | null;
+}) {
+  // Profile lookup (avatar + name) from the round's player snapshot — no dup data.
+  const playerOf = (seat: number) => players.find((p) => p.seat === seat);
+
+  // Celebrated ONLY = won a pot (the combination) AND came out NET-POSITIVE on
+  // money. A player can win a pot/combination yet still be a net money loser
+  // (e.g. takes a small side pot worth less than they paid in) — they are NOT
+  // celebrated; they drop into the list below. Ordered by combination strength
+  // (strongest first), then players-power as the tiebreaker — mirrors resolution.
+  const celebrated = results
+    .filter((r) => (r.outcome === "WIN" || r.outcome === "SPLIT") && r.coinsDelta > 0)
+    .sort(
+      (a, b) => (b.strength ?? 0) - (a.strength ?? 0) || (b.scoreSum ?? 0) - (a.scoreSum ?? 0),
+    );
+  // Any pot winner at all? Distinguishes a genuine no-winner refund (slate "draw")
+  // from a hand whose pot winners simply weren't net-positive.
+  const hasPotWinner = results.some((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
+  // Everyone else — pure losers, folders, refunds, and any net-≤0 pot winner —
+  // best money result first; rendered as collapsed cards below.
+  const others = results
+    .filter((r) => !celebrated.includes(r))
+    .sort((a, b) => b.coinsDelta - a.coinsDelta);
+  // Pots are only called out on the rows when MORE THAN ONE player is celebrated.
+  const showPots = celebrated.length > 1;
+
+  return (
+    <div className="space-y-3">
+      {/* ── TOP celebrated section — ONLY players who won the combination AND the
+          money, ordered by hand strength. When there's no pot winner at all → the
+          slate "draw" card instead. */}
+      {celebrated.length > 0 ? (
+        <motion.section
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+          className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-4 shadow-2xl"
+        >
+          <div className="mb-3 flex flex-col items-center">
+            <motion.span
+              initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
+              animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
+              transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
+              className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
+            >
+              🏆
+            </motion.span>
+            <div className="mt-1 text-xs font-bold tracking-[0.15em] text-gold/80">
+              {celebrated.length > 1 ? "الفائزون" : "الفائز"}
+            </div>
+          </div>
+          <div className="space-y-2">
+            {celebrated.map((w) => (
               <PlayerResultCard
-                key={r.seat}
-                r={r}
-                you={r.seat === yourSeat}
-                player={playerOf(r.seat)}
-                tone="red"
-                showPots={false}
-                defaultOpen={false}
+                key={w.seat}
+                r={w}
+                you={w.seat === yourSeat}
+                player={playerOf(w.seat)}
+                tone="gold"
+                showPots={showPots}
+                defaultOpen
               />
             ))}
           </div>
-        ) : null}
+        </motion.section>
+      ) : !hasPotWinner ? (
+        <motion.section
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: "easeOut" }}
+          className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-400/15 to-card/90 p-5 text-center shadow-2xl"
+        >
+          <div className="mb-1 flex justify-center">
+            <span className="grid size-12 place-items-center rounded-full border border-slate-300/40 bg-slate-400/10 text-2xl">
+              🤝
+            </span>
+          </div>
+          <div className="text-3xl font-black tracking-wide text-slate-200">تعادل!</div>
+          <p className="mt-1 text-sm text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
+          {/* All players side by side. */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            {players.map((pl) => (
+              <div key={pl.seat} className="flex w-[64px] flex-col items-center gap-1">
+                <SeatAvatar
+                  playerNumber={pl.playerNumber}
+                  seed={pl.username}
+                  size={44}
+                  className="ring-1 ring-slate-300/30"
+                />
+                <span className="max-w-full truncate text-[0.68rem] text-muted-foreground">
+                  {pl.seat === yourSeat ? "أنت" : pl.username}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.section>
+      ) : null}
 
-        {/* Your own strongest combination — private reveal, tap to expand. */}
-        {bestRank ? <BestRankRow bestRank={bestRank} /> : null}
+      {/* ── Everyone else: collapsed cards (key info on the outside), tap to
+          expand for the cards + the settlement math. Same card as above. */}
+      {others.length > 0 ? (
+        <div className="space-y-1.5">
+          {others.map((r) => (
+            <PlayerResultCard
+              key={r.seat}
+              r={r}
+              you={r.seat === yourSeat}
+              player={playerOf(r.seat)}
+              tone="red"
+              showPots={false}
+              defaultOpen={false}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {/* Your own strongest combination — private reveal, tap to expand. */}
+      {bestRank ? <BestRankRow bestRank={bestRank} /> : null}
+    </div>
+  );
+}
+
+/** End-of-session table summary, shown to a player who left or when the table
+ *  closed: one collapsed card per completed round (round number only on the
+ *  face), each expanding to that round's full winner announcement. The X button
+ *  closes to the home page. Rounds are oldest-first. */
+function TableSummary({
+  rounds,
+  closedReason,
+  onClose,
+}: {
+  rounds: RoundSummary[];
+  closedReason: "CLOSED_BY_HOST" | "EMPTY" | null;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-background/90 p-3 backdrop-blur-md sm:p-6"
+    >
+      <div className="relative z-10 my-auto w-full max-w-2xl space-y-3">
+        {/* header: title + reason + X (→ home) */}
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-card/85 px-4 py-3 backdrop-blur">
+          <div className="flex min-w-0 flex-col">
+            <span className="text-base font-black sm:text-lg">ملخص الطاولة</span>
+            <span className="truncate text-[0.7rem] text-muted-foreground sm:text-xs">
+              {closedReason === "CLOSED_BY_HOST"
+                ? "أغلق المضيف الطاولة"
+                : closedReason === "EMPTY"
+                  ? "أُغلقت الطاولة"
+                  : `استعرض جولاتك — ${rounds.length} ${rounds.length === 1 ? "جولة" : "جولات"}`}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="إغلاق والعودة للرئيسية"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 bg-black/40 text-lg text-white/85 transition hover:bg-black/65 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* one collapsed card per completed round (oldest first) */}
+        <div className="space-y-2">
+          {rounds.map((rd) => (
+            <SummaryRoundCard key={rd.round} rd={rd} />
+          ))}
+        </div>
       </div>
     </motion.div>
+  );
+}
+
+/** A single round in the table summary: collapsed shows just "الجولة N"; tapping
+ *  expands to replay that round's winner announcement exactly as it appeared. */
+function SummaryRoundCard({ rd }: { rd: RoundSummary }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/12 bg-card/70 backdrop-blur">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-4 py-3 text-start"
+      >
+        <span className="num grid size-8 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 text-xs font-black text-gold">
+          {rd.round}
+        </span>
+        <span className="flex-1 text-sm font-bold">الجولة {rd.round}</span>
+        <span
+          aria-hidden
+          className={cn("text-muted-foreground transition-transform", open && "rotate-180")}
+        >
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <div className="border-t border-white/10 p-3">
+          <RoundAnnouncement
+            results={rd.result.results}
+            players={rd.players}
+            yourSeat={rd.yourSeat}
+            bestRank={rd.bestRank}
+          />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
