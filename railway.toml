@@ -47,8 +47,14 @@ builder = "NIXPACKS"
 # both services deploy at once the concurrent runs serialize safely. Inherited by
 # every service whose Config File Path points at this railway.toml (web AND
 # game-server) — running it per-service is harmless because it is idempotent.
-# Requires DATABASE_URL + DIRECT_URL in each service's variables (already set).
-preDeployCommand = "pnpm db:deploy"
+#
+# `prisma migrate deploy` reads DIRECT_URL (the schema declares directUrl). A
+# service whose RUNTIME only needs DATABASE_URL (e.g. game-server) may not have
+# DIRECT_URL set, which would make the migrate step — and thus the whole deploy —
+# fail with P1012. So fall back to DATABASE_URL when DIRECT_URL is unset (on
+# Railway PG they are the same value; a future Neon split sets a real DIRECT_URL,
+# which takes precedence). Requires only DATABASE_URL in each service's variables.
+preDeployCommand = 'DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" pnpm db:deploy'
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 # Keep at 1: the game-server holds room state in memory and must be a single
