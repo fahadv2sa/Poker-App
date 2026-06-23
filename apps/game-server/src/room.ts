@@ -1049,6 +1049,14 @@ export class GameRoom {
       .map((p) => {
         const combo = combos.get(p.seat);
         const outcome = outcomeFor(p, settlements);
+        // Pots this seat WON (WIN/SPLIT_WIN credits), in pot order, with the gross
+        // amount taken from each — drives the per-winner pot icons + money math.
+        const potsWon = settlements
+          .filter(
+            (m) => m.seat === p.seat && (m.type === "WIN" || m.type === "SPLIT_WIN"),
+          )
+          .sort((a, b) => a.potIndex - b.potIndex)
+          .map((m) => ({ potIndex: m.potIndex, amount: Number(m.amount) }));
         // At a real showdown, reveal EVERY dealt player — winner, loser, AND
         // folders. A last-standing fold-win has no contest, so nothing is
         // revealed (privacy preserved).
@@ -1072,6 +1080,11 @@ export class GameRoom {
           combinationCards: reveal ? combo?.cards ?? [] : null,
           // Sum of the player (fame) scores in that combination (tiebreaker + display).
           scoreSum: reveal ? combo?.scoreSum ?? 0 : null,
+          // Combination strength (1-9) to order the celebrated winners.
+          strength: reveal ? combo?.strength ?? 0 : null,
+          // What this seat paid into the pot (the "دفع" side of the money math).
+          contributed: Number(p.committedTotal),
+          potsWon,
         };
       });
 

@@ -306,7 +306,7 @@ describe("hand flow: fold to last player standing", () => {
 
     // Survivor (seat 1) wins the whole pot: own 50 + 25 forfeit = 75.
     const win = persistence.settlements.find((m) => m.type === "WIN");
-    expect(win).toEqual({ seat: 1, type: "WIN", amount: 75n });
+    expect(win).toEqual({ seat: 1, type: "WIN", amount: 75n, potIndex: 0 });
     // No FOLD_FORFEIT sink: the forfeit reached the winner.
     expect(persistence.settlements.some((m) => m.type === "FOLD_FORFEIT")).toBe(false);
   });

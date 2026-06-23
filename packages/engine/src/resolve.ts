@@ -25,6 +25,10 @@ export interface Settlement {
   seat: number;
   type: "WIN" | "SPLIT_WIN" | "REFUND" | "FOLD_FORFEIT";
   amount: bigint;
+  /** Which pot this movement came from: 0 = main pot, 1.. = side pots, in the
+   *  same ascending order as `buildSidePots`. Lets the winner screen attribute a
+   *  win to its pot ("⛁ 1" main, "⛁ 2" first side pot, …). */
+  potIndex: number;
 }
 
 export interface ResolveSeat extends PotSeat {
@@ -73,7 +77,8 @@ export function resolveShowdown(
   const bySeat = new Map(seats.map((s) => [s.seat, s]));
   const settlements: Settlement[] = [];
 
-  for (const pot of pots) {
+  for (let potIndex = 0; potIndex < pots.length; potIndex++) {
+    const pot = pots[potIndex]!;
     const eligibleValid = pot.eligibleSeats.filter((seat) => {
       const s = bySeat.get(seat);
       return s?.claimedValid === true;
@@ -101,12 +106,13 @@ export function resolveShowdown(
       // 3) Still tied on strength AND score ⇒ split; remainder to the round starter.
       const type = winners.length > 1 ? "SPLIT_WIN" : "WIN";
       for (const [seat, share] of splitAmount(pot.amount, winners, dealerSeat)) {
-        if (share > 0n) settlements.push({ seat, type, amount: share });
+        if (share > 0n) settlements.push({ seat, type, amount: share, potIndex });
       }
     } else {
       // No eligible valid winner: refund non-folder layer contributions ...
       for (const seat of pot.eligibleSeats) {
-        if (pot.perSeat > 0n) settlements.push({ seat, type: "REFUND", amount: pot.perSeat });
+        if (pot.perSeat > 0n)
+          settlements.push({ seat, type: "REFUND", amount: pot.perSeat, potIndex });
       }
       // ... and turn any parked folder forfeit into an explicit sink. Each
       // folder is refunded its forfeit and then forfeits it (net zero, but it
@@ -114,8 +120,8 @@ export function resolveShowdown(
       if (pot.forfeit > 0n) {
         for (const s of seats) {
           if (s.folded && s.forfeit > 0n) {
-            settlements.push({ seat: s.seat, type: "REFUND", amount: s.forfeit });
-            settlements.push({ seat: s.seat, type: "FOLD_FORFEIT", amount: -s.forfeit });
+            settlements.push({ seat: s.seat, type: "REFUND", amount: s.forfeit, potIndex });
+            settlements.push({ seat: s.seat, type: "FOLD_FORFEIT", amount: -s.forfeit, potIndex });
           }
         }
       }

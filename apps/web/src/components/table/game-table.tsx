@@ -52,12 +52,38 @@ function combinationPower(cards: { fameScore: number | null }[] | null | undefin
   return (cards ?? []).reduce((sum, c) => sum + Math.round(c.fameScore ?? 0), 0);
 }
 
-/** The "قوة اللاعبين" line (gold ★ tone, matching the cards' fame badge). */
-function PowerLine({ power }: { power: number }) {
+/** Players-power pill: the ★ icon + the score, no words (the icon IS the label,
+ *  matching the cards' fame ★ badge). */
+function ScorePill({ score }: { score: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1 text-sm font-bold text-gold/90">
+    <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/[0.06] px-2 py-0.5 text-xs font-bold text-gold/90">
       <span aria-hidden className="opacity-80">★</span>
-      قوة اللاعبين <span className="num font-black">{power}</span>
+      <span className="num font-black">{score}</span>
+    </span>
+  );
+}
+
+/** A stacked-chips glyph — the visual idea of "a pot". Invented to pair with the
+ *  ★ score icon; takes `currentColor` so the pill controls its tint. */
+function PotIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden className={className} fill="currentColor">
+      <ellipse cx="8" cy="4.6" rx="5.2" ry="2.1" opacity="0.55" />
+      <ellipse cx="8" cy="8" rx="5.2" ry="2.1" opacity="0.78" />
+      <ellipse cx="8" cy="11.4" rx="5.2" ry="2.1" />
+    </svg>
+  );
+}
+
+/** Pot pill: the pot icon + its number (potIndex 0 → "1" = main pot), optionally
+ *  with the amount won from it. Replaces the wordy "المجمّع الرئيسي / جانبي N"
+ *  labels with a compact icon, mirroring the ★ score pill. */
+function PotChip({ index, amount }: { index: number; amount?: number }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/[0.06] px-2 py-0.5 text-xs font-bold text-gold/90">
+      <PotIcon className="size-3.5 opacity-90" />
+      <span className="num font-black">{index + 1}</span>
+      {amount != null ? <span className="num text-primary">+{amount}</span> : null}
     </span>
   );
 }
@@ -494,7 +520,6 @@ export function GameTable({
         {view.result ? (
           <ResultOverlay
             results={view.result.results}
-            winningRankNameAr={view.result.winningRankNameAr}
             players={players}
             yourSeat={yourSeat}
             bestRank={view.bestRank}
@@ -791,7 +816,6 @@ function ClaimExplanation({
  *  winner first, then the losers; stays up until the host deals the next hand. */
 function ResultOverlay({
   results,
-  winningRankNameAr,
   players,
   yourSeat,
   bestRank,
@@ -802,7 +826,6 @@ function ResultOverlay({
   onExit,
 }: {
   results: GameResultEntry[];
-  winningRankNameAr: string | null;
   players: PlayerView[];
   yourSeat: number | null;
   bestRank: BestRankPayload | null;
@@ -819,29 +842,44 @@ function ResultOverlay({
   const readyCount = roundReady?.readySeats.length ?? 0;
   const readyTotal = roundReady?.total ?? 0;
 
-  const nameOf = (seat: number) =>
-    players.find((p) => p.seat === seat)?.username ?? `مقعد ${seat}`;
   // Profile lookup (avatar + name) from the existing player list — no duplicate data.
   const playerOf = (seat: number) => players.find((p) => p.seat === seat);
 
-  const winners = results.filter((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
+  // Celebrated ONLY = won a pot (the combination) AND came out NET-POSITIVE on
+  // money. A player can win a pot/combination yet still be a net money loser
+  // (e.g. takes a small side pot worth less than they paid in) — they are NOT
+  // celebrated; they drop into the list below. Ordered by combination strength
+  // (strongest first), then players-power as the tiebreaker — mirrors resolution.
+  const celebrated = results
+    .filter((r) => (r.outcome === "WIN" || r.outcome === "SPLIT") && r.coinsDelta > 0)
+    .sort(
+      (a, b) => (b.strength ?? 0) - (a.strength ?? 0) || (b.scoreSum ?? 0) - (a.scoreSum ?? 0),
+    );
+  // Any pot winner at all? Distinguishes a genuine no-winner refund (slate "draw")
+  // from a hand whose pot winners simply weren't net-positive.
+  const hasPotWinner = results.some((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
+  // Everyone else — pure losers, folders, refunds, and any net-≤0 pot winner —
+  // best money result first; rendered as collapsed cards below.
+  const others = results
+    .filter((r) => !celebrated.includes(r))
+    .sort((a, b) => b.coinsDelta - a.coinsDelta);
+  // Pots are only called out on the rows when MORE THAN ONE player is celebrated
+  // (a single winner needs no pot label at all).
+  const showPots = celebrated.length > 1;
 
-  // #6 coin payout — fly coins from the (still-mounted) pot up to each winner's
-  // payout pill once the overlay has settled. Decorative; the real +amount is
-  // already shown. Skipped automatically when off / reduced-motion (fly no-ops).
+  // #6 coin payout — fly coins from the (still-mounted) pot up to each celebrated
+  // winner's amount once the overlay settles. Decorative; the real +amount already
+  // shows. Skipped automatically when off / reduced-motion (fly no-ops).
   useEffect(() => {
-    if (!anim("coinPayout") || winners.length === 0) return;
+    if (!anim("coinPayout") || celebrated.length === 0) return;
     const t = setTimeout(() => {
-      winners.forEach((w) =>
+      celebrated.forEach((w) =>
         fly({ from: '[data-fx="pot"]', to: `[data-fx="win-${w.seat}"]`, kind: "coin", count: 8 }),
       );
     }, 220);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const losers = results
-    .filter((r) => r.outcome !== "WIN" && r.outcome !== "SPLIT")
-    .sort((a, b) => a.coinsDelta - b.coinsDelta);
 
   return (
     <motion.div
@@ -850,9 +888,9 @@ function ResultOverlay({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex justify-center overflow-y-auto bg-background/85 p-3 backdrop-blur-md sm:p-6"
     >
-      {/* Celebratory confetti — only when there's actually a winner. Decorative,
-          pointer-events-none, hidden under prefers-reduced-motion. */}
-      {winners.length > 0 ? (
+      {/* Celebratory confetti — only when someone is actually celebrated.
+          Decorative, pointer-events-none, hidden under prefers-reduced-motion. */}
+      {celebrated.length > 0 ? (
         <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
           {CONFETTI.map((c, i) => (
             <span
@@ -901,10 +939,45 @@ function ResultOverlay({
           </div>
         </div>
 
-        {/* ── Result HERO: a distinct themed card per outcome ──────────────────
-            No winner → slate "draw" card with every player's avatar.
-            Winner(s) → gold card: 🏆, rank, players-power, avatar—name—amount, cards. */}
-        {winners.length === 0 ? (
+        {/* ── TOP celebrated section — ONLY players who won the combination AND
+            the money, ordered by hand strength (strongest first). Each is a
+            consistent card, expanded by default (the glory). When there's no pot
+            winner at all → the slate "draw" card instead. */}
+        {celebrated.length > 0 ? (
+          <motion.section
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-4 shadow-2xl"
+          >
+            <div className="mb-3 flex flex-col items-center">
+              <motion.span
+                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
+                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
+                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
+                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
+              >
+                🏆
+              </motion.span>
+              <div className="mt-1 text-xs font-bold tracking-[0.15em] text-gold/80">
+                {celebrated.length > 1 ? "الفائزون" : "الفائز"}
+              </div>
+            </div>
+            <div className="space-y-2">
+              {celebrated.map((w) => (
+                <PlayerResultCard
+                  key={w.seat}
+                  r={w}
+                  you={w.seat === yourSeat}
+                  player={playerOf(w.seat)}
+                  tone="gold"
+                  showPots={showPots}
+                  defaultOpen
+                />
+              ))}
+            </div>
+          </motion.section>
+        ) : !hasPotWinner ? (
           <motion.section
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -935,110 +1008,21 @@ function ResultOverlay({
               ))}
             </div>
           </motion.section>
-        ) : (
-          <motion.section
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.28, ease: "easeOut" }}
-            className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 text-center shadow-2xl"
-          >
-            {/* trophy */}
-            <div className="mb-1 flex justify-center">
-              <motion.span
-                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
-                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
-                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
-                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
-              >
-                🏆
-              </motion.span>
-            </div>
-            <div className="text-xs font-bold tracking-[0.15em] text-gold/80">
-              {winners.length > 1 ? "الفائزون" : "الفائز"}
-            </div>
-            {/* winning rank (Arabic) — the headline */}
-            {(winningRankNameAr ?? winners[0]!.claimedRankNameAr) ? (
-              <div className="mt-0.5 text-2xl font-black text-gold">
-                {winningRankNameAr ?? winners[0]!.claimedRankNameAr}
-              </div>
-            ) : null}
-            {/* Per winner: players-power → avatar—name—amount → strongest-association
-                cards. (A split lists each winner's own block; they tie on power.) */}
-            <div className="mt-3 flex flex-col items-center gap-5">
-              {winners.map((w) => {
-                const p = playerOf(w.seat);
-                const you = w.seat === yourSeat;
-                return (
-                  <div
-                    key={w.seat}
-                    className={cn(
-                      "flex w-full flex-col items-center gap-2.5",
-                      winners.length > 1 && "rounded-2xl border border-gold/20 bg-gold/[0.04] p-3",
-                    )}
-                  >
-                    {/* players power + number (matches the cards' ★ totals) */}
-                    <PowerLine power={combinationPower(w.combinationCards)} />
-                    {/* single line: avatar — name — amount */}
-                    <div className="flex items-center justify-center gap-2.5">
-                      {p ? (
-                        <SeatAvatar
-                          playerNumber={p.playerNumber}
-                          seed={p.username}
-                          size={46}
-                          className="glow-gold ring-2 ring-gold/50"
-                        />
-                      ) : null}
-                      <span
-                        className={cn(
-                          "text-lg font-extrabold",
-                          anim("winnerReveal") && "badge-shine rounded px-1",
-                        )}
-                      >
-                        {you ? "أنت" : p?.username ?? nameOf(w.seat)}
-                      </span>
-                      <span
-                        data-fx={`win-${w.seat}`}
-                        className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-base font-extrabold text-primary"
-                      >
-                        +{w.coinsDelta}
-                      </span>
-                    </div>
-                    {/* the player cards with the strongest association (never all 7) */}
-                    {w.combinationCards && w.combinationCards.length > 0 ? (
-                      <div className="flex flex-wrap justify-center gap-1.5">
-                        {w.combinationCards.map((c, i) => (
-                          <FootballCard
-                            key={`${w.seat}-${c.playerId}-${i}`}
-                            card={c}
-                            index={i}
-                            variant="result"
-                            reveal="flip"
-                          />
-                        ))}
-                      </div>
-                    ) : null}
-                    {/* concise data-driven "why" (kept; rank is the headline above) */}
-                    {w.claimEvidence ? (
-                      <div className="mx-auto max-w-md text-[0.7rem] text-muted-foreground">
-                        <ClaimExplanation rankNameAr={null} groups={w.claimEvidence} />
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </motion.section>
-        )}
+        ) : null}
 
-        {/* ── Everyone else: clean tappable profile rows (avatar + name) ────── */}
-        {losers.length > 0 ? (
+        {/* ── Everyone else: collapsed cards (key info on the outside), tap to
+            expand for the cards + the settlement math. Same card as above. */}
+        {others.length > 0 ? (
           <div className="space-y-1.5">
-            {losers.map((r) => (
-              <ResultRow
+            {others.map((r) => (
+              <PlayerResultCard
                 key={r.seat}
                 r={r}
                 you={r.seat === yourSeat}
                 player={playerOf(r.seat)}
+                tone="red"
+                showPots={false}
+                defaultOpen={false}
               />
             ))}
           </div>
@@ -1051,33 +1035,85 @@ function ResultOverlay({
   );
 }
 
-/** A loser's compact row (red theme): single line avatar — name/outcome — amount.
- *  Tapping expands the same "idea" as the winner card — the rank name, the
- *  players-power + number, then the strongest-association cards. */
-function ResultRow({
+/** The expanded money math: which pot(s) were won (icon + amount), then the
+ *  paid → won → net line. Shown when a card is expanded. */
+function MoneyMath({ r }: { r: GameResultEntry }) {
+  const grossWon = r.potsWon.reduce((s, p) => s + p.amount, 0);
+  return (
+    <div className="w-full max-w-xs rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs">
+      {/* Per-pot breakdown only when this player won MORE THAN ONE pot — a single
+          pot needs no label (the "ربح" total below already states it). */}
+      {r.potsWon.length > 1 ? (
+        <div className="mb-1.5 flex flex-wrap justify-center gap-1.5">
+          {r.potsWon.map((p) => (
+            <PotChip key={p.potIndex} index={p.potIndex} amount={p.amount} />
+          ))}
+        </div>
+      ) : null}
+      <div className="num flex items-center justify-center gap-2">
+        <span className="text-muted-foreground">
+          دفع <b className="text-foreground">{r.contributed}</b>
+        </span>
+        <span aria-hidden className="text-muted-foreground/50">•</span>
+        <span className="text-muted-foreground">
+          ربح <b className="text-primary">{grossWon}</b>
+        </span>
+        <span aria-hidden className="text-muted-foreground/50">•</span>
+        <span className="text-muted-foreground">
+          صافي{" "}
+          <b className={r.coinsDelta >= 0 ? "text-primary" : "text-destructive"}>
+            {r.coinsDelta >= 0 ? "+" : ""}
+            {r.coinsDelta}
+          </b>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** One consistent player card for BOTH the celebrated (gold) and the everyone-else
+ *  (red) sections — only the tone, default-open state, and pot-icon display differ.
+ *  Collapsed: avatar · name · association · ★score · (pots) · net amount. Expanded:
+ *  the combination cards, the settlement math, and the data-driven "why". */
+function PlayerResultCard({
   r,
   you,
   player,
+  tone,
+  showPots,
+  defaultOpen,
 }: {
   r: GameResultEntry;
   you: boolean;
   player: PlayerView | undefined;
+  tone: "gold" | "red";
+  showPots: boolean;
+  defaultOpen: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
+  const gold = tone === "gold";
   // Only the cards forming this player's strongest combination (engine witness) —
   // never the full 7.
   const cards = r.combinationCards && r.combinationCards.length > 0 ? r.combinationCards : null;
-  const hasDetails = Boolean(cards) || Boolean(r.claimEvidence) || Boolean(r.claimedRankNameAr);
+  const power = combinationPower(r.combinationCards);
+  const hasDetails =
+    Boolean(cards) || Boolean(r.claimEvidence) || r.potsWon.length > 0 || r.contributed > 0;
   const name = you ? "أنت" : player?.username ?? `مقعد ${r.seat}`;
 
   return (
     <div
       className={cn(
         "overflow-hidden rounded-xl border",
-        you ? "border-destructive/45 bg-destructive/10" : "border-destructive/25 bg-destructive/[0.05]",
+        gold
+          ? you
+            ? "border-gold/55 bg-gold/[0.12]"
+            : "border-gold/35 bg-gold/[0.06]"
+          : you
+            ? "border-destructive/45 bg-destructive/10"
+            : "border-destructive/25 bg-destructive/[0.05]",
       )}
     >
-      {/* collapsed: single line — avatar — name (+ outcome) — amount */}
+      {/* collapsed: avatar — [name (+outcome) / association · ★score · pots] — amount */}
       <button
         type="button"
         onClick={() => hasDetails && setOpen((o) => !o)}
@@ -1088,44 +1124,86 @@ function ResultRow({
           <SeatAvatar
             playerNumber={player.playerNumber}
             seed={player.username}
-            size={36}
-            className="shrink-0 ring-1 ring-destructive/25"
+            size={gold ? 44 : 38}
+            className={cn("shrink-0 ring-2", gold ? "glow-gold ring-gold/50" : "ring-destructive/25")}
           />
         ) : null}
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate font-bold">{name}</span>
-          <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[0.62rem] text-destructive">
-            {OUTCOME_AR[r.outcome] ?? r.outcome}
-          </span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "truncate font-bold",
+                gold && anim("winnerReveal") && "badge-shine rounded px-1",
+              )}
+            >
+              {name}
+            </span>
+            {!gold ? (
+              <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[0.62rem] text-destructive">
+                {OUTCOME_AR[r.outcome] ?? r.outcome}
+              </span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {r.claimedRankNameAr ? (
+              <span className={cn("text-xs font-black", gold ? "text-gold" : "text-gold/80")}>
+                {r.claimedRankNameAr}
+              </span>
+            ) : null}
+            {cards ? <ScorePill score={power} /> : null}
+            {showPots
+              ? r.potsWon.map((p) => <PotChip key={p.potIndex} index={p.potIndex} />)
+              : null}
+          </div>
         </div>
         <span
-          className={cn("num shrink-0 font-extrabold", r.coinsDelta >= 0 ? "text-primary" : "text-destructive")}
+          data-fx={gold ? `win-${r.seat}` : undefined}
+          className={cn(
+            "num shrink-0 text-base font-extrabold",
+            gold && "rounded-full bg-primary/15 px-2.5 py-0.5",
+            r.coinsDelta > 0
+              ? "text-primary"
+              : r.coinsDelta < 0
+                ? "text-destructive"
+                : "text-muted-foreground",
+          )}
         >
           {r.coinsDelta >= 0 ? "+" : ""}
           {r.coinsDelta}
         </span>
         {hasDetails ? (
-          <span aria-hidden className={cn("shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}>
+          <span
+            aria-hidden
+            className={cn("shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
+          >
             ▾
           </span>
         ) : null}
       </button>
-      {/* expanded: winner-style detail — rank, players-power, then the cards */}
+      {/* expanded: the combination cards, the settlement math, then the "why" */}
       {open && hasDetails ? (
-        <div className="flex flex-col items-center gap-2.5 border-t border-destructive/15 p-3 text-center">
-          {r.claimedRankNameAr ? (
-            <div className="text-base font-black text-gold">{r.claimedRankNameAr}</div>
-          ) : (
-            <div className="text-xs text-muted-foreground">بدون ترابط</div>
+        <div
+          className={cn(
+            "flex flex-col items-center gap-2.5 border-t p-3 text-center",
+            gold ? "border-gold/15" : "border-destructive/15",
           )}
-          {cards ? <PowerLine power={combinationPower(r.combinationCards)} /> : null}
+        >
           {cards ? (
             <div className="flex flex-wrap justify-center gap-1.5">
               {cards.map((c, i) => (
-                <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
+                <FootballCard
+                  key={`${r.seat}-${c.playerId}-${i}`}
+                  card={c}
+                  index={i}
+                  variant="result"
+                  reveal={gold ? "flip" : undefined}
+                />
               ))}
             </div>
-          ) : null}
+          ) : r.claimedRankNameAr ? null : (
+            <div className="text-xs text-muted-foreground">بدون ترابط</div>
+          )}
+          <MoneyMath r={r} />
           {r.claimEvidence ? (
             <div className="mx-auto max-w-md text-[0.7rem] text-muted-foreground">
               <ClaimExplanation rankNameAr={null} groups={r.claimEvidence} />

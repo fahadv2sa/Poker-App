@@ -251,7 +251,7 @@ describe("bot isolation — a human beats two bots (AUTO)", () => {
     // --- resolve / mint: the human is credited the FULL 150 pot ---
     // (own 50 + the two bots' 50 each). Bot seats are dropped from persistence.
     expect(persistence.resolveCalls).toBe(1);
-    expect(persistence.settlements).toEqual([{ seat: 1, type: "WIN", amount: 150n }]);
+    expect(persistence.settlements).toEqual([{ seat: 1, type: "WIN", amount: 150n, potIndex: 0 }]);
     expect(persistence.resolvedPlayers.every((p) => !p.isBot)).toBe(true);
     expect(persistence.resolvedPlayers.map((p) => p.seat)).toEqual([1]);
 
@@ -300,7 +300,7 @@ describe("bot isolation — a bot folds", () => {
     const bot = room.state.players.find((p) => p.seat === 2)!;
     expect(bot.forfeit).toBe(25n);
     // ... and the human sweeps own 50 + the bot's 25 forfeit = 75 (minted portion 25).
-    expect(persistence.settlements).toEqual([{ seat: 1, type: "WIN", amount: 75n }]);
+    expect(persistence.settlements).toEqual([{ seat: 1, type: "WIN", amount: 75n, potIndex: 0 }]);
   });
 });
 

@@ -238,6 +238,16 @@ export interface GameResultEntry {
    *  tiebreaker shown per player on the winner screen (winner and loser). 0 when
    *  no combination qualifies; `null` when this seat isn't revealed. */
   scoreSum: number | null;
+  /** Combination (hand) strength 1-9 used to ORDER the celebrated winners
+   *  (strongest first). 0 when no rank qualifies; `null` when not revealed. */
+  strength: number | null;
+  /** Total coins this seat put into the pot this hand (the "paid" side of the
+   *  money math shown on expand). 0 for a never-dealt seat. */
+  contributed: number;
+  /** The pots this seat WON and the gross amount taken from each, in pot order
+   *  (potIndex 0 = main pot, shown as ⛁ 1). Empty when this seat won nothing.
+   *  Drives the per-winner pot icons and the expanded settlement breakdown. */
+  potsWon: { potIndex: number; amount: number }[];
 }
 
 export interface GameResultPayload {
