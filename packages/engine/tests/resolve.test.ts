@@ -249,3 +249,77 @@ describe("ledger invariant Σ deltas = −Σ|FOLD_FORFEIT|", () => {
     expect(netBySeat(settlements).get(1)).toBe(125n); // 50+50+25 forfeit
   });
 });
+
+describe("score-sum tiebreaker (combination cards)", () => {
+  it("equal strength → the higher sum of player scores wins the whole pot (WIN, no split)", () => {
+    const { settlements } = resolveShowdown([
+      seat(1, 100n, { strength: 5, scoreSum: 120 }),
+      seat(2, 100n, { strength: 5, scoreSum: 200 }), // same combo, stronger scores
+      seat(3, 100n, { strength: 5, scoreSum: 80 }),
+    ]);
+    const net = netBySeat(settlements);
+    expect(net.get(2)).toBe(300n);
+    expect(net.get(1) ?? 0n).toBe(0n);
+    expect(net.get(3) ?? 0n).toBe(0n);
+    expect(settlements.every((m) => m.type === "WIN")).toBe(true);
+  });
+
+  it("strength beats score: a stronger combination wins even with a lower score sum", () => {
+    const { settlements } = resolveShowdown([
+      seat(1, 100n, { strength: 6, scoreSum: 10 }), // stronger combo, weak scores
+      seat(2, 100n, { strength: 5, scoreSum: 999 }), // weaker combo, huge scores
+    ]);
+    const net = netBySeat(settlements);
+    expect(net.get(1)).toBe(200n);
+    expect(net.get(2) ?? 0n).toBe(0n);
+  });
+
+  it("only equal strength AND equal score sum splits (SPLIT_WIN)", () => {
+    const { settlements } = resolveShowdown([
+      seat(1, 100n, { strength: 5, scoreSum: 150 }),
+      seat(2, 100n, { strength: 5, scoreSum: 150 }),
+    ]);
+    const net = netBySeat(settlements);
+    expect(net.get(1)).toBe(100n);
+    expect(net.get(2)).toBe(100n);
+    expect(settlements.some((m) => m.type === "SPLIT_WIN")).toBe(true);
+  });
+});
+
+describe("indivisible remainder → round starter (dealer)", () => {
+  it("gives the remainder to the dealer when the dealer is among the tied winners", () => {
+    // 3-way full tie (strength + scoreSum). A 25-coin folder forfeit makes the
+    // single main pot 300 + 25 = 325 → 325/3 = 108 each, remainder 1.
+    const seats: ResolveSeat[] = [
+      seat(1, 100n, { strength: 5, scoreSum: 100 }),
+      seat(2, 100n, { strength: 5, scoreSum: 100 }),
+      seat(3, 100n, { strength: 5, scoreSum: 100 }),
+      { seat: 4, committed: 0n, folded: true, forfeit: 25n, claimedValid: false, strength: 0 },
+    ];
+    // No dealer hint → remainder to the lowest winning seat (1).
+    const flat = netBySeat(resolveShowdown(seats).settlements);
+    expect(flat.get(1)).toBe(109n);
+    expect(flat.get(2)).toBe(108n);
+    expect(flat.get(3)).toBe(108n);
+    // Dealer = seat 3 → the remainder coin goes to seat 3 instead.
+    const withDealer = netBySeat(resolveShowdown(seats, 3).settlements);
+    expect(withDealer.get(1)).toBe(108n);
+    expect(withDealer.get(2)).toBe(108n);
+    expect(withDealer.get(3)).toBe(109n);
+  });
+
+  it("falls back to the lowest winning seat when the dealer is not a tied winner", () => {
+    // seats 1&2 tie at the top; seat 3 (the dealer) contributes but loses on
+    // strength. A 25 forfeit makes the pot 325 → 325/2 = 162 each, remainder 1.
+    const seats: ResolveSeat[] = [
+      seat(1, 100n, { strength: 5, scoreSum: 100 }),
+      seat(2, 100n, { strength: 5, scoreSum: 100 }),
+      seat(3, 100n, { strength: 1, scoreSum: 999 }), // dealer, but loses
+      { seat: 4, committed: 0n, folded: true, forfeit: 25n, claimedValid: false, strength: 0 },
+    ];
+    const net = netBySeat(resolveShowdown(seats, 3).settlements);
+    expect(net.get(1)).toBe(163n); // dealer not a winner → remainder to lowest winner
+    expect(net.get(2)).toBe(162n);
+    expect(net.get(3) ?? 0n).toBe(0n);
+  });
+});

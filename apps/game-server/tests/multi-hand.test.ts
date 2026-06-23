@@ -145,6 +145,25 @@ function midDeck(n = 20): DealtCard[] {
   }));
 }
 
+/**
+ * Like midDeck but with per-index fame scores, to drive the score-sum tiebreaker
+ * deterministically under AUTO resolution. dealFromDeck gives seat i the cards at
+ * deck[2i], deck[2i+1] (hole) and deck[2n..2n+4] (shared community); since every
+ * pool is a ROYAL_POSITION whose witness sums the first 5 cards (the 2 hole + 3
+ * community), a seat's relative scoreSum is decided by its two hole-card fames.
+ */
+function midDeckFamed(fames: number[]): DealtCard[] {
+  return fames.map((fame, i) => ({
+    playerId: `p${i}`,
+    name: `p${i}`,
+    nationality: `N${i}`,
+    position: "MID",
+    clubs: [],
+    photoUrl: null,
+    fameScore: fame,
+  }));
+}
+
 function player(seat: number, userId: string): RoomPlayer {
   return {
     seat,
@@ -166,7 +185,11 @@ function player(seat: number, userId: string): RoomPlayer {
   };
 }
 
-function makeRoom(seats: Array<[number, string]>, balances: Record<string, bigint>) {
+function makeRoom(
+  seats: Array<[number, string]>,
+  balances: Record<string, bigint>,
+  deck: DealtCard[] = midDeck(),
+) {
   const state: RoomState = {
     gameId: "g1",
     roomName: "Test Room",
@@ -192,7 +215,7 @@ function makeRoom(seats: Array<[number, string]>, balances: Record<string, bigin
   const emitter = new FakeEmitter();
   const timers = new ManualTimers();
   const deps: RoomDeps = {
-    cards: new FakeCards(midDeck()),
+    cards: new FakeCards(deck),
     persistence,
     emitter,
     timers,
@@ -216,14 +239,11 @@ async function checkDown(room: GameRoom): Promise<void> {
   }
 }
 
-/** Play one full hand to a showdown where each contender claims `rankBySeat`. */
-async function playHand(
-  room: GameRoom,
-  rankBySeat: (seat: number) => string = () => "ROYAL_POSITION",
-): Promise<void> {
+/** Play one full hand. Winner determination is now automatic: checking the hand
+ *  down to the end of the river makes the server evaluate every contender's
+ *  strongest combination and resolve the showdown directly (no claim step). */
+async function playHand(room: GameRoom): Promise<void> {
   await checkDown(room);
-  expect(room.state.phase).toBe("SHOWDOWN");
-  for (const p of contenders(room)) await room.selectClaim(p.seat, rankBySeat(p.seat));
   expect(room.state.phase).toBe("ENDED");
 }
 
@@ -352,7 +372,7 @@ describe("stats are counted once per hand (no duplication across the session)", 
     expect(persistence.gamesPlayed.get("c")).toBe(3);
   });
 
-  it("holds the single-resolve guard independently on each hand (concurrent claims)", async () => {
+  it("resolves exactly once per hand (auto), holding the single-resolve guard each hand", async () => {
     const { room, persistence } = makeRoom(
       [
         [1, "a"],
@@ -361,26 +381,15 @@ describe("stats are counted once per hand (no duplication across the session)", 
       { a: 5000n, b: 5000n },
     );
     await room.start();
-    await checkDown(room);
-    await Promise.all([
-      room.selectClaim(2, "ROYAL_POSITION"),
-      room.selectClaim(1, "ROYAL_POSITION"),
-    ]);
+    await checkDown(room); // hand 1 auto-resolves at the end of the river
     expect(persistence.resolveCalls).toBe(1);
 
     await room.startNextHand();
-    await checkDown(room);
-    await Promise.all([
-      room.selectClaim(room.state.currentTurnSeat ?? 1, "ROYAL_POSITION"),
-      ...contenders(room)
-        .map((p) => p.seat)
-        .filter((s) => s !== (room.state.currentTurnSeat ?? 1))
-        .map((s) => room.selectClaim(s, "ROYAL_POSITION")),
-    ]);
-    // Each hand resolved exactly once — the guard reset per hand and held again.
+    await checkDown(room); // hand 2 auto-resolves
+    // The guard reset per hand and held again — one resolve per hand, no dup.
     expect(persistence.resolveCalls).toBe(2);
     const splits = persistence.settlements.filter((m) => m.type === "SPLIT_WIN");
-    expect(splits).toHaveLength(4); // 2 per hand × 2 hands, never doubled
+    expect(splits).toHaveLength(4); // even tie each hand → 2 split rows × 2 hands
   });
 });
 
@@ -436,43 +445,13 @@ describe("hand:started mirrors authoritative post-ante state (Batch 1, item 1)",
   });
 });
 
-describe("claim timer: not choosing in time forfeits the claim (decision 19.6)", () => {
-  it("a contender who never claims loses to the valid claimant when the timer fires", async () => {
-    const { room, persistence, timers } = makeRoom(
-      [
-        [1, "a"],
-        [2, "b"],
-      ],
-      { a: 5000n, b: 5000n },
-    );
-    await room.start();
-    await checkDown(room);
-    expect(room.state.phase).toBe("SHOWDOWN");
-
-    // Only seat 1 claims (valid). Seat 2 never chooses → still unresolved.
-    await room.selectClaim(1, "ROYAL_POSITION");
-    expect(room.state.phase).toBe("SHOWDOWN");
-
-    // The claim timer fires → resolve with seat 2 forfeiting its claim.
-    const fire = timers.pending.get("claim");
-    expect(fire).toBeTruthy();
-    fire!();
-    await new Promise((r) => setTimeout(r, 0));
-
-    expect(room.state.phase).toBe("ENDED");
-    expect(persistence.resolveCalls).toBe(1);
-    // Seat 1 sweeps the whole pot (its 50 + seat 2's forfeited 50).
-    const win = persistence.settlements.find((s) => s.type === "WIN");
-    expect(win).toMatchObject({ seat: 1, amount: 100n });
-    expect(persistence.balances.get("a")).toBe(5050n);
-    expect(persistence.balances.get("b")).toBe(4950n);
-  });
-});
-
 describe("a player who busts is sat out, the room keeps playing", () => {
   it("excludes a busted player from the next hand and continues with the rest", async () => {
-    // c keeps making an impossible claim (LINEUP needs all 4 positions, but the
-    // all-midfielder pool can't form it) and bleeds 50/hand until it can't ante.
+    // Auto resolution: every pool is a ROYAL_POSITION, so the score-sum tiebreaker
+    // (the two hole cards' fame) decides it. seat 3 (c) holds the weakest hole
+    // cards (deck[4],deck[5] = fame 0) so it loses its 50 ante every hand; seats
+    // 1 & 2 tie (equal hole fame) and split, netting zero.
+    const deck = midDeckFamed([50, 50, 50, 50, 0, 0, 0, 0, 0, 0, 0]);
     const { room, persistence } = makeRoom(
       [
         [1, "a"],
@@ -480,14 +459,14 @@ describe("a player who busts is sat out, the room keeps playing", () => {
         [3, "c"],
       ],
       { a: 5000n, b: 5000n, c: 120n },
+      deck,
     );
-    const cLoses = (seat: number) => (seat === 3 ? "LINEUP" : "ROYAL_POSITION");
 
     await room.start();
-    await playHand(room, cLoses); // c: 120 → 70
+    await playHand(room); // c: 120 → 70
     await room.startNextHand();
     expect(seatOf(room, 3).status).toBe("ACTIVE"); // 70 ≥ 50, still in
-    await playHand(room, cLoses); // c: 70 → 20
+    await playHand(room); // c: 70 → 20
 
     await room.startNextHand(); // c now has 20 < ante 50
     expect(seatOf(room, 3).status).toBe("WAITING"); // sat out
@@ -501,18 +480,21 @@ describe("a player who busts is sat out, the room keeps playing", () => {
   });
 
   it("parks the room (no deal) when fewer than two players can afford the ante", async () => {
+    // seat 2 (b) holds the weaker hole cards (fame 0) and loses its 50 ante to
+    // seat 1 every hand until it can't afford the next ante.
+    const deck = midDeckFamed([50, 50, 0, 0, 0, 0, 0, 0, 0]);
     const { room, emitter } = makeRoom(
       [
         [1, "a"],
         [2, "b"],
       ],
       { a: 5000n, b: 120n },
+      deck,
     );
-    const bLoses = (seat: number) => (seat === 2 ? "LINEUP" : "ROYAL_POSITION");
     await room.start();
-    await playHand(room, bLoses); // b: 120 → 70
+    await playHand(room); // b: 120 → 70
     await room.startNextHand();
-    await playHand(room, bLoses); // b: 70 → 20
+    await playHand(room); // b: 70 → 20
 
     await room.startNextHand(); // only a can afford → cannot deal
     expect(room.state.status).toBe("LOBBY");

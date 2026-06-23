@@ -200,7 +200,7 @@ const roomEvents = (e: FakeEmitter, name: string) =>
 
 describe("hand flow: check-down to a split showdown", () => {
   it("deals privately, posts antes, walks all streets, and splits the pot", async () => {
-    const { room, persistence, emitter, timers } = makeRoom(allMidDeck());
+    const { room, persistence, emitter } = makeRoom(allMidDeck());
 
     await room.start();
 
@@ -234,16 +234,9 @@ describe("hand flow: check-down to a split showdown", () => {
 
     await room.placeAction(2, { type: "CHECK" });
     await room.placeAction(1, { type: "CHECK" });
-    expect(room.state.phase).toBe("SHOWDOWN");
-    expect(roomEvents(emitter, "showdown:start")).toHaveLength(1);
-    expect(timers.pending.has("claim")).toBe(true);
-
-    // Both validly claim ROYAL_POSITION (every pool is 7 midfielders).
-    await room.selectClaim(2, "ROYAL_POSITION");
-    await room.selectClaim(1, "ROYAL_POSITION");
-
+    // Winner determination is automatic: the final river check resolves the
+    // showdown directly (no claim step), evaluating each pool's combination.
     expect(room.state.phase).toBe("ENDED");
-    expect(persistence.claims.every((c) => c.valid)).toBe(true);
 
     const splits = persistence.settlements.filter((m) => m.type === "SPLIT_WIN");
     expect(splits).toHaveLength(2);
@@ -252,11 +245,9 @@ describe("hand flow: check-down to a split showdown", () => {
     const result = roomEvents(emitter, "game:result").at(-1)!.payload;
     expect(result.results).toHaveLength(2);
     expect(result.results.every((r: any) => r.coinsDelta === 0)).toBe(true);
-
-    // MANUAL mode: the per-seat best-rank suggestion IS sent (guides declaration).
-    const reveals = emitter.seat.filter((s) => s.event === "result:best");
-    expect(reveals).toHaveLength(2);
-    expect(reveals.every((r) => r.payload.rankNameAr != null)).toBe(true);
+    // Every player's combination + score sum is announced (winner and loser).
+    expect(result.results.every((r: any) => r.claimedRankNameAr != null)).toBe(true);
+    expect(result.results.every((r: any) => typeof r.scoreSum === "number")).toBe(true);
 
     // Stats: Layer-1 events were flushed at resolve (one ROUND_SUMMARY per dealt
     // player, plus the buffered bet events), and aggregation ran for both seats.
@@ -463,7 +454,7 @@ describe("private hole-card resync on reconnect (FIX #4)", () => {
 });
 
 describe("rank display names are data-driven (FIX #5)", () => {
-  it("showdown:start carries the DB name_ar, never the code or a hardcoded map", async () => {
+  it("game:result carries the DB name_ar, never the code or a hardcoded map", async () => {
     // Ranks whose nameAr is a sentinel distinct from the code — stands in for the
     // DB-loaded value; it can't come from the rank code or a compile-time catalog.
     const dbRanks: RankInfo[] = HAND_RANK_CATALOG.map((r) => ({
@@ -476,20 +467,22 @@ describe("rank display names are data-driven (FIX #5)", () => {
     const { room, emitter } = makeRoom(allMidDeck(), {}, dbRanks);
 
     await room.start();
-    // Check the hand down (2 then 1 each street) to reach showdown.
+    // Check the hand down (2 then 1 each street); the showdown auto-resolves.
     for (let i = 0; i < 4; i++) {
       await room.placeAction(2, { type: "CHECK" });
       await room.placeAction(1, { type: "CHECK" });
     }
-    expect(room.state.phase).toBe("SHOWDOWN");
+    expect(room.state.phase).toBe("ENDED");
 
-    const payload = roomEvents(emitter, "showdown:start").at(-1)!.payload as {
-      availableHandRanks: Array<{ code: string; nameAr: string }>;
+    const result = roomEvents(emitter, "game:result").at(-1)!.payload as {
+      winningRankNameAr: string | null;
+      results: Array<{ claimedRankNameAr: string | null }>;
     };
-    const royal = payload.availableHandRanks.find((r) => r.code === "ROYAL_POSITION")!;
-    expect(royal.nameAr).toBe("اسم-من-قاعدة-البيانات-ROYAL_POSITION");
-    // No rank's display name falls back to its code (no placeholder anywhere).
-    expect(payload.availableHandRanks.every((r) => r.nameAr !== r.code)).toBe(true);
+    const sentinel = "اسم-من-قاعدة-البيانات-ROYAL_POSITION";
+    // The announced winning association is the DB Arabic name, not the code.
+    expect(result.winningRankNameAr).toBe(sentinel);
+    // Every revealed player's combination name is the DB value (never the code).
+    expect(result.results.every((r) => r.claimedRankNameAr === sentinel)).toBe(true);
   });
 });
 
@@ -509,31 +502,21 @@ describe("distributable pot display (FIX #11)", () => {
   });
 });
 
-describe("simultaneous claims resolve the hand exactly once (race guard)", () => {
-  it("never duplicates settlement/results when both players claim at the same time", async () => {
+describe("the hand resolves exactly once (race guard)", () => {
+  it("never duplicates settlement/results when the showdown auto-resolves", async () => {
     const { room, persistence } = makeRoom(allMidDeck());
     await room.start();
 
-    // Walk to showdown with both players still in (check down 2 then 1).
+    // Walk to the end of the river; the showdown then auto-resolves once.
     for (let i = 0; i < 4; i++) {
       await room.placeAction(2, { type: "CHECK" });
       await room.placeAction(1, { type: "CHECK" });
     }
-    expect(room.state.phase).toBe("SHOWDOWN");
-
-    // Both contenders claim ROYAL_POSITION CONCURRENTLY — the exact race the
-    // smoke test surfaced: both selectClaim handlers pass the "all claimed"
-    // check after their persistClaim await.
-    await Promise.all([
-      room.selectClaim(2, "ROYAL_POSITION"),
-      room.selectClaim(1, "ROYAL_POSITION"),
-    ]);
-
     expect(room.state.phase).toBe("ENDED");
+
     // The single-resolve guard ⇒ resolveHand/persistResolve ran exactly once.
     expect(persistence.resolveCalls).toBe(1);
-    // A split pays two SPLIT_WIN movements — not four (which is what a double
-    // resolve produced before the fix).
+    // A split pays two SPLIT_WIN movements — never doubled.
     const splits = persistence.settlements.filter((m) => m.type === "SPLIT_WIN");
     expect(splits).toHaveLength(2);
     expect(splits.every((m) => m.amount === 50n)).toBe(true);
@@ -543,16 +526,14 @@ describe("simultaneous claims resolve the hand exactly once (race guard)", () =>
 describe("showdown official reveal + winning association (PROBLEM 2)", () => {
   const royalNameAr = RANKS.find((r) => r.code === "ROYAL_POSITION")!.nameAr;
 
-  it("reveals contenders' hole cards to everyone and reports each claim + the winning rank", async () => {
+  it("reveals every dealt player's hole cards and reports each combination + the winning rank", async () => {
     const { room, emitter } = makeRoom(allMidDeck());
     await room.start();
     for (let i = 0; i < 4; i++) {
       await room.placeAction(2, { type: "CHECK" });
       await room.placeAction(1, { type: "CHECK" });
     }
-    expect(room.state.phase).toBe("SHOWDOWN");
-    await room.selectClaim(2, "ROYAL_POSITION");
-    await room.selectClaim(1, "ROYAL_POSITION");
+    // Auto-resolves at the end of the river (no claim step).
     expect(room.state.phase).toBe("ENDED");
 
     const result = roomEvents(emitter, "game:result").at(-1)!.payload;
@@ -561,7 +542,7 @@ describe("showdown official reveal + winning association (PROBLEM 2)", () => {
 
     for (const seat of [1, 2]) {
       const row = result.results.find((r: any) => r.seat === seat);
-      expect(row.claimedRankNameAr).toBe(royalNameAr); // each player's pick
+      expect(row.claimedRankNameAr).toBe(royalNameAr); // each player's combination
       expect(row.holeCards).toHaveLength(2); // revealed at the official reveal
       const expected = room.state.players
         .find((p) => p.seat === seat)!

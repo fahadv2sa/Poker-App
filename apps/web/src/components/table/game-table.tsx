@@ -1018,6 +1018,12 @@ function ResultOverlay({
                           +{w.coinsDelta}
                         </span>
                       </div>
+                      {/* this winner's combination score sum (the tiebreaker) */}
+                      {w.scoreSum != null ? (
+                        <span className="rounded-full border border-gold/30 bg-gold/[0.06] px-2.5 py-0.5 text-[0.7rem] text-gold/90">
+                          مجموع النقاط <span className="num font-bold">{w.scoreSum}</span>
+                        </span>
+                      ) : null}
                       {/* this winner's concise "why" (rank is the headline above) */}
                       {w.claimEvidence ? (
                         <div className="mx-auto max-w-md text-xs text-muted-foreground">
@@ -1080,7 +1086,6 @@ function ResultRow({
   player: PlayerView | undefined;
 }) {
   const [open, setOpen] = useState(false);
-  const invalid = r.claimValid === false && (r.outcome === "LOSE" || r.outcome === "REFUND");
   // Only the cards forming this player's strongest combination (engine witness) —
   // never the full 7.
   const cards = r.combinationCards && r.combinationCards.length > 0 ? r.combinationCards : null;
@@ -1115,14 +1120,20 @@ function ResultRow({
               {OUTCOME_AR[r.outcome] ?? r.outcome}
             </span>
           </div>
-          {r.outcome === "FOLD" ? null : r.claimedRankNameAr ? (
+          {/* Every player's strongest combination + its score sum — winner and
+              loser alike, including folders. */}
+          {r.claimedRankNameAr ? (
             <div className="truncate text-xs">
-              <span className={invalid ? "text-destructive/90" : "text-gold"}>{r.claimedRankNameAr}</span>
-              {invalid ? <span className="text-destructive/80"> — غير محقّق</span> : null}
+              <span className="text-gold">{r.claimedRankNameAr}</span>
+              {r.scoreSum != null ? (
+                <span className="text-muted-foreground">
+                  {" "}· النقاط <span className="num">{r.scoreSum}</span>
+                </span>
+              ) : null}
             </div>
-          ) : invalid ? (
-            <div className="text-xs text-destructive/80">بدون ترابط</div>
-          ) : null}
+          ) : (
+            <div className="text-xs text-muted-foreground">بدون ترابط</div>
+          )}
         </div>
         <span
           className={cn("num shrink-0 font-extrabold", r.coinsDelta >= 0 ? "text-primary" : "text-destructive")}

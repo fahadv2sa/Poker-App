@@ -91,8 +91,20 @@ export interface BotTurnView {
   pot: bigint;
 }
 
+/** A dealt player's strongest achievable combination, used both for the
+ *  resolution tiebreaker (strength + scoreSum) and the winner-screen reveal
+ *  (cards + evidence + name). Computed once per hand by `bestComboFor`. */
+interface BestCombo {
+  rankId: string | null;
+  nameAr: string | null;
+  strength: number;
+  cards: ReturnType<typeof toCardView>[];
+  evidence: ClaimEvidenceGroup[] | null;
+  /** Sum of the fame scores of the cards forming the combination. */
+  scoreSum: number;
+}
+
 const TURN_KEY = "turn";
-const CLAIM_KEY = "claim";
 const NEXT_HAND_KEY = "nexthand";
 
 /** Phases in which a hand is genuinely live with coins committed to the pot —
@@ -937,34 +949,17 @@ export class GameRoom {
       return;
     }
 
-    // AUTO mode (table-level, server-authoritative): evaluate each contender's
-    // strongest rank with the SAME engine evaluator and resolve immediately —
-    // no self-declaration, no claim UI, no claim timer. Outcome = highest actual
-    // rank (ties split); a contender with no qualifying rank can't win. The
-    // per-seat best-rank reveal still fires from resolveHand, as in MANUAL.
-    if (this.state.config.resolveMode === "AUTO") {
-      for (const p of contenders) {
-        const best = bestAchievableRank(this.poolFor(p), this.state.ranks);
-        p.claimRankId = best?.id ?? null;
-        p.claimValid = best != null;
-        p.claimStrength = best?.strength ?? 0;
-      }
-      await this.resolveHand(false);
-      return;
+    // Winner determination is now ALWAYS automatic, in every room: evaluate each
+    // contender's actual strongest combination with the engine and resolve
+    // immediately (strength → score sum → split, in resolveHand). Self-declaration
+    // no longer decides the outcome, so there is no claim step / claim timer.
+    for (const p of contenders) {
+      const best = bestAchievableRank(this.poolFor(p), this.state.ranks);
+      p.claimRankId = best?.id ?? null;
+      p.claimValid = best != null;
+      p.claimStrength = best?.strength ?? 0;
     }
-
-    const deadline = this.deps.clock.now() + this.state.config.claimTimerSec * 1000;
-    this.deps.emitter.toRoom(SERVER_EVENTS.showdownStart, {
-      availableHandRanks: this.state.ranks
-        .slice()
-        .sort((a, b) => b.strength - a.strength)
-        // nameAr is the DB-loaded display name (data-driven), not the code.
-        .map((r) => ({ id: r.id, code: r.code, nameAr: r.nameAr, strength: r.strength })),
-      deadlineTs: deadline,
-    });
-    this.deps.timers.arm(CLAIM_KEY, this.state.config.claimTimerSec * 1000, () => {
-      void this.resolveHand(false);
-    });
+    await this.resolveHand(false);
   }
 
   /** A contender chooses an association at showdown. */
@@ -1014,6 +1009,14 @@ export class GameRoom {
     this.deps.timers.clearAll();
     this.state.phase = "RESOLVE";
 
+    // Every dealt player's strongest achievable combination — computed ONCE and
+    // reused for the resolution tiebreaker (strength + scoreSum) AND the
+    // winner-screen reveal below.
+    const combos = new Map<number, BestCombo>();
+    for (const p of this.state.players) {
+      if (p.holeCards.length > 0) combos.set(p.seat, this.bestComboFor(p));
+    }
+
     const resolveSeats: ResolveSeat[] = this.state.players
       .filter((p) => p.committedTotal > 0n || p.forfeit > 0n)
       .map((p) => {
@@ -1029,10 +1032,14 @@ export class GameRoom {
               ? true
               : p.claimValid,
           strength: p.claimStrength,
+          // Tiebreaker among equal-strength combinations: the stronger sum of the
+          // combination's player (fame) scores wins.
+          scoreSum: combos.get(p.seat)?.scoreSum ?? 0,
         };
       });
 
-    const { settlements } = resolveShowdown(resolveSeats);
+    // The indivisible remainder on a full tie goes to the round starter (dealer).
+    const { settlements } = resolveShowdown(resolveSeats, this.state.dealerSeat ?? undefined);
 
     // Reflect resolve credits in the in-memory available snapshot (every seat,
     // incl. bots — a bot's stack is fake but kept consistent for the session).
@@ -1066,46 +1073,49 @@ export class GameRoom {
     // live and players keep their seats for the next hand.
     this.state.phase = "ENDED";
 
-    // Official reveal (SPEC §2.4): only at a real showdown (not last-standing)
-    // do remaining contenders' hole cards become public — folders are NEVER
-    // revealed. Card privacy holds during the hand; this is the official reveal.
-    const rankNameById = (id: string | null): string | null =>
-      id ? (this.state.ranks.find((r) => r.id === id)?.nameAr ?? null) : null;
+    // Official reveal: EVERY dealt player's strongest combination + score sum is
+    // announced — winner AND loser, INCLUDING folders. (Card privacy for folders
+    // is intentionally waived at this final reveal per the winner-determination
+    // change; mid-hand privacy via the private game:dealt channel is unchanged.)
     const isShowdown = !lastStanding;
 
     const results = this.state.players
-      .filter((p) => p.committedTotal > 0n || p.forfeit > 0n)
+      .filter((p) => p.holeCards.length > 0)
       .map((p) => {
-        const folded = p.status === "FOLDED";
-        const revealed = isShowdown && !folded;
+        const combo = combos.get(p.seat);
         const outcome = outcomeFor(p, settlements);
-        const isWinner = outcome === "WIN" || outcome === "SPLIT";
+        // At a real showdown, reveal EVERY dealt player — winner, loser, AND
+        // folders. A last-standing fold-win has no contest, so nothing is
+        // revealed (privacy preserved).
+        const reveal = isShowdown;
         return {
           seat: p.seat,
           outcome,
           coinsDelta: Number(coinsDelta(p, settlements)),
           finalBalance: Number(p.available),
-          // Folders have no claim context (null); otherwise expose whether the
-          // showdown claim was valid so the client can explain an invalid-claim loss.
-          claimValid: folded ? null : p.claimValid,
-          claimedRankNameAr: folded ? null : rankNameById(p.claimRankId),
-          // The WHY: engine witness → DB-named cards/attributes. Only for a
-          // valid showdown claim; null for folders/invalid/last-standing.
-          claimEvidence: folded || !isShowdown ? null : this.buildClaimEvidence(p),
-          holeCards: revealed ? p.holeCards.map(toCardView) : null,
-          // Only the cards forming the shown combination (winner → winning/claimed
-          // rank; others → their strongest achievable rank) — never all 7.
-          combinationCards: revealed ? this.combinationFor(p, isWinner) : null,
+          // Whether this seat holds any valid combination (for display/explain).
+          claimValid: reveal && combo ? combo.rankId != null : null,
+          // Each player's actual strongest combination (server-evaluated), shown
+          // for winner and loser alike.
+          claimedRankNameAr: reveal ? combo?.nameAr ?? null : null,
+          // The WHY: engine witness → DB-named cards/attributes.
+          claimEvidence: reveal ? combo?.evidence ?? null : null,
+          // Hole cards revealed for every dealt player (incl. folders) at showdown.
+          holeCards: reveal ? p.holeCards.map(toCardView) : null,
+          // The cards forming this player's strongest combination — never all 7;
+          // [] when no rank qualifies.
+          combinationCards: reveal ? combo?.cards ?? [] : null,
+          // Sum of the player (fame) scores in that combination (tiebreaker + display).
+          scoreSum: reveal ? combo?.scoreSum ?? 0 : null,
         };
       });
 
-    // The winning association = the rank claimed by the winner(s) at showdown.
+    // The winning association = the winner(s)' actual strongest combination.
     const winnerSeat = settlements.find(
       (sm) => sm.type === "WIN" || sm.type === "SPLIT_WIN",
     )?.seat;
-    const winner =
-      winnerSeat != null ? this.state.players.find((p) => p.seat === winnerSeat) : undefined;
-    const winningRankNameAr = isShowdown && winner ? rankNameById(winner.claimRankId) : null;
+    const winningRankNameAr =
+      isShowdown && winnerSeat != null ? combos.get(winnerSeat)?.nameAr ?? null : null;
 
     this.deps.emitter.toRoom(SERVER_EVENTS.gameResult, {
       results,
@@ -1209,6 +1219,37 @@ export class GameRoom {
    * hardcoded football data. Null unless the player holds a valid claim.
    */
   /**
+   * A dealt player's STRONGEST achievable combination from their final 7-card
+   * pool: the rank, the witness cards, the data-driven evidence, and the SUM of
+   * those cards' fame scores (the resolution tiebreaker + the winner-screen
+   * score). Reuses the same engine evaluator as the winner logic
+   * (`bestAchievableRank`/`explainRank`) — never re-implements rank rules.
+   */
+  private bestComboFor(player: RoomPlayer): BestCombo {
+    const dealt = this.dealtPoolFor(player);
+    const pool: Card[] = dealt.map((c) => ({
+      nationality: c.nationality,
+      position: c.position,
+      clubs: c.clubs,
+    }));
+    const best = bestAchievableRank(pool, this.state.ranks);
+    if (!best) return { rankId: null, nameAr: null, strength: 0, cards: [], evidence: null, scoreSum: 0 };
+    const groups = explainRank(best.rule, pool);
+    const idx = groups
+      ? [...new Set(groups.flatMap((g) => g.cardIndices))].sort((a, b) => a - b)
+      : [];
+    const scoreSum = idx.reduce((sum, i) => sum + (dealt[i]!.fameScore ?? 0), 0);
+    return {
+      rankId: best.id,
+      nameAr: this.state.ranks.find((r) => r.id === best.id)?.nameAr ?? null,
+      strength: best.strength,
+      cards: idx.map((i) => toCardView(dealt[i]!)),
+      evidence: groups ? groups.map((g) => toEvidenceGroup(g, dealt)) : null,
+      scoreSum,
+    };
+  }
+
+  /**
    * The player's STRONGEST achievable rank from their final 7-card pool, for the
    * private winner-screen reveal. Reuses the same evaluator as the winner logic
    * (`bestAchievableRank`/`explainRank`) — never re-implements rank rules and
@@ -1234,31 +1275,6 @@ export class GameRoom {
       evidence,
       cards: cardIdx.map((i) => toCardView(dealt[i]!)),
     };
-  }
-
-  /**
-   * The cards that FORM a player's shown combination on the winner screen, taken
-   * from the engine witness (never re-implemented): the WINNING (claimed) rank
-   * for a winner, otherwise the player's STRONGEST achievable rank. Returns a
-   * subset of the 7-card pool (so the UI shows only the connected cards), or `[]`
-   * when no rank qualifies.
-   */
-  private combinationFor(player: RoomPlayer, useClaim: boolean) {
-    const dealt = this.dealtPoolFor(player);
-    const pool: Card[] = dealt.map((c) => ({
-      nationality: c.nationality,
-      position: c.position,
-      clubs: c.clubs,
-    }));
-    const rule =
-      useClaim && player.claimRankId && player.claimValid
-        ? this.state.ranks.find((r) => r.id === player.claimRankId)?.rule
-        : bestAchievableRank(pool, this.state.ranks)?.rule;
-    if (!rule) return [];
-    const groups = explainRank(rule, pool);
-    if (!groups) return [];
-    const idx = [...new Set(groups.flatMap((g) => g.cardIndices))].sort((a, b) => a - b);
-    return idx.map((i) => toCardView(dealt[i]!));
   }
 
   /**
@@ -1328,20 +1344,6 @@ export class GameRoom {
     this.pendingEvents = [];
     await this.deps.persistence.recordPlayEvents(events);
     await this.deps.persistence.aggregatePlayers(dealt.map((p) => p.userId));
-  }
-
-  private buildClaimEvidence(player: RoomPlayer): ClaimEvidenceGroup[] | null {
-    if (!player.claimRankId || !player.claimValid) return null;
-    const rank = this.state.ranks.find((r) => r.id === player.claimRankId);
-    if (!rank) return null;
-    const dealt = this.dealtPoolFor(player);
-    const pool: Card[] = dealt.map((c) => ({
-      nationality: c.nationality,
-      position: c.position,
-      clubs: c.clubs,
-    }));
-    const groups = explainRank(rank.rule, pool);
-    return groups ? groups.map((g) => toEvidenceGroup(g, dealt)) : null;
   }
 
   /** Project the room players into the engine's betting state. */

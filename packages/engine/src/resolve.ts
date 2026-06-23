@@ -2,17 +2,22 @@ import { buildSidePots, type PotSeat, type SidePot } from "./pots.js";
 
 /**
  * Showdown resolution (Sections 9.4 & 11). Pure: given each seat's standing pot
- * contribution and whether it made a valid claim (with the claimed strength),
- * it builds the side pots and returns the exact wallet movements to apply.
+ * contribution, its combination strength, and the sum of the player (fame)
+ * scores in that combination, it builds the side pots and returns the exact
+ * wallet movements to apply.
  *
- * Distribution per pot: the highest claimed strength among the pot's eligible
- * (non-folded, valid) seats wins it; ties split (SPLIT_WIN), and any indivisible
- * remainder coins go to the first (lowest-seat) winner. A pot with no eligible
- * valid winner pays no one — its
- * non-folder layer contributions are REFUNDed to their contributors, and any
- * folder forfeit parked in it becomes a FOLD_FORFEIT sink (see
- * forfeit-accounting model). Last-player-standing is just the case where the
- * sole non-folder is the only eligible seat in every pot.
+ * Distribution per pot (winner-determination method):
+ *   1) the strongest combination (highest rank strength) among the pot's
+ *      eligible (non-folded, valid) seats qualifies;
+ *   2) ties on strength are broken by the STRONGER sum of player scores in the
+ *      combination — the higher `scoreSum` wins outright;
+ *   3) still tied on strength AND score ⇒ split equally (SPLIT_WIN), and the
+ *      indivisible remainder goes to the round starter (`dealerSeat`) when they
+ *      are among the tied winners, else to the lowest-seat winner.
+ * A pot with no eligible valid winner pays no one — its non-folder layer
+ * contributions are REFUNDed, and any folder forfeit parked in it becomes a
+ * FOLD_FORFEIT sink. Last-player-standing is the case where the sole non-folder
+ * is the only eligible seat in every pot.
  */
 
 /** Resolve-time wallet movement. `amount` is signed (credit + / sink −). */
@@ -23,10 +28,14 @@ export interface Settlement {
 }
 
 export interface ResolveSeat extends PotSeat {
-  /** Non-folder reached showdown with a valid claim (or is last-standing). */
+  /** Non-folder reached showdown with a valid combination (or is last-standing). */
   claimedValid: boolean;
-  /** Strength of the validly claimed rank; ignored when claimedValid is false. */
+  /** Strength of the combination; ignored when claimedValid is false. */
   strength: number;
+  /** Sum of the player (fame) scores of the cards forming this seat's
+   *  combination — the tiebreaker among equal-strength seats (higher wins).
+   *  Defaults to 0 (so equal-strength seats with no score data still split). */
+  scoreSum?: number;
 }
 
 export interface ResolveResult {
@@ -34,22 +43,32 @@ export interface ResolveResult {
   settlements: Settlement[];
 }
 
-function splitAmount(amount: bigint, winners: number[]): Map<number, bigint> {
+function splitAmount(
+  amount: bigint,
+  winners: number[],
+  remainderSeat?: number,
+): Map<number, bigint> {
   const sorted = [...winners].sort((a, b) => a - b);
   const n = BigInt(sorted.length);
   const base = amount / n;
-  // Indivisible remainder (0 .. n-1) all goes to the FIRST (lowest-seat) winner,
-  // per the betting rules. base * n + remainder === amount, so the pot is always
+  // Indivisible remainder (0 .. n-1) goes to the round starter (`remainderSeat`,
+  // the dealer) when they are among the tied winners, else to the FIRST
+  // (lowest-seat) winner. base * n + remainder === amount, so the pot is always
   // fully distributed with no coins created or lost.
   const remainder = amount - base * n;
+  const recipient =
+    remainderSeat !== undefined && sorted.includes(remainderSeat) ? remainderSeat : sorted[0];
   const out = new Map<number, bigint>();
-  sorted.forEach((seat, i) => {
-    out.set(seat, i === 0 ? base + remainder : base);
-  });
+  for (const seat of sorted) {
+    out.set(seat, seat === recipient ? base + remainder : base);
+  }
   return out;
 }
 
-export function resolveShowdown(seats: readonly ResolveSeat[]): ResolveResult {
+export function resolveShowdown(
+  seats: readonly ResolveSeat[],
+  dealerSeat?: number,
+): ResolveResult {
   const pots = buildSidePots(seats);
   const bySeat = new Map(seats.map((s) => [s.seat, s]));
   const settlements: Settlement[] = [];
@@ -61,15 +80,27 @@ export function resolveShowdown(seats: readonly ResolveSeat[]): ResolveResult {
     });
 
     if (eligibleValid.length > 0) {
-      // Highest claimed strength among eligible takes the pot; ties split.
-      let top = -Infinity;
+      // 1) Strongest combination (highest rank strength) qualifies.
+      let topStrength = -Infinity;
       for (const seat of eligibleValid) {
         const strength = bySeat.get(seat)!.strength;
-        if (strength > top) top = strength;
+        if (strength > topStrength) topStrength = strength;
       }
-      const winners = eligibleValid.filter((seat) => bySeat.get(seat)!.strength === top);
+      const atTopStrength = eligibleValid.filter(
+        (seat) => bySeat.get(seat)!.strength === topStrength,
+      );
+      // 2) Tiebreak by the stronger sum of player scores in the combination.
+      let topScore = -Infinity;
+      for (const seat of atTopStrength) {
+        const score = bySeat.get(seat)!.scoreSum ?? 0;
+        if (score > topScore) topScore = score;
+      }
+      const winners = atTopStrength.filter(
+        (seat) => (bySeat.get(seat)!.scoreSum ?? 0) === topScore,
+      );
+      // 3) Still tied on strength AND score ⇒ split; remainder to the round starter.
       const type = winners.length > 1 ? "SPLIT_WIN" : "WIN";
-      for (const [seat, share] of splitAmount(pot.amount, winners)) {
+      for (const [seat, share] of splitAmount(pot.amount, winners, dealerSeat)) {
         if (share > 0n) settlements.push({ seat, type, amount: share });
       }
     } else {

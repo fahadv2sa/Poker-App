@@ -253,12 +253,15 @@ export interface GameResultEntry {
    *  visible to everyone ONLY at showdown resolution. `null` for folders (never
    *  revealed) and for non-showdown (last-player-standing) endings. */
   holeCards: CardView[] | null;
-  /** The cards that FORM this seat's shown combination (engine witness): the
-   *  winning/claimed rank for a winner, else their strongest achievable rank — a
-   *  subset of the revealed pool, so the winner screen shows only these, never
-   *  all 7. `null` for folders / last-standing (not revealed); `[]` if no rank
-   *  qualifies. Computed by the engine evaluator, not the client. */
+  /** The cards that FORM this seat's shown combination (engine witness): each
+   *  player's strongest achievable rank — a subset of the revealed pool, so the
+   *  winner screen shows only these, never all 7. `[]` if no rank qualifies;
+   *  `null` only when not revealed. Computed by the engine evaluator. */
   combinationCards: CardView[] | null;
+  /** Sum of the player (fame) scores of the cards in `combinationCards` — the
+   *  tiebreaker shown per player on the winner screen (winner and loser). 0 when
+   *  no combination qualifies; `null` when this seat isn't revealed. */
+  scoreSum: number | null;
 }
 
 export interface GameResultPayload {

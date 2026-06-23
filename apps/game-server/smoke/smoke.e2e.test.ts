@@ -370,12 +370,6 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
         if (p.seat === c.seat) c.socket.emit("action:place", { type: "CHECK" });
       });
     }
-    const showdownP = once<{ availableHandRanks: Array<{ id: string; code: string }> }>(
-      A.socket,
-      "showdown:start",
-      undefined,
-      40_000,
-    );
     const resultP = once<{ results: Array<{ seat: number; outcome: string; coinsDelta: number }> }>(
       A.socket,
       "game:result",
@@ -385,16 +379,11 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
     // The first turn's event already passed before the responder attached — kick it.
     (ft.seat === A.seat ? A : B).socket.emit("action:place", { type: "CHECK" });
 
-    // --- showdown: BOTH players claim ROYAL_POSITION simultaneously, exercising
-    //     the real concurrent path (the single-resolve guard must hold). Every
-    //     fixture player is a midfielder, so ROYAL_POSITION is always valid for
-    //     any 7-card pool — a deterministic split. (PAIR is now clubs-only and the
-    //     fixture has no clubs, so it would not be a valid claim here.) ----------
-    const showdown = await showdownP;
-    const rankId = showdown.availableHandRanks.find((r) => r.code === "ROYAL_POSITION")!.id;
-    A.socket.emit("claim:select", { handRankId: rankId });
-    B.socket.emit("claim:select", { handRankId: rankId });
-
+    // --- showdown: winner determination is AUTOMATIC now (no self-declaration).
+    //     Checking the hand down to the river makes the server evaluate each
+    //     contender's strongest combination and resolve directly. Every fixture
+    //     player is a midfielder, so both pools are ROYAL_POSITION with equal
+    //     score sums (no fame seeded) ⇒ a deterministic split. ----------
     const result = await resultP;
     expect(result.results).toHaveLength(2);
 
@@ -480,10 +469,9 @@ describe.runIf(ENABLED)("END-TO-END smoke: full live hand", () => {
     expect(results.every((r) => r.outcome === "SPLIT")).toBe(true);
     expect(results.every((r) => r.coinsDelta === 0n)).toBe(true);
 
-    // Antes + claims were persisted by the server (not the clients).
+    // Antes were persisted by the server (not the clients). Winner determination
+    // is automatic now, so there is no self-declared claim step to persist.
     const bets = await prisma.bet.count({ where: { gameId: game.id, action: "ANTE" } });
     expect(bets).toBe(2);
-    const claims = await prisma.playerHandClaim.count({ where: { gameId: game.id, isValid: true } });
-    expect(claims).toBe(2);
   });
 });
