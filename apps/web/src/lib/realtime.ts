@@ -151,11 +151,14 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   socket.on(SERVER_EVENTS.playerFolded, () => sound.play("fold"));
   socket.on(SERVER_EVENTS.gameResult, (p: GameResultPayload) => {
     clearWarn();
-    // `yourDelta` is always 0 on the wire (the client recomputes balance from
-    // `results`), so derive the win/lose cue from THIS seat's outcome instead —
-    // otherwise the win/lose sound never fired.
+    // Distinct cue per result card: no-winner (draw) → showdown; you won → win;
+    // you were in the hand and lost → lose. `yourDelta` is always 0 on the wire
+    // (the client recomputes balance from `results`), so derive the cue from the
+    // results instead.
+    const anyWinner = p.results.some((r) => r.outcome === "WIN" || r.outcome === "SPLIT");
     const mine = yourSeat != null ? p.results.find((r) => r.seat === yourSeat) : undefined;
-    if (mine && (mine.outcome === "WIN" || mine.outcome === "SPLIT")) sound.play("win");
+    if (!anyWinner) sound.play("showdown");
+    else if (mine && (mine.outcome === "WIN" || mine.outcome === "SPLIT")) sound.play("win");
     else if (mine && mine.outcome === "LOSE") sound.play("lose");
   });
   socket.on(SERVER_EVENTS.playerLeft, () => sound.play("notify"));

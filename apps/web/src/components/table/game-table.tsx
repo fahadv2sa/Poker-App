@@ -45,6 +45,23 @@ const OUTCOME_AR: Record<string, string> = {
   REFUND: "استُردّ",
 };
 
+/** "Players power" — the integer sum of the combination cards' fame scores, each
+ *  rounded exactly as shown on the card (★), so the total reconciles with the
+ *  cards and never shows a fraction. */
+function combinationPower(cards: { fameScore: number | null }[] | null | undefined): number {
+  return (cards ?? []).reduce((sum, c) => sum + Math.round(c.fameScore ?? 0), 0);
+}
+
+/** The "قوة اللاعبين" line (gold ★ tone, matching the cards' fame badge). */
+function PowerLine({ power }: { power: number }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/[0.06] px-3 py-1 text-sm font-bold text-gold/90">
+      <span aria-hidden className="opacity-80">★</span>
+      قوة اللاعبين <span className="num font-black">{power}</span>
+    </span>
+  );
+}
+
 export function GameTable({
   token,
   inviteCode,
@@ -884,109 +901,134 @@ function ResultOverlay({
           </div>
         </div>
 
-        {/* ── Winner HERO (focal celebration) ──────────────────────────────── */}
-        <motion.section
-          initial={{ opacity: 0, scale: 0.96, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.28, ease: "easeOut" }}
-          className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 text-center shadow-2xl"
-        >
-          <div className="mb-1 flex justify-center">
-            <motion.span
-              initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
-              animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
-              transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
-              className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
-            >
-              🏆
-            </motion.span>
-          </div>
-
-          {winners.length === 0 ? (
-            <p className="mt-1 text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
-          ) : (
-            <>
-              <div className="text-xs font-bold tracking-[0.15em] text-gold/80">
-                {winners.length > 1 ? "الفائزون" : "الفائز"}
-              </div>
-              {/* winning rank — the headline */}
-              {(winningRankNameAr ?? winners[0]!.claimedRankNameAr) ? (
-                <div className="mt-0.5 text-2xl font-black text-gold">
-                  {winningRankNameAr ?? winners[0]!.claimedRankNameAr}
+        {/* ── Result HERO: a distinct themed card per outcome ──────────────────
+            No winner → slate "draw" card with every player's avatar.
+            Winner(s) → gold card: 🏆, rank, players-power, avatar—name—amount, cards. */}
+        {winners.length === 0 ? (
+          <motion.section
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-400/15 to-card/90 p-5 text-center shadow-2xl"
+          >
+            <div className="mb-1 flex justify-center">
+              <span className="grid size-12 place-items-center rounded-full border border-slate-300/40 bg-slate-400/10 text-2xl">
+                🤝
+              </span>
+            </div>
+            <div className="text-3xl font-black tracking-wide text-slate-200">تعادل!</div>
+            <p className="mt-1 text-sm text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
+            {/* All players side by side. */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+              {players.map((pl) => (
+                <div key={pl.seat} className="flex w-[64px] flex-col items-center gap-1">
+                  <SeatAvatar
+                    playerNumber={pl.playerNumber}
+                    seed={pl.username}
+                    size={44}
+                    className="ring-1 ring-slate-300/30"
+                  />
+                  <span className="max-w-full truncate text-[0.68rem] text-muted-foreground">
+                    {pl.seat === yourSeat ? "أنت" : pl.username}
+                  </span>
                 </div>
-              ) : null}
-              {/* EACH winner: avatar + name + payout, then THEIR OWN combination
-                  cards + "why". In a split this shows every winner's own cards
-                  (previously only the first winner's were shown). Never all 7. */}
-              <div className="mt-3 flex flex-col items-center gap-4">
-                {winners.map((w) => {
-                  const p = playerOf(w.seat);
-                  const you = w.seat === yourSeat;
-                  return (
-                    <div
-                      key={w.seat}
-                      className={cn(
-                        "flex w-full flex-col items-center gap-2",
-                        winners.length > 1 && "rounded-2xl border border-gold/20 bg-gold/[0.04] p-3",
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {p ? (
-                          <SeatAvatar
-                            playerNumber={p.playerNumber}
-                            seed={p.username}
-                            size={46}
-                            className="glow-gold ring-2 ring-gold/50"
-                          />
-                        ) : null}
-                        <span
-                          className={cn(
-                            "text-lg font-extrabold",
-                            anim("winnerReveal") && "badge-shine rounded px-1",
-                          )}
-                        >
-                          {you ? "أنت" : p?.username ?? nameOf(w.seat)}
-                        </span>
-                        <span
-                          data-fx={`win-${w.seat}`}
-                          className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-base font-extrabold text-primary"
-                        >
-                          +{w.coinsDelta}
-                        </span>
-                      </div>
-                      {/* this winner's combination score sum (the tiebreaker) */}
-                      {w.scoreSum != null ? (
-                        <span className="rounded-full border border-gold/30 bg-gold/[0.06] px-2.5 py-0.5 text-[0.7rem] text-gold/90">
-                          مجموع النقاط <span className="num font-bold">{w.scoreSum}</span>
-                        </span>
-                      ) : null}
-                      {/* this winner's concise "why" (rank is the headline above) */}
-                      {w.claimEvidence ? (
-                        <div className="mx-auto max-w-md text-xs text-muted-foreground">
-                          <ClaimExplanation rankNameAr={null} groups={w.claimEvidence} />
-                        </div>
-                      ) : null}
-                      {/* this winner's OWN winning-combination cards (never all 7) */}
-                      {w.combinationCards && w.combinationCards.length > 0 ? (
-                        <div className="flex flex-wrap justify-center gap-1.5">
-                          {w.combinationCards.map((c, i) => (
-                            <FootballCard
-                              key={`${w.seat}-${c.playerId}-${i}`}
-                              card={c}
-                              index={i}
-                              variant="result"
-                              reveal="flip"
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
+              ))}
+            </div>
+          </motion.section>
+        ) : (
+          <motion.section
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="rounded-2xl border border-gold/40 bg-gradient-to-b from-gold/15 to-card/90 p-5 text-center shadow-2xl"
+          >
+            {/* trophy */}
+            <div className="mb-1 flex justify-center">
+              <motion.span
+                initial={anim("winnerReveal") ? { scale: 0, rotate: -20 } : false}
+                animate={anim("winnerReveal") ? { scale: 1, rotate: 0 } : undefined}
+                transition={{ type: "spring", stiffness: 260, damping: 12, delay: 0.1 }}
+                className="glow-gold grid size-12 place-items-center rounded-full border border-gold/50 bg-gold/10 text-2xl"
+              >
+                🏆
+              </motion.span>
+            </div>
+            <div className="text-xs font-bold tracking-[0.15em] text-gold/80">
+              {winners.length > 1 ? "الفائزون" : "الفائز"}
+            </div>
+            {/* winning rank (Arabic) — the headline */}
+            {(winningRankNameAr ?? winners[0]!.claimedRankNameAr) ? (
+              <div className="mt-0.5 text-2xl font-black text-gold">
+                {winningRankNameAr ?? winners[0]!.claimedRankNameAr}
               </div>
-            </>
-          )}
-        </motion.section>
+            ) : null}
+            {/* Per winner: players-power → avatar—name—amount → strongest-association
+                cards. (A split lists each winner's own block; they tie on power.) */}
+            <div className="mt-3 flex flex-col items-center gap-5">
+              {winners.map((w) => {
+                const p = playerOf(w.seat);
+                const you = w.seat === yourSeat;
+                return (
+                  <div
+                    key={w.seat}
+                    className={cn(
+                      "flex w-full flex-col items-center gap-2.5",
+                      winners.length > 1 && "rounded-2xl border border-gold/20 bg-gold/[0.04] p-3",
+                    )}
+                  >
+                    {/* players power + number (matches the cards' ★ totals) */}
+                    <PowerLine power={combinationPower(w.combinationCards)} />
+                    {/* single line: avatar — name — amount */}
+                    <div className="flex items-center justify-center gap-2.5">
+                      {p ? (
+                        <SeatAvatar
+                          playerNumber={p.playerNumber}
+                          seed={p.username}
+                          size={46}
+                          className="glow-gold ring-2 ring-gold/50"
+                        />
+                      ) : null}
+                      <span
+                        className={cn(
+                          "text-lg font-extrabold",
+                          anim("winnerReveal") && "badge-shine rounded px-1",
+                        )}
+                      >
+                        {you ? "أنت" : p?.username ?? nameOf(w.seat)}
+                      </span>
+                      <span
+                        data-fx={`win-${w.seat}`}
+                        className="num rounded-full bg-primary/15 px-2.5 py-0.5 text-base font-extrabold text-primary"
+                      >
+                        +{w.coinsDelta}
+                      </span>
+                    </div>
+                    {/* the player cards with the strongest association (never all 7) */}
+                    {w.combinationCards && w.combinationCards.length > 0 ? (
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        {w.combinationCards.map((c, i) => (
+                          <FootballCard
+                            key={`${w.seat}-${c.playerId}-${i}`}
+                            card={c}
+                            index={i}
+                            variant="result"
+                            reveal="flip"
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    {/* concise data-driven "why" (kept; rank is the headline above) */}
+                    {w.claimEvidence ? (
+                      <div className="mx-auto max-w-md text-[0.7rem] text-muted-foreground">
+                        <ClaimExplanation rankNameAr={null} groups={w.claimEvidence} />
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.section>
+        )}
 
         {/* ── Everyone else: clean tappable profile rows (avatar + name) ────── */}
         {losers.length > 0 ? (
@@ -1009,9 +1051,9 @@ function ResultOverlay({
   );
 }
 
-/** One collapsed profile row for a non-hero player: avatar + name + outcome chip
- *  + rank (claimed in Manual / computed in Auto — same field) + ±amount. Tapping
- *  expands that player's cards + full evidence inline. Presentation only. */
+/** A loser's compact row (red theme): single line avatar — name/outcome — amount.
+ *  Tapping expands the same "idea" as the winner card — the rank name, the
+ *  players-power + number, then the strongest-association cards. */
 function ResultRow({
   r,
   you,
@@ -1032,9 +1074,10 @@ function ResultRow({
     <div
       className={cn(
         "overflow-hidden rounded-xl border",
-        you ? "border-primary/30 bg-primary/10" : "border-white/10 bg-card/80",
+        you ? "border-destructive/45 bg-destructive/10" : "border-destructive/25 bg-destructive/[0.05]",
       )}
     >
+      {/* collapsed: single line — avatar — name (+ outcome) — amount */}
       <button
         type="button"
         onClick={() => hasDetails && setOpen((o) => !o)}
@@ -1046,30 +1089,14 @@ function ResultRow({
             playerNumber={player.playerNumber}
             seed={player.username}
             size={36}
-            className="shrink-0 ring-1 ring-white/15"
+            className="shrink-0 ring-1 ring-destructive/25"
           />
         ) : null}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate font-bold">{name}</span>
-            <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[0.62rem] text-muted-foreground">
-              {OUTCOME_AR[r.outcome] ?? r.outcome}
-            </span>
-          </div>
-          {/* Every player's strongest combination + its score sum — winner and
-              loser alike, including folders. */}
-          {r.claimedRankNameAr ? (
-            <div className="truncate text-xs">
-              <span className="text-gold">{r.claimedRankNameAr}</span>
-              {r.scoreSum != null ? (
-                <span className="text-muted-foreground">
-                  {" "}· النقاط <span className="num">{r.scoreSum}</span>
-                </span>
-              ) : null}
-            </div>
-          ) : (
-            <div className="text-xs text-muted-foreground">بدون ترابط</div>
-          )}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="truncate font-bold">{name}</span>
+          <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[0.62rem] text-destructive">
+            {OUTCOME_AR[r.outcome] ?? r.outcome}
+          </span>
         </div>
         <span
           className={cn("num shrink-0 font-extrabold", r.coinsDelta >= 0 ? "text-primary" : "text-destructive")}
@@ -1083,18 +1110,25 @@ function ResultRow({
           </span>
         ) : null}
       </button>
+      {/* expanded: winner-style detail — rank, players-power, then the cards */}
       {open && hasDetails ? (
-        <div className="border-t border-white/10 p-2.5 text-center">
-          {r.claimEvidence || r.claimedRankNameAr ? (
-            <div className="mb-2 text-xs">
-              <ClaimExplanation rankNameAr={r.claimedRankNameAr} groups={r.claimEvidence} />
-            </div>
-          ) : null}
+        <div className="flex flex-col items-center gap-2.5 border-t border-destructive/15 p-3 text-center">
+          {r.claimedRankNameAr ? (
+            <div className="text-base font-black text-gold">{r.claimedRankNameAr}</div>
+          ) : (
+            <div className="text-xs text-muted-foreground">بدون ترابط</div>
+          )}
+          {cards ? <PowerLine power={combinationPower(r.combinationCards)} /> : null}
           {cards ? (
             <div className="flex flex-wrap justify-center gap-1.5">
               {cards.map((c, i) => (
                 <FootballCard key={`${c.playerId}-${i}`} card={c} index={i} variant="result" />
               ))}
+            </div>
+          ) : null}
+          {r.claimEvidence ? (
+            <div className="mx-auto max-w-md text-[0.7rem] text-muted-foreground">
+              <ClaimExplanation rankNameAr={null} groups={r.claimEvidence} />
             </div>
           ) : null}
         </div>
