@@ -21,6 +21,15 @@ Prerequisites already done in code (Part 1 fixes):
   source; `tsx` is now a runtime dependency).
 - `apps/game-server` binds `process.env.PORT` (Railway-injected) with a local fallback.
 
+> **Migrate-first guard (automated).** `railway.toml` sets
+> `[deploy] preDeployCommand = "pnpm db:deploy"`, so on every deploy Railway runs
+> `prisma migrate deploy` AFTER build and BEFORE the new version serves; a failed
+> migration aborts the deploy and the old version keeps running. Schema-dependent
+> code can therefore never go live ahead of its migration. It applies only pending
+> migrations (idempotent, advisory-locked) and needs `DATABASE_URL` + `DIRECT_URL`
+> in each service's variables. The manual prod-migration commands below remain
+> valid for first-time setup and for applying migrations out-of-band before a push.
+
 > Local-dev note: because the schema now declares `directUrl`, add
 > `DIRECT_URL` (= your existing `DATABASE_URL`) to your local `packages/db/.env`
 > so `pnpm db:migrate` / `db:deploy` keep working. App **runtime** is unaffected

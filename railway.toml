@@ -35,6 +35,20 @@
 builder = "NIXPACKS"
 
 [deploy]
+# ── MIGRATE-FIRST GUARD (the lasting fix for the 2026-06-21 schema/code outage) ──
+# Railway runs preDeployCommand in a one-off instance AFTER build succeeds and
+# BEFORE the new version starts receiving traffic; if it exits non-zero the deploy
+# is ABORTED and the previous version keeps serving. So a push can no longer ship
+# schema-dependent code ahead of its migration — prod is migrated first, every time.
+#
+# `pnpm db:deploy` → `prisma migrate deploy` (reads DIRECT_URL): applies only
+# PENDING migrations, never resets/drops, and is idempotent (already-applied
+# migrations are skipped). It takes an advisory lock on _prisma_migrations, so if
+# both services deploy at once the concurrent runs serialize safely. Inherited by
+# every service whose Config File Path points at this railway.toml (web AND
+# game-server) — running it per-service is harmless because it is idempotent.
+# Requires DATABASE_URL + DIRECT_URL in each service's variables (already set).
+preDeployCommand = "pnpm db:deploy"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 # Keep at 1: the game-server holds room state in memory and must be a single
