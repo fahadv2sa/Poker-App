@@ -64,7 +64,6 @@ export function useGameSocket(token: string, inviteCode: string) {
           v.state
             ? {
                 ...v,
-                showdown: null,
                 state: {
                   ...v.state,
                   phase: p.phase,
@@ -133,21 +132,6 @@ export function useGameSocket(token: string, inviteCode: string) {
               }
             : v,
         ),
-      // A3: track who has claimed at showdown.
-      onClaimReceived: (p) =>
-        setView((v) =>
-          v.claimedSeats.includes(p.seat)
-            ? v
-            : { ...v, claimedSeats: [...v.claimedSeats, p.seat] },
-        ),
-      onShowdown: (showdown) =>
-        setView((v) => ({
-          ...v,
-          showdown,
-          bestRank: null,
-          claimedSeats: [],
-          state: v.state ? { ...v.state, phase: "SHOWDOWN", currentTurnSeat: null } : v.state,
-        })),
       onResult: (result) =>
         setView((v) => {
           const mine = v.state
@@ -156,7 +140,6 @@ export function useGameSocket(token: string, inviteCode: string) {
           return {
             ...v,
             result,
-            showdown: null,
             // A7: keep the header balance authoritative — adopt the server's
             // finalBalance for our seat as the new base going into the next hand.
             balance: mine ? mine.finalBalance : v.balance,
@@ -172,10 +155,8 @@ export function useGameSocket(token: string, inviteCode: string) {
           ...v,
           result: null,
           bestRank: null,
-          showdown: null,
           hole: [],
           waiting: false,
-          claimedSeats: [],
           roundReady: null,
           state: v.state
             ? {
@@ -206,7 +187,6 @@ export function useGameSocket(token: string, inviteCode: string) {
           ...v,
           result: null,
           bestRank: null,
-          showdown: null,
           hole: [],
           waiting: true,
           roundReady: null,
@@ -251,10 +231,6 @@ export function useGameSocket(token: string, inviteCode: string) {
     (type: string, amount?: number) => connRef.current?.placeAction(type, amount),
     [],
   );
-  const selectClaim = useCallback(
-    (handRankId: string) => connRef.current?.selectClaim(handRankId),
-    [],
-  );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
   // Retry the join carrying the password for a locked room (server re-verifies).
   const submitPassword = useCallback(
@@ -270,7 +246,6 @@ export function useGameSocket(token: string, inviteCode: string) {
     closeTable,
     leave,
     placeAction,
-    selectClaim,
     clearError,
     submitPassword,
   };

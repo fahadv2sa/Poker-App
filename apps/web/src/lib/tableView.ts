@@ -3,7 +3,6 @@ import type {
   BetPlacedPayload,
   CardView,
   GameResultPayload,
-  ShowdownStartPayload,
   StateSyncPayload,
 } from "@fp/shared";
 
@@ -24,13 +23,10 @@ export interface TableView {
   connected: boolean;
   state: StateSyncPayload | null;
   hole: CardView[];
-  showdown: ShowdownStartPayload | null;
   result: GameResultPayload | null;
   /** The local player's OWN strongest rank for the winner screen (private,
    *  per-seat reveal). null until the result arrives / between hands. */
   bestRank: BestRankPayload | null;
-  /** Seats that have submitted a showdown claim this hand (A3). */
-  claimedSeats: number[];
   /** Auto-dismissing notices shown at the top of the table (A6, C10). */
   notices: Notice[];
   /** Authoritative wallet balance from the last hand's result (feature #7). */
@@ -58,10 +54,8 @@ export const INITIAL_VIEW: TableView = {
   connected: false,
   state: null,
   hole: [],
-  showdown: null,
   result: null,
   bestRank: null,
-  claimedSeats: [],
   notices: [],
   balance: null,
   waiting: false,

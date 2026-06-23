@@ -8,7 +8,6 @@ import {
   QUICK_PLAY,
   SERVER_EVENTS,
   actionPlaceSchema,
-  claimSelectSchema,
   queueJoinSchema,
   roomJoinSchema,
   type Difficulty,
@@ -356,17 +355,6 @@ export function attachSocketHandlers(
           amount: input.amount !== undefined ? BigInt(input.amount) : undefined,
         };
         await rt.room.placeAction(seat, action);
-      }),
-    );
-
-    socket.on(CLIENT_EVENTS.claimSelect, (raw: unknown) =>
-      guard(socket, async () => {
-        const input = claimSelectSchema.parse(raw);
-        const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
-        if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
-        const seat = seatOf(rt, socket.id);
-        if (seat === null) return emitError(socket, "NO_SEAT", "لا مقعد لك");
-        await rt.room.selectClaim(seat, input.handRankId);
       }),
     );
 

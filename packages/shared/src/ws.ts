@@ -27,7 +27,6 @@ export const CLIENT_EVENTS = {
    *  server starts once all connected humans are ready, or when the grace elapses. */
   roundReady: "round:ready",
   actionPlace: "action:place",
-  claimSelect: "claim:select",
   /** Quick Play: join a tier's matchmaking queue. */
   queueJoin: "queue:join",
   /** Quick Play: leave the queue while waiting (no charge, clean state). */
@@ -41,8 +40,6 @@ export const SERVER_EVENTS = {
   turnChanged: "turn:changed",
   betPlaced: "bet:placed",
   playerFolded: "player:folded",
-  showdownStart: "showdown:start",
-  claimReceived: "claim:received",
   gameResult: "game:result",
   /** PRIVATE per-seat: the recipient's own strongest achievable rank, revealed on
    *  the winner screen only (winner-announcement reveal, never mid-hand). */
@@ -93,11 +90,6 @@ export const actionPlaceSchema = z.object({
   // so the client can never influence a financial reference (Section 6.3).
 });
 export type ActionPlaceInput = z.infer<typeof actionPlaceSchema>;
-
-export const claimSelectSchema = z.object({
-  handRankId: z.string().uuid(),
-});
-export type ClaimSelectInput = z.infer<typeof claimSelectSchema>;
 
 export const roundReadySchema = z.object({});
 export type RoundReadyInput = z.infer<typeof roundReadySchema>;
@@ -194,22 +186,6 @@ export interface BetPlacedPayload {
 }
 
 export interface PlayerFoldedPayload {
-  seat: number;
-}
-
-export interface HandRankOption {
-  id: string;
-  code: string;
-  nameAr: string;
-  strength: number;
-}
-
-export interface ShowdownStartPayload {
-  availableHandRanks: HandRankOption[];
-  deadlineTs: number;
-}
-
-export interface ClaimReceivedPayload {
   seat: number;
 }
 

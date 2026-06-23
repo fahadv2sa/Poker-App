@@ -12,7 +12,7 @@ import {
   type PlayerView,
 } from "@fp/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
-import { isContender as selIsContender, isMyTurn as selIsMyTurn } from "@/lib/tableView";
+import { isMyTurn as selIsMyTurn } from "@/lib/tableView";
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { SoundControl } from "@/components/sound-control";
@@ -56,12 +56,11 @@ export function GameTable({
   isHost: boolean;
   initialBalance: number;
 }) {
-  const { view, start, ready, closeTable, leave, placeAction, selectClaim, clearError, submitPassword } =
+  const { view, start, ready, closeTable, leave, placeAction, clearError, submitPassword } =
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
   const [password, setPassword] = useState("");
-  const [claimed, setClaimed] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   // Opponent profile open during play (by playerNumber) — on-demand read.
@@ -93,7 +92,6 @@ export function GameTable({
   // Whose-turn / contender derived from the shared, unit-tested selectors so the
   // seat-1/host case can't silently regress (PROBLEM 1).
   const isMyTurn = selIsMyTurn(view);
-  const isContender = selIsContender(view);
   const owed = s && me ? s.currentBet - me.committedThisRound : 0;
   const minRaiseTo = (s?.currentBet ?? 0) + DEFAULT_GAME_CONFIG.minRaise;
 
@@ -124,9 +122,6 @@ export function GameTable({
     };
   }, []);
 
-  useEffect(() => {
-    if (phase !== "SHOWDOWN") setClaimed(null);
-  }, [phase]);
   // The room was closed (host or auto-empty): briefly show why, then return to
   // the menu. The server already evicted us and settled any refunds.
   useEffect(() => {
@@ -235,7 +230,6 @@ export function GameTable({
                       player={p}
                       isActive={s.currentTurnSeat === p.seat}
                       deadlineTs={s.currentTurnSeat === p.seat ? s.turnDeadlineTs : null}
-                      hasClaimed={phase === "SHOWDOWN" && view.claimedSeats.includes(p.seat)}
                       onOpenProfile={setProfileNum}
                     />
                   </div>
@@ -455,16 +449,6 @@ export function GameTable({
                   maxRaiseTo={maxRaiseTo}
                   onAction={placeAction}
                   deadlineTs={s.turnDeadlineTs}
-                />
-              ) : phase === "SHOWDOWN" && isContender && view.showdown ? (
-                <ClaimPanel
-                  ranks={view.showdown.availableHandRanks}
-                  deadlineTs={view.showdown.deadlineTs}
-                  claimed={claimed}
-                  onPick={(id) => {
-                    setClaimed(id);
-                    selectClaim(id);
-                  }}
                 />
               ) : view.result ? (
                 // The rich breakdown lives in the full-screen ResultOverlay
@@ -747,54 +731,6 @@ function ActionBar({
         </>
       )}
     </motion.div>
-  );
-}
-
-function ClaimPanel({
-  ranks,
-  deadlineTs,
-  claimed,
-  onPick,
-}: {
-  ranks: Array<{ id: string; code: string; nameAr: string; strength: number }>;
-  deadlineTs: number | null;
-  claimed: string | null;
-  onPick: (id: string) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="text-sm">
-        <span className="font-bold text-primary">اختر ترابطك</span>
-        <span className="text-muted-foreground"> — الاختيار الخاطئ يُخرجك من المنافسة</span>
-      </div>
-
-      <Countdown deadlineTs={deadlineTs} totalMs={DEFAULT_GAME_CONFIG.claimTimerSec * 1000} />
-      {!claimed ? (
-        <p className="text-center text-xs text-destructive/90">
-          إن لم تختر قبل انتهاء الوقت ستفقد حقّك في المطالبة بالمجمّع
-        </p>
-      ) : null}
-      <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
-        {ranks.map((r) => (
-          <button
-            key={r.id}
-            disabled={claimed != null}
-            onClick={() => onPick(r.id)}
-            className={cn(
-              "flex items-center justify-between rounded-lg border bg-secondary/60 px-3 py-2.5 text-start transition",
-              "hover:border-accent disabled:opacity-60",
-              claimed === r.id && "border-primary glow-primary",
-            )}
-          >
-            <span className="font-medium">{r.nameAr}</span>
-            <span className="num text-xs text-muted-foreground">{10 - r.strength}</span>
-          </button>
-        ))}
-      </div>
-      {claimed ? (
-        <p className="text-center text-sm text-muted-foreground">تم إرسال اختيارك. بانتظار البقية…</p>
-      ) : null}
-    </div>
   );
 }
 

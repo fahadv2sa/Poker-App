@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
 import { TurnFrame } from "./fx";
 
-// Rank display names are NOT hardcoded — they arrive in the showdown:start
-// payload as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
+// Rank display names are NOT hardcoded — they arrive in the game:result payload
+// as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
 
 export const PHASE_AR: Record<string, string> = {
   LOBBY: "الانتظار",
@@ -480,13 +480,11 @@ export function OpponentSeat({
   player,
   isActive,
   deadlineTs,
-  hasClaimed = false,
   onOpenProfile,
 }: {
   player: PlayerView;
   isActive: boolean;
   deadlineTs?: number | null;
-  hasClaimed?: boolean;
   /** Tap the seat to open this opponent's public profile (on-demand read). */
   onOpenProfile?: (playerNumber: number) => void;
 }) {
@@ -559,8 +557,6 @@ export function OpponentSeat({
       <span className="text-[0.55rem] leading-none sm:text-[0.6rem]">
         {isActive ? (
           <span className="font-bold text-primary">يلعب…</span>
-        ) : hasClaimed ? (
-          <span className="font-bold text-accent">اختار ✓</span>
         ) : (
           <span className="text-muted-foreground">{STATUS_AR[player.status] ?? player.status}</span>
         )}

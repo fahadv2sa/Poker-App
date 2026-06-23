@@ -5,7 +5,6 @@ import {
   SERVER_EVENTS,
   type BestRankPayload,
   type BetPlacedPayload,
-  type ClaimReceivedPayload,
   type GameDealtPayload,
   type GameResultPayload,
   type HandStartedPayload,
@@ -17,7 +16,6 @@ import {
   type RoomClosedPayload,
   type RoundStatusPayload,
   type SessionWaitingPayload,
-  type ShowdownStartPayload,
   type StateSyncPayload,
   type TurnChangedPayload,
 } from "@fp/shared";
@@ -38,8 +36,6 @@ export interface GameHandlers {
   onTurn?: (p: TurnChangedPayload) => void;
   onBet?: (p: BetPlacedPayload) => void;
   onFolded?: (p: PlayerFoldedPayload) => void;
-  onShowdown?: (p: ShowdownStartPayload) => void;
-  onClaimReceived?: (p: ClaimReceivedPayload) => void;
   onResult?: (p: GameResultPayload) => void;
   onBestRank?: (p: BestRankPayload) => void;
   onHandStarted?: (p: HandStartedPayload) => void;
@@ -65,7 +61,6 @@ export interface GameConnection {
   /** Leave the table without closing it (host role transfers if you're host). */
   leave: () => void;
   placeAction: (type: string, amount?: number) => void;
-  selectClaim: (handRankId: string) => void;
   disconnect: () => void;
 }
 
@@ -108,8 +103,6 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
   bind(SERVER_EVENTS.turnChanged, handlers.onTurn);
   bind(SERVER_EVENTS.betPlaced, handlers.onBet);
   bind(SERVER_EVENTS.playerFolded, handlers.onFolded);
-  bind(SERVER_EVENTS.showdownStart, handlers.onShowdown);
-  bind(SERVER_EVENTS.claimReceived, handlers.onClaimReceived);
   bind(SERVER_EVENTS.gameResult, handlers.onResult);
   bind(SERVER_EVENTS.bestRank, handlers.onBestRank);
   bind(SERVER_EVENTS.handStarted, handlers.onHandStarted);
@@ -156,11 +149,6 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
     else if (p.action !== "FOLD") sound.play("chip"); // BET / CALL / RAISE
   });
   socket.on(SERVER_EVENTS.playerFolded, () => sound.play("fold"));
-  socket.on(SERVER_EVENTS.showdownStart, () => {
-    clearWarn();
-    sound.play("showdown");
-  });
-  socket.on(SERVER_EVENTS.claimReceived, () => sound.play("notify"));
   socket.on(SERVER_EVENTS.gameResult, (p: GameResultPayload) => {
     clearWarn();
     // `yourDelta` is always 0 on the wire (the client recomputes balance from
@@ -184,8 +172,6 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
     leave: () => socket.emit(CLIENT_EVENTS.roomLeave, {}),
     placeAction: (type, amount) =>
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
-    selectClaim: (handRankId) =>
-      socket.emit(CLIENT_EVENTS.claimSelect, { handRankId }),
     disconnect: () => socket.disconnect(),
   };
 }

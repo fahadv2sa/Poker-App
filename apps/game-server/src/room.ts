@@ -9,7 +9,6 @@ import {
   legalActions,
   openRound,
   resolveShowdown,
-  validateClaim,
   explainRank,
   type Action,
   type BettingSeat,
@@ -960,40 +959,6 @@ export class GameRoom {
       p.claimStrength = best?.strength ?? 0;
     }
     await this.resolveHand(false);
-  }
-
-  /** A contender chooses an association at showdown. */
-  async selectClaim(seat: number, handRankId: string): Promise<void> {
-    if (this.state.phase !== "SHOWDOWN") throw new Error("Not in showdown");
-    const player = this.player(seat);
-    if (player.status !== "ACTIVE" && player.status !== "ALLIN") {
-      throw new Error("Not a contender");
-    }
-    const pool = this.poolFor(player);
-    const { isValid, bestPossibleRankId } = validateClaim(
-      pool,
-      handRankId,
-      this.state.ranks,
-    );
-    player.claimRankId = handRankId;
-    player.claimValid = isValid;
-    player.claimStrength = isValid
-      ? (this.state.ranks.find((r) => r.id === handRankId)?.strength ?? 0)
-      : 0;
-
-    await this.deps.persistence.persistClaim(
-      this.state.gameId,
-      player,
-      handRankId,
-      isValid,
-      bestPossibleRankId,
-    );
-    this.deps.emitter.toRoom(SERVER_EVENTS.claimReceived, { seat });
-
-    // Resolve once every contender has chosen (advance immediately, 19.2).
-    if (this.contenders().every((p) => p.claimRankId !== null)) {
-      await this.resolveHand(false);
-    }
   }
 
   // -- resolution ----------------------------------------------------------
