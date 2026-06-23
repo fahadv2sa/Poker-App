@@ -255,8 +255,9 @@ export class GameRoom {
 
   /**
    * A player left (socket disconnect / explicit leave). They're dropped from the
-   * next hand; between hands they're parked immediately. Mid-hand, the existing
-   * turn timer auto-folds them on timeout — unchanged here.
+   * next hand; between hands they're parked immediately. Mid-hand, the seat is
+   * marked disconnected and is FOLDED when its turn times out (see onTurnTimeout),
+   * so a departed player can never win the in-flight hand.
    */
   handlePlayerLeft(seat: number): void {
     const p = this.state.players.find((x) => x.seat === seat);
@@ -861,11 +862,22 @@ export class GameRoom {
     if (actor?.isBot) this.deps.bots?.onTurn(this, bs.currentTurnSeat, deadline);
   }
 
-  /** Turn timed out (Section 9): auto-check if possible, otherwise auto-fold. */
+  /**
+   * Turn timed out (Section 9). A still-connected but idle player gets the
+   * courtesy auto-check when nothing is owed (otherwise auto-fold). A player who
+   * has LEFT/DISCONNECTED mid-hand is always FOLDED — never auto-checked — so a
+   * departed seat can't ride a free check to showdown and win a hand it abandoned.
+   */
   private async onTurnTimeout(seat: number): Promise<void> {
     if (this.state.currentTurnSeat !== seat) return;
+    const player = this.state.players.find((p) => p.seat === seat);
     const la = legalActions(this.toBettingState(this.roundForPhase()), seat);
-    const action: Action = la.canCheck ? { type: "CHECK" } : { type: "FOLD" };
+    const action: Action =
+      player && !player.connected
+        ? { type: "FOLD" }
+        : la.canCheck
+          ? { type: "CHECK" }
+          : { type: "FOLD" };
     await this.placeAction(seat, action);
   }
 
