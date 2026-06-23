@@ -14,6 +14,30 @@ Two critical pieces (separate, heavily-tested):
 1. **Football Hand Engine** — data-driven associations engine (9 ranks, pure functions). Phase 2.
 2. **Wallet / Betting Integrity** — append-only ledger, DB transactions, row locks, idempotency.
 
+## Recent changes (2026-06-23) — read these; they supersede older text below
+
+- **Showdown is now FULLY AUTOMATIC in every room** (manual self-declaration removed).
+  The server evaluates each contender's actual strongest combination and resolves by:
+  (1) strongest combination wins; (2) tie on strength → the stronger **SUM of the
+  combination's player fame scores** wins outright; (3) still tied → split equally, the
+  indivisible remainder to the **round starter** (dealer button), else lowest-seat winner.
+  `resolveShowdown(seats, dealerSeat?)` takes per-seat `scoreSum`. The entire claim flow
+  was deleted as dead code (events `showdown:start`/`claim:select`/`claim:received` + their
+  schemas, the claim timer, `GameRoom.selectClaim`, web `ClaimPanel`). This makes Section 19
+  #6 ("claim-timer expiry") obsolete and overrides the MANUAL `resolveMode` default.
+- **Winner reveal shows EVERY dealt player** at a real showdown (winner, loser, folders) —
+  each with combination, evidence, hole cards, and a "players power" sum
+  (`GameResultEntry.scoreSum`). Card-privacy principle (#4 below) is intentionally waived
+  **only at the official reveal**; mid-hand privacy is unchanged. Result screen has themed
+  cards: winner=gold 🏆, no-winner=slate "تعادل!", loser=red (compact, tap to expand);
+  distinct win/lose/showdown sounds.
+- **Reconnection grace** (`RECONNECT_GRACE_MS` = 5 min). A dropped socket (e.g. backgrounding
+  the tab) is no longer treated as leaving: the seat + room are held; a reconnect cancels it;
+  cleanup runs only on explicit leave/close or grace expiry. Web nudges a reconnect on tab
+  re-focus (`realtime.ts`). A seat disconnected mid-hand is **folded** on its turn timeout
+  (never auto-checked), so a departed player can't win.
+- **Idle auto-logout is now 24 hours** (`SESSION_INACTIVITY_MS`, was 2 days).
+
 ## Tech stack (Section 3)
 
 ```
@@ -218,13 +242,17 @@ If yes:
 - [ ] Remember **`git push` IS the prod deploy** (Railway, branch `feat/fame-score-system`).
       There is no separate "deploy" gate. Treat every push to that branch as going live.
 
-### Stronger guarantee (do this to make the rule automatic)
+### Stronger guarantee — NOW AUTOMATED (2026-06-23)
 
-The manual ordering is the current safeguard. To make it impossible to deploy ahead of the
-schema, add a **release/predeploy command** that runs `prisma migrate deploy` before the new
-process starts serving — e.g. in `railway.toml [deploy]` set a `preDeployCommand` (or fold
-`pnpm db:deploy` into the service start) so each deploy migrates prod first and a failed
-migration aborts the deploy. Until that exists, the checklist above is mandatory and manual.
+This is now in place: `railway.toml [deploy]` sets
+`preDeployCommand = 'DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" pnpm db:deploy'`, so every
+deploy runs `prisma migrate deploy` against prod **before** the new process serves, and a
+failed migration **aborts the deploy**. (The `DIRECT_URL := DATABASE_URL` fallback lets a
+service that only sets `DATABASE_URL` — e.g. game-server — still migrate; without it the
+predeploy hit Prisma P1012.) The manual checklist above remains the belt-and-suspenders
+mental model, but ordering is no longer purely manual. NOTE: each Railway service must have
+**auto-deploy from the branch ENABLED** (the game-server's was found OFF once, leaving it on
+a stale build — use "Deploy latest commit" in the dashboard if a push doesn't auto-fire).
 
 ### Why the web app didn't crash (don't be fooled again)
 
@@ -270,13 +298,12 @@ Temporary, cleanly-removable AI fillers so early users always find a Quick Play 
   (`[bots] disabled`). Read in `index.ts`. **Kill-switch:** set `BOTS_ENABLED=false`
   in Railway → restart. **Prod state:** code deployed (`5e54d85`), 46 bots seeded,
   `BOTS_ENABLED=true` set by the operator.
-- **KNOWN ISSUE (resource leak — not yet fixed).** A bot-containing table is **not**
-  torn down when all humans leave: the teardown check `players.some(p => p.connected)`
-  (`socket.ts` `leave()`, ~lines 358 & 366) counts bots (seated `connected:true`,
-  never flipped). It does **not** keep playing (no auto-deal) but the room/deck/bot-
-  identities **leak in memory** until a restart (boot recovery then ABANDONs orphaned
-  games). **Fix:** count connected **humans** only — `p.connected && !p.isBot` — in
-  `socket.ts leave()` (matches the human-only pattern already in `startTable`).
+- **FIXED (2026-06-23) — was: bot-table teardown leak.** A bot-containing table used to
+  leak in memory after all humans left, because the teardown check counted bots (seated
+  `connected:true`, never flipped). Now `socket.ts` tears down on **connected humans only**
+  via `presence.hasConnectedHuman` (`p.connected && !p.isBot`), and the new reconnection
+  grace defers teardown rather than firing on a transient drop. An emptied bot table closes
+  once the last human is truly gone.
 - **Remove entirely:** delete `apps/game-server/src/bots/`, the `deps.bots?` seam +
   call in `room.ts`, the social fence + `isBot` guards, and
   `DELETE FROM users WHERE player_number >= 900000`.

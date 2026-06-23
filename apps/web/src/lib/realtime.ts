@@ -78,6 +78,24 @@ function connectErrorMessage(reason: string): string {
 export function connectGame(token: string, handlers: GameHandlers): GameConnection {
   const socket = io(url(), { auth: { token }, withCredentials: true });
 
+  // Backgrounding a tab (especially on mobile) can suspend the socket; when the
+  // page returns to the foreground, nudge a reconnect so the player rejoins
+  // promptly. The server holds their seat for a grace window, so this restores the
+  // table seamlessly. Socket.IO also auto-reconnects on its own — this just makes
+  // resume immediate instead of waiting for the next backoff tick.
+  const onVisible = () => {
+    if (
+      typeof document !== "undefined" &&
+      document.visibilityState === "visible" &&
+      !socket.connected
+    ) {
+      socket.connect();
+    }
+  };
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", onVisible);
+  }
+
   const bind = <T>(event: string, fn?: (p: T) => void) => {
     if (fn) socket.on(event, (p: unknown) => fn(p as T));
   };
@@ -175,7 +193,12 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
     leave: () => socket.emit(CLIENT_EVENTS.roomLeave, {}),
     placeAction: (type, amount) =>
       socket.emit(CLIENT_EVENTS.actionPlace, { type, amount }),
-    disconnect: () => socket.disconnect(),
+    disconnect: () => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisible);
+      }
+      socket.disconnect();
+    },
   };
 }
 

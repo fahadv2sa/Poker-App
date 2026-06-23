@@ -12,6 +12,51 @@ Authoritative spec (Arabic): C:\Users\Admin\OneDrive\Desktop\SPEC.md
 Quick reference card: CLAUDE.md (in the repo root — read it too; it is current)
 Current git branch (= the production deploy branch): feat/fame-score-system
 
+================================================================================
+LATEST UPDATES (2026-06-23) — authoritative; supersede the dated sections below
+where they differ. (The numbered sections are kept for context but predate these.)
+================================================================================
+- WINNER DETERMINATION IS NOW FULLY AUTOMATIC in every room (MANUAL self-
+  declaration removed). At showdown the server evaluates each contender's actual
+  strongest combination and resolves by: (1) strongest combination wins; (2) a
+  tie on strength is broken by the stronger SUM of the combination's player fame
+  scores (higher wins outright); (3) still tied ⇒ split equally, the indivisible
+  remainder to the ROUND STARTER (dealer button), else the lowest-seat winner.
+  `resolveShowdown()` takes per-seat `scoreSum` + an optional `dealerSeat`. The
+  whole claim flow was REMOVED as dead code: the `showdown:start` / `claim:select`
+  / `claim:received` events + their schemas, the claim timer, `GameRoom.selectClaim`,
+  and the web `ClaimPanel`. (Supersedes §5.5, §6.2, the §10 event list, §16.G.)
+- WINNER REVEAL: at a real showdown the result reveals EVERY dealt player —
+  winner, loser, AND folders — each with combination, evidence, hole cards, and a
+  "players power" score (`GameResultEntry.scoreSum`). Folder card privacy is
+  intentionally waived AT THE OFFICIAL REVEAL only; mid-hand privacy and
+  last-standing fold-wins are unchanged. Winner screen has distinct themed cards:
+  winner = gold (🏆 → rank → "قوة اللاعبين" + number → avatar—name—amount → cards),
+  no-winner = slate ("تعادل!" + every player's avatar), loser = red (compact, tap
+  to expand rank/power/cards). Distinct sounds: win / lose / showdown (no-winner).
+- RECONNECTION GRACE (`RECONNECT_GRACE_MS` = 5 min, `@fp/shared`): a dropped socket
+  (e.g. backgrounding a tab to read a message) is NO LONGER treated as leaving.
+  The seat + room are HELD for the grace; a reconnect (`room:join`) cancels it;
+  the real cleanup runs only on an explicit `room:leave`/`room:close` or grace
+  expiry. The web nudges a reconnect on tab re-focus (`realtime.ts`). Fix lives in
+  the `socket.ts` disconnect handler (split from explicit leave).
+- IDLE AUTO-LOGOUT is now 24 HOURS (`SESSION_INACTIVITY_MS`, was 2 days).
+  (Supersedes §12.)
+- A player who LEAVES/DISCONNECTS mid-hand can no longer WIN the hand: a
+  disconnected seat is FOLDED on its turn timeout (never auto-checked) —
+  `room.ts onTurnTimeout`.
+- MIGRATE-FIRST IS NOW AUTOMATED: `railway.toml [deploy] preDeployCommand` runs
+  `prisma migrate deploy` (with a `DIRECT_URL := DATABASE_URL` fallback so a
+  service that only sets DATABASE_URL still migrates) before each deploy serves;
+  a failed migration aborts the deploy. (Supersedes §14 / §16.A "until that
+  exists".) Each Railway service must have auto-deploy ENABLED from the branch
+  (the game-server's was found OFF once → stale build; use "Deploy latest commit"
+  if a push doesn't auto-fire).
+- BOT-TABLE TEARDOWN LEAK is FIXED (§18.7 no longer applies): `socket.ts` uses
+  `presence.hasConnectedHuman` (connected && !isBot), and the reconnection grace
+  defers teardown. An emptied bot table now closes once the last human is gone.
+- Lint gate is green (the `sw.js` / `gen-icons.mjs` errors were fixed).
+
 TABLE OF CONTENTS
   1.  Overview — what this game is
   2.  Architecture (the big picture)

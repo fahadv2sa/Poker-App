@@ -57,8 +57,19 @@ export const PLAYER_NUMBER_START = 100001;
  * Bots (player_number >= BOT_PLAYER_NUMBER_BASE) are never subject to this — they
  * have no login and no socket, and the enforcement helpers skip them explicitly.
  */
-export const SESSION_INACTIVITY_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+export const SESSION_INACTIVITY_MS = 24 * 60 * 60 * 1000; // 24 hours
 export const SESSION_INACTIVITY_SECONDS = SESSION_INACTIVITY_MS / 1000;
+
+/**
+ * Reconnection grace. When a player's socket drops mid-session (e.g. backgrounding
+ * the tab to read a notification/message), their table SEAT and the room are HELD
+ * this long so a reconnect restores them seamlessly — a dropped socket is NOT
+ * treated as leaving the table. The real cleanup (drop seat, announce left, tear
+ * down an emptied room) only runs on an explicit leave/close, or when the grace
+ * expires with no reconnect. Connection is otherwise only lost on manual logout
+ * or the inactivity auto-logout above.
+ */
+export const RECONNECT_GRACE_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Write-coalescing for activity tracking: `last_active_at` is advanced at most

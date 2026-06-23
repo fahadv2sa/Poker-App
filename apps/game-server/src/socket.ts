@@ -6,6 +6,7 @@ import {
   CLIENT_EVENTS,
   DEFAULT_GAME_CONFIG,
   QUICK_PLAY,
+  RECONNECT_GRACE_MS,
   SERVER_EVENTS,
   actionPlaceSchema,
   queueJoinSchema,
@@ -126,6 +127,20 @@ export function attachSocketHandlers(
   // Per-game teardown guard: serializes the host-close and the auto-empty cleanup
   // so a room is closed (and its hand refunded) exactly once even if they race.
   const closingGames = new Set<string>();
+
+  // Reconnection grace: a dropped socket arms a deferred cleanup keyed by
+  // `${gameId}:${userId}`. A reconnect (room:join) clears it, so backgrounding the
+  // tab and returning within the grace never loses the seat/room. Map holds the
+  // pending timer per disconnected user.
+  const disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const graceKey = (gameId: string, userId: string) => `${gameId}:${userId}`;
+  const cancelGrace = (gameId: string, userId: string) => {
+    const t = disconnectTimers.get(graceKey(gameId, userId));
+    if (t) {
+      clearTimeout(t);
+      disconnectTimers.delete(graceKey(gameId, userId));
+    }
+  };
 
   // ── Quick Play matchmaking ───────────────────────────────────────────────
   // Auto-creates a private table (reusing the normal Game row + lifecycle) when
@@ -288,6 +303,9 @@ export function attachSocketHandlers(
         const player = seatPlayer(rt.room.state, user, balance);
         rt.seats.set(player.seat, socket.id);
         joinedGameId = game.id;
+        // Reconnection: their socket dropped and is now back within the grace —
+        // cancel the pending disconnect cleanup so they were never "left".
+        cancelGrace(game.id, user.userId);
         await socket.join(roomKey(game.id));
 
         socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, player.seat));
@@ -402,8 +420,10 @@ export function attachSocketHandlers(
         // Feature #7: the room drops them from the next hand (and parks them now
         // if we're between hands) without tearing down the live session.
         rt.room.handlePlayerLeft(seat);
-        // Batch 2: tell the rest of the table so they can show a banner.
-        socket.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
+        // Batch 2: tell the rest of the table so they can show a banner. Use the
+        // server instance (not `socket.to`) because this may run from the deferred
+        // grace timer, after the originating socket is already disconnected.
+        io.to(roomKey(joinedGameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
       }
       // A table is kept alive only while a real HUMAN is still connected. Bots are
       // seated connected:true (they have no socket) and must NOT keep an abandoned
@@ -426,11 +446,35 @@ export function attachSocketHandlers(
       }
     };
     socket.on(CLIENT_EVENTS.roomLeave, () => {
+      // Explicit leave (a manual action) is immediate — no grace.
+      if (joinedGameId) cancelGrace(joinedGameId, user.userId);
       void leave().catch((err) => console.error("room:leave cleanup failed", err));
     });
     socket.on("disconnect", () => {
       matchmaking.leave(socket.id); // drop from any Quick Play queue, cleanly
-      void leave().catch((err) => console.error("disconnect cleanup failed", err));
+      if (!joinedGameId) return;
+      const rt = runtimes.get(joinedGameId);
+      if (!rt) return;
+      // Only the socket that currently holds the seat schedules cleanup; if a
+      // reconnect already rebound the seat to a newer socket, this stale
+      // disconnect is a no-op (and must not re-arm the grace).
+      if (seatOf(rt, socket.id) === null) return;
+      // RECONNECTION GRACE: a dropped socket (backgrounding the tab, a brief
+      // network blip) is NOT treated as leaving. Hold the seat + room; the real
+      // cleanup runs only if no reconnect arrives within the grace. A reconnect
+      // (room:join) cancels this. The player stays seated/connected meanwhile, so
+      // the room is never torn down and no "left" banner fires prematurely.
+      const gameId = joinedGameId;
+      const key = graceKey(gameId, user.userId);
+      const existing = disconnectTimers.get(key);
+      if (existing) clearTimeout(existing);
+      disconnectTimers.set(
+        key,
+        setTimeout(() => {
+          disconnectTimers.delete(key);
+          void leave().catch((err) => console.error("disconnect cleanup failed", err));
+        }, RECONNECT_GRACE_MS),
+      );
     });
   });
 }
