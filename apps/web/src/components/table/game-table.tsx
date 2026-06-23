@@ -88,16 +88,64 @@ function PotChip({ index, amount }: { index: number; amount?: number }) {
   );
 }
 
+/** A compact stat card flanking the player's profile during play: total coins
+ *  (gold) on the right, session net profit/loss (emerald up / red down) on the
+ *  left. Height-matched to the profile chip; a soft glow adds a little life. */
+function StatCard({
+  label,
+  value,
+  tone,
+  signed = false,
+  glyph,
+}: {
+  label: string;
+  value: number;
+  tone: "gold" | "up" | "down";
+  signed?: boolean;
+  glyph?: string;
+}) {
+  const tones = {
+    gold: "border-gold/45 bg-gold/10 text-gold shadow-[0_0_12px_rgba(212,175,55,0.22)]",
+    up: "border-emerald-400/50 bg-emerald-400/10 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.3)]",
+    down: "border-destructive/50 bg-destructive/10 text-destructive shadow-[0_0_12px_rgba(239,68,68,0.25)]",
+  } as const;
+  const sign = signed ? (value > 0 ? "+" : value < 0 ? "−" : "") : "";
+  return (
+    <div
+      className={cn(
+        "flex min-w-[4.25rem] flex-col items-center justify-center rounded-2xl border px-2.5 py-1 backdrop-blur transition sm:min-w-[5.25rem] sm:px-3 sm:py-1.5",
+        tones[tone],
+      )}
+    >
+      <span className="text-[0.55rem] font-bold tracking-wide opacity-75 sm:text-[0.64rem]">
+        {label}
+      </span>
+      <span className="num flex items-center gap-1 text-sm font-black leading-none sm:text-lg">
+        {glyph ? (
+          <span aria-hidden className="text-[0.8em] opacity-90">
+            {glyph}
+          </span>
+        ) : null}
+        {sign}
+        {Math.abs(value)}
+      </span>
+    </div>
+  );
+}
+
 export function GameTable({
   token,
   inviteCode,
   isHost,
   initialBalance,
+  nickname,
 }: {
   token: string;
   inviteCode: string;
   isHost: boolean;
   initialBalance: number;
+  /** The local player's display name (nickname → username), shown at their seat. */
+  nickname: string;
 }) {
   const { view, start, ready, closeTable, leave, placeAction, clearError, submitPassword } =
     useGameSocket(token, inviteCode);
@@ -143,6 +191,9 @@ export function GameTable({
   // live hand we subtract what's committed. The server is always the real source.
   const base = view.balance ?? initialBalance;
   const shownBalance = view.result ? base : base - Number(me?.committedTotal ?? 0);
+  // Session profit/loss vs the balance the player sat down with — live (dips while
+  // chips are committed, recovers on a win), so it tracks the action in real time.
+  const net = shownBalance - initialBalance;
   // Cap for the manual raise input: the most you could put in this round = your
   // remaining balance plus what you've already committed this round (i.e. your
   // all-in total). A raise-to can never exceed this.
@@ -382,7 +433,7 @@ export function GameTable({
                     card={s.communityCards[i] ?? null}
                     back={!s.communityCards[i]}
                     reveal="flip"
-                    widthClass="w-[56px] sm:w-[104px]"
+                    widthClass="w-[58px] sm:w-[118px]"
                   />
                 ))}
               </div>
@@ -438,11 +489,15 @@ export function GameTable({
             </section>
           </section>
 
-          {/* your seat — profile + live balance, pulled down into the space that
-              used to be empty below the felt, so nothing floats and the column
-              stays balanced between the table and the action bar. */}
+          {/* your seat HUD — a flanked trio pulled down into the space below the
+              felt: total coins (RIGHT), your profile (center), session net P/L
+              (LEFT). In RTL the first child renders rightmost. */}
           {me ? (
-            <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-center justify-center sm:mt-3">
+            <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-stretch justify-center gap-2 sm:mt-3">
+              {/* total coins — to the RIGHT of the profile */}
+              <StatCard label="رصيدي" glyph="🪙" value={shownBalance} tone="gold" />
+
+              {/* profile — center; the player's nickname, no coins */}
               <div
                 className={cn(
                   "flex items-center gap-2.5 rounded-2xl border bg-[#070b14]/70 px-3 py-1.5 backdrop-blur transition",
@@ -457,13 +512,23 @@ export function GameTable({
                   className={cn("ring-1", isMyTurn ? "ring-2 ring-primary" : "ring-white/15")}
                 />
                 <div className="flex flex-col leading-tight">
-                  <span className="text-xs font-bold sm:text-sm">أنت</span>
-                  <span className="num text-[0.66rem] text-gold sm:text-xs">🪙 {shownBalance}</span>
+                  <span className="max-w-[7rem] truncate text-xs font-bold sm:max-w-[10rem] sm:text-sm">
+                    {nickname}
+                  </span>
+                  {isMyTurn ? (
+                    <span className="text-[0.62rem] font-bold text-primary sm:text-xs">دورك…</span>
+                  ) : null}
                 </div>
-                {isMyTurn ? (
-                  <span className="ms-1 text-[0.62rem] font-bold text-primary sm:text-xs">دورك…</span>
-                ) : null}
               </div>
+
+              {/* session net profit/loss — to the LEFT of the profile */}
+              <StatCard
+                label="صافي"
+                glyph={net > 0 ? "▲" : net < 0 ? "▼" : undefined}
+                value={net}
+                signed
+                tone={net >= 0 ? "up" : "down"}
+              />
             </div>
           ) : null}
           </div>

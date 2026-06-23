@@ -255,7 +255,7 @@ export function FootballCard({
   // Smaller on mobile so the 5-card board fits one row and the hand fits one
   // screen; full size on desktop (sm:) — keeps cards recognizable and crisp.
   // A caller may override the preset via `widthClass` (e.g. the larger board).
-  const width = widthClass ?? (size === "lg" ? "w-[68px] sm:w-[120px]" : "w-[52px] sm:w-[88px]");
+  const width = widthClass ?? (size === "lg" ? "w-[76px] sm:w-[132px]" : "w-[52px] sm:w-[88px]");
 
   if (back || !card) {
     return (
