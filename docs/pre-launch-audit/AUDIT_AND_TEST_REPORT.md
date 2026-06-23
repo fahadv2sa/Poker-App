@@ -126,4 +126,56 @@ All commands run from the repo root with `NODE_OPTIONS=--use-system-ca`. Environ
 
 ---
 
-*End of report. This was a read-only audit: no application code, config, schema, or migration was modified, and no production data was touched. The only new files are this report and `THEORETICAL_BREAKDOWN.md` under `docs/pre-launch-audit/`.*
+## FINAL LAUNCH READINESS (2026-06-23, updated)
+
+This supersedes the **Part C** blocker list above, which was the read-only first pass. The blockers have since been worked (all changes are committed **locally** on `feat/fame-score-system`, **not pushed**; production was never touched).
+
+### Blocker status — real, current
+
+| # | Blocker (Part C) | Status | Evidence |
+|---|---|---|---|
+| 1 | Red lint gate | ✅ **RESOLVED** | `apps/web/public/sw.js` + `gen-icons.mjs` fixed; `pnpm lint` exits 0. Commit `25a9cc3`. |
+| 2 | Medium bug — departed player could win mid-hand | ✅ **RESOLVED** | `onTurnTimeout` folds disconnected seats; verified live (leave/disconnect → departed seat folds). Commit `d6e819a`. |
+| 3 | Low finding #1 — over-strict smoke privacy assertion | ✅ **RESOLVED** | `result:best` added to the private-channel exclusion; cross-player leak detection preserved; verified the failure point moved off privacy. Commit `4ec8da2`. |
+| 4 | Production migrations applied | ⚠️ **OPERATOR ACTION** — automated guard now in code | `railway.toml` `preDeployCommand = "pnpm db:deploy"` makes every deploy migrate-first (commit `294826a`). The **current** prod DB state still must be checked/applied by the operator before/at the next deploy — this cannot be done from here (no prod access; production must never be touched by the audit). |
+| 5 | Enough eligible players per tier | ✅ **VERIFIED (local)** + operator to confirm prod | Local dev DB (mirrors the prod import): EASY **188**, MEDIUM **1,514**, ELITE **8,228** eligible (need ≥17 for a 6-seat table); 46 bots; 0 active players with null fame. No shortfall. Operator should confirm the same against prod (query prepared below). |
+
+### Verdict: **GO — conditional only on the operator running the prepared production steps**
+
+All code-side blockers (1, 2, 3) are **resolved**; per-tier data is **sufficient** (5); and migrate-first is now **automated** (4). Nothing code-side is outstanding. The only remaining gate is operator execution against production (push + verify/apply migrations + confirm prod tier counts), which by policy must be done by the operator, not the audit. Once those run clean, this is a **GO**.
+
+The Part C "strongly recommended / hygiene" items (rate limits, env-contract completeness, `state:sync` pot display, error localization, repo hygiene) remain **open but explicitly non-blocking** for launch.
+
+### Action items — already handled in code (committed locally, NOT pushed)
+
+- `25a9cc3` lint fix · `d6e819a` mid-hand-leave fold · `4ec8da2` smoke privacy assertion · `294826a` migrate-first predeploy guard.
+- Local per-tier eligibility verified — no seed change required.
+
+### Action items — operator must run these (production / push; never executed by the audit)
+
+> For every prod command, run it from **your own machine** using the **public** Railway DB URL — `DATABASE_PUBLIC_URL` (host `*.proxy.rlwy.net`), found in the Railway dashboard → **Postgres service → Variables** (or **Connect → Public Network**). Do **not** use the private `RAILWAY_PRIVATE_DOMAIN` host — that is only reachable from inside Railway's network (it is what the deployed services use), not from your laptop. Never paste secret values into shared logs.
+
+1. **Check current prod migration status** (read-only):
+   ```
+   NODE_OPTIONS=--use-system-ca \
+   DATABASE_URL="<DATABASE_PUBLIC_URL>" DIRECT_URL="<DATABASE_PUBLIC_URL>" \
+   pnpm --filter @fp/db exec prisma migrate status
+   ```
+   Expected when ready: "Database schema is up to date" through `20260622000003_level_up_celebration`.
+2. **Take a backup/snapshot first** (Railway → Postgres → Backups), then **apply pending prod migrations** (idempotent; additive ADD COLUMNs):
+   ```
+   NODE_OPTIONS=--use-system-ca \
+   DATABASE_URL="<DATABASE_PUBLIC_URL>" DIRECT_URL="<DATABASE_PUBLIC_URL>" \
+   pnpm db:deploy
+   ```
+   Re-run the status command to confirm "up to date". *(With the new `preDeployCommand`, the next push also does this automatically and aborts the deploy if it fails.)*
+3. **Verify prod per-tier eligibility** (read-only) — each tier must be ≥ 17:
+   ```
+   psql "<DATABASE_PUBLIC_URL>" -c "SELECT 'EASY' tier, count(*) FROM players WHERE active AND floor(fame_score)>=70 UNION ALL SELECT 'MEDIUM', count(*) FROM players WHERE active AND floor(fame_score)>=50 UNION ALL SELECT 'ELITE', count(*) FROM players WHERE active;"
+   ```
+   If any tier is short, seed/import on prod (e.g. `... pnpm db:import-api-football` / `db:calculate-scores`, then `db:seed-bots`) — see DEPLOY.md.
+4. **Rollback (if a migration fails):** the deploy aborts and the old version keeps serving (predeploy guard); for a manually-applied migration that failed mid-way, restore the pre-migration backup, or mark it with `prisma migrate resolve --rolled-back <migration_name>` after reverting, then investigate. Prisma has no automatic down-migration, so the backup is the primary rollback.
+
+---
+
+*End of report. The original audit was read-only; subsequent fixes are committed locally only (not pushed), and no production database or live server was ever touched by this work.*
