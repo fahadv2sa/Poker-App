@@ -2,7 +2,7 @@
 // Static PNGs = no runtime cost, cached by the browser. A solid navy square is
 // baked behind the ball so iOS home-screen icons (which ignore transparency)
 // render correctly. Re-run with: node scripts/gen-icons.mjs
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";

@@ -5,6 +5,7 @@
  * can never serve stale assets or interfere with auth/game state. Activates
  * immediately so updates replace any prior version cleanly.
  */
+/* global self */
 self.addEventListener("install", () => {
   self.skipWaiting();
 });
