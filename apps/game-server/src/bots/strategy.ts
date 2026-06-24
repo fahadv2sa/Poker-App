@@ -224,12 +224,19 @@ export function decide(ctx: DecisionContext): BotDecision {
   const rng = ctx.rng ?? Math.random;
   const value = clamp01(ctx.strength);
   const delayMs = computeDelayMs(ctx, rng);
+  // Betting is near-passive pre-flop and escalates flop→turn→river. This factor
+  // scales the raise/bluff frequency (and bet sizing, in sizeRaise) by street, so
+  // bots no longer open aggressively before any community cards are revealed.
+  const sf = streetFactor(ctx.street);
 
   // Always-legal fallback on a turn: CHECK if nothing is owed, otherwise FOLD.
   const fallback = (): Action => (legal.canCheck ? { type: "CHECK" } : { type: "FOLD" });
 
   const tryRaise = (): Action | null => {
     if (!legal.canRaise || legal.minRaiseTo === null) return null;
+    // Bots never go all-in: skip when the only legal raise commits the whole
+    // stack (a raise-to of maxRaiseTo is an all-in). sizeRaise keeps a margin too.
+    if (legal.minRaiseTo >= legal.maxRaiseTo) return null;
     return { type: "RAISE", amount: sizeRaise(ctx, rng) };
   };
 
@@ -237,7 +244,7 @@ export function decide(ctx: DecisionContext): BotDecision {
 
   // ── Not facing a bet: CHECK, or bet for value / as a bluff (a RAISE-from-0) ──
   if (!facingBet) {
-    if (rng() < raiseProb(value, p, false)) {
+    if (rng() < raiseProb(value, p, false) * sf) {
       const r = tryRaise();
       if (r) return { action: r, delayMs };
     }
@@ -245,17 +252,16 @@ export function decide(ctx: DecisionContext): BotDecision {
   }
 
   // ── Facing a bet ──
-  // 1) Maybe raise (value-raise when strong; bluff-raise when weak).
-  if (rng() < raiseProb(value, p, true)) {
+  // 1) Maybe raise (value-raise when strong; bluff-raise when weak), escalating
+  //    by street so pre-flop stays near-passive.
+  if (rng() < raiseProb(value, p, true) * sf) {
     const r = tryRaise();
     if (r) return { action: r, delayMs };
-    // Can't raise but want aggression with a strong hand → shove if allowed.
-    if (legal.canAllIn && value >= STRONG_CUT) return { action: { type: "ALLIN" }, delayMs };
   }
   // 2) Otherwise call or fold. Strong hands have callProb 1 → they never fold.
+  //    Bots never shove: if they can't legally CALL, they fold.
   if (rng() < callProb(value, ctx.potOdds, p)) {
     if (legal.canCall) return { action: { type: "CALL" }, delayMs };
-    if (legal.canAllIn) return { action: { type: "ALLIN" }, delayMs }; // short-stack call
   }
   return { action: legal.canFold ? { type: "FOLD" } : fallback(), delayMs };
 }
@@ -297,11 +303,34 @@ function callProb(value: number, odds: number, p: Personality): number {
 function sizeRaise(ctx: DecisionContext, rng: () => number): bigint {
   const { legal, pot, personality: p } = ctx;
   const min = legal.minRaiseTo as bigint; // non-null: caller only sizes when canRaise
-  const max = legal.maxRaiseTo;
-  if (max <= min) return min; // only a min-raise (or full-stack) is possible
-  const frac = clamp(p.betSizing + (rng() - 0.5) * 0.3, 0.25, 1.5);
+  // Cap strictly below a full-stack commit (maxRaiseTo) so a bot never raises
+  // all-in; if only a min-raise fits, take it.
+  const max = legal.maxRaiseTo > min ? legal.maxRaiseTo - 1n : min;
+  if (max <= min) return min;
+  // Bet smaller early and larger late: scale the pot fraction by the street.
+  const frac = clamp(p.betSizing + (rng() - 0.5) * 0.3, 0.25, 1.5) * streetFactor(ctx.street);
   const target = min + (pot * BigInt(Math.round(frac * 1000))) / 1000n;
   return clampBig(target, min, max);
+}
+
+/**
+ * Per-street escalation factor for raise/bluff frequency and bet sizing: betting
+ * is near-passive PRE-FLOP (bots mostly check/call before any board), then ramps
+ * up across the flop, turn and river. Multiplied into `raiseProb` and the
+ * bet-size pot fraction only — never into calling — so pre-flop stays
+ * check/call rather than aggressive.
+ */
+function streetFactor(street: BetRound): number {
+  switch (street) {
+    case "PREFLOP":
+      return 0.2;
+    case "FLOP":
+      return 0.5;
+    case "TURN":
+      return 0.75;
+    default: // RIVER
+      return 1;
+  }
 }
 
 /**

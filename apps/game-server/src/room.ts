@@ -112,16 +112,42 @@ const NEXT_HAND_KEY = "nexthand";
 const LIVE_HAND_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"]);
 
 /**
- * A bot's FAKE virtual stack each hand is CALIBRATED to the humans at the table so
- * a bot never out-chips / over-pressures them: it equals the largest human stack,
- * clamped to [BOT_MIN_STACK, BOT_MAX_STACK]. The band tracks the human economy — a
- * 1000 floor (≈ a fresh signup balance) and a ceiling ≈ signup 1000 + the 2000/24h
- * bank cap — so bots can't bet amounts a normal human couldn't have. Re-derived
- * every hand (humans' real balances change); never sourced from / written to the
- * wallet ledger. Only ever applied to `isBot` seats. Tunable.
+ * A bot's FAKE virtual stack is an INDEPENDENT, natural-looking per-bot balance —
+ * a stable, never-round number derived from its reserved `player_number` (see
+ * `botStackForSeed`), in [BOT_MIN_STACK, BOT_MAX_STACK]. Distinct per bot, so
+ * identical balances never expose the bots the moment they start betting. NOT
+ * calibrated to the humans. Fake/in-memory only: never sourced from or written to
+ * the wallet ledger, and only ever applied to `isBot` seats. Tunable.
  */
 const BOT_MIN_STACK = 1000n;
-const BOT_MAX_STACK = 3000n;
+const BOT_MAX_STACK = 3321n;
+
+/** A 32-bit integer scramble so adjacent reserved player_numbers diverge. */
+function botStackHash(n: number): number {
+  let h = (n | 0) ^ 0x9e3779b9;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  return (h ^ (h >>> 16)) >>> 0;
+}
+
+/**
+ * A bot's stable per-hand stack: a natural-looking, NEVER-round balance (no
+ * multiple of 50) in [BOT_MIN_STACK, BOT_MAX_STACK], derived deterministically
+ * from its reserved `playerNumber` — so it's the same all session, distinct from
+ * other bots, and capped at 3321. Pure; fake coins (never touches the ledger).
+ */
+export function botStackForSeed(playerNumber: number): bigint {
+  const lo = Number(BOT_MIN_STACK);
+  const hi = Number(BOT_MAX_STACK);
+  const h = botStackHash(playerNumber);
+  let v = lo + (h % (hi - lo + 1)); // [1000, 3321]
+  if (v % 50 === 0) {
+    // Nudge off any round figure by a seed-derived 1..49; stay within the cap.
+    v += 1 + (botStackHash(h ^ 0x5bd1e995) % 49);
+    if (v > hi) v -= 50;
+  }
+  return BigInt(v);
+}
 
 /**
  * Authoritative game-room orchestrator (Section 8 state machine). Holds the
@@ -203,9 +229,9 @@ export class GameRoom {
       }
       p.available = balance;
     }
-    // Bots get a fake stack calibrated to the humans (never out-chipping them).
-    const botStack = this.botStackFor(humans);
-    for (const p of seated) if (p.isBot) p.available = botStack;
+    // Bots get an independent, natural-looking per-bot stack (never a round
+    // figure, capped at BOT_MAX_STACK, distinct per bot). Fake coins only.
+    for (const p of seated) if (p.isBot) p.available = botStackForSeed(p.playerNumber);
 
     // First hand: the button starts at the lowest occupied seat (19.9); it
     // rotates from the next hand onward.
@@ -247,8 +273,7 @@ export class GameRoom {
         const b = balances.get(p.userId);
         if (b !== undefined) p.available = b;
       }
-      const botStack = this.botStackFor(humans);
-      for (const p of present) if (p.isBot) p.available = botStack;
+      for (const p of present) if (p.isBot) p.available = botStackForSeed(p.playerNumber);
       const eligible = present.filter(
         (p) => p.isBot || (balances.get(p.userId) ?? 0n) >= ante,
       );
@@ -573,17 +598,6 @@ export class GameRoom {
     const cur = this.state.dealerSeat;
     if (cur === null) return sorted[0]!;
     return sorted.find((s) => s > cur) ?? sorted[0]!;
-  }
-
-  /** A bot's fake stack for the hand: the largest human stack at the table,
-   *  clamped to [BOT_MIN_STACK, BOT_MAX_STACK] so bots never out-chip the humans
-   *  (or bet amounts a normal human couldn't have). Humans must be sourced first. */
-  private botStackFor(humans: readonly RoomPlayer[]): bigint {
-    let maxHuman = 0n;
-    for (const p of humans) if (p.available > maxHuman) maxHuman = p.available;
-    if (maxHuman < BOT_MIN_STACK) return BOT_MIN_STACK;
-    if (maxHuman > BOT_MAX_STACK) return BOT_MAX_STACK;
-    return maxHuman;
   }
 
   /** Reset a seat's per-hand betting + claim state (keeps wallet `available`). */

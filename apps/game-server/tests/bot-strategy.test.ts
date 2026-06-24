@@ -190,6 +190,7 @@ describe("decide — weak + aggressive sometimes raises (bluffs)", () => {
       const { counts } = sample(N, {
         legal: legal({ canCheck: true, canCall: false, callAmount: 0n }),
         strength: 0.02, // clearly in the bluff band for every archetype
+        street: "RIVER", // river ⇒ streetFactor 1, so the raw bluffFreq shows through
         personality: p,
         potOdds: 0,
       }, 4242);
@@ -233,14 +234,26 @@ describe("decide — sane bet sizing", () => {
     }
   });
 
-  it("falls back to the min raise-to when the band is degenerate (max == min)", () => {
+  it("never raises when the only legal raise is a full-stack all-in (max == min)", () => {
+    // A raise-to of maxRaiseTo commits the whole stack (= all-in); bots never go
+    // all-in, so a degenerate band yields no RAISE at all (they check/call/fold).
     const { decisions } = sample(500, {
       legal: legal({ minRaiseTo: 200n, maxRaiseTo: 200n }),
       strength: 0.95,
       personality: ARCHETYPES.aggressive,
     }, 11);
-    for (const d of decisions) {
-      if (d.type === "RAISE") expect(d.amount).toBe(200n);
+    expect(decisions.some((d) => d.type === "RAISE")).toBe(false);
+  });
+
+  it("never emits an ALLIN action on any street or strength", () => {
+    const rng = seeded(31);
+    for (let i = 0; i < 3000; i++) {
+      for (const street of ["PREFLOP", "FLOP", "TURN", "RIVER"] as const) {
+        for (const strength of [0.0, 0.1, 0.5, 0.95]) {
+          const d = decide(ctx({ street, strength, rng }));
+          expect(d.action.type).not.toBe("ALLIN");
+        }
+      }
     }
   });
 

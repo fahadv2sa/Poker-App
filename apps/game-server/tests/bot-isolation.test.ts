@@ -2,7 +2,7 @@ import type { Settlement } from "@fp/engine";
 import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fp/shared";
 import { describe, expect, it } from "vitest";
 import { dealFromDeck } from "../src/cards.js";
-import { GameRoom, type RoomDeps } from "../src/room.js";
+import { GameRoom, botStackForSeed, type RoomDeps } from "../src/room.js";
 import type {
   BetRecord,
   CardSource,
@@ -326,7 +326,7 @@ describe("bot isolation — closing a live hand with bots", () => {
   });
 });
 
-describe("bot stack is calibrated to the humans (not a flat 5000)", () => {
+describe("bot stack — independent, natural-looking per-bot balance (not human-calibrated)", () => {
   // After start(), the ante has moved from `available` into `committedTotal`, so the
   // seeded bot stack = available + committedTotal.
   const seededBotStack = async (humanBalance: bigint) => {
@@ -337,10 +337,24 @@ describe("bot stack is calibrated to the humans (not a flat 5000)", () => {
     return bot.available + bot.committedTotal;
   };
 
-  it("tracks the largest human stack, clamped to [1000, 3000]", async () => {
-    expect(await seededBotStack(2500n)).toBe(2500n); // tracks the human
-    expect(await seededBotStack(600n)).toBe(1000n); // floored (human below the floor)
-    expect(await seededBotStack(9000n)).toBe(3000n); // capped at the economy ceiling
+  it("does NOT depend on the human stack (independent of the table)", async () => {
+    // Same bot, wildly different human balances → identical bot stack.
+    expect(await seededBotStack(2500n)).toBe(await seededBotStack(9000n));
+    // …and it equals the deterministic per-bot seed value (player_number 900002).
+    expect(await seededBotStack(600n)).toBe(botStackForSeed(900002));
+  });
+
+  it("is in [1000, 3321] and never a round figure", () => {
+    for (let pn = 900001; pn <= 900200; pn++) {
+      const v = botStackForSeed(pn);
+      expect(v >= 1000n && v <= 3321n).toBe(true);
+      expect(v % 50n).not.toBe(0n); // never a round number
+    }
+  });
+
+  it("differs from one bot to another (no shared figure at a table)", () => {
+    const table = [900001, 900002, 900003, 900004, 900005, 900006].map(botStackForSeed);
+    expect(new Set(table.map(String)).size).toBe(table.length);
   });
 });
 
