@@ -4,7 +4,7 @@
 - **Last updated:** 2026-06-23
 - **Repository:** https://github.com/fahadv2sa/link-up.git
 - **Production deploy branch:** `feat/fame-score-system`
-- **Project root (local):** `C:\Users\Admin\OneDrive\Desktop\poker-app`
+- **Project root (local):** `C:\Users\Admin\OneDrive\Desktop\Football B\link-up`
 
 > **Overview.** Link Up is a server-authoritative, online, multiplayer card game with a Texas-Hold'em *structure* (rooms, a mandatory opening bet, betting rounds, community cards, showdown, side pots) but a completely different *winning logic*: each "card" is a real football player, and hands are scored by **football knowledge** — the relationships between players by **nationality, position, and club career history** — across 9 "association" ranks. The UI is fully Arabic, right-to-left (RTL), premium dark theme. The system is a pnpm + Turborepo monorepo split into a stateless Next.js web app, a single always-on Socket.IO authoritative game server, a pure rules engine, a Prisma/PostgreSQL data layer, and a shared contracts package. Money is a virtual "Coins" economy backed by an append-only wallet ledger with DB transactions, row locks, and idempotency keys. It is deployed to Railway (three services) with Cloudflare DNS at `poker.fmgtech.dev` (web) and `poker-rt.fmgtech.dev` (realtime).
 

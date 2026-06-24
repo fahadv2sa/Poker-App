@@ -155,7 +155,7 @@ real football player — the owner supplies the player database later, data-driv
 
 ## Project location
 
-Monorepo lives at `C:\Users\Admin\OneDrive\Desktop\poker-app` (chosen by the user). It is under OneDrive —
+Monorepo lives at `C:\Users\Admin\OneDrive\Desktop\Football B\link-up` (chosen by the user). It is under OneDrive —
 if `node_modules` sync ever causes file-lock/EPERM issues, pause OneDrive sync for this folder or exclude
 `node_modules`. The spec lives at `C:\Users\Admin\OneDrive\Desktop\SPEC.md`.
 

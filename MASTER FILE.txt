@@ -7,7 +7,7 @@ this monorepo (not the spec's intentions where the two have diverged — such
 divergences are called out explicitly).
 
 Generated: 2026-06-21
-Project root: C:\Users\Admin\OneDrive\Desktop\poker-app
+Project root: C:\Users\Admin\OneDrive\Desktop\Football B\link-up
 Authoritative spec (Arabic): C:\Users\Admin\OneDrive\Desktop\SPEC.md
 Quick reference card: CLAUDE.md (in the repo root — read it too; it is current)
 Current git branch (= the production deploy branch): feat/fame-score-system
@@ -210,7 +210,7 @@ logic in the browser.
 ================================================================================
 pnpm workspaces are defined in pnpm-workspace.yaml as apps/* and packages/*.
 
-poker-app/
+link-up/
 ├─ apps/
 │  ├─ web/                  Next.js app (UI + REST)
 │  │  └─ src/
