@@ -1,5 +1,5 @@
 ================================================================================
-FOOTBALL POKER (فوتبول بوكر) — MASTER REFERENCE FILE
+LINK UP (لينك اب) — MASTER REFERENCE FILE
 ================================================================================
 A complete, self-contained onboarding reference for any future AI platform,
 external developer, or designer. Written to be accurate to the ACTUAL code in
@@ -81,7 +81,7 @@ TABLE OF CONTENTS
 ================================================================================
 1. OVERVIEW — WHAT THIS GAME IS
 ================================================================================
-Football Poker is a server-authoritative, online, multiplayer card game. It uses
+Link Up is a server-authoritative, online, multiplayer card game. It uses
 a Texas-Hold'em STRUCTURE (rooms, a mandatory opening bet, betting rounds,
 community cards, showdown, side pots) but the WINNING LOGIC is entirely
 different: instead of poker hand ranks, hands are scored by FOOTBALL KNOWLEDGE —

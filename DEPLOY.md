@@ -1,4 +1,4 @@
-# Deploying Football Poker to Railway
+# Deploying Link Up to Railway
 
 Target architecture (one GitHub repo → three Railway services):
 

@@ -1,4 +1,4 @@
-# Football Poker (فوتبول بوكر)
+# Link Up (لينك اب)
 
 A server-authoritative online multiplayer card game with a Texas-Hold'em structure, but the
 winning logic is based on **football knowledge** — relationships between players by

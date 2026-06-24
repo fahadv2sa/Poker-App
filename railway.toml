@@ -1,4 +1,4 @@
-# Railway deployment — Football Poker monorepo (pnpm workspaces + Turborepo).
+# Railway deployment — Link Up monorepo (pnpm workspaces + Turborepo).
 #
 # Architecture — all from this one GitHub repo:
 #   Service "web"          → apps/web         (Next.js)    →  poker.fmgtech.dev

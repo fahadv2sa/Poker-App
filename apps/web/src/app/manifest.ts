@@ -5,7 +5,7 @@ import type { MetadataRoute } from "next";
 // apple meta tags wired in layout.tsx instead. Background/theme match the brand.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "فوتبول بي — Football Poker",
+    name: "فوتبول بي — Football B",
     short_name: "فوتبول بي",
     description: "تحديات كرة قدم",
     start_url: "/",

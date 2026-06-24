@@ -1,6 +1,6 @@
-# Football Poker — Theoretical Breakdown (Logical Sections Map)
+# Link Up — Theoretical Breakdown (Logical Sections Map)
 
-- **Project:** Football Poker (فوتبول بوكر) — `Poker-App` monorepo
+- **Project:** Link Up (لينك اب) — `Poker-App` monorepo
 - **Audit date:** 2026-06-23
 - **Nature:** READ-ONLY pre-launch audit. **No file in the project was modified.** This document is a *paper map only* — no file was moved, renamed, or reorganized. It labels and groups the code exactly as it already exists on disk.
 
@@ -8,7 +8,7 @@
 
 ## Architecture overview (how the sections tie together)
 
-Football Poker is a server-authoritative, real-time multiplayer card game with a Texas-Hold'em *structure* but a football-knowledge *winning logic* (players are scored by shared nationality / position / club career across 9 "association" ranks). It is a **pnpm + Turborepo monorepo** with two runtime processes and three shared packages:
+Link Up is a server-authoritative, real-time multiplayer card game with a Texas-Hold'em *structure* but a football-knowledge *winning logic* (players are scored by shared nationality / position / club career across 9 "association" ranks). It is a **pnpm + Turborepo monorepo** with two runtime processes and three shared packages:
 
 ```
         Browser (Next.js client, RTL Arabic UI)

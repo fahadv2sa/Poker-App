@@ -27,7 +27,7 @@ export function LoginForm({ notice }: { notice?: string }) {
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
         <Logo glow className="size-20" />
         <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ تحديات كرة قدم · بوكر</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ تحديات كرة قدم</div>
       </div>
 
       <Panel accent>

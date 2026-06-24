@@ -1,4 +1,4 @@
-# Football Poker — Gameplay Audit (end-to-end runtime trace)
+# Link Up — Gameplay Audit (end-to-end runtime trace)
 
 **Date:** 2026-06-17
 **Scope:** Actual runtime flow a real player goes through — server emits **and** client

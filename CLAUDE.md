@@ -1,4 +1,4 @@
-# CLAUDE.md — Football Poker
+# CLAUDE.md — Link Up
 
 Reference card for this project. Authoritative source is `SPEC.md` (on the user's Desktop:
 `C:\Users\Admin\OneDrive\Desktop\SPEC.md`), Arabic, "Football Poker — النسخة النهائية v3".

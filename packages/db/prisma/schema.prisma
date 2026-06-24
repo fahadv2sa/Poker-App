@@ -1,4 +1,4 @@
-// Football Poker — database schema (Section 5 of SPEC.md).
+// Football B — database schema, shared platform DB (Section 5 of SPEC.md).
 // Conventions: all PKs are uuid; all timestamps are timestamptz; tables and
 // columns are snake_case via @@map/@map. Only Positions + HandRanks are seeded;
 // no real football player is ever inserted (data-driven, Section 17).
