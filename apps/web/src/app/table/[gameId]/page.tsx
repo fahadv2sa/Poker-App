@@ -32,7 +32,7 @@ export default async function TablePage({
   // and the table screen would hang on "connecting…". Resolve cleanly instead:
   // send the user home with a notice, so nothing abandoned/dangling remains.
   // (ENDED/IN_PROGRESS/LOBBY are still-live sessions and render normally.)
-  if (game.status === "ABANDONED") redirect("/?closed=1");
+  if (game.status === "ABANDONED") redirect("/games/link-up?closed=1");
 
   // Display name shown at the player's own seat: their chosen nickname, falling
   // back to the username, then a generic label. Never empty.
