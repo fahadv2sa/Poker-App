@@ -1,6 +1,6 @@
 # Link Up — Pre-Launch Audit & Test Report
 
-- **Project:** Link Up (لينك اب) — `Poker-App` monorepo
+- **Project:** Link Up (لينك اب) — `link-up` monorepo
 - **Audit date:** 2026-06-23
 - **Branch audited:** `feat/fame-score-system` (the production deploy branch)
 - **Nature:** **READ-ONLY, NON-DESTRUCTIVE audit.** No application code, config, schema, or migration was changed. The only files created are this report and `THEORETICAL_BREAKDOWN.md` in `docs/pre-launch-audit/`. No bug was fixed — every issue is documented only. Tests were run against the **local** Postgres only; **nothing touched production**.

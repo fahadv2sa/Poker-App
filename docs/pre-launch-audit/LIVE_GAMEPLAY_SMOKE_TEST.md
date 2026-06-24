@@ -1,6 +1,6 @@
 # Link Up — Live Gameplay Smoke Test
 
-- **Project:** Link Up (لينك اب) — `Poker-App` monorepo
+- **Project:** Link Up (لينك اب) — `link-up` monorepo
 - **Date:** 2026-06-23
 - **Type:** **LOCAL-ONLY** live end-to-end gameplay smoke test. Everything ran against a **local PostgreSQL** (`localhost:5432`). **Nothing connected to, read from, wrote to, or migrated production.** No game logic, engine, socket, schema, or config was modified (two pre-existing harness/test issues are *documented*, not fixed).
 - **Purpose:** Close the gap left by the SKIPPED smoke e2e in the pre-launch audit — prove a real game *runs correctly when played live*, not just that it type-checks/builds.

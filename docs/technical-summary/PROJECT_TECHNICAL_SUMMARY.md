@@ -1,8 +1,8 @@
 # Link Up (لينك اب) — Project Technical Summary
 
-- **Project name:** Link Up (`football-poker` / repo `Poker-App`)
+- **Project name:** Link Up (`link-up` / repo `link-up`)
 - **Last updated:** 2026-06-23
-- **Repository:** https://github.com/fahadv2sa/Poker-App.git
+- **Repository:** https://github.com/fahadv2sa/link-up.git
 - **Production deploy branch:** `feat/fame-score-system`
 - **Project root (local):** `C:\Users\Admin\OneDrive\Desktop\poker-app`
 
@@ -432,7 +432,7 @@ Builder: **NIXPACKS** (`railway.toml [build]`). `[deploy]`: `restartPolicyType =
 
 ### 8.2 GitHub & branch
 
-Repo `https://github.com/fahadv2sa/Poker-App.git`; the production **deploy branch is `feat/fame-score-system`** (current local branch). **`git push` to that branch IS the prod deploy** (Railway auto-deploys on push). Latest local commit at summary time: `f52a858 Fix winner screen: rename poker-looking bot + show every winner's own cards`.
+Repo `https://github.com/fahadv2sa/link-up.git`; the production **deploy branch is `feat/fame-score-system`** (current local branch). **`git push` to that branch IS the prod deploy** (Railway auto-deploys on push). Latest local commit at summary time: `f52a858 Fix winner screen: rename poker-looking bot + show every winner's own cards`.
 
 ### 8.3 Environment variables (names + purpose only — no secret values)
 

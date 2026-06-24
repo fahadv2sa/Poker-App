@@ -1,6 +1,6 @@
 # Link Up — Theoretical Breakdown (Logical Sections Map)
 
-- **Project:** Link Up (لينك اب) — `Poker-App` monorepo
+- **Project:** Link Up (لينك اب) — `link-up` monorepo
 - **Audit date:** 2026-06-23
 - **Nature:** READ-ONLY pre-launch audit. **No file in the project was modified.** This document is a *paper map only* — no file was moved, renamed, or reorganized. It labels and groups the code exactly as it already exists on disk.
 
