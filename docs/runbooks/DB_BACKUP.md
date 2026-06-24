@@ -19,11 +19,12 @@ you can't trivially undo. Backups are cheap; the dataset is not.
 - The **prod connection string** = Railway's **public** proxy URL (`*.proxy.rlwy.net`), from the dashboard:
   **Postgres service → Variables → `DATABASE_PUBLIC_URL`** (NOT the in-network `RAILWAY_PRIVATE_DOMAIN`,
   which is unreachable from your machine). It already includes credentials + `sslmode`.
-- **Match the major version.** Use a `postgres:<N>` image whose major ≥ the server. Check the server:
+- **Match the major version.** Use a `postgres:<N>` image whose major ≥ the server. **The prod server is
+  currently PostgreSQL 18.4, so the examples below use `postgres:18`.** Re-check after any server upgrade and
+  bump the tag (an older `pg_dump` refuses a newer server). Confirm:
   ```bash
-  docker run --rm postgres:16 psql "$PROD_URL" -c "show server_version;"
+  docker run --rm postgres:18 psql "$PROD_URL" -c "show server_version;"
   ```
-  If it prints 17.x, use `postgres:17` everywhere below; 16.x → `postgres:16`, etc.
 
 Set the URL once per shell (Git Bash):
 ```bash
@@ -34,7 +35,7 @@ export PROD_URL='postgresql://USER:PASS@HOST.proxy.rlwy.net:PORT/railway?sslmode
 
 ## 1. Sanity counts (know what you're capturing)
 ```bash
-docker run --rm postgres:16 psql "$PROD_URL" -c "select 'players' t, count(*) n from players
+docker run --rm postgres:18 psql "$PROD_URL" -c "select 'players' t, count(*) n from players
   union all select 'clubs', count(*) from clubs
   union all select 'player_clubs', count(*) from player_clubs
   union all select 'players_with_fame', count(*) from players where fame_score is not null
@@ -47,7 +48,7 @@ Note the numbers — you'll re-check them after a restore.
 Custom format (`-Fc`, compressed). Piping stdout → a host file avoids Windows/Docker path issues:
 ```bash
 mkdir -p backups
-docker run --rm postgres:16 pg_dump "$PROD_URL" -Fc \
+docker run --rm postgres:18 pg_dump "$PROD_URL" -Fc \
   > "backups/football-b-prod-$(date +%Y%m%d-%H%M).dump"
 ls -lh backups/   # confirm the file exists and is NOT 0 bytes
 ```
@@ -55,7 +56,7 @@ ls -lh backups/   # confirm the file exists and is NOT 0 bytes
 ## 3. Verify the backup (do NOT skip — an unverified backup isn't a backup)
 List the archive's table of contents; a healthy dump shows the tables:
 ```bash
-docker run --rm -i postgres:16 pg_restore -l \
+docker run --rm -i postgres:18 pg_restore -l \
   < "backups/football-b-prod-YYYYMMDD-HHMM.dump" | grep -E 'TABLE DATA (public )?(players|clubs|users)'
 ```
 You should see `players`, `clubs`, `users`, etc. If the file is tiny or this prints nothing, the dump
@@ -72,13 +73,13 @@ failed — fix it before doing anything destructive.
 ### Restore into a FRESH / empty database (safest)
 Point `TARGET_URL` at the empty DB and load:
 ```bash
-docker run --rm -i postgres:16 pg_restore --no-owner --no-privileges -d "$TARGET_URL" \
+docker run --rm -i postgres:18 pg_restore --no-owner --no-privileges -d "$TARGET_URL" \
   < "backups/football-b-prod-YYYYMMDD-HHMM.dump"
 ```
 
 ### Restore OVER an existing database (drops & recreates objects — destructive on the target)
 ```bash
-docker run --rm -i postgres:16 pg_restore --clean --if-exists --no-owner --no-privileges -d "$TARGET_URL" \
+docker run --rm -i postgres:18 pg_restore --clean --if-exists --no-owner --no-privileges -d "$TARGET_URL" \
   < "backups/football-b-prod-YYYYMMDD-HHMM.dump"
 ```
 ⚠️ `--clean` **drops** objects on `$TARGET_URL` first. Triple-check `$TARGET_URL` points where you intend.
@@ -90,7 +91,7 @@ After restoring, re-run the **§1 sanity counts** against the target and confirm
 ## Optional — football-data-only dump (just the irreplaceable tables)
 A lighter, focused capture of the reference data (schema + data):
 ```bash
-docker run --rm postgres:16 pg_dump "$PROD_URL" -Fc \
+docker run --rm postgres:18 pg_dump "$PROD_URL" -Fc \
   -t players -t nationalities -t positions -t clubs \
   -t player_clubs -t player_national_teams -t player_youth_clubs \
   -t player_tournament_stats -t player_season_stats -t hand_ranks \
