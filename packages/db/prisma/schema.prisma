@@ -15,6 +15,11 @@ datasource db {
   // lets a future move to Neon (pooled vs direct) happen with no code change.
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+  // Multi-game isolation: tables live in per-owner schemas (binding contract in
+  // docs/architecture/PLATFORM_CONTRACTS.md). platform = identity/social (A),
+  // football = reference data (B), link_up = Link Up's economy + session (C+D).
+  // A future game takes its own schema; A+B stay shared.
+  schemas   = ["platform", "football", "link_up"]
 }
 
 // ----------------------------------------------------------------------------
@@ -35,6 +40,7 @@ enum WalletTxType {
   INSTALL_REWARD
 
   @@map("wallet_tx_type")
+  @@schema("link_up")
 }
 
 enum PositionCode {
@@ -44,6 +50,7 @@ enum PositionCode {
   FWD
 
   @@map("position_code")
+  @@schema("football")
 }
 
 enum GameStatus {
@@ -53,6 +60,7 @@ enum GameStatus {
   ABANDONED
 
   @@map("game_status")
+  @@schema("link_up")
 }
 
 // How a room was created. MANUAL rooms (from إنشاء غرفة) are publicly listed and
@@ -64,6 +72,7 @@ enum GameKind {
   QUICK_PLAY
 
   @@map("game_kind")
+  @@schema("link_up")
 }
 
 enum GamePhase {
@@ -77,6 +86,7 @@ enum GamePhase {
   ENDED
 
   @@map("game_phase")
+  @@schema("link_up")
 }
 
 enum GamePlayerStatus {
@@ -87,6 +97,7 @@ enum GamePlayerStatus {
   DISCONNECTED
 
   @@map("game_player_status")
+  @@schema("link_up")
 }
 
 enum CardType {
@@ -94,6 +105,7 @@ enum CardType {
   COMMUNITY
 
   @@map("card_type")
+  @@schema("link_up")
 }
 
 enum BetRound {
@@ -103,6 +115,7 @@ enum BetRound {
   RIVER
 
   @@map("bet_round")
+  @@schema("link_up")
 }
 
 enum BetAction {
@@ -114,6 +127,7 @@ enum BetAction {
   ALLIN
 
   @@map("bet_action")
+  @@schema("link_up")
 }
 
 enum ResultOutcome {
@@ -124,6 +138,7 @@ enum ResultOutcome {
   REFUND
 
   @@map("result_outcome")
+  @@schema("link_up")
 }
 
 // Big-tournament categories tracked per player for the fame score (display/
@@ -134,6 +149,7 @@ enum TournamentType {
   CHAMPIONS_LEAGUE
 
   @@map("tournament_type")
+  @@schema("football")
 }
 
 // Room difficulty — selects the fame_score floor the deal draws from (Part 3).
@@ -144,6 +160,7 @@ enum Difficulty {
   ELITE
 
   @@map("difficulty")
+  @@schema("link_up")
 }
 
 // ----------------------------------------------------------------------------
@@ -201,6 +218,7 @@ model User {
   emailOtp      EmailOtp?
 
   @@map("users")
+  @@schema("platform")
 }
 
 // One-time email-verification code (signup OTP). At most ONE active code per user
@@ -224,6 +242,7 @@ model EmailOtp {
   // Supports the opportunistic purge (DELETE WHERE expires_at < now()).
   @@index([expiresAt])
   @@map("email_otps")
+  @@schema("platform")
 }
 
 // Social — likes (one row per (liker, target); one-per-user toggle). Denormalized
@@ -240,6 +259,7 @@ model Like {
   @@unique([likerId, targetId])
   @@index([targetId])
   @@map("likes")
+  @@schema("platform")
 }
 
 enum FriendStatus {
@@ -248,6 +268,7 @@ enum FriendStatus {
   REJECTED
 
   @@map("friend_status")
+  @@schema("platform")
 }
 
 // Social — directional friend request with an approval state machine. One row per
@@ -268,6 +289,7 @@ model Friendship {
   @@index([addresseeId, status])
   @@index([requesterId, status])
   @@map("friendships")
+  @@schema("platform")
 }
 
 model Wallet {
@@ -282,6 +304,7 @@ model Wallet {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("wallets")
+  @@schema("link_up")
 }
 
 // Append-only ledger — the financial source of truth (Section 6).
@@ -304,6 +327,7 @@ model WalletTransaction {
   // seq-scan); also useful for any per-game ledger lookup. Additive.
   @@index([gameId])
   @@map("wallet_transactions")
+  @@schema("link_up")
 }
 
 model BankClaim {
@@ -321,6 +345,7 @@ model BankClaim {
 
   @@index([userId, claimedAt])
   @@map("bank_claims")
+  @@schema("link_up")
 }
 
 model UserStats {
@@ -338,6 +363,7 @@ model UserStats {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_stats")
+  @@schema("link_up")
 }
 
 // Uploaded profile avatar (profile layer). Stored in the DB (Railway's filesystem
@@ -352,6 +378,7 @@ model UserAvatar {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_avatars")
+  @@schema("platform")
 }
 
 // ============================================================================
@@ -376,6 +403,7 @@ enum PlayEventType {
   ROUND_SUMMARY
 
   @@map("play_event_type")
+  @@schema("link_up")
 }
 
 model PlayEvent {
@@ -396,6 +424,7 @@ model PlayEvent {
   @@index([playerId, createdAt])
   @@index([gameId, handNumber])
   @@map("play_events")
+  @@schema("link_up")
 }
 
 // Layer 2 — precomputed per-player read model. Updated AFTER a hand, incrementally
@@ -440,6 +469,7 @@ model PlayerMetrics {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("player_metrics")
+  @@schema("link_up")
 }
 
 // Layer 3 — data-driven badge definitions (same pattern as HandRank). Add a new
@@ -459,6 +489,7 @@ model Badge {
   awards        PlayerBadge[]
 
   @@map("badges")
+  @@schema("link_up")
 }
 
 // Awarded badges — idempotent (a badge is granted once per player).
@@ -474,6 +505,7 @@ model PlayerBadge {
   @@unique([userId, badgeId])
   @@index([userId])
   @@map("player_badges")
+  @@schema("link_up")
 }
 
 // ----------------------------------------------------------------------------
@@ -490,6 +522,7 @@ model Nationality {
   players   Player[]
 
   @@map("nationalities")
+  @@schema("football")
 }
 
 model Position {
@@ -501,6 +534,7 @@ model Position {
   players Player[]
 
   @@map("positions")
+  @@schema("football")
 }
 
 // Team entity type. Career history (player_clubs) holds ONLY kind=CLUB; national
@@ -513,6 +547,7 @@ enum ClubKind {
   YOUTH_CLUB
 
   @@map("club_kind")
+  @@schema("football")
 }
 
 model Club {
@@ -530,6 +565,7 @@ model Club {
   youthClubs    PlayerYouthClub[]
 
   @@map("clubs")
+  @@schema("football")
 }
 
 model Player {
@@ -588,6 +624,7 @@ model Player {
   @@index([positionId])
   @@index([tier])
   @@map("players")
+  @@schema("football")
 }
 
 // One row per (player, tournament type) holding an appearance count, sourced by
@@ -603,6 +640,7 @@ model PlayerTournamentStat {
   @@unique([playerId, tournamentType])
   @@index([playerId])
   @@map("player_tournament_stats")
+  @@schema("football")
 }
 
 // SEASON-/COMPETITION-dependent stats from API-Football's /players?id=&season=
@@ -695,6 +733,7 @@ model PlayerSeasonStat {
   @@index([season])
   @@index([leagueId])
   @@map("player_season_stats")
+  @@schema("football")
 }
 
 model PlayerClub {
@@ -710,6 +749,7 @@ model PlayerClub {
   @@index([playerId])
   @@index([clubId])
   @@map("player_clubs")
+  @@schema("football")
 }
 
 // National-team appearances (المنتخب), split out of player_clubs. Each row's
@@ -727,6 +767,7 @@ model PlayerNationalTeam {
   @@index([playerId])
   @@index([clubId])
   @@map("player_national_teams")
+  @@schema("football")
 }
 
 // Youth-club academy appearances (e.g. "Real Madrid U19"), split out of
@@ -743,6 +784,7 @@ model PlayerYouthClub {
   @@index([playerId])
   @@index([clubId])
   @@map("player_youth_clubs")
+  @@schema("football")
 }
 
 // Game rules, seeded. rule (jsonb) holds the Rule DSL (Section 7.3/7.4).
@@ -761,6 +803,7 @@ model HandRank {
   claimsAsBest    PlayerHandClaim[] @relation("BestPossibleRank")
 
   @@map("hand_ranks")
+  @@schema("link_up")
 }
 
 // ----------------------------------------------------------------------------
@@ -801,6 +844,7 @@ model Game {
   // ended_at < cutoff). Additive; no data change.
   @@index([status, endedAt])
   @@map("games")
+  @@schema("link_up")
 }
 
 model GamePlayer {
@@ -825,6 +869,7 @@ model GamePlayer {
   @@unique([gameId, seat])
   @@unique([gameId, userId])
   @@map("game_players")
+  @@schema("link_up")
 }
 
 model GameCard {
@@ -841,6 +886,7 @@ model GameCard {
 
   @@index([gameId])
   @@map("game_cards")
+  @@schema("link_up")
 }
 
 model Bet {
@@ -858,6 +904,7 @@ model Bet {
 
   @@index([gameId])
   @@map("bets")
+  @@schema("link_up")
 }
 
 model PlayerHandClaim {
@@ -876,6 +923,7 @@ model PlayerHandClaim {
 
   @@index([gameId])
   @@map("player_hand_claims")
+  @@schema("link_up")
 }
 
 model GameResult {
@@ -892,4 +940,5 @@ model GameResult {
 
   @@index([gameId])
   @@map("game_results")
+  @@schema("link_up")
 }

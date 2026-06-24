@@ -23,7 +23,9 @@ Railway projects when they exist) and share **only two things**: a **single iden
 ## 2. The single most important artifact: table ownership
 
 Every table in `packages/db/prisma/schema.prisma` belongs to exactly one of three groups. This is the
-isolation boundary.
+isolation boundary. **As of 2026-06-24 these are real Postgres schemas** (Prisma multiSchema, one shared
+DB): **`platform`** (A), **`football`** (B), **`link_up`** (C+D). A + B are shared; each game owns its
+schema; a future game takes its own (e.g. `game2`). Migration: `20260624170000_multi_schema_split`.
 
 | Group | Owner | Tables | Sharing rule |
 |---|---|---|---|
