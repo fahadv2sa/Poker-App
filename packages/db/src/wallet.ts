@@ -63,7 +63,7 @@ export async function applyWalletTransaction(
   // 1) Lock the wallet row for this user.
   const rows = await tx.$queryRaw<WalletRow[]>(
     Prisma.sql`SELECT id, balance, highest_balance
-               FROM wallets
+               FROM link_up.wallets
                WHERE user_id = ${userId}::uuid
                FOR UPDATE`,
   );

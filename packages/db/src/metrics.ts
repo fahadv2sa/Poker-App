@@ -198,7 +198,7 @@ export async function aggregatePlayers(userIds: string[]): Promise<void> {
  */
 export async function acknowledgeLevelUp(userId: string): Promise<void> {
   await prisma.$executeRaw`
-    UPDATE player_metrics SET celebrated_level = level WHERE user_id = ${userId}::uuid
+    UPDATE link_up.player_metrics SET celebrated_level = level WHERE user_id = ${userId}::uuid
   `;
 }
 

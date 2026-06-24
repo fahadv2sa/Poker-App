@@ -109,7 +109,7 @@ export async function claimFromBank(
   return prisma.$transaction(async (tx) => {
     // 1) Serialize concurrent claims for this user (lock the wallet row).
     await tx.$queryRaw(
-      Prisma.sql`SELECT id FROM wallets WHERE user_id = ${userId}::uuid FOR UPDATE`,
+      Prisma.sql`SELECT id FROM link_up.wallets WHERE user_id = ${userId}::uuid FOR UPDATE`,
     );
 
     // 2) Once per Riyadh day — race-free inside the lock.

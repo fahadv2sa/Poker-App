@@ -25,7 +25,7 @@ export async function grantInstallReward(userId: string): Promise<InstallRewardR
   return prisma.$transaction(async (tx) => {
     // Serialize concurrent claims for this user (lock the wallet row).
     const rows = await tx.$queryRaw<{ balance: bigint }[]>(
-      Prisma.sql`SELECT balance FROM wallets WHERE user_id = ${userId}::uuid FOR UPDATE`,
+      Prisma.sql`SELECT balance FROM link_up.wallets WHERE user_id = ${userId}::uuid FOR UPDATE`,
     );
     const wallet = rows[0];
     if (!wallet) return { granted: false, amount: 0n, balance: 0n };

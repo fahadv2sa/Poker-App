@@ -149,7 +149,7 @@ export class PrismaCardSource implements CardSource {
     const scoreFilter =
       minScore <= 0 ? Prisma.empty : Prisma.sql`AND floor(fame_score) >= ${minScore}`;
     const eligible = await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-      SELECT id FROM players WHERE active = true ${scoreFilter}
+      SELECT id FROM football.players WHERE active = true ${scoreFilter}
     `);
     if (eligible.length < need) {
       throw new Error(
