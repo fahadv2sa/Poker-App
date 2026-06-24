@@ -10,7 +10,7 @@
  *     no photo). Search API-Football by name; on a high-confidence name match,
  *     set ONLY photo_url. Never assign external_ref, never touch other fields.
  *
- *   pnpm --filter @fp/db exec tsx prisma/backfill-fixes.ts --daily=75000 --interval=120
+ *   pnpm --filter @fb/db exec tsx prisma/backfill-fixes.ts --daily=75000 --interval=120
  *
  * Reuses apiGet (rate-limited fetch) and the club-upsert pattern. NEVER updates
  * fame_score / tier / top5_league_seasons (it never updates the player row in

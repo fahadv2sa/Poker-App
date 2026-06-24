@@ -1,5 +1,5 @@
 import { errors, jwtVerify } from "jose";
-import { realtimeClaimsSchema, type RealtimeClaims } from "@fp/shared";
+import { realtimeClaimsSchema, type RealtimeClaims } from "@fb/shared";
 
 /**
  * Socket authentication (FIX #1 / Section 16). The game server NEVER trusts a

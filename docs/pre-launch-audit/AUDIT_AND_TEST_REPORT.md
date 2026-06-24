@@ -77,18 +77,18 @@ All commands run from the repo root with `NODE_OPTIONS=--use-system-ca`. Environ
 
 | # | Check | Command | Result | Notes |
 |---|---|---|---|---|
-| 1 | Prisma schema validation | `pnpm --filter @fp/db exec prisma validate` (dummy local envs) | **PASS** | "The schema … is valid 🚀". Read-only, no DB connection. (First attempt FAILED only because `DIRECT_URL` was unset — see A.1.) |
+| 1 | Prisma schema validation | `pnpm --filter @fb/db exec prisma validate` (dummy local envs) | **PASS** | "The schema … is valid 🚀". Read-only, no DB connection. (First attempt FAILED only because `DIRECT_URL` was unset — see A.1.) |
 | 2 | Typecheck — all 5 packages | `pnpm typecheck` (turbo `tsc --noEmit`) | **PASS** | 5/5 successful (FULL TURBO cache hit ⇒ last run was clean). Also serves as the "all imports resolve / no missing modules" static check. |
 | 3 | Lint — whole monorepo | `pnpm lint` (`eslint .`, report-only) | **FAIL** | 6 errors, 0 warnings. `apps/web/public/sw.js` ×5 `'self' is not defined` (no service-worker globals configured for that file); `apps/web/scripts/gen-icons.mjs` unused import `writeFileSync`. Exit code 1. No autofix applied. |
-| 4 | Engine unit tests (pure) | `pnpm --filter @fp/engine test` | **PASS** | 7 files, **84/84**. |
-| 5 | Game-server tests (fakes, no DB) | `pnpm --filter @fp/game-server test` | **PASS** | 13 files, **122/122** (room, multi-hand, recovery, bot isolation/fill/strategy/controller/matchmaking, auth, rate-limit, presence, table-deck). |
-| 6 | Web tests | `pnpm --filter @fp/web test` | **PASS** | 2 files, **17/17** (`tableView` selectors + social bot-fence). |
-| 7 | DB integrity tests (real Postgres) | `pnpm --filter @fp/db test` | **PASS** | 4 files, **17/17** (wallet idempotency/row-lock/CHECK, bank 1×/day, install-reward once, level-up). Ran against **local** Postgres. The `prisma:error Unique constraint … (username)` line is an **expected assertion** inside the "rejects a duplicate username" test (the test passed). |
-| 8 | Web production build | `pnpm --filter @fp/web build` | **PASS** | All 33 routes compiled (placeholder env). Exit 0. |
+| 4 | Engine unit tests (pure) | `pnpm --filter @fb/engine test` | **PASS** | 7 files, **84/84**. |
+| 5 | Game-server tests (fakes, no DB) | `pnpm --filter @fb/game-server test` | **PASS** | 13 files, **122/122** (room, multi-hand, recovery, bot isolation/fill/strategy/controller/matchmaking, auth, rate-limit, presence, table-deck). |
+| 6 | Web tests | `pnpm --filter @fb/web test` | **PASS** | 2 files, **17/17** (`tableView` selectors + social bot-fence). |
+| 7 | DB integrity tests (real Postgres) | `pnpm --filter @fb/db test` | **PASS** | 4 files, **17/17** (wallet idempotency/row-lock/CHECK, bank 1×/day, install-reward once, level-up). Ran against **local** Postgres. The `prisma:error Unique constraint … (username)` line is an **expected assertion** inside the "rejects a duplicate username" test (the test passed). |
+| 8 | Web production build | `pnpm --filter @fb/web build` | **PASS** | All 33 routes compiled (placeholder env). Exit 0. |
 | 9 | Env-var consistency (code vs `.env.example`) | `grep process.env.* vs .env.example` | **FAIL (gaps)** | `BOTS_ENABLED`, `INTERNAL_API_TOKEN`, `GAME_SERVER_INTERNAL_URL`, `ANTHROPIC_API_KEY` used but undocumented; `DIRECT_URL` missing from local `packages/db/.env.example`. (A.1, A.6) |
 | 10 | Secret hygiene (tracked files) | `git ls-files \| grep -i env/secret` | **PASS** | No real `.env` or secret tracked — only `.example` templates (placeholders). One large non-secret data backup is tracked (A.1). |
 | 11 | Game-server compile/build | (covered by #2 `tsc --noEmit`) | **PASS (implied)** | Deploy uses `tsx` on source; there is no separate prod build step for the game-server. |
-| 12 | Full-hand smoke e2e | `pnpm --filter @fp/game-server smoke` | **SKIPPED** | Spins a live server and deals real hands; requires the local DB to be **seeded with enough active players** (`seats×2+5`) or it throws by design. Not run to keep the audit side-effect-light. **Before launch:** run against a seeded local/staging DB. |
+| 12 | Full-hand smoke e2e | `pnpm --filter @fb/game-server smoke` | **SKIPPED** | Spins a live server and deals real hands; requires the local DB to be **seeded with enough active players** (`seats×2+5`) or it throws by design. Not run to keep the audit side-effect-light. **Before launch:** run against a seeded local/staging DB. |
 | 13 | Prod migration status | `prisma migrate status` against prod | **SKIPPED** | Deliberately **not run** — read-only audit must not touch production. **Before launch:** verify prod is up to date through `20260622000003_level_up_celebration` (the migrate-first rule, A.6). |
 | 14 | DB-backed suites against a throwaway DB | `TEST_DATABASE_URL` suite | **PARTIAL/covered by #7** | The wallet/bank suites ran against the local DB successfully; running them against a dedicated `TEST_DATABASE_URL` in CI is recommended so they never share data with a dev DB. |
 
@@ -159,7 +159,7 @@ The Part C "strongly recommended / hygiene" items (rate limits, env-contract com
    ```
    NODE_OPTIONS=--use-system-ca \
    DATABASE_URL="<DATABASE_PUBLIC_URL>" DIRECT_URL="<DATABASE_PUBLIC_URL>" \
-   pnpm --filter @fp/db exec prisma migrate status
+   pnpm --filter @fb/db exec prisma migrate status
    ```
    Expected when ready: "Database schema is up to date" through `20260622000003_level_up_celebration`.
 2. **Take a backup/snapshot first** (Railway → Postgres → Backups), then **apply pending prod migrations** (idempotent; additive ADD COLUMNs):

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { DEFAULT_GAME_CONFIG, type CardView, type PlayerView } from "@fp/shared";
+import { DEFAULT_GAME_CONFIG, type CardView, type PlayerView } from "@fb/shared";
 import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
 import { fxBus } from "@/lib/fx-bus";

@@ -1,5 +1,5 @@
-import type { Card, HandRankDef } from "@fp/engine";
-import type { BetRound, Difficulty, GamePhase, GameConfig } from "@fp/shared";
+import type { Card, HandRankDef } from "@fb/engine";
+import type { BetRound, Difficulty, GamePhase, GameConfig } from "@fb/shared";
 
 /**
  * Authoritative in-memory room state (Section 8). The server is the only

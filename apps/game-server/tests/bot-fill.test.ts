@@ -1,4 +1,4 @@
-import { QUICK_PLAY } from "@fp/shared";
+import { QUICK_PLAY } from "@fb/shared";
 import { describe, expect, it } from "vitest";
 import { BotIdentityPool } from "../src/bots/pool.js";
 import { BotRuntime } from "../src/bots/runtime.js";

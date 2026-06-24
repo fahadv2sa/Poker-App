@@ -19,7 +19,7 @@ import {
   type PotSeat,
   type ResolveSeat,
   type WitnessGroup,
-} from "@fp/engine";
+} from "@fb/engine";
 import {
   BLUFF_BET_TO_POT,
   NEW_ROUND_GRACE_SEC,
@@ -30,7 +30,7 @@ import {
   type ClaimEvidenceGroup,
   type PlayerView,
   type PotView,
-} from "@fp/shared";
+} from "@fb/shared";
 import type {
   BetRecord,
   CardSource,

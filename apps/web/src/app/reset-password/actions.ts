@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
-import { resetPasswordSchema } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { resetPasswordSchema } from "@fb/shared";
 import { hashPassword } from "@/lib/argon";
 import { clearResetAuthorized, readResetAuthorized } from "@/lib/password-reset";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";

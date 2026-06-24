@@ -1,5 +1,5 @@
-import { prisma } from "@fp/db";
-import { BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { BOT_PLAYER_NUMBER_BASE } from "@fb/shared";
 
 /**
  * Bot identities (Model B): each bot is a lightweight real `users` row in the

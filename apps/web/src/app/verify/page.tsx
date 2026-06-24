@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { readPendingVerification } from "@/lib/pending-verification";
 import { VerifyForm } from "@/components/verify-form";

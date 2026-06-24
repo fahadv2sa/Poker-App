@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
-import { PENDING_VERIFICATION_TTL_SECONDS } from "@fp/shared";
+import { PENDING_VERIFICATION_TTL_SECONDS } from "@fb/shared";
 
 /**
  * "Pending verification" identity carrier. Login is blocked for unverified users,

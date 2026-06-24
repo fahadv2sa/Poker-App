@@ -1,4 +1,4 @@
-import type { BetRound } from "@fp/shared";
+import type { BetRound } from "@fb/shared";
 
 /**
  * Betting-round mechanics (Sections 8, 9, 19.9). Pure: a reducer over the

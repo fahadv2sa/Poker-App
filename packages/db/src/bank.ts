@@ -1,4 +1,4 @@
-import { BANK_CLAIM_PER_LEVEL, BANK_RESET_TZ_OFFSET_HOURS } from "@fp/shared";
+import { BANK_CLAIM_PER_LEVEL, BANK_RESET_TZ_OFFSET_HOURS } from "@fb/shared";
 import { Prisma } from "./generated/client";
 import { prisma } from "./client";
 import { applyWalletTransaction } from "./wallet";

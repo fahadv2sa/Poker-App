@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
-import { BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { BOT_PLAYER_NUMBER_BASE } from "@fb/shared";
 import { auth } from "@/auth";
 import { PageHeader } from "@/components/page-header";
 import { cn } from "@/lib/utils";

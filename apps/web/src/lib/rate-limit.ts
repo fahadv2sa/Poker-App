@@ -5,12 +5,12 @@ import {
   rateLimit,
   sweepRateStore,
   type RateStore,
-} from "@fp/shared";
+} from "@fb/shared";
 
 /**
  * Server-side rate limiting for sensitive endpoints (Section 6 / 16): auth and
  * bank. In-memory per-process stores (v1 single server). Pure logic lives in
- * @fp/shared; this wires it to the request IP / user.
+ * @fb/shared; this wires it to the request IP / user.
  */
 
 const authStore: RateStore = new Map();

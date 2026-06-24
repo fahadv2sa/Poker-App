@@ -10,7 +10,7 @@ import {
   type ClaimEvidenceGroup,
   type GameResultEntry,
   type PlayerView,
-} from "@fp/shared";
+} from "@fb/shared";
 import { useGameSocket } from "@/lib/useGameSocket";
 import { isMyTurn as selIsMyTurn, type RoundSummary } from "@/lib/tableView";
 import { sound } from "@/lib/sound";

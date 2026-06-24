@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { GameTable } from "@/components/table/game-table";
 import { signRealtimeToken } from "@/lib/realtime-token";

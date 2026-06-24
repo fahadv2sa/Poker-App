@@ -4,8 +4,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { hash } from "@node-rs/argon2";
-import { prisma } from "@fp/db";
-import { AVATAR_MAX_BYTES, BOT_PLAYER_NUMBER_BASE } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { AVATAR_MAX_BYTES, BOT_PLAYER_NUMBER_BASE } from "@fb/shared";
 import { personalityForSeed } from "./strategy.js";
 import { generateBotProfile, seededRng } from "./profile.js";
 

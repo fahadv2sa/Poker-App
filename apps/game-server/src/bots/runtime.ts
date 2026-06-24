@@ -1,4 +1,4 @@
-import { QUICK_PLAY } from "@fp/shared";
+import { QUICK_PLAY } from "@fb/shared";
 import { BotController, type BotControllerOptions } from "./controller.js";
 import type { BotIdentity } from "./identities.js";
 import { BotIdentityPool } from "./pool.js";

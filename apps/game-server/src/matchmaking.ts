@@ -1,4 +1,4 @@
-import { QUICK_PLAY, SERVER_EVENTS, type Difficulty } from "@fp/shared";
+import { QUICK_PLAY, SERVER_EVENTS, type Difficulty } from "@fb/shared";
 import type { Server } from "socket.io";
 
 /**

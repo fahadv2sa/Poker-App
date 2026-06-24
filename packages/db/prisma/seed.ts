@@ -1,7 +1,7 @@
 // Load packages/db/.env before the Prisma client reads DATABASE_URL, so
 // `pnpm db:seed` works on a fresh shell (audit #8) — not just via `prisma`.
 import "dotenv/config";
-import { BADGE_CATALOG, HAND_RANK_CATALOG } from "@fp/shared";
+import { BADGE_CATALOG, HAND_RANK_CATALOG } from "@fb/shared";
 import { prisma } from "../src/client";
 import { Prisma } from "../src/generated/client";
 
@@ -11,7 +11,7 @@ import { Prisma } from "../src/generated/client";
  * fully data-driven. Idempotent: safe to run repeatedly (upsert by unique key).
  *
  * The HandRank catalog (codes, strengths, and the Rule DSL of Section 7.4) is
- * the single source of truth in `@fp/shared` (HAND_RANK_CATALOG) — the very same
+ * the single source of truth in `@fb/shared` (HAND_RANK_CATALOG) — the very same
  * definitions the engine interprets at runtime. This seed only writes them to
  * the database.
  */

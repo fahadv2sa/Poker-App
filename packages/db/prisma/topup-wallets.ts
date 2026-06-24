@@ -6,10 +6,10 @@
  * fixed reference — safe to re-run and safe to run on local + prod independently.
  *
  *   # local:
- *   pnpm --filter @fp/db exec tsx prisma/topup-wallets.ts
+ *   pnpm --filter @fb/db exec tsx prisma/topup-wallets.ts
  *   # prod:
  *   DATABASE_URL="<prod-url>" NODE_OPTIONS=--use-system-ca \
- *     pnpm --filter @fp/db exec tsx prisma/topup-wallets.ts
+ *     pnpm --filter @fb/db exec tsx prisma/topup-wallets.ts
  */
 import "dotenv/config";
 import { applyWalletTransactionAtomic } from "../src/wallet";

@@ -117,7 +117,7 @@ intentionally empty until the tournament-stats import is run.)
 ## STEP 6 — Configure the game-server service
 Create/select the **game-server** service (Root Directory = repo root):
 - **Build Command:** _(none — `tsx` runs the source; install + postinstall is enough)_
-- **Start Command:** `pnpm --filter @fp/game-server start`
+- **Start Command:** `pnpm --filter @fb/game-server start`
 - **Replicas:** **1** (required — in-memory room state)
 - **Variables:**
   ```
@@ -132,8 +132,8 @@ Create/select the **game-server** service (Root Directory = repo root):
 
 ## STEP 7 — Configure the web service
 Create/select the **web** service (Root Directory = repo root):
-- **Build Command:** `pnpm --filter @fp/web build`
-- **Start Command:** `pnpm --filter @fp/web start`
+- **Build Command:** `pnpm --filter @fb/web build`
+- **Start Command:** `pnpm --filter @fb/web start`
 - **Variables:**
   ```
   DATABASE_URL                = <Railway PostgreSQL connection string>
@@ -173,7 +173,7 @@ Troubleshooting:
   confirm install happens at the repo root.
 - Game-server can't be reached → confirm it bound Railway's `PORT` (logs print
   `Game server listening on :<port>`), domain is **DNS-only**, and the start
-  command is `pnpm --filter @fp/game-server start`.
+  command is `pnpm --filter @fb/game-server start`.
 
 ---
 

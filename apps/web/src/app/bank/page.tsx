@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getBankStatus, getBankHistory, prisma } from "@fp/db";
+import { getBankStatus, getBankHistory, prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { PageHeader } from "@/components/page-header";
 import { Panel } from "@/components/panel";

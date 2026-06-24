@@ -1,5 +1,5 @@
 {
-  "name": "@fp/db",
+  "name": "@fb/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
-    "@fp/shared": "workspace:*",
+    "@fb/shared": "workspace:*",
     "@prisma/client": "^6.2.1"
   },
   "devDependencies": {

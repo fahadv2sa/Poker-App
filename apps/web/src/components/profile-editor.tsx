@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { AVATAR_MAX_BYTES, isAvatarMime, validateNickname } from "@fp/shared";
+import { AVATAR_MAX_BYTES, isAvatarMime, validateNickname } from "@fb/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

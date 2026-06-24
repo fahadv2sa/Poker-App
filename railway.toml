@@ -15,8 +15,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Service: web  (apps/web)
 #   Root Directory : (repo root)
-#   Build Command  : pnpm --filter @fp/web build
-#   Start Command  : pnpm --filter @fp/web start
+#   Build Command  : pnpm --filter @fb/web build
+#   Start Command  : pnpm --filter @fb/web start
 #   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
 #                    NEXT_PUBLIC_GAME_SERVER_URL
 #                    (NEXT_PUBLIC_* is baked in at BUILD time — set it before building)
@@ -25,7 +25,7 @@
 # Service: game-server  (apps/game-server)
 #   Root Directory : (repo root)
 #   Build Command  : (none — tsx runs TypeScript source; install + postinstall suffices)
-#   Start Command  : pnpm --filter @fp/game-server start      # → tsx src/index.ts
+#   Start Command  : pnpm --filter @fb/game-server start      # → tsx src/index.ts
 #   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN
 #                    (PORT is injected by Railway — do not set it)
 #   Replicas       : EXACTLY 1  (authoritative in-memory room state + timers — never scale)

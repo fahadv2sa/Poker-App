@@ -1,4 +1,4 @@
-import { QUICK_PLAY, SERVER_EVENTS } from "@fp/shared";
+import { QUICK_PLAY, SERVER_EVENTS } from "@fb/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Matchmaking, type MatchmakingDeps } from "../src/matchmaking.js";
 

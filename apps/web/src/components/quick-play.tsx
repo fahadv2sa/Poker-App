@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { QUICK_PLAY, type Difficulty } from "@fp/shared";
+import { QUICK_PLAY, type Difficulty } from "@fb/shared";
 import { connectQueue, type QueueConnection } from "@/lib/realtime";
 import { sound } from "@/lib/sound";
 import { Button } from "@/components/ui/button";

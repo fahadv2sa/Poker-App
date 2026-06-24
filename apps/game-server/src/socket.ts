@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { Prisma, getWalletBalance, prisma, touchUserActivity } from "@fp/db";
-import type { Action } from "@fp/engine";
+import { Prisma, getWalletBalance, prisma, touchUserActivity } from "@fb/db";
+import type { Action } from "@fb/engine";
 import {
   CLIENT_EVENTS,
   DEFAULT_GAME_CONFIG,
@@ -12,7 +12,7 @@ import {
   roomJoinSchema,
   type Difficulty,
   type StateSyncPayload,
-} from "@fp/shared";
+} from "@fb/shared";
 import type { Server, Socket } from "socket.io";
 import { computeLivePots, GameRoom, type RoomDeps } from "./room.js";
 import type { Emitter } from "./ports.js";

@@ -1,4 +1,4 @@
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 
 /**
  * Resolve a login/forgot identifier to a user. The single rule shared by the

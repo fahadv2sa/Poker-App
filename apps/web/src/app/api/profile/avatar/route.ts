@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fp/db";
-import { AVATAR_MAX_BYTES, isAvatarMime } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { AVATAR_MAX_BYTES, isAvatarMime } from "@fb/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

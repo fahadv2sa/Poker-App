@@ -1,4 +1,4 @@
-import type { BetRound } from "@fp/shared";
+import type { BetRound } from "@fb/shared";
 
 /**
  * Fold accounting (Section 10, decision 19.3). A folder loses ONLY the forfeit;

@@ -1,4 +1,4 @@
-import { SIGNUP_BONUS, type WalletTxType } from "@fp/shared";
+import { SIGNUP_BONUS, type WalletTxType } from "@fb/shared";
 import { Prisma } from "./generated/client";
 import { prisma } from "./client";
 import {

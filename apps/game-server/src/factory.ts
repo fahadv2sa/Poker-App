@@ -1,6 +1,6 @@
-import { prisma } from "@fp/db";
-import { parseRule } from "@fp/engine";
-import { DEFAULT_GAME_CONFIG, type GameConfig } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { parseRule } from "@fb/engine";
+import { DEFAULT_GAME_CONFIG, type GameConfig } from "@fb/shared";
 import type { RankInfo, RoomPlayer, RoomState } from "./types.js";
 
 /**

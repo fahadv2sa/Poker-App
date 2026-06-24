@@ -1,5 +1,5 @@
 import { SignJWT } from "jose";
-import type { RealtimeClaims } from "@fp/shared";
+import type { RealtimeClaims } from "@fb/shared";
 
 /**
  * Mints the short-lived token the browser passes to the game server's Socket.IO

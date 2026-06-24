@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma, prisma } from "@fp/db";
-import { DEFAULT_GAME_CONFIG, DIFFICULTIES } from "@fp/shared";
+import { Prisma, prisma } from "@fb/db";
+import { DEFAULT_GAME_CONFIG, DIFFICULTIES } from "@fb/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

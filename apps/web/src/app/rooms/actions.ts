@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 
 export interface JoinState {

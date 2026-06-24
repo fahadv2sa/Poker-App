@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { motion } from "framer-motion";
-import { emailSchema, usernameSchema } from "@fp/shared";
+import { emailSchema, usernameSchema } from "@fb/shared";
 import { registerAction } from "@/app/register/actions";
 import type { AuthFormState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";

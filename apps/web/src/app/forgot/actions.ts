@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { issueOtp } from "@fp/db";
-import { forgotPasswordSchema } from "@fp/shared";
+import { issueOtp } from "@fb/db";
+import { forgotPasswordSchema } from "@fb/shared";
 import { sendOtpEmail } from "@/lib/email";
 import { setPendingReset } from "@/lib/password-reset";
 import { findUserByIdentifier } from "@/lib/resolve-identifier";

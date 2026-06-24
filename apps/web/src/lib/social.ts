@@ -1,4 +1,4 @@
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 
 /** The relationship between the viewer and another player, from the viewer's
  *  side. REJECTED reads as "none" so a player can request again later. */

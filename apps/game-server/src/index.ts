@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { rateLimit, type RateStore } from "@fp/shared";
-import { isSessionInactive, touchUserActivity } from "@fp/db";
+import { rateLimit, type RateStore } from "@fb/shared";
+import { isSessionInactive, touchUserActivity } from "@fb/db";
 import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { PrismaRoomPersistence } from "./persistence.js";
@@ -14,7 +14,7 @@ import { BotRuntime } from "./bots/runtime.js";
 /**
  * Authoritative game server (Socket.IO) — Phase 3. Owns in-memory room state,
  * timers, the game state machine, and writes to PostgreSQL inside transactions
- * (Ante/Bet/AllIn/Fold/Resolve + side pots). Pure rules live in @fp/engine.
+ * (Ante/Bet/AllIn/Fold/Resolve + side pots). Pure rules live in @fb/engine.
  */
 async function main(): Promise<void> {
   // Railway (and most managed hosts) inject PORT; fall back to GAME_SERVER_PORT

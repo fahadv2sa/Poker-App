@@ -1,4 +1,4 @@
-import type { BetPlacedPayload, PlayerView, StateSyncPayload } from "@fp/shared";
+import type { BetPlacedPayload, PlayerView, StateSyncPayload } from "@fb/shared";
 import { describe, expect, it } from "vitest";
 import {
   actionNotice,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BankLimitError, claimFromBank } from "@fp/db";
+import { BankLimitError, claimFromBank } from "@fb/db";
 import { auth } from "@/auth";
 import { bankRateLimit } from "@/lib/rate-limit";
 

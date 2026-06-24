@@ -76,4 +76,4 @@ export {
   type AnyOfRule,
   type AllOfRule,
   type HandRankDefinition,
-} from "@fp/shared";
+} from "@fb/shared";

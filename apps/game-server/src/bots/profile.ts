@@ -1,4 +1,4 @@
-import { computeXp, levelForXp, type MetricView } from "@fp/shared";
+import { computeXp, levelForXp, type MetricView } from "@fb/shared";
 import type { Personality } from "./strategy.js";
 
 /**

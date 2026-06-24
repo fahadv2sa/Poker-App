@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { registerSchema } from "@fp/shared";
-import { registerUserWithWallet, UsernameTakenError, EmailTakenError } from "@fp/db";
+import { registerSchema } from "@fb/shared";
+import { registerUserWithWallet, UsernameTakenError, EmailTakenError } from "@fb/db";
 import { hashPassword } from "@/lib/argon";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 

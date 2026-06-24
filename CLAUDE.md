@@ -272,7 +272,7 @@ Temporary, cleanly-removable AI fillers so early users always find a Quick Play 
   optional `RoomDeps.bots` seam (`room.ts beginTurnOrAdvance` → `deps.bots?.onTurn`)
   with human-like delays. `bots/{pool,seating,runtime}.ts` manage identities + fill.
 - **Identities = "Model B".** Real `users` rows in the **reserved `player_number`
-  block ≥ 900000** (`BOT_PLAYER_NUMBER_BASE` in `@fp/shared`) — no schema column, no
+  block ≥ 900000** (`BOT_PLAYER_NUMBER_BASE` in `@fb/shared`) — no schema column, no
   migration; the web resolves bot name/avatar/profile via the normal by-number
   endpoints. Each has a fabricated `player_metrics` row + a webp avatar; **NO wallet,
   NO user_stats**. Seeded by `bots/seed-bots.ts` (`pnpm db:seed-bots`) from
@@ -292,7 +292,7 @@ Temporary, cleanly-removable AI fillers so early users always find a Quick Play 
   (scope any ledger-sum check to human-only). Bots play a fake in-memory stack.
 - **Social fencing.** `player_number ≥ 900000` can't be liked/friended
   (`apps/web/src/app/api/social/*`) — generic 403, never reveals "bot"
-  (`isBotPlayerNumber` in `@fp/shared`). Profiles stay viewable.
+  (`isBotPlayerNumber` in `@fb/shared`). Profiles stay viewable.
 - **Flag + kill-switch.** `BOTS_ENABLED=true` on the game-server enables it (boot log
   `[bots] enabled — N identities loaded`); unset/`false` = byte-for-byte base game
   (`[bots] disabled`). Read in `index.ts`. **Kill-switch:** set `BOTS_ENABLED=false`

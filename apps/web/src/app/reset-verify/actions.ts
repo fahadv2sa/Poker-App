@@ -1,8 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma, issueOtp, verifyPasswordResetOtp } from "@fp/db";
-import { otpConfirmSchema } from "@fp/shared";
+import { prisma, issueOtp, verifyPasswordResetOtp } from "@fb/db";
+import { otpConfirmSchema } from "@fb/shared";
 import { sendOtpEmail } from "@/lib/email";
 import {
   clearPendingReset,

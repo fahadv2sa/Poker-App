@@ -1,4 +1,4 @@
-import { QUICK_PLAY } from "@fp/shared";
+import { QUICK_PLAY } from "@fb/shared";
 import type { BotIdentity } from "./identities.js";
 import type { RoomPlayer, RoomState } from "../types.js";
 

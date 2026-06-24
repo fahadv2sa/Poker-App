@@ -6,8 +6,8 @@ import {
   prisma,
   recordPlayEvents as dbRecordPlayEvents,
   type TxClient,
-} from "@fp/db";
-import type { Settlement } from "@fp/engine";
+} from "@fb/db";
+import type { Settlement } from "@fb/engine";
 import type {
   BetRecord,
   LedgerMovement,

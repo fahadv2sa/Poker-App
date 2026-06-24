@@ -4,7 +4,7 @@ import {
   OTP_MAX_ATTEMPTS,
   OTP_RESEND_COOLDOWN_SECONDS,
   OTP_TTL_SECONDS,
-} from "@fp/shared";
+} from "@fb/shared";
 import { prisma } from "./client";
 
 /**

@@ -5,7 +5,7 @@ import type {
   GameResultPayload,
   PlayerView,
   StateSyncPayload,
-} from "@fp/shared";
+} from "@fb/shared";
 
 /**
  * Pure, framework-free table view model + the reducers/selectors the live table

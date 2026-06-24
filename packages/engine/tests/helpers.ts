@@ -1,4 +1,4 @@
-import { HAND_RANK_CATALOG, type HandRankCode } from "@fp/shared";
+import { HAND_RANK_CATALOG, type HandRankCode } from "@fb/shared";
 import type { Card, HandRankDef } from "../src/index.js";
 
 /**

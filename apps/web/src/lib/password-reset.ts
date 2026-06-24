@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import {
   PENDING_VERIFICATION_TTL_SECONDS,
   RESET_AUTHORIZED_TTL_SECONDS,
-} from "@fp/shared";
+} from "@fb/shared";
 
 /**
  * Forgot-password flow identity carriers (same signed-httpOnly-cookie pattern as

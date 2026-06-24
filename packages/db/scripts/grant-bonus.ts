@@ -7,7 +7,7 @@
 // The deterministic `reference` makes re-runs a no-op (no double credit).
 //
 // Run (Railway): set DATABASE_URL inline, then:
-//   pnpm --filter @fp/db exec tsx scripts/grant-bonus.ts
+//   pnpm --filter @fb/db exec tsx scripts/grant-bonus.ts
 import { prisma } from "../src/client";
 import { applyWalletTransactionAtomic } from "../src/wallet";
 

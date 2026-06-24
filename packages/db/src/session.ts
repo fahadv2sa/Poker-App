@@ -2,12 +2,12 @@ import {
   ACTIVITY_WRITE_THROTTLE_MS,
   SESSION_INACTIVITY_MS,
   isBotPlayerNumber,
-} from "@fp/shared";
+} from "@fb/shared";
 import { prisma } from "./client";
 
 /**
  * Inactivity auto-logout — the server-side half (the threshold + write-coalescing
- * constants live in @fp/shared so the web and game-server agree). Sessions are
+ * constants live in @fb/shared so the web and game-server agree). Sessions are
  * stateless JWTs (Auth.js), so there is nothing to revoke in a table; instead we
  * track `users.last_active_at` and enforce the inactivity window on access:
  *   - the web sets a rolling JWT maxAge AND calls touchUserActivity on each

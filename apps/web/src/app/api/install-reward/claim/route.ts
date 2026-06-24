@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { grantInstallReward } from "@fp/db";
+import { grantInstallReward } from "@fb/db";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

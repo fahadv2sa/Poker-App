@@ -6,8 +6,8 @@ import {
   UsernameTakenError,
   issueOtp,
   registerUserWithWallet,
-} from "@fp/db";
-import { registerSchema } from "@fp/shared";
+} from "@fb/db";
+import { registerSchema } from "@fb/shared";
 import { hashPassword } from "@/lib/argon";
 import { sendOtpEmail } from "@/lib/email";
 import { setPendingVerification } from "@/lib/pending-verification";

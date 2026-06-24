@@ -7,7 +7,7 @@ import {
   parseBadgeRule,
   type MetricCounters,
   type PlayEventType,
-} from "@fp/shared";
+} from "@fb/shared";
 import { Prisma } from "./generated/client";
 import { prisma } from "./client";
 

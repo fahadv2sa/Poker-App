@@ -1,4 +1,4 @@
-import type { Rule, RuleAttribute } from "@fp/shared";
+import type { Rule, RuleAttribute } from "@fb/shared";
 
 /**
  * The engine's projection of a football player onto the three attributes the

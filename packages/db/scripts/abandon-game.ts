@@ -10,7 +10,7 @@
 // tool for targeting a specific game on demand.
 //
 // Run (Railway): set DATABASE_URL inline, then:
-//   pnpm --filter @fp/db exec tsx scripts/abandon-game.ts <gameId>
+//   pnpm --filter @fb/db exec tsx scripts/abandon-game.ts <gameId>
 import { prisma } from "../src/client";
 import { applyWalletTransaction } from "../src/wallet";
 

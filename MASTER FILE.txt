@@ -34,7 +34,7 @@ where they differ. (The numbered sections are kept for context but predate these
   winner = gold (🏆 → rank → "قوة اللاعبين" + number → avatar—name—amount → cards),
   no-winner = slate ("تعادل!" + every player's avatar), loser = red (compact, tap
   to expand rank/power/cards). Distinct sounds: win / lose / showdown (no-winner).
-- RECONNECTION GRACE (`RECONNECT_GRACE_MS` = 5 min, `@fp/shared`): a dropped socket
+- RECONNECTION GRACE (`RECONNECT_GRACE_MS` = 5 min, `@fb/shared`): a dropped socket
   (e.g. backgrounding a tab to read a message) is NO LONGER treated as leaving.
   The seat + room are HELD for the grace; a reconnect (`room:join`) cancels it;
   the real cleanup runs only on an explicit `room:leave`/`room:close` or grace
@@ -268,7 +268,7 @@ poker-app/
 ├─ turbo.json, tsconfig.base.json, eslint.config.mjs, pnpm-workspace.yaml
 └─ package.json             root scripts (db:*, build, test, lint, typecheck)
 
-Package import names: @fp/web, @fp/game-server, @fp/db, @fp/engine, @fp/shared.
+Package import names: @fb/web, @fb/game-server, @fb/db, @fb/engine, @fb/shared.
 Dependency direction: web → {db, shared}; game-server → {db, engine, shared};
 db → shared; engine → shared. shared depends on nothing internal. The engine
 never imports db (it stays pure).
@@ -843,8 +843,8 @@ Setup:
 
 Run the three processes (web + game-server are separate; both need the DB):
   Terminal 1:  docker compose up                                   # Postgres
-  Terminal 2:  pnpm --filter @fp/game-server dev                   # Socket.IO :4000
-  Terminal 3:  pnpm --filter @fp/web dev                           # Next.js :3000
+  Terminal 2:  pnpm --filter @fb/game-server dev                   # Socket.IO :4000
+  Terminal 3:  pnpm --filter @fb/web dev                           # Next.js :3000
 Open http://localhost:3000, register (1000 Coins), create a room, share the code.
 
 *** DEALING NEEDS PLAYERS IN THE DB. *** With an empty `players` table the deal
@@ -869,7 +869,7 @@ Quality gates:
   pnpm typecheck        # tsc --noEmit, all packages
   pnpm lint             # ESLint flat config, whole monorepo
   pnpm test             # all vitest suites
-  pnpm --filter @fp/web build
+  pnpm --filter @fb/web build
 The wallet/bank suites hit a REAL PostgreSQL (the guarantees under test — FOR
 UPDATE locking, the balance CHECK, idempotency, the 2×/24h limit under
 concurrency — are database behavior). Start Postgres + db:deploy (or set
@@ -885,12 +885,12 @@ Target: one GitHub repo → THREE Railway services (full runbook in DEPLOY.md):
   Postgres    → Railway PostgreSQL plugin
 
 Service config (also documented in railway.toml comments):
-  web:         Root = repo root; Build `pnpm --filter @fp/web build`;
-               Start `pnpm --filter @fp/web start`; replicas may scale.
+  web:         Root = repo root; Build `pnpm --filter @fb/web build`;
+               Start `pnpm --filter @fb/web start`; replicas may scale.
                Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
                NEXT_PUBLIC_GAME_SERVER_URL (NEXT_PUBLIC_* is baked at BUILD time).
   game-server: Root = repo root; Build (none — tsx runs the TS source);
-               Start `pnpm --filter @fp/game-server start` (→ tsx src/index.ts);
+               Start `pnpm --filter @fb/game-server start` (→ tsx src/index.ts);
                *** replicas = EXACTLY 1 *** (in-memory room state + timers).
                Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN.
                Do NOT set PORT (Railway injects it).
@@ -963,7 +963,7 @@ game-server to Fly.io/a VPS needs only env-var changes, no code change.
     them behind ports.
   - Enums/constants/contracts have ONE home in packages/shared and are mirrored
     by the Prisma enums; keep them in sync.
-  - The HandRank catalog in @fp/shared is the single source of truth: the seed
+  - The HandRank catalog in @fb/shared is the single source of truth: the seed
     writes it to the DB and the engine interprets the same DSL — edit there and
     re-seed to change behavior.
   - Server-generated idempotency references follow strict naming (see §8); do not
@@ -1108,7 +1108,7 @@ can be removed by deleting that folder + a few wiring lines + the flag.
 
 18.2 IDENTITIES — "Model B" (reserved player_number block)
   - Each bot is a lightweight real `users` row in the RESERVED block player_number
-    >= 900000 (BOT_PLAYER_NUMBER_BASE in @fp/shared). "Is a bot?" = that comparison
+    >= 900000 (BOT_PLAYER_NUMBER_BASE in @fb/shared). "Is a bot?" = that comparison
     — NO schema column, NO migration. So the web client resolves a bot's name/
     avatar/profile through the SAME by-number endpoints as any human, unchanged.
   - Each bot gets a fabricated, believable player_metrics row (level/matches/wins/
@@ -1159,7 +1159,7 @@ can be removed by deleting that folder + a few wiring lines + the flag.
   - player_number >= 900000 is excluded from the social surfaces
     (apps/web/src/app/api/social/{like,friend,friend/respond}). Attempts return a
     GENERIC 403 ("تعذّر تنفيذ هذا الإجراء") that never reveals the target is a bot
-    (anti-detection). Guard: isBotPlayerNumber() in @fp/shared. Bot PROFILES remain
+    (anti-detection). Guard: isBotPlayerNumber() in @fb/shared. Bot PROFILES remain
     viewable (the table needs name/avatar/stats); only the social actions are
     fenced. No leaderboard endpoint exists yet — fence it there too if one is added.
 

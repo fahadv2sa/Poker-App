@@ -1,5 +1,5 @@
-import type { Settlement } from "@fp/engine";
-import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fp/shared";
+import type { Settlement } from "@fb/engine";
+import { HAND_RANK_CATALOG, DEFAULT_GAME_CONFIG } from "@fb/shared";
 import { describe, expect, it } from "vitest";
 import { dealFromDeck } from "../src/cards.js";
 import { GameRoom, type RoomDeps } from "../src/room.js";

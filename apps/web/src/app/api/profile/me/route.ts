@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fp/db";
-import { validateNickname } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { validateNickname } from "@fb/shared";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

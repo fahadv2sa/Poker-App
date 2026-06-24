@@ -1,4 +1,4 @@
-import type { Action } from "@fp/engine";
+import type { Action } from "@fb/engine";
 import type { BotPort, GameRoom } from "../room.js";
 import { decide, handStrength, personalityForSeed, potOdds } from "./strategy.js";
 

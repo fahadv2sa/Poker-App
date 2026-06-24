@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rateLimit, sweepRateStore, type RateStore } from "@fp/shared";
+import { rateLimit, sweepRateStore, type RateStore } from "@fb/shared";
 
 /**
  * Rate limiter (audit #9 / Section 16) used to throttle auth, bank, and WS

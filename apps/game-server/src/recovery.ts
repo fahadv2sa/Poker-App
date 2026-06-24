@@ -1,4 +1,4 @@
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import type { LedgerMovement, RoomPersistence } from "./ports.js";
 
 /**

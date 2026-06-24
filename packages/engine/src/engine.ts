@@ -1,4 +1,4 @@
-import { ruleSchema, type Rule } from "@fp/shared";
+import { ruleSchema, type Rule } from "@fb/shared";
 import { evaluateRank } from "./evaluate.js";
 import type {
   ClaimValidation,

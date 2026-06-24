@@ -1,4 +1,4 @@
-import { INSTALL_REWARD_AMOUNT } from "@fp/shared";
+import { INSTALL_REWARD_AMOUNT } from "@fb/shared";
 import { Prisma } from "./generated/client";
 import { prisma } from "./client";
 import { applyWalletTransaction } from "./wallet";

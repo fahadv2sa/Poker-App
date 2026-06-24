@@ -1,5 +1,5 @@
-import { bestAchievableRank, type Action, type HandRankDef, type LegalActions, type Pool } from "@fp/engine";
-import type { BetRound } from "@fp/shared";
+import { bestAchievableRank, type Action, type HandRankDef, type LegalActions, type Pool } from "@fb/engine";
+import type { BetRound } from "@fb/shared";
 
 /**
  * Bot decision engine — PURE (Phase 1). No I/O, no DB, no clock, no sockets.

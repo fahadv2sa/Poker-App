@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fp/db";
-import { emailSchema, usernameSchema } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { emailSchema, usernameSchema } from "@fb/shared";
 import { availabilityRateLimit, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";

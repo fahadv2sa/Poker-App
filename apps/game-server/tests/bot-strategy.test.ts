@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Action, LegalActions } from "@fp/engine";
+import type { Action, LegalActions } from "@fb/engine";
 import {
   ARCHETYPES,
   ARCHETYPE_KEYS,

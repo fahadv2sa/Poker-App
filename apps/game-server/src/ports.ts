@@ -1,5 +1,5 @@
-import type { Settlement } from "@fp/engine";
-import type { BetRound, Difficulty, PlayEventType } from "@fp/shared";
+import type { Settlement } from "@fb/engine";
+import type { BetRound, Difficulty, PlayEventType } from "@fb/shared";
 import type { DealtCard, RoomPlayer, RoomState } from "./types.js";
 
 /** One Layer-1 stats event (append-only). Written off the betting hot path. */

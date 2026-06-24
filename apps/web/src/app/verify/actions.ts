@@ -2,8 +2,8 @@
 
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { prisma, issueOtp, verifyOtp } from "@fp/db";
-import { otpConfirmSchema } from "@fp/shared";
+import { prisma, issueOtp, verifyOtp } from "@fb/db";
+import { otpConfirmSchema } from "@fb/shared";
 import { signIn } from "@/auth";
 import { sendOtpEmail } from "@/lib/email";
 import {

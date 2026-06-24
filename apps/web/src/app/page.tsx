@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
-import { BANK_CLAIM_PER_LEVEL, BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { BANK_CLAIM_PER_LEVEL, BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fb/shared";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/logo";
 import { HomeMenu } from "@/components/home-menu";

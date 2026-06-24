@@ -1,5 +1,5 @@
-import { Prisma, prisma } from "@fp/db";
-import { DIFFICULTY_MIN_SCORE, type Difficulty } from "@fp/shared";
+import { Prisma, prisma } from "@fb/db";
+import { DIFFICULTY_MIN_SCORE, type Difficulty } from "@fb/shared";
 import type { CardSource } from "./ports.js";
 import type { DealtCard } from "./types.js";
 

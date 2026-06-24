@@ -1,6 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
-import { OTP_TTL_SECONDS } from "@fp/shared";
+import { OTP_TTL_SECONDS } from "@fb/shared";
 
 /**
  * Transactional email via Resend. SERVER-ONLY (holds RESEND_API_KEY). The client

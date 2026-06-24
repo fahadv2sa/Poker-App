@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@fp/db";
-import { deriveMetricView, type MetricCounters } from "@fp/shared";
+import { prisma } from "@fb/db";
+import { deriveMetricView, type MetricCounters } from "@fb/shared";
 import { auth } from "@/auth";
 import { BackButton } from "@/components/back-button";
 import { cn } from "@/lib/utils";

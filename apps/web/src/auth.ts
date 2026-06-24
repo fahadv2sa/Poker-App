@@ -1,7 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { prisma, touchUserActivity } from "@fp/db";
-import { SESSION_INACTIVITY_SECONDS, loginSchema } from "@fp/shared";
+import { prisma, touchUserActivity } from "@fb/db";
+import { SESSION_INACTIVITY_SECONDS, loginSchema } from "@fb/shared";
 import { verifyPassword } from "@/lib/argon";
 import { verifyOtpLoginToken } from "@/lib/otp-login-token";
 import { findUserByIdentifier } from "@/lib/resolve-identifier";
@@ -88,7 +88,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.playerNumber = (user as { playerNumber?: number }).playerNumber;
       }
       // Treat any token use as activity (this callback runs on sign-in AND on
-      // every session access). Throttled + guarded in @fp/db, so it never adds
+      // every session access). Throttled + guarded in @fb/db, so it never adds
       // a real write on most requests and never breaks auth on a DB error.
       if (typeof token.uid === "string") {
         await touchUserActivity(token.uid);

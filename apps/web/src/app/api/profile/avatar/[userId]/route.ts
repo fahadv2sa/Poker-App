@@ -1,4 +1,4 @@
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

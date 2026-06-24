@@ -10,10 +10,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
-vi.mock("@fp/db", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
+vi.mock("@fb/db", () => ({ prisma: { user: { findUnique: vi.fn() } } }));
 
 import { auth } from "@/auth";
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { POST as likePOST } from "@/app/api/social/like/route";
 import { POST as friendPOST, DELETE as friendDELETE } from "@/app/api/social/friend/route";
 import { POST as respondPOST } from "@/app/api/social/friend/respond/route";

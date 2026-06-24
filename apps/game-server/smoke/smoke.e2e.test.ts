@@ -5,8 +5,8 @@ import { randomBytes } from "node:crypto";
 import { SignJWT } from "jose";
 import { io, type Socket } from "socket.io-client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { Prisma, prisma } from "@fp/db";
-import { DEFAULT_GAME_CONFIG } from "@fp/shared";
+import { Prisma, prisma } from "@fb/db";
+import { DEFAULT_GAME_CONFIG } from "@fb/shared";
 
 /**
  * Opt-in END-TO-END smoke test (RUN_SMOKE=1). Stands up the REAL stack —

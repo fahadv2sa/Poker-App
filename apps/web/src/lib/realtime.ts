@@ -18,7 +18,7 @@ import {
   type SessionWaitingPayload,
   type StateSyncPayload,
   type TurnChangedPayload,
-} from "@fp/shared";
+} from "@fb/shared";
 
 /**
  * Typed Socket.IO client for the game server (Section 12). The handshake carries

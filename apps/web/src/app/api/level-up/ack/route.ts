@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { acknowledgeLevelUp } from "@fp/db";
+import { acknowledgeLevelUp } from "@fb/db";
 import { auth } from "@/auth";
 
 export const runtime = "nodejs";

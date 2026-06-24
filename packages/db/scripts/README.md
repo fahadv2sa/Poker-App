@@ -1,4 +1,4 @@
-# `@fp/db` ops scripts
+# `@fb/db` ops scripts
 
 One-off operational scripts. **Not part of the app or the build** — run manually
 against a target database. Each is **idempotent** (safe to re-run) and goes through
@@ -10,7 +10,7 @@ Run from the repo root (set the target `DATABASE_URL` inline; corporate TLS need
 
 ```bash
 DATABASE_URL="<connection-string>" NODE_OPTIONS=--use-system-ca \
-  pnpm --filter @fp/db exec tsx scripts/<script>.ts [args]
+  pnpm --filter @fb/db exec tsx scripts/<script>.ts [args]
 ```
 
 | Script | What it does |

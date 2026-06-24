@@ -38,13 +38,13 @@ importers:
 
   apps/game-server:
     dependencies:
-      '@fp/db':
+      '@fb/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@fp/engine':
+      '@fb/engine':
         specifier: workspace:*
         version: link:../../packages/engine
-      '@fp/shared':
+      '@fb/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@node-rs/argon2':
@@ -75,10 +75,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@fp/db':
+      '@fb/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@fp/shared':
+      '@fb/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@node-rs/argon2':
@@ -157,7 +157,7 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.104.2
         version: 0.104.2(zod@3.25.76)
-      '@fp/shared':
+      '@fb/shared':
         specifier: workspace:*
         version: link:../shared
       '@prisma/client':
@@ -182,7 +182,7 @@ importers:
 
   packages/engine:
     dependencies:
-      '@fp/shared':
+      '@fb/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:

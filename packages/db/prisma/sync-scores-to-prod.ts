@@ -5,7 +5,7 @@
  * only: never touches wallet/ledger/rank engine.
  *
  *   PROD_URL="<railway-public-url>" NODE_OPTIONS=--use-system-ca \
- *     pnpm --filter @fp/db exec tsx prisma/sync-scores-to-prod.ts
+ *     pnpm --filter @fb/db exec tsx prisma/sync-scores-to-prod.ts
  *
  * Backs up prod's current 4 columns to a timestamped JSON before writing.
  */

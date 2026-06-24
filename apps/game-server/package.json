@@ -1,5 +1,5 @@
 {
-  "name": "@fp/game-server",
+  "name": "@fb/game-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
     "seed:bots": "tsx --env-file=.env.local src/bots/seed-bots.ts"
   },
   "dependencies": {
-    "@fp/db": "workspace:*",
-    "@fp/engine": "workspace:*",
-    "@fp/shared": "workspace:*",
+    "@fb/db": "workspace:*",
+    "@fb/engine": "workspace:*",
+    "@fb/shared": "workspace:*",
     "@node-rs/argon2": "^2.0.2",
     "jose": "^6.2.3",
     "socket.io": "^4.8.0",

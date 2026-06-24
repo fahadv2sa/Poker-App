@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
 // Postgres) and drives one full hand. Kept OUT of the default unit suite
 // (tests/**) — run with: RUN_SMOKE=1 vitest run -c vitest.smoke.config.ts
 
-// Load DATABASE_URL into the environment BEFORE the test imports @fp/db, so the
+// Load DATABASE_URL into the environment BEFORE the test imports @fb/db, so the
 // Prisma client (constructed at import) binds the right datasource.
 const dbEnvPath = resolve(process.cwd(), "..", "..", "packages", "db", ".env");
 const dbLine = readFileSync(dbEnvPath, "utf8")

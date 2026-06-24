@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { HAND_RANK_CATALOG } from "@fp/shared";
-import { prisma } from "@fp/db";
+import { HAND_RANK_CATALOG } from "@fb/shared";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { BackButton } from "@/components/back-button";
 import { HowToPlay } from "./how-to-play";

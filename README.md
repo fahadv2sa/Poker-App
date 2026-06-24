@@ -77,10 +77,10 @@ The web app and the game server are separate processes; both need the database.
 docker compose up
 
 # terminal 2 — game server (Socket.IO, default :4000)
-pnpm --filter @fp/game-server dev
+pnpm --filter @fb/game-server dev
 
 # terminal 3 — web app (Next.js, :3000)
-pnpm --filter @fp/web dev
+pnpm --filter @fb/web dev
 ```
 
 Open http://localhost:3000, register (you get 1000 Coins), create a room, and share the invite
@@ -105,7 +105,7 @@ some (see *Data is data-driven* below); with an empty `players` table the deal w
 pnpm typecheck     # tsc --noEmit, all packages
 pnpm lint          # ESLint (flat config), whole monorepo
 pnpm test          # all vitest suites (wallet/bank suites need a live, migrated DB)
-pnpm --filter @fp/web build   # production build of the web app
+pnpm --filter @fb/web build   # production build of the web app
 ```
 
 The wallet/bank suites hit a real PostgreSQL because the guarantees under test — `SELECT … FOR
@@ -119,7 +119,7 @@ No football player/club/nationality/rank name is hardcoded. Only **game rules** 
 4 Positions and the 9 HandRanks. The owner supplies the player database later.
 
 - **Add players / clubs / nationalities:** insert rows into `nationalities`, `clubs`, `players`,
-  `player_clubs` (via `pnpm --filter @fp/db studio`, SQL, or an admin tool). No code change. The
+  `player_clubs` (via `pnpm --filter @fb/db studio`, SQL, or an admin tool). No code change. The
   server deals random active players from this table.
 - **Edit / add an association (HandRank):** edit a row in `hand_ranks`. `strength` orders ranks;
   `name_ar` is the display name shown at showdown (read live from the DB — no redeploy); `rule`

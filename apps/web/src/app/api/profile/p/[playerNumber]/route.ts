@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@fp/db";
+import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { friendStateOf, friendsCount, relationRow } from "@/lib/social";
 
