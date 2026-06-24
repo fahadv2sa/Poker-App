@@ -11,10 +11,27 @@
  * script args. No external dependency, nothing to install.
  *
  * Import this FIRST, before anything that performs network requests.
+ *
+ * The re-exec is SKIPPED on managed hosts (Railway) and via an explicit opt-out:
+ * there is no TLS interception there, so the flag is unneeded, AND that runtime's
+ * Node rejects `--use-system-ca` inside NODE_OPTIONS ("not allowed in
+ * NODE_OPTIONS"), which would crash the process (this is exactly what broke the
+ * cleanup-cron). The only script that runs on Railway is the abandoned-room
+ * cleanup, which talks solely to the internal Postgres — no external HTTPS — so it
+ * needs nothing here. Local corporate-TLS machines are unaffected: they either
+ * already have NODE_OPTIONS=--use-system-ca preset (guard below skips) or take the
+ * re-exec as before.
  */
 import { spawnSync } from "node:child_process";
 
-if (!(process.env.NODE_OPTIONS ?? "").includes("use-system-ca")) {
+const onRailway = !!process.env.RAILWAY_ENVIRONMENT || !!process.env.RAILWAY_SERVICE_ID;
+const optedOut = process.env.FP_SKIP_SYSTEM_CA === "1";
+
+if (
+  !onRailway &&
+  !optedOut &&
+  !(process.env.NODE_OPTIONS ?? "").includes("use-system-ca")
+) {
   const NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ""} --use-system-ca`.trim();
   const result = spawnSync(
     process.execPath,
