@@ -268,6 +268,9 @@ model WalletTransaction {
   game         Game?        @relation(fields: [gameId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  // Makes the SetNull during an abandoned-game delete index-driven (was a
+  // seq-scan); also useful for any per-game ledger lookup. Additive.
+  @@index([gameId])
   @@map("wallet_transactions")
 }
 
@@ -659,6 +662,9 @@ model Game {
   transactions    WalletTransaction[]
   playEvents      PlayEvent[]
 
+  // Supports the abandoned-room cleanup selection (status='ABANDONED' AND
+  // ended_at < cutoff). Additive; no data change.
+  @@index([status, endedAt])
   @@map("games")
 }
 
