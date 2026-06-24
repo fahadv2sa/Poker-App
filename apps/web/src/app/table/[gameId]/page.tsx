@@ -16,7 +16,7 @@ export default async function TablePage({
   const [game, wallet, user] = await Promise.all([
     prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, roomName: true, inviteCode: true, createdBy: true },
+      select: { id: true, roomName: true, inviteCode: true, createdBy: true, status: true },
     }),
     prisma.wallet.findUnique({
       where: { userId: session.user.id },
@@ -28,6 +28,11 @@ export default async function TablePage({
     }),
   ]);
   if (!game) notFound();
+  // A closed (ABANDONED) table can never be joined — the socket would reject it
+  // and the table screen would hang on "connecting…". Resolve cleanly instead:
+  // send the user home with a notice, so nothing abandoned/dangling remains.
+  // (ENDED/IN_PROGRESS/LOBBY are still-live sessions and render normally.)
+  if (game.status === "ABANDONED") redirect("/?closed=1");
 
   // Display name shown at the player's own seat: their chosen nickname, falling
   // back to the username, then a generic label. Never empty.

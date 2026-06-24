@@ -8,6 +8,7 @@ import { HomeMenu } from "@/components/home-menu";
 import { UiSoundToggle } from "@/components/ui-sound-toggle";
 import { InstallRewardModal } from "@/components/install-reward-modal";
 import { LevelUpModal } from "@/components/level-up-modal";
+import { RoomClosedNotice } from "@/components/room-closed-notice";
 import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
@@ -141,10 +142,17 @@ function BottomItem({
   );
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ closed?: string }>;
+}) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
+
+  // Set when redirected here from a closed/ABANDONED table link (see table page).
+  const roomClosed = (await searchParams).closed === "1";
 
   // All dynamic — same canonical sources as the profile page: identity + likes +
   // balance from users/wallet, level from player_metrics, avatar from
@@ -334,6 +342,9 @@ export default async function HomePage() {
       {/* One-time "add to home screen" reward — shows only in a browser tab to
           users who haven't claimed; the reward is granted server-side. */}
       <InstallRewardModal claimed={installRewardClaimed} amount={installRewardAmount} />
+
+      {/* Redirected here from a closed/ABANDONED table link → brief notice. */}
+      {roomClosed ? <RoomClosedNotice /> : null}
     </main>
   );
 }
