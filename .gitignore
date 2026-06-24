@@ -37,6 +37,7 @@ coverage/
 .import-progress.json
 .tournament-progress.json
 .diff-import-progress.json
+.enrich-progress.json
 .run-logs/
 
 # docker volume (if mapped locally)

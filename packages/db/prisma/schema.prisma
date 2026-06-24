@@ -513,6 +513,16 @@ model Player {
   positionId    String   @map("position_id") @db.Uuid
   birthYear     Int?     @map("birth_year")
   photoUrl      String?  @map("photo_url")
+  // Static per-player data imported from API-Football (display/data only — NEVER
+  // used by the rank engine, which keys on nationality/position/clubs). All
+  // nullable so existing rows stay valid until enriched.
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  birthDate     DateTime? @map("birth_date") @db.Date
+  birthPlace    String?   @map("birth_place")
+  birthCountry  String?   @map("birth_country")
+  heightCm      Int?      @map("height_cm")
+  weightKg      Int?      @map("weight_kg")
   active        Boolean  @default(true)
   // Legend flag (display/curation only — never used by the rank engine, wallet,
   // or card privacy). The fame-score "legend" component stays 0 for everyone
@@ -539,6 +549,7 @@ model Player {
   nationalTeams   PlayerNationalTeam[]
   youthClubs      PlayerYouthClub[]
   tournamentStats PlayerTournamentStat[]
+  seasonStats     PlayerSeasonStat[]
   gameCards       GameCard[]
 
   @@index([nationalityId])
@@ -560,6 +571,98 @@ model PlayerTournamentStat {
   @@unique([playerId, tournamentType])
   @@index([playerId])
   @@map("player_tournament_stats")
+}
+
+// SEASON-/COMPETITION-dependent stats from API-Football's /players?id=&season=
+// `statistics[]` — one row per (player, season, competition, team). Fully
+// columnized (every nested field flattened) so the data is structured and
+// searchable, nothing discarded. Display/data only — NEVER used by the rank
+// engine, wallet, or card privacy. Mirrors our existing conventions (uuid PK,
+// snake_case @@map, timestamptz). External ids are the API-Football ids.
+model PlayerSeasonStat {
+  id       String @id @default(uuid()) @db.Uuid
+  playerId String @map("player_id") @db.Uuid
+  season   Int
+
+  // team + league/competition this stat line belongs to (API ids + display)
+  teamId        Int?    @map("team_id")
+  teamName      String? @map("team_name")
+  teamLogo      String? @map("team_logo")
+  leagueId      Int?    @map("league_id")
+  leagueName    String? @map("league_name")
+  leagueCountry String? @map("league_country")
+  leagueLogo    String? @map("league_logo")
+  leagueFlag    String? @map("league_flag")
+
+  // games
+  appearances Int?     @map("games_appearances")
+  lineups     Int?     @map("games_lineups")
+  minutes     Int?     @map("games_minutes")
+  shirtNumber Int?     @map("games_number")
+  position    String?  @map("games_position")
+  rating      Float?   @map("games_rating")
+  captain     Boolean? @map("games_captain")
+
+  // substitutes
+  subsIn    Int? @map("subs_in")
+  subsOut   Int? @map("subs_out")
+  subsBench Int? @map("subs_bench")
+
+  // shots
+  shotsTotal Int? @map("shots_total")
+  shotsOn    Int? @map("shots_on")
+
+  // goals
+  goalsTotal    Int? @map("goals_total")
+  goalsConceded Int? @map("goals_conceded")
+  goalsAssists  Int? @map("goals_assists")
+  goalsSaves    Int? @map("goals_saves")
+
+  // passes
+  passesTotal    Int? @map("passes_total")
+  passesKey      Int? @map("passes_key")
+  passesAccuracy Int? @map("passes_accuracy")
+
+  // tackles
+  tacklesTotal         Int? @map("tackles_total")
+  tacklesBlocks        Int? @map("tackles_blocks")
+  tacklesInterceptions Int? @map("tackles_interceptions")
+
+  // duels
+  duelsTotal Int? @map("duels_total")
+  duelsWon   Int? @map("duels_won")
+
+  // dribbles
+  dribblesAttempts Int? @map("dribbles_attempts")
+  dribblesSuccess  Int? @map("dribbles_success")
+  dribblesPast     Int? @map("dribbles_past")
+
+  // fouls
+  foulsDrawn     Int? @map("fouls_drawn")
+  foulsCommitted Int? @map("fouls_committed")
+
+  // cards
+  cardsYellow    Int? @map("cards_yellow")
+  cardsYellowRed Int? @map("cards_yellowred")
+  cardsRed       Int? @map("cards_red")
+
+  // penalty
+  penaltyWon       Int? @map("penalty_won")
+  penaltyCommitted Int? @map("penalty_committed")
+  penaltyScored    Int? @map("penalty_scored")
+  penaltyMissed    Int? @map("penalty_missed")
+  penaltySaved     Int? @map("penalty_saved")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, season, leagueId, teamId])
+  @@index([playerId])
+  @@index([season])
+  @@index([leagueId])
+  @@map("player_season_stats")
 }
 
 model PlayerClub {

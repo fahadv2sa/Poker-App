@@ -17,6 +17,7 @@
     "seed:players": "tsx prisma/seed-players.ts",
     "import:api-football": "tsx prisma/import-api-football.ts",
     "import:tournament-stats": "tsx prisma/import-tournament-stats.ts",
+    "import:player-data": "tsx prisma/enrich-players.ts",
     "diff-import": "tsx prisma/differential-import.ts",
     "transliterate:names": "tsx prisma/transliterate-names.ts",
     "calculate:scores": "tsx prisma/calculate-scores.ts",

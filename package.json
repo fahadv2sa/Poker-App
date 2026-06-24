@@ -21,6 +21,7 @@
     "db:seed-players": "pnpm --filter @fp/db seed:players",
     "db:import-api-football": "pnpm --filter @fp/db import:api-football",
     "db:import-tournament-stats": "pnpm --filter @fp/db import:tournament-stats",
+    "db:import-player-data": "pnpm --filter @fp/db import:player-data",
     "db:diff-import": "pnpm --filter @fp/db diff-import",
     "db:transliterate-names": "pnpm --filter @fp/db transliterate:names",
     "db:calculate-scores": "pnpm --filter @fp/db calculate:scores",
