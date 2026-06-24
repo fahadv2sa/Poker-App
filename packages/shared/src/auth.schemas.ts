@@ -31,15 +31,27 @@ export const emailSchema = z
   .max(254, "البريد الإلكتروني طويل جدًا")
   .email("صيغة البريد الإلكتروني غير صحيحة");
 
-export const registerSchema = z.object({
-  username: usernameSchema,
-  email: emailSchema,
-  password: passwordSchema,
-});
+// Mandatory password confirmation: the two fields must match (also enforced live
+// in the UI). Applied to both signup and password-reset.
+const passwordsMatch = (d: { password: string; confirmPassword: string }) =>
+  d.password === d.confirmPassword;
+const passwordsMatchError = {
+  message: "كلمتا المرور غير متطابقتين",
+  path: ["confirmPassword"],
+};
+
+export const registerSchema = z
+  .object({
+    username: usernameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine(passwordsMatch, passwordsMatchError);
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-// 6-digit OTP entered on /verify. Identity comes from the pending-verification
-// cookie (server-side), NOT from this payload — so the body carries only the code.
+// 6-digit OTP entered on /verify (signup) and the reset code page. Identity comes
+// from a server-side signed cookie, NOT this payload — so the body is just the code.
 export const otpConfirmSchema = z.object({
   code: z
     .string()
@@ -48,11 +60,34 @@ export const otpConfirmSchema = z.object({
 });
 export type OtpConfirmInput = z.infer<typeof otpConfirmSchema>;
 
+// Login + forgot-password identifier: accepts EITHER an email or a username. The
+// caller resolves which: an input containing "@" is looked up by email
+// (lowercased), otherwise by username. Kept permissive on purpose.
+export const identifierSchema = z
+  .string()
+  .trim()
+  .min(1, "أدخل اسم المستخدم أو البريد الإلكتروني")
+  .max(254, "المُدخل طويل جدًا");
+
 export const loginSchema = z.object({
-  username: usernameSchema,
+  identifier: identifierSchema,
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
+
+// Forgot-password: who to send the reset code to (email or username).
+export const forgotPasswordSchema = z.object({ identifier: identifierSchema });
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+// Reset-password: the new password, entered twice. Identity comes from the signed
+// reset-authorized cookie, not this payload.
+export const resetPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine(passwordsMatch, passwordsMatchError);
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 /**
  * Identity claims carried by the realtime (Socket.IO) auth token. The web mints

@@ -4,6 +4,7 @@ import { prisma, touchUserActivity } from "@fp/db";
 import { SESSION_INACTIVITY_SECONDS, loginSchema } from "@fp/shared";
 import { verifyPassword } from "@/lib/argon";
 import { verifyOtpLoginToken } from "@/lib/otp-login-token";
+import { findUserByIdentifier } from "@/lib/resolve-identifier";
 
 /**
  * Thrown by `authorize` when the password is correct but the email is NOT yet
@@ -40,15 +41,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        username: { label: "اسم المستخدم", type: "text" },
+        identifier: { label: "اسم المستخدم أو البريد الإلكتروني", type: "text" },
         password: { label: "كلمة المرور", type: "password" },
       },
       authorize: async (raw) => {
         const parsed = loginSchema.safeParse(raw);
         if (!parsed.success) return null;
 
-        const { username, password } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { username } });
+        const { identifier, password } = parsed.data;
+        const user = await findUserByIdentifier(identifier);
         if (!user) return null;
 
         const ok = await verifyPassword(user.passwordHash, password);

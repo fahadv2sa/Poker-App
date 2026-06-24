@@ -248,7 +248,12 @@ async function registerViaWeb(): Promise<{ id: string; username: string; playerN
   const res = await fetch(`${WEB_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email: `${username}@smoke.local`, password: "smokepass123" }),
+    body: JSON.stringify({
+      username,
+      email: `${username}@smoke.local`,
+      password: "smokepass123",
+      confirmPassword: "smokepass123",
+    }),
   });
   const data = (await res.json()) as { id?: string; playerNumber?: number; messageAr?: string };
   if (res.status !== 201 || !data.id) {

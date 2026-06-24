@@ -31,6 +31,7 @@ export async function registerAction(
     username: String(formData.get("username") ?? ""),
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
+    confirmPassword: String(formData.get("confirmPassword") ?? ""),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "مدخلات غير صحيحة" };

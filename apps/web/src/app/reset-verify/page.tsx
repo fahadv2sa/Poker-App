@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@fp/db";
 import { auth } from "@/auth";
-import { readPendingVerification } from "@/lib/pending-verification";
+import { readPendingReset } from "@/lib/password-reset";
 import { VerifyForm } from "@/components/verify-form";
-import { confirmCodeAction, requestCodeAction } from "./actions";
+import { confirmResetCodeAction, requestResetCodeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -16,29 +16,29 @@ function maskEmail(email: string): string {
   return `${shown}${hidden}@${domain}`;
 }
 
-export default async function VerifyPage() {
-  // A fully-authed user has no business here.
+export default async function ResetVerifyPage() {
   const session = await auth();
   if (session?.user?.id) redirect("/");
 
-  // Identity comes only from the signed pending-verification cookie.
-  const userId = await readPendingVerification();
-  if (!userId) redirect("/login");
+  const userId = await readPendingReset();
+  if (!userId) redirect("/forgot");
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, emailVerifiedAt: true },
+    select: { email: true },
   });
-  if (!user?.email) redirect("/login");
-  if (user.emailVerifiedAt) redirect("/login"); // already verified → just log in
+  if (!user?.email) redirect("/forgot");
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden px-4 pb-10 page-top">
       <div aria-hidden className="arena-rail" />
       <VerifyForm
         maskedEmail={maskEmail(user.email)}
-        confirmAction={confirmCodeAction}
-        resendAction={requestCodeAction}
+        confirmAction={confirmResetCodeAction}
+        resendAction={requestResetCodeAction}
+        badge="إعادة تعيين كلمة المرور"
+        title="أدخل رمز التحقق"
+        submitLabel="تأكيد الرمز"
       />
     </main>
   );

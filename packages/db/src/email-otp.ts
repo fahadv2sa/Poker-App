@@ -94,14 +94,17 @@ export type VerifyOtpOutcome =
   | { status: "locked" };
 
 /**
- * Verify a submitted code for a user. On success: set users.email_verified_at and
- * DELETE the code in one transaction. On miss: increment attempts (killing the
- * code once OTP_MAX_ATTEMPTS is reached). Expired/exhausted codes are removed.
+ * Shared validation core for BOTH the signup-verification and password-reset
+ * flows (one OTP system, no parallel infra). Validates the submitted code:
+ *   - no row → no_code; expired → delete + expired; attempts exhausted → delete +
+ *     locked; wrong code → increment attempts (delete + locked once exhausted);
+ *   - correct code → "verified" WITHOUT deleting the row, so the caller can
+ *     consume it together with its own success side-effect (atomic, per flow).
  */
-export async function verifyOtp(
+async function checkOtp(
   userId: string,
   code: string,
-  now: Date = new Date(),
+  now: Date,
 ): Promise<VerifyOtpOutcome> {
   const row = await prisma.emailOtp.findUnique({ where: { userId } });
   if (!row) return { status: "no_code" };
@@ -128,12 +131,43 @@ export async function verifyOtp(
     return { status: "invalid", attemptsRemaining };
   }
 
-  // Success — mark verified + drop the code atomically (delete-on-verify).
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: now } }),
-    prisma.emailOtp.delete({ where: { userId } }),
-  ]);
   return { status: "verified" };
+}
+
+/**
+ * SIGNUP verification. On success: set users.email_verified_at and DELETE the code
+ * in one transaction (delete-on-verify). Behaviour/signature unchanged.
+ */
+export async function verifyOtp(
+  userId: string,
+  code: string,
+  now: Date = new Date(),
+): Promise<VerifyOtpOutcome> {
+  const result = await checkOtp(userId, code, now);
+  if (result.status === "verified") {
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: now } }),
+      prisma.emailOtp.delete({ where: { userId } }),
+    ]);
+  }
+  return result;
+}
+
+/**
+ * PASSWORD-RESET verification. Same code rules + cleanup as signup, but it ONLY
+ * authorizes the reset — it does NOT set email_verified_at and does NOT log the
+ * user in. On success the code is consumed (deleted) so it can't be replayed.
+ */
+export async function verifyPasswordResetOtp(
+  userId: string,
+  code: string,
+  now: Date = new Date(),
+): Promise<VerifyOtpOutcome> {
+  const result = await checkOtp(userId, code, now);
+  if (result.status === "verified") {
+    await prisma.emailOtp.deleteMany({ where: { userId } });
+  }
+  return result;
 }
 
 /** Belt-and-suspenders bulk purge of expired codes (callable from a job if ever needed). */

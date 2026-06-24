@@ -16,6 +16,7 @@ import {
 const authStore: RateStore = new Map();
 const bankStore: RateStore = new Map();
 const otpStore: RateStore = new Map();
+const availabilityStore: RateStore = new Map();
 
 /** Best-effort client IP from proxy headers. */
 export async function clientIp(): Promise<string> {
@@ -49,4 +50,14 @@ export function otpRequestRateLimit(userId: string): boolean {
     OTP_MAX_REQUESTS_PER_ACCOUNT,
     OTP_REQUEST_WINDOW_SECONDS * 1000,
   ).allowed;
+}
+
+/**
+ * Live register email/username availability checks: 30 per minute per IP. Looser
+ * than auth (it fires on field blur) but capped so the endpoint can't be used for
+ * bulk account enumeration.
+ */
+export function availabilityRateLimit(ip: string): boolean {
+  if (availabilityStore.size > 5000) sweepRateStore(availabilityStore);
+  return rateLimit(availabilityStore, `avail:${ip}`, 30, 60_000).allowed;
 }

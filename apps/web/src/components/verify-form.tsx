@@ -2,18 +2,40 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { confirmCodeAction, requestCodeAction, type VerifyFormState } from "@/app/verify/actions";
+import type { OtpFormState } from "@/lib/otp-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import { Panel } from "@/components/panel";
 
-/** Email-OTP verification card (RTL, premium). Code entry + resend with cooldown. */
-export function VerifyForm({ maskedEmail }: { maskedEmail: string }) {
-  const [confirmState, confirmAction, confirming] = useActionState(confirmCodeAction, undefined);
-  const [resendState, resendAction, resending] = useActionState<VerifyFormState | undefined, FormData>(
-    () => requestCodeAction(undefined),
+type ConfirmAction = (prev: OtpFormState | undefined, formData: FormData) => Promise<OtpFormState>;
+type ResendAction = (prev: OtpFormState | undefined) => Promise<OtpFormState>;
+
+/**
+ * Reusable email-OTP code-entry card (RTL, premium): clean 6-digit entry + resend
+ * with live cooldown. Used by both signup verification and password reset — the
+ * caller supplies the server actions and copy, so behaviour-after-success differs
+ * while the UI stays consistent.
+ */
+export function VerifyForm({
+  maskedEmail,
+  confirmAction,
+  resendAction,
+  badge = "تأكيد البريد الإلكتروني",
+  title = "أدخل رمز التحقق",
+  submitLabel = "تأكيد وتسجيل الدخول",
+}: {
+  maskedEmail: string;
+  confirmAction: ConfirmAction;
+  resendAction: ResendAction;
+  badge?: string;
+  title?: string;
+  submitLabel?: string;
+}) {
+  const [confirmState, confirm, confirming] = useActionState(confirmAction, undefined);
+  const [resendState, resend, resending] = useActionState<OtpFormState | undefined, FormData>(
+    () => resendAction(undefined),
     undefined,
   );
 
@@ -38,13 +60,13 @@ export function VerifyForm({ maskedEmail }: { maskedEmail: string }) {
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
         <Logo glow className="size-20" />
         <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ تأكيد البريد الإلكتروني</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ {badge}</div>
       </div>
 
       <Panel accent>
-        <form action={confirmAction} className="flex flex-col gap-4">
+        <form action={confirm} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl">أدخل رمز التحقق</h1>
+            <h1 className="text-2xl">{title}</h1>
             <p className="text-sm text-muted-foreground">
               أرسلنا رمزًا من ٦ أرقام إلى <span className="num" dir="ltr">{maskedEmail}</span>
             </p>
@@ -73,7 +95,7 @@ export function VerifyForm({ maskedEmail }: { maskedEmail: string }) {
           </div>
 
           <Button type="submit" size="lg" disabled={confirming} className="btn-cta w-full">
-            {confirming ? "جارٍ التحقق…" : "تأكيد وتسجيل الدخول"}
+            {confirming ? "جارٍ التحقق…" : submitLabel}
           </Button>
         </form>
 
@@ -84,7 +106,7 @@ export function VerifyForm({ maskedEmail }: { maskedEmail: string }) {
           {resendState?.error && !resendState.cooldownSeconds ? (
             <p className="text-sm text-destructive-foreground">{resendState.error}</p>
           ) : null}
-          <form action={resendAction}>
+          <form action={resend}>
             <Button
               type="submit"
               variant="ghost"

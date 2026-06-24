@@ -99,6 +99,9 @@ export const OTP_TTL_SECONDS = 5 * 60; // 5 minutes (max code lifetime)
 export const OTP_RESEND_COOLDOWN_SECONDS = 60; // earliest a resend may replace the code
 export const OTP_MAX_ATTEMPTS = 5; // wrong guesses before the code is killed
 export const PENDING_VERIFICATION_TTL_SECONDS = 20 * 60; // signed cookie carrying the unverified user to /verify
+// Forgot-password: after the reset OTP is verified, this signed cookie authorizes
+// the /reset-password page for a short window. Separate from the OTP TTL.
+export const RESET_AUTHORIZED_TTL_SECONDS = 10 * 60;
 
 /** OTP request ceilings (defence-in-depth on top of the cooldown + one-row rule). */
 export const OTP_MAX_REQUESTS_PER_ACCOUNT = 5; // per OTP_REQUEST_WINDOW, per user

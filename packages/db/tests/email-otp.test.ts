@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "../src/client";
 import { registerUserWithWallet } from "../src/wallet";
-import { issueOtp, verifyOtp, purgeExpiredOtps } from "../src/email-otp";
+import { issueOtp, verifyOtp, verifyPasswordResetOtp, purgeExpiredOtps } from "../src/email-otp";
 import { EmailTakenError } from "../src/errors";
 import {
   OTP_MAX_ATTEMPTS,
@@ -142,6 +142,40 @@ describe("verifyOtp", () => {
   it("returns no_code when none exists", async () => {
     const user = await freshUser();
     const res = await verifyOtp(user.id, "123456");
+    expect(res.status).toBe("no_code");
+  });
+});
+
+describe("verifyPasswordResetOtp", () => {
+  it("accepts the correct code, consumes it, but does NOT mark verified", async () => {
+    const user = await freshUser();
+    // Start from a known-unverified state to prove reset does not flip the flag.
+    await prisma.user.update({ where: { id: user.id }, data: { emailVerifiedAt: null } });
+    const now = new Date();
+    const issued = await issueOtp(user.id, now);
+    if (issued.status !== "issued") throw new Error("expected issued");
+
+    const res = await verifyPasswordResetOtp(user.id, issued.code, now);
+    expect(res.status).toBe("verified");
+
+    const u = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(u.emailVerifiedAt).toBeNull(); // reset must NOT verify the email
+    expect(await prisma.emailOtp.count({ where: { userId: user.id } })).toBe(0); // consumed
+  });
+
+  it("rejects a wrong code and counts attempts (shared rules)", async () => {
+    const user = await freshUser();
+    const now = new Date();
+    await issueOtp(user.id, now);
+    const res = await verifyPasswordResetOtp(user.id, "000000", now);
+    expect(res.status).toBe("invalid");
+    if (res.status === "invalid") expect(res.attemptsRemaining).toBe(OTP_MAX_ATTEMPTS - 1);
+    expect(await prisma.emailOtp.count({ where: { userId: user.id } })).toBe(1); // still there
+  });
+
+  it("returns no_code when none exists", async () => {
+    const user = await freshUser();
+    const res = await verifyPasswordResetOtp(user.id, "123456");
     expect(res.status).toBe("no_code");
   });
 });

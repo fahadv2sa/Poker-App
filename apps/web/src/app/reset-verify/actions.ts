@@ -1,43 +1,32 @@
 "use server";
 
-import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
-import { prisma, issueOtp, verifyOtp } from "@fp/db";
+import { prisma, issueOtp, verifyPasswordResetOtp } from "@fp/db";
 import { otpConfirmSchema } from "@fp/shared";
-import { signIn } from "@/auth";
 import { sendOtpEmail } from "@/lib/email";
 import {
-  clearPendingVerification,
-  readPendingVerification,
-} from "@/lib/pending-verification";
-import { mintOtpLoginToken } from "@/lib/otp-login-token";
+  clearPendingReset,
+  readPendingReset,
+  setResetAuthorized,
+} from "@/lib/password-reset";
 import { otpRequestRateLimit } from "@/lib/rate-limit";
 import type { OtpFormState } from "@/lib/otp-form";
 
-/**
- * Resend: issue + email a fresh code for the pending user. Identity comes ONLY
- * from the pending-verification cookie. Honors the per-account ceiling and the
- * per-code cooldown (issueOtp), which replaces the active code once elapsed.
- */
-export async function requestCodeAction(
+/** Resend a reset code for the pending-reset user (same OTP infra + cooldown). */
+export async function requestResetCodeAction(
   _prev: OtpFormState | undefined,
 ): Promise<OtpFormState> {
-  const userId = await readPendingVerification();
-  if (!userId) redirect("/login");
+  const userId = await readPendingReset();
+  if (!userId) redirect("/forgot");
 
   if (!otpRequestRateLimit(userId)) {
     return { error: "محاولات كثيرة، يُرجى المحاولة لاحقًا" };
   }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, emailVerifiedAt: true },
+    select: { email: true },
   });
-  if (!user?.email) redirect("/login");
-  if (user.emailVerifiedAt) {
-    await clearPendingVerification();
-    redirect("/login");
-  }
+  if (!user?.email) redirect("/forgot");
 
   const issued = await issueOtp(userId);
   if (issued.status === "cooldown") {
@@ -49,30 +38,30 @@ export async function requestCodeAction(
   try {
     await sendOtpEmail(user.email, issued.code);
   } catch (err) {
-    console.error("OTP email send failed (resend)", err);
+    console.error("OTP email send failed (reset resend)", err);
     return { error: "تعذّر إرسال البريد، حاول مرة أخرى" };
   }
   return { sent: true };
 }
 
 /**
- * Confirm: verify the submitted code for the pending user. On success, mark
- * verified (done inside verifyOtp), clear the cookie, and log the user in via the
- * password-less `otp-verified` provider, then redirect home.
+ * Confirm the reset code. On success: consume the code (verifyPasswordResetOtp —
+ * NO verify flag, NO login), swap the pending-reset cookie for a short-lived
+ * reset-authorized cookie, and send the user to set a new password.
  */
-export async function confirmCodeAction(
+export async function confirmResetCodeAction(
   _prev: OtpFormState | undefined,
   formData: FormData,
 ): Promise<OtpFormState> {
-  const userId = await readPendingVerification();
-  if (!userId) redirect("/login");
+  const userId = await readPendingReset();
+  if (!userId) redirect("/forgot");
 
   const parsed = otpConfirmSchema.safeParse({ code: String(formData.get("code") ?? "") });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "رمز غير صحيح" };
   }
 
-  const result = await verifyOtp(userId, parsed.data.code);
+  const result = await verifyPasswordResetOtp(userId, parsed.data.code);
   switch (result.status) {
     case "invalid":
       return { error: `رمز غير صحيح. محاولات متبقية: ${result.attemptsRemaining}` };
@@ -86,16 +75,7 @@ export async function confirmCodeAction(
       break;
   }
 
-  // Verified — establish the session without a password, then go home.
-  await clearPendingVerification();
-  const token = await mintOtpLoginToken(userId);
-  try {
-    await signIn("otp-verified", { token, redirectTo: "/" });
-  } catch (err) {
-    if (err instanceof AuthError) {
-      return { error: "تم التأكيد، لكن تعذّر تسجيل الدخول تلقائيًا. سجّل الدخول." };
-    }
-    throw err; // NEXT_REDIRECT on success
-  }
-  return {};
+  await clearPendingReset();
+  await setResetAuthorized(userId);
+  redirect("/reset-password"); // throws NEXT_REDIRECT — must propagate
 }
