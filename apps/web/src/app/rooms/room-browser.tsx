@@ -19,8 +19,6 @@ export interface RoomCardData {
    */
   filled: number;
   mode: "MANUAL" | "AUTO";
-  /** Password-protected (Friends/manual rooms only). */
-  locked: boolean;
   kind: "PUBLIC" | "FRIENDS";
 }
 
@@ -63,7 +61,7 @@ function RoomCard({ r }: { r: RoomCardData }) {
             }}
             aria-hidden
           >
-            {isPublic ? "⚡" : r.locked ? "🔒" : "♣"}
+            {isPublic ? "⚡" : "♣"}
           </span>
           <div className="min-w-0">
             <strong className="block truncate text-base leading-tight">{r.roomName}</strong>
@@ -94,11 +92,6 @@ function RoomCard({ r }: { r: RoomCardData }) {
         >
           مستوى اللعب: {DIFFICULTY_AR[r.difficulty] ?? r.difficulty}
         </span>
-        {!isPublic && r.locked ? (
-          <span className="rounded-full border border-border/70 px-2.5 py-1 text-muted-foreground">
-            خاصة
-          </span>
-        ) : null}
       </div>
 
       {/* players progress */}
@@ -120,12 +113,12 @@ function RoomCard({ r }: { r: RoomCardData }) {
       {/* CTA */}
       <div className="relative mt-0.5 flex items-center justify-between">
         <span className="text-[0.7rem] text-muted-foreground">
-          {isPublic ? "انضمام بعد انتهاء الجولة الحالية" : r.locked ? "تتطلب كلمة مرور" : "متاحة للدخول"}
+          {isPublic ? "انضمام بعد انتهاء الجولة الحالية" : "متاحة للدخول"}
         </span>
         <span
           className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm font-bold text-primary transition group-hover:bg-primary/20"
         >
-          {isPublic ? "دخول →" : r.locked ? "🔒 دخول" : "دخول →"}
+          دخول →
         </span>
       </div>
     </Link>

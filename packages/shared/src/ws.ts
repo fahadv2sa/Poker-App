@@ -68,7 +68,6 @@ export const SERVER_EVENTS = {
 
 export const roomJoinSchema = z.object({
   inviteCode: z.string().trim().min(1),
-  password: z.string().optional(),
 });
 export type RoomJoinInput = z.infer<typeof roomJoinSchema>;
 

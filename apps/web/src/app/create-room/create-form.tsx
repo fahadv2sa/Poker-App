@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { type Difficulty, type ResolveMode } from "@fp/shared";
+import { type Difficulty } from "@fp/shared";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,11 @@ const DIFFICULTY_OPTIONS: ReadonlyArray<{ value: Difficulty; label: string; desc
   { value: "ELITE", label: "النخبة", desc: "جميع اللاعبين" },
 ];
 
-/** How hand-ranks are resolved at showdown (Auto/Manual), set by the creator. */
-const RESOLVE_MODE_OPTIONS: ReadonlyArray<{ value: ResolveMode; label: string; desc: string }> = [
-  { value: "MANUAL", label: "يدوي", desc: "كل لاعب يختار ترابطه بنفسه" },
-  { value: "AUTO", label: "تلقائي", desc: "النظام يحسب الأقوى ويحدد الفائز تلقائيًا" },
+/** Room visibility: a public room is listed and open to anyone; a private room is
+ *  hidden from the list and entered only via the invite link or room code. */
+const ROOM_TYPE_OPTIONS: ReadonlyArray<{ value: boolean; label: string; desc: string }> = [
+  { value: false, label: "غرفة عامة", desc: "تظهر في قائمة الغرف ويمكن لأي لاعب الدخول" },
+  { value: true, label: "غرفة خاصة", desc: "لا تظهر في القائمة — تُدخَل عبر رابط الدعوة أو الكود فقط" },
 ];
 
 /** Create-room form. POSTs to /api/rooms, then opens the new table. */
@@ -29,7 +30,6 @@ export function CreateRoomForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [difficulty, setDifficulty] = useState<Difficulty>("MEDIUM");
-  const [resolveMode, setResolveMode] = useState<ResolveMode>("MANUAL");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,9 +44,7 @@ export function CreateRoomForm() {
           roomName: String(form.get("roomName") ?? ""),
           isPrivate,
           maxPlayers: Number(form.get("maxPlayers") ?? 6),
-          password: isPrivate ? String(form.get("password") ?? "") : undefined,
           difficulty,
-          resolveMode,
         }),
       });
       const data = await res.json();
@@ -104,15 +102,15 @@ export function CreateRoomForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>طريقة حسم الترابطات</Label>
+        <Label>نوع الغرفة</Label>
         <div className="grid grid-cols-2 gap-2">
-          {RESOLVE_MODE_OPTIONS.map((o) => {
-            const active = resolveMode === o.value;
+          {ROOM_TYPE_OPTIONS.map((o) => {
+            const active = isPrivate === o.value;
             return (
               <button
-                key={o.value}
+                key={String(o.value)}
                 type="button"
-                onClick={() => setResolveMode(o.value)}
+                onClick={() => setIsPrivate(o.value)}
                 aria-pressed={active}
                 className={cn(
                   "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",
@@ -131,36 +129,18 @@ export function CreateRoomForm() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-1 flex-col gap-2">
-          <Label htmlFor="maxPlayers">أقصى عدد لاعبين</Label>
-          <Input
-            id="maxPlayers"
-            name="maxPlayers"
-            type="number"
-            min={2}
-            max={8}
-            defaultValue={6}
-            className="num"
-          />
-        </div>
-        <label className="flex items-center gap-2 pb-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isPrivate}
-            onChange={(e) => setIsPrivate(e.target.checked)}
-            className="size-4 accent-[var(--primary)]"
-          />
-          غرفة خاصة
-        </label>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="maxPlayers">أقصى عدد لاعبين</Label>
+        <Input
+          id="maxPlayers"
+          name="maxPlayers"
+          type="number"
+          min={2}
+          max={8}
+          defaultValue={6}
+          className="num"
+        />
       </div>
-
-      {isPrivate ? (
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="password">كلمة مرور الغرفة</Label>
-          <Input id="password" name="password" type="password" />
-        </div>
-      ) : null}
 
       <Button type="submit" size="lg" disabled={pending} className="btn-cta w-full">
         {pending ? "جارٍ الإنشاء…" : "إنشاء وفتح الطاولة"}

@@ -52,7 +52,7 @@ export interface GameHandlers {
 
 export interface GameConnection {
   socket: Socket;
-  join: (inviteCode: string, password?: string) => void;
+  join: (inviteCode: string) => void;
   start: () => void;
   nextHand: () => void;
   /** Winner screen: mark this player ready for the next round (round:ready). */
@@ -184,8 +184,7 @@ export function connectGame(token: string, handlers: GameHandlers): GameConnecti
 
   return {
     socket,
-    join: (inviteCode, password) =>
-      socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode, password }),
+    join: (inviteCode) => socket.emit(CLIENT_EVENTS.roomJoin, { inviteCode }),
     start: () => socket.emit(CLIENT_EVENTS.gameStart, {}),
     nextHand: () => socket.emit(CLIENT_EVENTS.nextHand, {}),
     ready: () => socket.emit(CLIENT_EVENTS.roundReady, {}),

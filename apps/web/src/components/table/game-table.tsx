@@ -147,11 +147,10 @@ export function GameTable({
   /** The local player's display name (nickname → username), shown at their seat. */
   nickname: string;
 }) {
-  const { view, start, ready, closeTable, leave, placeAction, clearError, submitPassword } =
+  const { view, start, ready, closeTable, leave, placeAction, clearError } =
     useGameSocket(token, inviteCode);
   const router = useRouter();
   const s = view.state;
-  const [password, setPassword] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   // Once the player leaves or the table closes, show the end-of-session table
@@ -634,49 +633,6 @@ export function GameTable({
         ) : null}
       </AnimatePresence>
 
-      {/* Locked room: the server demands a password before seating. Prompt for it
-          and retry the join; on success a state:sync clears this overlay. */}
-      <AnimatePresence>
-        {view.needsPassword && !view.closed ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 grid place-items-center bg-background/90 px-6 backdrop-blur"
-          >
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (password.trim()) submitPassword(password.trim());
-              }}
-              className="flex w-full max-w-sm flex-col gap-4 rounded-xl border bg-card p-6 text-center shadow-xl"
-            >
-              <div className="text-3xl">🔒</div>
-              <p className="text-lg font-black">غرفة خاصة</p>
-              <p className="text-sm text-muted-foreground">
-                {view.passwordMessage ?? "أدخل كلمة المرور للدخول"}
-              </p>
-              <Input
-                type="password"
-                autoFocus
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="كلمة المرور"
-                className="text-center"
-              />
-              <div className="flex gap-2">
-                <Button type="submit" disabled={!password.trim()} className="flex-1">
-                  دخول
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => router.push("/")}>
-                  ← القائمة
-                </Button>
-              </div>
-            </form>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-
       {/* Room closed with no rounds to browse: explain briefly, then redirect.
           (With completed rounds, the table summary below takes over instead.) */}
       <AnimatePresence>
@@ -729,13 +685,46 @@ function LobbyPanel({
   canStart: boolean;
   onStart: () => void;
 }) {
+  const [copied, setCopied] = useState(false);
+  // Share the invite via the native share sheet on mobile (Web Share API). The
+  // current page URL (/table/<gameId>) joins the room directly. Desktop browsers
+  // without Web Share fall back to copying the link to the clipboard.
+  const onShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "دعوة إلى طاولة",
+          text: `انضم إلى طاولتي! كود الدعوة: ${inviteCode}`,
+          url,
+        });
+      } catch {
+        // User dismissed the share sheet, or sharing failed — nothing to do.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable/blocked — nothing to do.
+    }
+  };
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm text-muted-foreground">كود الدعوة</span>
-        <code className="num rounded-md border bg-secondary/50 px-3 py-1 tracking-widest">
-          {inviteCode}
-        </code>
+        <div className="flex items-center gap-2">
+          <code className="num rounded-md border bg-secondary/50 px-3 py-1 tracking-widest">
+            {inviteCode}
+          </code>
+          <Button type="button" variant="secondary" size="sm" onClick={onShare} className="gap-1.5">
+            <span aria-hidden>🔗</span>
+            {copied ? "تم النسخ" : "مشاركة"}
+          </Button>
+        </div>
       </div>
       {isHost ? (
         <Button onClick={onStart} disabled={!canStart} className="w-full" size="lg">

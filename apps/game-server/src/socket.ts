@@ -1,5 +1,4 @@
 import { randomBytes } from "node:crypto";
-import { verify as verifyPassword } from "@node-rs/argon2";
 import { Prisma, getWalletBalance, prisma, touchUserActivity } from "@fp/db";
 import type { Action } from "@fp/engine";
 import {
@@ -157,7 +156,6 @@ export function attachSocketHandlers(
           isPrivate: true, // never listed in the public rooms list
           kind: "QUICK_PLAY", // authoritative room-type: matchmaking-only, no rejoin
           maxPlayers: QUICK_PLAY.maxSeats,
-          passwordHash: null,
           difficulty: tier,
           inviteCode: quickInviteCode(),
           createdBy: hostUserId, // first queued player hosts (host-transfer applies)
@@ -238,15 +236,16 @@ export function attachSocketHandlers(
         const input = roomJoinSchema.parse(raw);
         const game = await prisma.game.findUnique({
           where: { inviteCode: input.inviteCode },
-          select: { id: true, kind: true, passwordHash: true },
+          select: { id: true, kind: true },
         });
         if (!game) return emitError(socket, "ROOM_NOT_FOUND", "الغرفة غير موجودة");
         const rt = await getRuntime(game.id);
         // getRuntime returns null for ABANDONED (closed) rooms — gone for good.
         if (!rt) return emitError(socket, "ROOM_NOT_FOUND", "الغرفة غير موجودة");
 
-        // Is this user already a seated member of this room? Members rejoining
-        // skip the password gate; the rejoin rule itself depends on room kind.
+        // Is this user already a seated member of this room? (The rejoin rule
+        // depends on room kind.) Rooms have no password — a private room is simply
+        // unlisted; anyone holding the invite link or room code may enter.
         const existing = rt.room.state.players.find((p) => p.userId === user.userId);
 
         // Rule 4: Quick Play rooms forbid rejoin once a player has left. The
@@ -258,21 +257,6 @@ export function attachSocketHandlers(
             "NO_REJOIN",
             "لا يمكنك العودة إلى مباراة اللعب السريع بعد مغادرتها",
           );
-        }
-
-        // Rule 3: a password-protected room requires the correct password to
-        // enter as a NEW member — checked server-side (no client trust). Members
-        // rejoining and rooms with no password (public, or Quick Play) skip this.
-        if (game.passwordHash && !existing) {
-          const ok =
-            !!input.password && (await verifyPassword(game.passwordHash, input.password));
-          if (!ok) {
-            return emitError(
-              socket,
-              "PASSWORD_REQUIRED",
-              input.password ? "كلمة المرور غير صحيحة" : "هذه غرفة محمية — أدخل كلمة المرور",
-            );
-          }
         }
 
         // Quick Play "join after the current round": a NEW human entering a LIVE

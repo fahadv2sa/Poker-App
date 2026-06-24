@@ -56,11 +56,6 @@ export interface TableView {
    *  shows a notice and returns to the menu; null while the room is live. */
   closed: "CLOSED_BY_HOST" | "EMPTY" | null;
   error: string | null;
-  /** Set when the server rejects the join for a password-protected room. The
-   *  table shows a password prompt; `passwordMessage` carries the Arabic hint
-   *  (or "wrong password" after a failed attempt). Cleared once seated. */
-  needsPassword: boolean;
-  passwordMessage: string | null;
   /** Set when the handshake is rejected for a gone session (inactivity logout or
    *  an invalid token). The table sends the user to /login to re-authenticate. */
   authExpired: boolean;
@@ -86,8 +81,6 @@ export const INITIAL_VIEW: TableView = {
   waiting: false,
   closed: null,
   error: null,
-  needsPassword: false,
-  passwordMessage: null,
   authExpired: false,
   roundReady: null,
   rounds: [],

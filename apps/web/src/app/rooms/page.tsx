@@ -60,14 +60,14 @@ export default async function RoomsPage() {
       take: 50,
     }),
     prisma.game.findMany({
-      where: { kind: "MANUAL", status: "LOBBY" },
+      // Private rooms are NEVER listed — reachable only via invite link / room code.
+      where: { kind: "MANUAL", status: "LOBBY", isPrivate: false },
       select: {
         id: true,
         roomName: true,
         difficulty: true,
         maxPlayers: true,
         config: true,
-        passwordHash: true,
         creator: { select: { username: true } },
         _count: { select: { players: true } },
       },
@@ -90,7 +90,6 @@ export default async function RoomsPage() {
       // unreachable.
       filled: l?.filled ?? r._count.players,
       mode: modeOf(r.config),
-      locked: false,
       kind: "PUBLIC",
     };
   });
@@ -103,7 +102,6 @@ export default async function RoomsPage() {
     maxPlayers: r.maxPlayers,
     filled: r._count.players,
     mode: modeOf(r.config),
-    locked: r.passwordHash !== null,
     kind: "FRIENDS",
   }));
 

@@ -46,12 +46,7 @@ export function useGameSocket(token: string, inviteCode: string) {
       // Preserve our own seat: a broadcast sync (another player joining) carries
       // yourSeat=null and must not erase the seat we already hold (PROBLEM 1).
       // A state:sync means we're seated in the room — clear any password prompt.
-      onState: (state) =>
-        setView((v) => ({
-          ...applyStateSync(v, state),
-          needsPassword: false,
-          passwordMessage: null,
-        })),
+      onState: (state) => setView((v) => applyStateSync(v, state)),
       onDealt: (p) => setView((v) => ({ ...v, hole: p.holeCards })),
       onPhase: (p) =>
         setView((v) =>
@@ -238,12 +233,7 @@ export function useGameSocket(token: string, inviteCode: string) {
           pushNoticeRef.current(e.messageAr, "system");
           return;
         }
-        setView((v) =>
-          // A locked room asks for a password instead of showing a fatal error.
-          e.code === "PASSWORD_REQUIRED"
-            ? { ...v, needsPassword: true, passwordMessage: e.messageAr }
-            : { ...v, error: e.messageAr },
-        );
+        setView((v) => ({ ...v, error: e.messageAr }));
       },
       // Inactivity logout / invalid token: the session is gone — flag it so the
       // table redirects to /login (retrying the handshake can't recover it).
@@ -264,11 +254,6 @@ export function useGameSocket(token: string, inviteCode: string) {
     [],
   );
   const clearError = useCallback(() => setView((v) => ({ ...v, error: null })), []);
-  // Retry the join carrying the password for a locked room (server re-verifies).
-  const submitPassword = useCallback(
-    (password: string) => connRef.current?.join(inviteCode, password),
-    [inviteCode],
-  );
 
   return {
     view,
@@ -279,6 +264,5 @@ export function useGameSocket(token: string, inviteCode: string) {
     leave,
     placeAction,
     clearError,
-    submitPassword,
   };
 }

@@ -2,9 +2,8 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Prisma, prisma } from "@fp/db";
-import { DEFAULT_GAME_CONFIG, DIFFICULTIES, RESOLVE_MODES } from "@fp/shared";
+import { DEFAULT_GAME_CONFIG, DIFFICULTIES } from "@fp/shared";
 import { auth } from "@/auth";
-import { hashPassword } from "@/lib/argon";
 
 export const runtime = "nodejs";
 
@@ -12,9 +11,7 @@ const createRoomSchema = z.object({
   roomName: z.string().trim().min(2, "اسم الغرفة قصير جدًا").max(40),
   isPrivate: z.boolean().default(false),
   maxPlayers: z.number().int().min(2).max(8).default(6),
-  password: z.string().min(1).max(64).optional(),
   difficulty: z.enum(DIFFICULTIES).default("MEDIUM"),
-  resolveMode: z.enum(RESOLVE_MODES).default("MANUAL"),
 });
 
 /** Unguessable invite code (Section 16). */
@@ -28,15 +25,14 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });
   }
-  // Manual, open rooms only. Quick Play (kind=QUICK_PLAY) is matchmaking-only and
-  // never listed; private rooms appear but are flagged `locked` (the invite code
-  // is NOT exposed — entry requires the password, verified at the table).
+  // Public manual rooms only. Quick Play (kind=QUICK_PLAY) is matchmaking-only and
+  // never listed; private rooms (isPrivate) are NEVER listed — they're reachable
+  // only via the invite link or room code.
   const rooms = await prisma.game.findMany({
-    where: { kind: "MANUAL", status: "LOBBY" },
+    where: { kind: "MANUAL", status: "LOBBY", isPrivate: false },
     select: {
       id: true,
       roomName: true,
-      passwordHash: true,
       maxPlayers: true,
       _count: { select: { players: true } },
     },
@@ -47,7 +43,6 @@ export async function GET() {
     rooms.map((r) => ({
       id: r.id,
       roomName: r.roomName,
-      locked: r.passwordHash !== null,
       players: r._count.players,
       maxPlayers: r.maxPlayers,
     })),
@@ -76,20 +71,18 @@ export async function POST(req: Request) {
       { status: 422 },
     );
   }
-  const { roomName, isPrivate, maxPlayers, password, difficulty, resolveMode } = parsed.data;
+  const { roomName, isPrivate, maxPlayers, difficulty } = parsed.data;
 
-  const passwordHash = isPrivate && password ? await hashPassword(password) : null;
   const game = await prisma.game.create({
     data: {
       roomName,
       isPrivate,
       maxPlayers,
-      passwordHash,
       difficulty,
       inviteCode: inviteCode(),
       createdBy: userId,
-      // Per-table config (jsonb); resolveMode is the creator's Auto/Manual choice.
-      config: { ...DEFAULT_GAME_CONFIG, resolveMode } as unknown as Prisma.InputJsonValue,
+      // Per-table config (jsonb). Showdown is auto-only now (no manual mode).
+      config: { ...DEFAULT_GAME_CONFIG } as unknown as Prisma.InputJsonValue,
     },
     select: { id: true, inviteCode: true },
   });

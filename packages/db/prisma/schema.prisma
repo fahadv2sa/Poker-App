@@ -634,7 +634,6 @@ model Game {
   roomName        String     @map("room_name")
   isPrivate       Boolean    @default(false) @map("is_private")
   kind            GameKind   @default(MANUAL)
-  passwordHash    String?    @map("password_hash")
   maxPlayers      Int        @map("max_players")
   inviteCode      String     @unique @map("invite_code")
   status          GameStatus @default(LOBBY)
