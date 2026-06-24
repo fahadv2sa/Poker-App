@@ -66,7 +66,7 @@ async function main() {
       for (let i = 0; i < rows.length; i += CHUNK) {
         const chunk = rows.slice(i, i + CHUNK);
         const sql =
-          `UPDATE players AS p SET ` +
+          `UPDATE football.players AS p SET ` +
           `fame_score = v.fame_score, tier = v.tier, ` +
           `is_legend = v.is_legend, legend_score = v.legend_score ` +
           `FROM (VALUES ${chunk.map(valuesRow).join(",")}) ` +

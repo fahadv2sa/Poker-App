@@ -26,6 +26,10 @@ Every table in `packages/db/prisma/schema.prisma` belongs to exactly one of thre
 isolation boundary. **As of 2026-06-24 these are real Postgres schemas** (Prisma multiSchema, one shared
 DB): **`platform`** (A), **`football`** (B), **`link_up`** (C+D). A + B are shared; each game owns its
 schema; a future game takes its own (e.g. `game2`). Migration: `20260624170000_multi_schema_split`.
+> ⚠️ **multiSchema gotcha:** Prisma routes **model** queries (`prisma.user.*`) to the right schema
+> automatically, but **raw SQL (`$queryRaw`/`$executeRaw`) is NOT routed** — it hits `public` via
+> `search_path`. **Always schema-qualify table names in raw SQL** (`football.players`, `link_up.wallets`,
+> `platform.users`, …). This bit us once (Quick Play stalled after the split, fixed in `9602339`).
 
 | Group | Owner | Tables | Sharing rule |
 |---|---|---|---|

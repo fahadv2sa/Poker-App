@@ -50,9 +50,9 @@ async function main() {
 
   // Reconciliation: balance MUST equal the sum of that user's ledger amounts.
   const mism = await prisma.$queryRawUnsafe<{ n: number }[]>(
-    `SELECT count(*)::int AS n FROM wallets w
+    `SELECT count(*)::int AS n FROM link_up.wallets w
      WHERE w.balance <> (
-       SELECT COALESCE(sum(amount), 0) FROM wallet_transactions t WHERE t.user_id = w.user_id
+       SELECT COALESCE(sum(amount), 0) FROM link_up.wallet_transactions t WHERE t.user_id = w.user_id
      )`,
   );
   console.log(`balance != Σ(ledger) wallets (MUST be 0): ${mism[0]!.n}`);
