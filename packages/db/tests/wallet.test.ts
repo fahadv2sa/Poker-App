@@ -21,7 +21,11 @@ const createdUserIds: string[] = [];
 
 async function freshUser() {
   const username = `t_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
-  const user = await registerUserWithWallet({ username, passwordHash: "argon2id$test" });
+  const user = await registerUserWithWallet({
+    username,
+    email: `${username}@test.local`,
+    passwordHash: "argon2id$test",
+  });
   createdUserIds.push(user.id);
   return user;
 }
@@ -83,7 +87,11 @@ describe("registration + signup bonus", () => {
     const user = await freshUser();
     const original = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     await expect(
-      registerUserWithWallet({ username: original.username, passwordHash: "x" }),
+      registerUserWithWallet({
+        username: original.username,
+        email: `dup_${original.username}@test.local`,
+        passwordHash: "x",
+      }),
     ).rejects.toBeInstanceOf(UsernameTakenError);
   });
 });

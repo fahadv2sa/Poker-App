@@ -72,6 +72,21 @@ export function AuthForm({
             />
           </div>
 
+          {!isLogin ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="example@mail.com"
+                dir="ltr"
+                required
+              />
+            </div>
+          ) : null}
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="password">كلمة المرور</Label>
             <Input

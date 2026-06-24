@@ -1,8 +1,20 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma, touchUserActivity } from "@fp/db";
 import { SESSION_INACTIVITY_SECONDS, loginSchema } from "@fp/shared";
 import { verifyPassword } from "@/lib/argon";
+import { verifyOtpLoginToken } from "@/lib/otp-login-token";
+
+/**
+ * Thrown by `authorize` when the password is correct but the email is NOT yet
+ * verified. Surfaces as a CredentialsSignin with `code: "unverified"`, which the
+ * login action distinguishes from a bad password to route the user to /verify
+ * (rather than show "wrong credentials"). A wrong password still returns null
+ * (generic), so this never leaks which accounts exist/are unverified.
+ */
+export class UnverifiedEmailError extends CredentialsSignin {
+  override code = "unverified";
+}
 
 /**
  * Auth.js (Credentials) — Section 19.8. Username + password, session stored in a
@@ -42,6 +54,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const ok = await verifyPassword(user.passwordHash, password);
         if (!ok) return null;
 
+        // Login gate: password is correct, but block until the email is verified.
+        // Existing accounts were grandfathered (email_verified_at backfilled), so
+        // only genuinely-unverified new signups hit this.
+        if (!user.emailVerifiedAt) throw new UnverifiedEmailError();
+
+        return { id: user.id, name: user.username, playerNumber: user.playerNumber };
+      },
+    }),
+    // Programmatic, password-less login used ONLY right after a successful OTP
+    // verification. The `token` is a short-lived signed proof minted server-side by
+    // the verify action — never client-supplied identity. Re-checks the user is
+    // actually verified before issuing a session.
+    Credentials({
+      id: "otp-verified",
+      credentials: { token: {} },
+      authorize: async (raw) => {
+        const token = typeof raw?.token === "string" ? raw.token : null;
+        if (!token) return null;
+        const userId = await verifyOtpLoginToken(token);
+        if (!userId) return null;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || !user.emailVerifiedAt) return null;
         return { id: user.id, name: user.username, playerNumber: user.playerNumber };
       },
     }),

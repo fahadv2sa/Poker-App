@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { registerSchema } from "@fp/shared";
-import { registerUserWithWallet, UsernameTakenError } from "@fp/db";
+import { registerUserWithWallet, UsernameTakenError, EmailTakenError } from "@fp/db";
 import { hashPassword } from "@/lib/argon";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
@@ -42,12 +42,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const { username, password } = parsed.data;
+  const { username, email, password } = parsed.data;
 
   try {
     const passwordHash = await hashPassword(password);
     const user = await registerUserWithWallet({
       username,
+      email,
       passwordHash,
       avatarSeed: username,
     });
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (err) {
-    if (err instanceof UsernameTakenError) {
+    if (err instanceof UsernameTakenError || err instanceof EmailTakenError) {
       return NextResponse.json(
         { error: err.code, messageAr: err.message },
         { status: 409 },

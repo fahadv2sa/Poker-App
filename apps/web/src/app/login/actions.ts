@@ -1,8 +1,11 @@
 "use server";
 
-import { AuthError } from "next-auth";
+import { AuthError, CredentialsSignin } from "next-auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@fp/db";
 import { signIn } from "@/auth";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
+import { setPendingVerification } from "@/lib/pending-verification";
 
 export interface AuthFormState {
   error?: string;
@@ -22,6 +25,16 @@ export async function loginAction(
     await signIn("credentials", { username, password, redirectTo: "/" });
     return {};
   } catch (err) {
+    // Correct password but unverified email → start the verification flow rather
+    // than show an error. (authorize threw UnverifiedEmailError → code "unverified".)
+    if (err instanceof CredentialsSignin && err.code === "unverified") {
+      const user = await prisma.user.findUnique({
+        where: { username },
+        select: { id: true },
+      });
+      if (user) await setPendingVerification(user.id);
+      redirect("/verify"); // throws NEXT_REDIRECT — must propagate
+    }
     if (err instanceof AuthError) {
       return { error: "اسم المستخدم أو كلمة المرور غير صحيحة" };
     }

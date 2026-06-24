@@ -160,6 +160,14 @@ model User {
   // remain the identifiers; null falls back to `username` for display.
   nickname     String?
   passwordHash String   @map("password_hash") // argon2id
+  // Email + OTP verification. `email` is collected at signup and unique; nullable
+  // ONLY so pre-existing rows (no email) stay valid — new signups always set it.
+  // `emailVerifiedAt` is the login gate: NULL = unverified (login is blocked and
+  // the user is routed to /verify). The init-verification migration backfills all
+  // existing rows to now() so the handful of legacy/test accounts are grandfathered
+  // as verified and never sent through the flow.
+  email           String?   @unique
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
   avatarSeed   String?  @map("avatar_seed")
   // Social layer: denormalized total likes received (source of truth = Like rows).
   likesReceived Int     @default(0) @map("likes_received")
@@ -190,8 +198,32 @@ model User {
   likesGot      Like[]       @relation("LikesGot")
   friendReqSent Friendship[] @relation("FriendRequester")
   friendReqRecv Friendship[] @relation("FriendAddressee")
+  emailOtp      EmailOtp?
 
   @@map("users")
+}
+
+// One-time email-verification code (signup OTP). At most ONE active code per user
+// (user_id is unique) — a re-request UPSERTS this row, so codes never accumulate;
+// the row count is bounded by the number of currently-unverified users. The
+// 6-digit code is stored ONLY as a hash (HMAC-SHA256 over AUTH_SECRET), never in
+// plaintext. Lifecycle (data-hygiene): deleted on successful verify, and expired
+// rows are purged opportunistically on each issue/verify. `expiresAt` is at most
+// 5 minutes out; `attempts` caps brute-force guesses before the code is killed.
+model EmailOtp {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Supports the opportunistic purge (DELETE WHERE expires_at < now()).
+  @@index([expiresAt])
+  @@map("email_otps")
 }
 
 // Social — likes (one row per (liker, target); one-per-user toggle). Denormalized

@@ -1,5 +1,11 @@
 import { headers } from "next/headers";
-import { rateLimit, sweepRateStore, type RateStore } from "@fp/shared";
+import {
+  OTP_MAX_REQUESTS_PER_ACCOUNT,
+  OTP_REQUEST_WINDOW_SECONDS,
+  rateLimit,
+  sweepRateStore,
+  type RateStore,
+} from "@fp/shared";
 
 /**
  * Server-side rate limiting for sensitive endpoints (Section 6 / 16): auth and
@@ -9,6 +15,7 @@ import { rateLimit, sweepRateStore, type RateStore } from "@fp/shared";
 
 const authStore: RateStore = new Map();
 const bankStore: RateStore = new Map();
+const otpStore: RateStore = new Map();
 
 /** Best-effort client IP from proxy headers. */
 export async function clientIp(): Promise<string> {
@@ -28,4 +35,18 @@ export function authRateLimit(ip: string): boolean {
 export function bankRateLimit(userId: string): boolean {
   if (bankStore.size > 5000) sweepRateStore(bankStore);
   return rateLimit(bankStore, `bank:${userId}`, 5, 60_000).allowed;
+}
+
+/**
+ * OTP (re)send ceiling per account, on top of the per-code 60s cooldown and the
+ * one-active-code rule — defence against email-bombing a single inbox.
+ */
+export function otpRequestRateLimit(userId: string): boolean {
+  if (otpStore.size > 5000) sweepRateStore(otpStore);
+  return rateLimit(
+    otpStore,
+    `otp:${userId}`,
+    OTP_MAX_REQUESTS_PER_ACCOUNT,
+    OTP_REQUEST_WINDOW_SECONDS * 1000,
+  ).allowed;
 }

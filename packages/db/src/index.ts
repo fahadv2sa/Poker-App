@@ -11,6 +11,7 @@ export type {
 } from "./generated/client";
 export * from "./errors";
 export * from "./wallet";
+export * from "./email-otp";
 export * from "./bank";
 export * from "./install-reward";
 export * from "./metrics";

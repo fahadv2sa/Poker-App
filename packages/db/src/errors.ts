@@ -31,6 +31,12 @@ export class UsernameTakenError extends WalletError {
   }
 }
 
+export class EmailTakenError extends WalletError {
+  constructor() {
+    super("البريد الإلكتروني مستخدم بالفعل", "EMAIL_TAKEN");
+  }
+}
+
 export class BankLimitError extends WalletError {
   constructor(public readonly retryAt: Date) {
     super("لقد سحبت مكافأتك اليومية من البنك — عُد غدًا", "BANK_LIMIT_REACHED");

@@ -15,7 +15,7 @@ const createdUserIds: string[] = [];
 
 async function freshUserAt(level: number, celebratedLevel: number) {
   const username = `lu_${randomUUID().replace(/-/g, "").slice(0, 15)}`;
-  const user = await registerUserWithWallet({ username, passwordHash: "argon2id$test" });
+  const user = await registerUserWithWallet({ username, email: `${username}@test.local`, passwordHash: "argon2id$test" });
   createdUserIds.push(user.id);
   await prisma.playerMetrics.upsert({
     where: { userId: user.id },

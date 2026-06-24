@@ -81,6 +81,30 @@ export const RECONNECT_GRACE_MS = 5 * 60 * 1000; // 5 minutes
 export const ACTIVITY_WRITE_THROTTLE_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
+ * Email OTP verification (signup). A 6-digit numeric code, valid for at most
+ * OTP_TTL — short-lived by design so rows never linger (data-hygiene). At most
+ * ONE active code per user (the DB enforces it via a unique user_id); a re-issue
+ * UPSERTS that row, so codes never pile up.
+ *
+ * Resend policy: the core rule is "no new code while the current one is valid",
+ * but a strictly-enforced wait would strand a user whose email never arrived — so
+ * a resend is allowed after OTP_RESEND_COOLDOWN, and it REPLACES the active code
+ * (re-hashes, resets the TTL and attempt counter). OTP_MAX_ATTEMPTS caps wrong
+ * guesses before the code is invalidated, making the 10^6 space unbruteforceable
+ * inside the TTL window. The pending-verification cookie that carries identity to
+ * /verify lives PENDING_VERIFICATION_TTL.
+ */
+export const OTP_CODE_LENGTH = 6;
+export const OTP_TTL_SECONDS = 5 * 60; // 5 minutes (max code lifetime)
+export const OTP_RESEND_COOLDOWN_SECONDS = 60; // earliest a resend may replace the code
+export const OTP_MAX_ATTEMPTS = 5; // wrong guesses before the code is killed
+export const PENDING_VERIFICATION_TTL_SECONDS = 20 * 60; // signed cookie carrying the unverified user to /verify
+
+/** OTP request ceilings (defence-in-depth on top of the cooldown + one-row rule). */
+export const OTP_MAX_REQUESTS_PER_ACCOUNT = 5; // per OTP_REQUEST_WINDOW, per user
+export const OTP_REQUEST_WINDOW_SECONDS = 15 * 60; // 15 minutes
+
+/**
  * Quick Play bot fillers (cold-start, removable). Bot user rows live in a RESERVED
  * player_number block at or above this base — far above where the real
  * autoincrement sequence (starting at 100001) will reach for the foreseeable

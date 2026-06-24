@@ -2,6 +2,7 @@ import { SIGNUP_BONUS, type WalletTxType } from "@fp/shared";
 import { Prisma } from "./generated/client";
 import { prisma } from "./client";
 import {
+  EmailTakenError,
   InsufficientFundsError,
   UsernameTakenError,
   WalletNotFoundError,
@@ -126,6 +127,9 @@ export function applyWalletTransactionAtomic(
 
 export interface RegisterUserParams {
   username: string;
+  /** Normalized (lowercased) email; the account is created UNVERIFIED
+   *  (email_verified_at stays null) and gated at login until an OTP is entered. */
+  email: string;
   /** Pre-hashed (argon2id). This layer never sees plaintext passwords. */
   passwordHash: string;
   avatarSeed?: string | null;
@@ -147,13 +151,14 @@ export interface RegisteredUser {
 export async function registerUserWithWallet(
   params: RegisterUserParams,
 ): Promise<RegisteredUser> {
-  const { username, passwordHash, avatarSeed = null } = params;
+  const { username, email, passwordHash, avatarSeed = null } = params;
 
   try {
     return await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           username,
+          email,
           passwordHash,
           avatarSeed,
           wallet: { create: { balance: 0n, highestBalance: 0n } },
@@ -177,10 +182,14 @@ export async function registerUserWithWallet(
       };
     });
   } catch (err) {
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
+    // Detect the unique-constraint violation by code (structural), not instanceof:
+    // when bundled (e.g. Next.js), the runtime error can fail an instanceof check
+    // against the imported Prisma namespace, letting a raw P2002 escape as a 500.
+    if ((err as { code?: string } | null)?.code === "P2002") {
+      // Distinguish which unique column collided (username vs email).
+      const target = (err as { meta?: { target?: unknown } }).meta?.target;
+      const fields = Array.isArray(target) ? target.join(",") : String(target ?? "");
+      if (fields.includes("email")) throw new EmailTakenError();
       throw new UsernameTakenError();
     }
     throw err;

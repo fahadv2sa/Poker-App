@@ -248,13 +248,16 @@ async function registerViaWeb(): Promise<{ id: string; username: string; playerN
   const res = await fetch(`${WEB_URL}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password: "smokepass123" }),
+    body: JSON.stringify({ username, email: `${username}@smoke.local`, password: "smokepass123" }),
   });
   const data = (await res.json()) as { id?: string; playerNumber?: number; messageAr?: string };
   if (res.status !== 201 || !data.id) {
     throw new Error(`web register failed (${res.status}): ${data.messageAr ?? JSON.stringify(data)}`);
   }
   created.userIds.push(data.id);
+  // New accounts are created UNVERIFIED and login is gated; the smoke flow needs a
+  // usable session, so mark this throwaway account verified directly in the DB.
+  await prisma.user.update({ where: { id: data.id }, data: { emailVerifiedAt: new Date() } });
   return { id: data.id, username, playerNumber: data.playerNumber ?? 0 };
 }
 
