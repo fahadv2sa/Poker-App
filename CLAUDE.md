@@ -4,6 +4,11 @@ Reference card for this project. Authoritative source is `SPEC.md` (on the user'
 `C:\Users\Admin\OneDrive\Desktop\SPEC.md`), Arabic, "Football Poker — النسخة النهائية v3".
 All decisions are finalized in **Section 19** — follow them literally, add no assumptions.
 
+> **Multi-game platform:** Link Up is game #1 of the **Football B** platform. Before adding a second
+> game, touching identity/auth, the football reference data, or any DB change, read the binding contract
+> at **`docs/architecture/PLATFORM_CONTRACTS.md`** (table ownership, identity = the shared `AUTH_SECRET`
+> JWT, football-data read seam, per-game isolation rules, and the deferred-by-design decisions).
+
 ## What this is
 
 Server-authoritative online multiplayer card game. Texas-Hold'em-style structure (rooms, blinds-like
