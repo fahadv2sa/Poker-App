@@ -414,19 +414,21 @@ Next.js 15 App Router. Pages (under `src/app/`): `login`, `register`, `rooms` (l
 
 ```
 Railway project
-├─ Service "web"          → apps/web         (Next.js)    → poker.fmgtech.dev    (Cloudflare proxied/orange)
-├─ Service "game-server"  → apps/game-server (Socket.IO)  → poker-rt.fmgtech.dev (Cloudflare DNS-only/grey)
-└─ Plugin  "Postgres"     → Railway PostgreSQL
+├─ Service "link-up"             → apps/web         (Next.js)    → poker.fmgtech.dev    (Cloudflare proxied/orange)
+├─ Service "game-server-link-up" → apps/game-server (Socket.IO)  → poker-rt.fmgtech.dev (Cloudflare DNS-only/grey)
+└─ Plugin  "Postgres"            → Railway PostgreSQL
 ```
+
+> **Service names (renamed 2026-06-24):** the Railway services are **link-up** (`apps/web`) and **game-server-link-up** (`apps/game-server`); project **Football-B**; **Postgres** unchanged. App directories + `@fb/*` package names are unchanged — only the Railway service labels changed; `${{ ... }}` cross-service refs must use these service names.
 
 Builder: **NIXPACKS** (`railway.toml [build]`). `[deploy]`: `restartPolicyType = ON_FAILURE`, `restartPolicyMaxRetries = 10`, **`numReplicas = 1`**. Railway does **not** create multiple services from one config file — each service is created in the dashboard pointing at the same repo, with Root Directory = repo root (so the pnpm workspace installs once and the root `postinstall` runs `prisma generate` for both).
 
-- **web service:** Build `pnpm --filter @fb/web build`; Start `pnpm --filter @fb/web start`; replicas may scale (stateless). Vars: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_GAME_SERVER_URL` (baked at **build** time).
-- **game-server service:** Build (none — `tsx` runs the TS source); Start `pnpm --filter @fb/game-server start` (→ `tsx src/index.ts`); **replicas = EXACTLY 1** (in-memory room state + timers). Vars: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `WEB_ORIGIN`, and (operationally) `BOTS_ENABLED`. **Do not set `PORT`** (Railway injects it; the server binds `process.env.PORT` with a local fallback).
+- **link-up service (apps/web):** Build `pnpm --filter @fb/web build`; Start `pnpm --filter @fb/web start`; replicas may scale (stateless). Vars: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `AUTH_URL`, `NEXT_PUBLIC_GAME_SERVER_URL` (baked at **build** time).
+- **game-server-link-up service (apps/game-server):** Build (none — `tsx` runs the TS source); Start `pnpm --filter @fb/game-server start` (→ `tsx src/index.ts`); **replicas = EXACTLY 1** (in-memory room state + timers). Vars: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `WEB_ORIGIN`, and (operationally) `BOTS_ENABLED`. **Do not set `PORT`** (Railway injects it; the server binds `process.env.PORT` with a local fallback).
 
-`AUTH_SECRET` **must be byte-identical** across web and game-server, or every socket handshake is rejected.
+`AUTH_SECRET` **must be byte-identical** across link-up and game-server-link-up, or every socket handshake is rejected.
 
-**Cloudflare DNS (SSL/TLS = Full(strict)):** `poker` CNAME → web (proxied/orange); `poker-rt` CNAME → game-server (**DNS-only/grey**, so the browser WebSocket hits Railway's TLS endpoint directly, avoiding the Cloudflare WS proxy on day one).
+**Cloudflare DNS (SSL/TLS = Full(strict)):** `poker` CNAME → link-up (proxied/orange); `poker-rt` CNAME → game-server-link-up (**DNS-only/grey**, so the browser WebSocket hits Railway's TLS endpoint directly, avoiding the Cloudflare WS proxy on day one).
 
 > Domain note: the docs predominantly use `poker.fmgtech.dev` / `poker-rt.fmgtech.dev`. `MASTER FILE.txt` §18.6 mentions Quick Play running on **`game1.fmgtech.dev`** for the game server in one spot — a likely doc inconsistency; the canonical/most-referenced realtime host in `DEPLOY.md` + `railway.toml` is `poker-rt.fmgtech.dev`. The exact current live mapping beyond these references is **Not verifiable from the codebase** (DNS lives in Cloudflare).
 

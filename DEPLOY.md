@@ -4,10 +4,12 @@ Target architecture (one GitHub repo → three Railway services):
 
 ```
 Railway project
-├─ Service "web"          → apps/web         (Next.js)        → poker.fmgtech.dev
-├─ Service "game-server"  → apps/game-server (Socket.IO)      → poker-rt.fmgtech.dev
-└─ Plugin  "Postgres"     → Railway PostgreSQL
+├─ Service "link-up"             → apps/web         (Next.js)        → poker.fmgtech.dev
+├─ Service "game-server-link-up" → apps/game-server (Socket.IO)      → poker-rt.fmgtech.dev
+└─ Plugin  "Postgres"            → Railway PostgreSQL
 ```
+
+> **Service names (renamed 2026-06-24):** the Railway services are **link-up** (= `apps/web`) and **game-server-link-up** (= `apps/game-server`); project **Football-B**; DB plugin **Postgres** (unchanged). The app directories (`apps/web`, `apps/game-server`) and `@fb/*` package names are UNCHANGED — only the Railway service labels changed. Any `${{ ... }}` cross-service reference must use these service names.
 
 The web app is stateless. **The game-server holds authoritative room state in
 memory and runs in-process turn timers, so it must be a single always-on
@@ -28,7 +30,7 @@ Prerequisites already done in code (Part 1 fixes):
 > ahead of its migration. It applies only pending migrations (idempotent,
 > advisory-locked). It needs `DATABASE_URL` in each service's variables and falls
 > back to `DATABASE_URL` when `DIRECT_URL` is unset — so a service whose runtime
-> only uses `DATABASE_URL` (e.g. game-server) still deploys without a separate
+> only uses `DATABASE_URL` (e.g. game-server-link-up) still deploys without a separate
 > `DIRECT_URL`. The manual prod-migration commands below remain valid for
 > first-time setup and for applying migrations out-of-band before a push.
 
@@ -114,8 +116,8 @@ intentionally empty until the tournament-stats import is run.)
 > Verify: `SELECT count(*) FROM players p LEFT JOIN positions pos
 > ON p.position_id = pos.id WHERE pos.id IS NULL;` must return **0**.
 
-## STEP 6 — Configure the game-server service
-Create/select the **game-server** service (Root Directory = repo root):
+## STEP 6 — Configure the game-server-link-up service
+Create/select the **game-server-link-up** service (Root Directory = repo root):
 - **Build Command:** _(none — `tsx` runs the source; install + postinstall is enough)_
 - **Start Command:** `pnpm --filter @fb/game-server start`
 - **Replicas:** **1** (required — in-memory room state)
@@ -130,15 +132,15 @@ Create/select the **game-server** service (Root Directory = repo root):
 - **Settings → Networking → Custom Domain:** add `poker-rt.fmgtech.dev` (note the
   CNAME target Railway gives you for STEP 8).
 
-## STEP 7 — Configure the web service
-Create/select the **web** service (Root Directory = repo root):
+## STEP 7 — Configure the link-up (web) service
+Create/select the **link-up** service (Root Directory = repo root):
 - **Build Command:** `pnpm --filter @fb/web build`
 - **Start Command:** `pnpm --filter @fb/web start`
 - **Variables:**
   ```
   DATABASE_URL                = <Railway PostgreSQL connection string>
   DIRECT_URL                  = <same as DATABASE_URL>
-  AUTH_SECRET                 = <exact same value as the game-server>
+  AUTH_SECRET                 = <exact same value as game-server-link-up>
   AUTH_URL                    = https://poker.fmgtech.dev
   NEXT_PUBLIC_GAME_SERVER_URL = https://poker-rt.fmgtech.dev
   ```
@@ -152,8 +154,8 @@ In Cloudflare (DNS for fmgtech.dev), add:
 
 | Name      | Type  | Target (Railway-provided)        | Proxy                |
 |-----------|-------|----------------------------------|----------------------|
-| `poker`   | CNAME | web service CNAME                | Proxied (orange)     |
-| `poker-rt`| CNAME | game-server service CNAME        | **DNS-only (grey)**  |
+| `poker`   | CNAME | link-up service CNAME            | Proxied (orange)     |
+| `poker-rt`| CNAME | game-server-link-up service CNAME | **DNS-only (grey)** |
 
 SSL/TLS mode: **Full (strict)**. `poker-rt` is DNS-only so the browser's WebSocket
 connects straight to Railway's TLS endpoint (avoids debugging Cloudflare's WS proxy
@@ -167,13 +169,13 @@ on day one; you can switch it to proxied later).
 Troubleshooting:
 - Sockets rejected (`UNAUTHENTICATED` / `SESSION_EXPIRED`) → `AUTH_SECRET` is not
   byte-identical on both services.
-- Sockets connect but the browser logs a CORS error → `WEB_ORIGIN` on the
-  game-server must exactly equal `https://poker.fmgtech.dev`.
+- Sockets connect but the browser logs a CORS error → `WEB_ORIGIN` on
+  game-server-link-up must exactly equal `https://poker.fmgtech.dev`.
 - Web build fails on a missing Prisma client → the root `postinstall` didn't run;
   confirm install happens at the repo root.
 - Game-server can't be reached → confirm it bound Railway's `PORT` (logs print
   `Game server listening on :<port>`), domain is **DNS-only**, and the start
-  command is `pnpm --filter @fb/game-server start`.
+  command is `pnpm --filter @fb/game-server start` (on the game-server-link-up service).
 
 ---
 

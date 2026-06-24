@@ -880,28 +880,33 @@ TEST_DATABASE_URL) first.
 14. DEPLOYMENT (RAILWAY) + THE MIGRATE-FIRST RULE
 ================================================================================
 Target: one GitHub repo → THREE Railway services (full runbook in DEPLOY.md):
-  web         → apps/web (Next.js)            → poker.fmgtech.dev   (proxied)
-  game-server → apps/game-server (Socket.IO)  → poker-rt.fmgtech.dev (DNS-only)
-  Postgres    → Railway PostgreSQL plugin
+  link-up             → apps/web (Next.js)            → poker.fmgtech.dev   (proxied)
+  game-server-link-up → apps/game-server (Socket.IO)  → poker-rt.fmgtech.dev (DNS-only)
+  Postgres            → Railway PostgreSQL plugin
+
+  SERVICE NAMES (renamed 2026-06-24): Railway service labels are "link-up" (=apps/web)
+  and "game-server-link-up" (=apps/game-server); project "Football-B"; "Postgres"
+  unchanged. App dirs + @fb/* package names unchanged — only service labels changed;
+  ${{...}} cross-service refs use these service names.
 
 Service config (also documented in railway.toml comments):
-  web:         Root = repo root; Build `pnpm --filter @fb/web build`;
+  link-up:     Root = repo root; Build `pnpm --filter @fb/web build`;
                Start `pnpm --filter @fb/web start`; replicas may scale.
                Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
                NEXT_PUBLIC_GAME_SERVER_URL (NEXT_PUBLIC_* is baked at BUILD time).
-  game-server: Root = repo root; Build (none — tsx runs the TS source);
+  game-server-link-up: Root = repo root; Build (none — tsx runs the TS source);
                Start `pnpm --filter @fb/game-server start` (→ tsx src/index.ts);
                *** replicas = EXACTLY 1 *** (in-memory room state + timers).
                Vars: DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN.
                Do NOT set PORT (Railway injects it).
-  AUTH_SECRET must be the SAME value across web and game-server.
+  AUTH_SECRET must be the SAME value across link-up and game-server-link-up.
 
 The root `postinstall` runs `prisma generate` on every install (the Prisma
 client is generated to a git-ignored path). Railway installs with a frozen
 lockfile, so commit an up-to-date pnpm-lock.yaml.
 
-DNS (Cloudflare, Full(strict) SSL): `poker` CNAME → web (proxied/orange);
-`poker-rt` CNAME → game-server (DNS-only/grey, so the browser WebSocket hits
+DNS (Cloudflare, Full(strict) SSL): `poker` CNAME → link-up (proxied/orange);
+`poker-rt` CNAME → game-server-link-up (DNS-only/grey, so the browser WebSocket hits
 Railway's TLS endpoint directly).
 
 ***** THE MIGRATE-FIRST RULE (NON-NEGOTIABLE — caused a real prod outage) *****

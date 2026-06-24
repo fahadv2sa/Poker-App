@@ -248,11 +248,17 @@ This is now in place: `railway.toml [deploy]` sets
 `preDeployCommand = 'DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" pnpm db:deploy'`, so every
 deploy runs `prisma migrate deploy` against prod **before** the new process serves, and a
 failed migration **aborts the deploy**. (The `DIRECT_URL := DATABASE_URL` fallback lets a
-service that only sets `DATABASE_URL` — e.g. game-server — still migrate; without it the
+service that only sets `DATABASE_URL` — e.g. game-server-link-up — still migrate; without it the
 predeploy hit Prisma P1012.) The manual checklist above remains the belt-and-suspenders
 mental model, but ordering is no longer purely manual. NOTE: each Railway service must have
 **auto-deploy from the branch ENABLED** (the game-server's was found OFF once, leaving it on
 a stale build — use "Deploy latest commit" in the dashboard if a push doesn't auto-fire).
+
+**Railway service names (renamed 2026-06-24):** the services are **link-up** (= `apps/web`) and
+**game-server-link-up** (= `apps/game-server`); Railway project **Football-B**; DB plugin **Postgres**
+(unchanged). The app directories (`apps/web`, `apps/game-server`) and `@fb/*` package names are
+UNCHANGED — only the Railway service labels changed. Any `${{ ... }}` cross-service reference must use
+the service names above.
 
 ### Why the web app didn't crash (don't be fooled again)
 

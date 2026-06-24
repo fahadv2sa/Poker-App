@@ -1,9 +1,15 @@
 # Railway deployment — Link Up monorepo (pnpm workspaces + Turborepo).
 #
 # Architecture — all from this one GitHub repo:
-#   Service "web"          → apps/web         (Next.js)    →  poker.fmgtech.dev
-#   Service "game-server"  → apps/game-server (Socket.IO)  →  poker-rt.fmgtech.dev
-#   Plugin  "Postgres"     → Railway PostgreSQL
+#   Service "link-up"             → apps/web         (Next.js)    →  poker.fmgtech.dev
+#   Service "game-server-link-up" → apps/game-server (Socket.IO)  →  poker-rt.fmgtech.dev
+#   Plugin  "Postgres"            → Railway PostgreSQL
+#
+# SERVICE NAMES (renamed 2026-06-24): the Railway service LABELS are now "link-up"
+# (= apps/web) and "game-server-link-up" (= apps/game-server); project "Football-B";
+# DB plugin "Postgres" (unchanged). App directories + @fb/* package names are
+# UNCHANGED — only the Railway service labels changed. ${{ }} cross-service refs
+# must use these service names.
 #
 # Railway does NOT create multiple services from a single config file. Create each
 # service in the dashboard (New Service → this GitHub repo), keep Root Directory at
@@ -13,7 +19,7 @@
 # service whose "Config File Path" points at this file.
 #
 # ─────────────────────────────────────────────────────────────────────────────
-# Service: web  (apps/web)
+# Service: link-up  (apps/web)
 #   Root Directory : (repo root)
 #   Build Command  : pnpm --filter @fb/web build
 #   Start Command  : pnpm --filter @fb/web start
@@ -22,7 +28,7 @@
 #                    (NEXT_PUBLIC_* is baked in at BUILD time — set it before building)
 #   Replicas       : 1+  (stateless — safe to scale horizontally)
 #
-# Service: game-server  (apps/game-server)
+# Service: game-server-link-up  (apps/game-server)
 #   Root Directory : (repo root)
 #   Build Command  : (none — tsx runs TypeScript source; install + postinstall suffices)
 #   Start Command  : pnpm --filter @fb/game-server start      # → tsx src/index.ts
@@ -45,11 +51,11 @@ builder = "NIXPACKS"
 # PENDING migrations, never resets/drops, and is idempotent (already-applied
 # migrations are skipped). It takes an advisory lock on _prisma_migrations, so if
 # both services deploy at once the concurrent runs serialize safely. Inherited by
-# every service whose Config File Path points at this railway.toml (web AND
-# game-server) — running it per-service is harmless because it is idempotent.
+# every service whose Config File Path points at this railway.toml (link-up AND
+# game-server-link-up) — running it per-service is harmless because it is idempotent.
 #
 # `prisma migrate deploy` reads DIRECT_URL (the schema declares directUrl). A
-# service whose RUNTIME only needs DATABASE_URL (e.g. game-server) may not have
+# service whose RUNTIME only needs DATABASE_URL (e.g. game-server-link-up) may not have
 # DIRECT_URL set, which would make the migrate step — and thus the whole deploy —
 # fail with P1012. So fall back to DATABASE_URL when DIRECT_URL is unset (on
 # Railway PG they are the same value; a future Neon split sets a real DIRECT_URL,
