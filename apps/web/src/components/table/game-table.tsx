@@ -713,25 +713,53 @@ function LobbyPanel({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm text-muted-foreground">كود الدعوة</span>
-        <div className="flex items-center gap-2">
-          <code className="num rounded-md border bg-secondary/50 px-3 py-1 tracking-widest">
+    <div className="flex flex-col gap-4">
+      {/* ── Invite card: premium gold panel with the code + share ───────────── */}
+      <div className="relative overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-b from-gold/[0.12] to-transparent px-4 py-5 text-center">
+        {/* ambient gold glow along the top edge */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-12 h-28"
+          style={{
+            background:
+              "radial-gradient(60% 100% at 50% 0%, color-mix(in oklch, var(--gold) 28%, transparent), transparent)",
+          }}
+        />
+        <div className="relative flex flex-col items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-[0.68rem] font-bold tracking-[0.18em] text-gold">
+            <span aria-hidden>🎟️</span> كود الدعوة
+          </span>
+          <div className="num inline-flex rounded-xl border border-gold/40 bg-[#0b0f1a]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
             {inviteCode}
-          </code>
-          <Button type="button" variant="secondary" size="sm" onClick={onShare} className="gap-1.5">
-            <span aria-hidden>🔗</span>
-            {copied ? "تم النسخ" : "مشاركة"}
+          </div>
+          <p className="text-xs text-muted-foreground">ادعُ أصدقاءك بالكود أو شارك الرابط مباشرة</p>
+          <Button
+            type="button"
+            onClick={onShare}
+            size="lg"
+            className="mt-1 w-full max-w-xs gap-2 border border-gold/40 bg-gold/15 font-bold text-gold hover:bg-gold/25"
+          >
+            <span aria-hidden className="text-base">🔗</span>
+            {copied ? "تم نسخ الرابط ✓" : "مشاركة الدعوة"}
           </Button>
         </div>
       </div>
+
+      {/* ── Start the game (host) / waiting state ────────────────────────────── */}
       {isHost ? (
-        <Button onClick={onStart} disabled={!canStart} className="w-full" size="lg">
-          {canStart ? "ابدأ اللعبة" : "بانتظار لاعب آخر…"}
+        <Button
+          onClick={onStart}
+          disabled={!canStart}
+          size="lg"
+          className={cn("w-full text-base font-bold", canStart && "btn-cta glow-primary")}
+        >
+          {canStart ? "ابدأ اللعبة" : "بانتظار انضمام لاعب…"}
         </Button>
       ) : (
-        <p className="text-center text-sm text-muted-foreground">بانتظار أن يبدأ المضيف اللعبة…</p>
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-card/50 py-3 text-sm text-muted-foreground">
+          <span aria-hidden className="size-2 animate-pulse rounded-full bg-primary" />
+          بانتظار أن يبدأ المضيف اللعبة…
+        </div>
       )}
     </div>
   );
