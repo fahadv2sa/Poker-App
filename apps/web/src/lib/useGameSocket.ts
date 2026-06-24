@@ -75,7 +75,13 @@ export function useGameSocket(token: string, inviteCode: string) {
       onTurn: (p) =>
         setView((v) =>
           v.state
-            ? { ...v, state: { ...v.state, currentTurnSeat: p.seat, turnDeadlineTs: p.deadlineTs } }
+            ? {
+                ...v,
+                // The acting seat's fold-forfeit; it's the local player's own when
+                // it becomes their turn (the fold confirm only shows then).
+                foldForfeit: p.foldForfeit,
+                state: { ...v.state, currentTurnSeat: p.seat, turnDeadlineTs: p.deadlineTs },
+              }
             : v,
         ),
       onBet: (p) => {

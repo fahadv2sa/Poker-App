@@ -70,6 +70,9 @@ export interface TableView {
   /** Every completed round this session, oldest first — replayed in the table
    *  summary shown when the player leaves or the table closes. */
   rounds: RoundSummary[];
+  /** Coins the local player would forfeit (lose) by folding on the CURRENT turn,
+   *  from the latest turn:changed. Shown in the fold confirmation. 0 between turns. */
+  foldForfeit: number;
 }
 
 export const INITIAL_VIEW: TableView = {
@@ -88,6 +91,7 @@ export const INITIAL_VIEW: TableView = {
   authExpired: false,
   roundReady: null,
   rounds: [],
+  foldForfeit: 0,
 };
 
 const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);

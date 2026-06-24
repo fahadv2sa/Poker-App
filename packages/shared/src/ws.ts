@@ -173,6 +173,11 @@ export interface PhaseChangedPayload {
 export interface TurnChangedPayload {
   seat: number;
   deadlineTs: number;
+  /** Coins THIS seat would forfeit (its only loss) by folding right now — half
+   *  the ante on PREFLOP/FLOP, half its last bet on TURN/RIVER, capped at what it
+   *  has committed. The rest of its commitment is refunded on fold. Shown in the
+   *  fold confirmation so the player knows exactly how much they'd lose. */
+  foldForfeit: number;
 }
 
 export interface BetPlacedPayload {

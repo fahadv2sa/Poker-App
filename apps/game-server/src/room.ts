@@ -876,14 +876,27 @@ export class GameRoom {
     this.deps.timers.arm(TURN_KEY, this.state.config.turnTimerSec * 1000, () => {
       void this.onTurnTimeout(bs.currentTurnSeat!);
     });
+    // What the seat to act would forfeit (lose) by folding right now — shown in
+    // the client's fold confirmation. The rest of its commitment is refunded.
+    const actor = this.state.players.find((p) => p.seat === bs.currentTurnSeat);
+    const foldForfeit = actor
+      ? Number(
+          computeFold({
+            round: this.roundForPhase(),
+            ante: BigInt(this.state.config.ante),
+            lastBetAmount: actor.lastBetAmount,
+            committedTotal: actor.committedTotal,
+          }).forfeit,
+        )
+      : 0;
     this.deps.emitter.toRoom(SERVER_EVENTS.turnChanged, {
       seat: bs.currentTurnSeat,
       deadlineTs: deadline,
+      foldForfeit,
     });
     // Bot seam: if the seat to act is a Quick Play bot, hand it to the optional
     // controller (which schedules a human-like delayed placeAction). Inert for
     // humans and whenever no controller is injected — the base game is unaffected.
-    const actor = this.state.players.find((p) => p.seat === bs.currentTurnSeat);
     if (actor?.isBot) this.deps.bots?.onTurn(this, bs.currentTurnSeat, deadline);
   }
 

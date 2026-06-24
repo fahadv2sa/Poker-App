@@ -566,6 +566,7 @@ export function GameTable({
                   owed={owed}
                   minRaiseTo={minRaiseTo}
                   maxRaiseTo={maxRaiseTo}
+                  foldForfeit={view.foldForfeit}
                   onAction={placeAction}
                   deadlineTs={s.turnDeadlineTs}
                 />
@@ -751,12 +752,15 @@ function ActionBar({
   owed,
   minRaiseTo,
   maxRaiseTo,
+  foldForfeit,
   onAction,
   deadlineTs,
 }: {
   owed: number;
   minRaiseTo: number;
   maxRaiseTo: number;
+  /** Coins the player would lose (forfeit) by folding now; rest is refunded. */
+  foldForfeit: number;
   onAction: (type: string, amount?: number) => void;
   deadlineTs: number | null;
 }) {
@@ -800,7 +804,8 @@ function ActionBar({
       {foldConfirm ? (
         <div className="flex flex-col gap-2">
           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-xs text-destructive-foreground sm:text-sm">
-            الانسحاب من هذه الجولة؟ تخسر جزءًا من رهانك ويُعاد لك الباقي. المؤقّت مستمر.
+            هل تريد الانسحاب؟ ستخسر 🪙 <span className="num font-bold">{foldForfeit}</span>{" "}
+            عملة ويُعاد لك باقي رهانك. المؤقّت مستمر.
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Button variant="destructive" className={sz} onClick={() => onAction("FOLD")}>
