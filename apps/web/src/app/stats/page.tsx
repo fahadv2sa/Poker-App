@@ -128,22 +128,23 @@ export default async function StatsPage() {
             "radial-gradient(120% 120% at 0% 0%, color-mix(in oklch, var(--accent) 16%, transparent), transparent 55%), linear-gradient(180deg, color-mix(in oklch, var(--primary) 7%, transparent), transparent), var(--card)",
         }}
       >
-        <div className="flex flex-wrap items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-5">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
             {avatarSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarSrc} alt={displayName} className="size-16 rounded-full object-cover ring-2 ring-accent/60" />
+              <img src={avatarSrc} alt={displayName} className="size-16 shrink-0 rounded-full object-cover ring-2 ring-accent/60" />
             ) : (
               <div
-                className="grid size-16 place-items-center rounded-full text-2xl font-black text-white ring-2 ring-accent/60"
+                className="grid size-16 shrink-0 place-items-center rounded-full text-2xl font-black text-white ring-2 ring-accent/60"
                 style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))` }}
                 aria-hidden
               >
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
-            <div>
-              <div className="text-2xl font-black leading-tight">{displayName}</div>
+            <div className="min-w-0">
+              {/* truncate a long name so the level/XP emblem never wraps to the next line */}
+              <div className="truncate text-2xl font-black leading-tight">{displayName}</div>
               <div className="num text-sm text-muted-foreground">#{user.playerNumber}</div>
             </div>
           </div>
