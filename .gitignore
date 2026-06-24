@@ -48,3 +48,11 @@ coverage/
 # originals only need to exist on the machine that runs the seed — never in git
 # or on the server. identities.json IS committed; the images are not.
 apps/game-server/src/bots/avatars/
+
+# Database backups / dumps — NEVER commit (large + contains data). Put dumps in /backups/ or off-repo.
+# Runbook: docs/runbooks/DB_BACKUP.md
+/backups/
+*.dump
+*.dump.gz
+*.sql.gz
+prod-*-backup-*.json

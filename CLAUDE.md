@@ -8,6 +8,9 @@ All decisions are finalized in **Section 19** — follow them literally, add no 
 > game, touching identity/auth, the football reference data, or any DB change, read the binding contract
 > at **`docs/architecture/PLATFORM_CONTRACTS.md`** (table ownership, identity = the shared `AUTH_SECRET`
 > JWT, football-data read seam, per-game isolation rules, and the deferred-by-design decisions).
+>
+> **Before ANY destructive/structural DB change, back up first** — the football reference dataset is
+> hard to rebuild (external API + manual curation). Runbook: **`docs/runbooks/DB_BACKUP.md`**.
 
 ## What this is
 
