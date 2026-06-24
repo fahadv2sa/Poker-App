@@ -5,12 +5,19 @@ import Link from "next/link";
 
 /**
  * Home top-bar overflow menu (the ⋯ on the right). A small dropdown with the
- * game guide, friends, and log out. Logout reuses the existing `signOut` server
+ * game guide (shown only when `showGuide` — it's game-specific, not platform-level)
+ * and log out. Logout reuses the existing `signOut` server
  * action, passed in from the (server) home page exactly like LogoutConfirm does —
  * no auth behavior changes here, this only relocates the entry points. Closes on
  * outside-click or Escape.
  */
-export function HomeMenu({ logoutAction }: { logoutAction: () => void | Promise<void> }) {
+export function HomeMenu({
+  logoutAction,
+  showGuide = true,
+}: {
+  logoutAction: () => void | Promise<void>;
+  showGuide?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -54,9 +61,11 @@ export function HomeMenu({ logoutAction }: { logoutAction: () => void | Promise<
           className="panel absolute z-30 mt-2 flex w-52 flex-col overflow-hidden p-1.5 text-sm"
           style={{ insetInlineEnd: 0 }}
         >
-          <Link role="menuitem" href="/guide" onClick={() => setOpen(false)} className={item}>
-            <span aria-hidden>📖</span> دليل اللعب
-          </Link>
+          {showGuide ? (
+            <Link role="menuitem" href="/guide" onClick={() => setOpen(false)} className={item}>
+              <span aria-hidden>📖</span> دليل اللعب
+            </Link>
+          ) : null}
           <form action={logoutAction} className="contents">
             <button
               role="menuitem"

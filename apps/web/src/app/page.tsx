@@ -93,7 +93,8 @@ export default async function HubPage() {
         </div>
         <div className="flex items-center gap-2">
           <UiSoundToggle />
-          <HomeMenu logoutAction={logout} />
+          {/* Hub is platform-level — no Link Up game guide here (it lives in the game). */}
+          <HomeMenu logoutAction={logout} showGuide={false} />
         </div>
       </header>
 

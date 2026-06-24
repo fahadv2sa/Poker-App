@@ -177,7 +177,7 @@ export function GameTable({
     // Show the table summary if there's at least one completed round to browse;
     // otherwise there's nothing to show, so go straight home.
     if (view.rounds.length > 0) setShowSummary(true);
-    else router.replace("/");
+    else router.replace("/games/link-up");
   };
 
   const phase = s?.phase ?? "LOBBY";
@@ -230,7 +230,7 @@ export function GameTable({
       setShowSummary(true);
       return;
     }
-    const t = setTimeout(() => router.replace("/"), 1400);
+    const t = setTimeout(() => router.replace("/games/link-up"), 1400);
     return () => clearTimeout(t);
   }, [view.closed, view.rounds.length, router]);
   // Inactivity auto-logout (or an invalid token) rejected the handshake: the
@@ -662,7 +662,7 @@ export function GameTable({
           <TableSummary
             rounds={view.rounds}
             closedReason={view.closed}
-            onClose={() => router.replace("/")}
+            onClose={() => router.replace("/games/link-up")}
           />
         ) : null}
       </AnimatePresence>

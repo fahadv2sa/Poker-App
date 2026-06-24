@@ -227,14 +227,21 @@ export default async function HomePage({
       {/* ── 1) top bar: logo on the RIGHT, ⋯ menu on the LEFT (RTL: first child
               renders at the right, last child at the left). ───────────────── */}
       <header className="relative z-30 flex items-center justify-between">
-        <Link
-          href="/"
-          aria-label="إلى الألعاب"
-          className="flex items-center gap-2 text-lg font-black transition active:scale-95"
-        >
-          <Logo glow className="size-9" />
-          <span>لينك اب</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Back to the platform games hub (/). */}
+          <Link
+            href="/"
+            aria-label="العودة إلى الألعاب"
+            className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-foreground/85 transition hover:text-foreground active:scale-95"
+          >
+            <span aria-hidden>🔙</span>
+            الألعاب
+          </Link>
+          <div className="flex items-center gap-2 text-lg font-black">
+            <Logo glow className="size-9" />
+            <span>لينك اب</span>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <UiSoundToggle />
           <HomeMenu logoutAction={logout} />
