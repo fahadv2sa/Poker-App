@@ -91,10 +91,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.uid = user.id;
         token.playerNumber = (user as { playerNumber?: number }).playerNumber;
       }
-      // Treat any token use as activity (this callback runs on sign-in AND on
-      // every session access). Throttled + guarded in @fb/db, so it never adds
-      // a real write on most requests and never breaks auth on a DB error.
       if (typeof token.uid === "string") {
+        // Invalidate the session if the account no longer exists (e.g. it was
+        // deleted): a still-valid JWT for a missing user otherwise loops forever
+        // between "/" (user not found → /login) and "/login" (session present →
+        // "/"). Drop the identity claims → the session reads as logged out, so
+        // they get a normal login/register screen. Fails OPEN on a DB error so a
+        // hiccup never logs everyone out.
+        let stillExists: boolean;
+        try {
+          stillExists =
+            (await prisma.user.findUnique({
+              where: { id: token.uid },
+              select: { id: true },
+            })) !== null;
+        } catch {
+          stillExists = true; // fail-open: a DB hiccup must not log everyone out
+        }
+        if (!stillExists) {
+          delete token.uid;
+          delete token.playerNumber;
+          return token;
+        }
+        // Treat any token use as activity (this callback runs on sign-in AND on
+        // every session access). Throttled + guarded in @fb/db, so it never adds
+        // a real write on most requests and never breaks auth on a DB error.
         await touchUserActivity(token.uid);
       }
       return token;
