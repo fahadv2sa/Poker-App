@@ -691,20 +691,28 @@ function LobbyPanel({
   // without Web Share fall back to copying the link to the clipboard.
   const onShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
+    // Each item on its OWN line. The URL goes INSIDE the text (not the separate
+    // Web Share `url` field) so the recipient app keeps our exact line layout
+    // instead of appending the link onto an Arabic line — mixing RTL Arabic with
+    // the LTR code/URL on a single line is what the bidi algorithm scrambles.
+    // A code/URL alone on its line renders cleanly; WhatsApp/Telegram still
+    // auto-generate the link preview for the URL found in the text.
+    const text = [
+      "انضم لطاولتي بالضغط على الرابط أو إدخال الكود",
+      inviteCode,
+      "رابط الانضمام",
+      url,
+    ].join("\n");
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({
-          title: "دعوة إلى طاولة",
-          text: `انضم إلى طاولتي! كود الدعوة: ${inviteCode}`,
-          url,
-        });
+        await navigator.share({ text });
       } catch {
         // User dismissed the share sheet, or sharing failed — nothing to do.
       }
       return;
     }
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -740,7 +748,7 @@ function LobbyPanel({
             className="mt-1 w-full max-w-xs gap-2 border border-gold/40 bg-gold/15 font-bold text-gold hover:bg-gold/25"
           >
             <span aria-hidden className="text-base">🔗</span>
-            {copied ? "تم نسخ الرابط ✓" : "مشاركة الدعوة"}
+            {copied ? "تم نسخ الدعوة ✓" : "مشاركة الدعوة"}
           </Button>
         </div>
       </div>
