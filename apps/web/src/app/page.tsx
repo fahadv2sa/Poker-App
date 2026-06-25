@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@fb/db";
 import { auth, signOut } from "@/auth";
@@ -16,6 +17,40 @@ function hueFromSeed(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
   return h;
+}
+
+/** One profile stat — tone-tinted icon chip + value + label. `href` makes it a
+ *  navigation control (Friends → /friends). Matches the game's stat chips. */
+function StatCard({
+  icon,
+  value,
+  label,
+  tone,
+  href,
+}: {
+  icon: string;
+  value: string;
+  label: string;
+  tone: string;
+  href?: string;
+}) {
+  const body = (
+    <>
+      <span className="stat-chip" style={{ "--tone": tone } as CSSProperties} aria-hidden>
+        {icon}
+      </span>
+      <span className="num text-sm font-extrabold leading-none">{value}</span>
+      <span className="text-[0.66rem] text-muted-foreground">{label}</span>
+    </>
+  );
+  const cls = "group flex w-16 flex-col items-center gap-1.5 text-center";
+  return href ? (
+    <Link href={href} className={cn(cls, "transition")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
 }
 
 /** One game tile on the hub. Live → navigates to the game; "soon" → a disabled
@@ -57,14 +92,18 @@ export default async function HubPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
 
-  // Identity only — the hub is platform-level. Coins/level/stats are per-game and
-  // live INSIDE each game (e.g. /games/link-up), never on the hub.
-  const [user, avatar] = await Promise.all([
+  // Platform-level profile: identity (avatar/name) + social (likes/friends). Level/
+  // XP live in each game's statistics; coins live inside each game. Never economy
+  // here — the hub is shared across all games.
+  const [user, avatar, friendCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { username: true, nickname: true, avatarSeed: true },
+      select: { username: true, nickname: true, avatarSeed: true, likesReceived: true },
     }),
     prisma.userAvatar.findUnique({ where: { userId }, select: { updatedAt: true } }),
+    prisma.friendship.count({
+      where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
+    }),
   ]);
   if (!user) redirect("/login");
 
@@ -74,6 +113,8 @@ export default async function HubPage() {
     : null;
   const hue = hueFromSeed(user.avatarSeed ?? user.username);
   const initial = displayName.charAt(0).toUpperCase();
+  const likes = user.likesReceived.toLocaleString("en-US");
+  const friends = friendCount.toLocaleString("en-US");
 
   // Reuses the existing sign-out server action (same as the game lobby).
   const logout = async () => {
@@ -98,29 +139,36 @@ export default async function HubPage() {
         </div>
       </header>
 
-      {/* identity chrome — avatar + name (tap → profile). No economy here. */}
-      <section className="fade-rise relative z-10 mt-6 flex flex-col items-center gap-2">
-        <Link href="/profile" aria-label="الملف الشخصي" className="transition active:scale-95">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl}
-              alt={displayName}
-              className="avatar-glow size-20 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              aria-hidden
-              className="avatar-glow grid size-20 place-items-center rounded-full text-3xl font-black text-white"
-              style={{
-                background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))`,
-              }}
-            >
-              {initial}
-            </div>
-          )}
-        </Link>
-        <span className="max-w-[10rem] truncate text-base font-bold">{displayName}</span>
+      {/* profile — platform-level identity + social. Avatar (tap → profile), name,
+          and ❤️ likes + 👥 friends. Level/XP live in the game's statistics. */}
+      <section className="panel panel-accent fade-rise relative z-10 mt-6 overflow-hidden p-5 sm:p-6">
+        <div className="flex flex-col items-center gap-3">
+          <Link href="/profile" aria-label="الملف الشخصي" className="transition active:scale-95">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="avatar-glow size-24 rounded-full object-cover sm:size-28"
+              />
+            ) : (
+              <div
+                aria-hidden
+                className="avatar-glow grid size-24 place-items-center rounded-full text-4xl font-black text-white sm:size-28"
+                style={{
+                  background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))`,
+                }}
+              >
+                {initial}
+              </div>
+            )}
+          </Link>
+          <span className="max-w-[11rem] truncate text-base font-bold">{displayName}</span>
+          <div className="mt-1 flex items-center justify-center gap-12">
+            <StatCard icon="❤️" value={likes} label="إعجاب" tone="var(--primary)" />
+            <StatCard icon="👥" value={friends} label="الأصدقاء" tone="var(--accent)" href="/friends" />
+          </div>
+        </div>
       </section>
 
       {/* games grid — one card per platform game (see lib/games.ts). */}
