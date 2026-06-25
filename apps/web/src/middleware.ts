@@ -4,29 +4,37 @@ import type { NextRequest } from "next/server";
 /**
  * Host-based routing for the dedicated admin origin.
  *
- * When `ADMIN_HOST` is set (e.g. "panel.fmgtech.dev") and a request arrives on
- * that host, ONLY the admin area is served — every other path redirects to
- * /admin/login, so the admin panel is its own origin/PWA and iOS can never
- * collapse its home-screen icon onto the game (different host).
+ * Requests on an admin host get the admin-only panel: every non-admin path
+ * redirects to /admin/login, so the panel is its own origin/PWA and iOS can never
+ * collapse its home-screen icon onto the game (a different host).
  *
- * Behind Cloudflare + Railway the real public host can land in `x-forwarded-host`
- * or `nextUrl.host` rather than the raw `host` header, so we match against ALL of
- * them. Safe by default: ADMIN_HOST unset / any other host (the game) → no-op.
+ * The admin host is HARDCODED so the feature can never silently depend on a
+ * Railway variable being set/applied (the original failure). `ADMIN_HOST` only
+ * ADDS extra hosts if ever needed. Behind Cloudflare + Railway the real public
+ * host arrives in `host` / `x-forwarded-host` (nextUrl.host is the internal
+ * localhost), so we match all three. The game host is left untouched.
  */
-export function middleware(req: NextRequest) {
-  const adminHost = (process.env.ADMIN_HOST ?? "")
-    .trim()
+function normHost(h: string | null): string {
+  return (h ?? "")
     .toLowerCase()
+    .split(",")[0]!
+    .trim()
     .replace(/^https?:\/\//, "")
     .replace(/\/.*$/, "");
+}
 
+const ADMIN_HOSTS = new Set(
+  ["panel.fmgtech.dev", process.env.ADMIN_HOST ?? ""].map(normHost).filter(Boolean),
+);
+
+export function middleware(req: NextRequest) {
   const candidates = [
-    req.nextUrl.host,
-    req.headers.get("x-forwarded-host"),
     req.headers.get("host"),
-  ].map((h) => (h ?? "").toLowerCase().split(",")[0]!.trim());
+    req.headers.get("x-forwarded-host"),
+    req.nextUrl.host,
+  ].map(normHost);
 
-  const onAdminHost = adminHost !== "" && candidates.includes(adminHost);
+  const onAdminHost = candidates.some((c) => ADMIN_HOSTS.has(c));
 
   const { pathname } = req.nextUrl;
   const passthrough =
@@ -42,10 +50,10 @@ export function middleware(req: NextRequest) {
     res = NextResponse.redirect(url);
   }
 
-  // TEMP diagnostic (hostnames only, no secrets) — removed once confirmed working.
+  // TEMP diagnostic (hostnames only, no secrets) — removed once confirmed on prod.
   res.headers.set(
     "x-fb-mw",
-    `admin=${adminHost || "unset"};cands=${candidates.join("|")};match=${onAdminHost}`,
+    `adminHosts=${[...ADMIN_HOSTS].join("|") || "none"};cands=${candidates.join("|")};match=${onAdminHost}`,
   );
   return res;
 }
