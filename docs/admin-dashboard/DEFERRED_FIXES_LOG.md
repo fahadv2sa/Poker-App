@@ -46,6 +46,20 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
   pre-launch audit).
 - **Suggested fix (later):** widen the pin to `>=20` or align the local Node version.
 
+## D5 — Migration-history divergence: prod ahead of the deploy branch — DEFERRED (operational, prod-relevant)
+- **Found:** Phase 0 (after applying the admin migration to prod, migrate-first).
+- **What:** prod's `_prisma_migrations` now records `20260625064625_add_admin_authority`
+  as applied, but the **auto-deploy branch `feat/fame-score-system` does not contain that
+  migration file** (it lives on `feat/admin-dashboard`).
+- **Why it matters:** if `feat/fame-score-system` is deployed **before** the admin migration
+  is merged into it, the predeploy `prisma migrate deploy` will see a migration applied on the
+  DB but missing from that branch's folder — at minimum it reports divergence, and it may fail
+  the deploy. This is the expected, known cost of doing migrate-first from a feature branch.
+- **Mitigation (do this, not blocking now):** do **not** deploy `feat/fame-score-system` until
+  the admin migration is present in the deploy path — i.e. merge the admin work (or at least
+  the migration) into the deploy branch, or switch the deploy branch to the merged result,
+  before the next prod deploy. No deploy is in progress, so nothing is broken right now.
+
 ## D4 — Prisma config deprecation + major upgrade available — DEFERRED
 - **Found:** Phase 0 (generate/migrate output).
 - **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also
