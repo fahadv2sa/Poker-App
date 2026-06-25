@@ -7,6 +7,7 @@ export * from "./gameserver-client.js";
 export * from "./gameserver-http.js";
 export * from "./actions/wallet.js";
 export * from "./actions/users.js";
+export * from "./actions/admins.js";
 export * from "./views/overview.js";
 export * from "./views/users.js";
 export * from "./views/games.js";

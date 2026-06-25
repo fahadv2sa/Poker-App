@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { can } from "@fb/admin-core";
+import { PERMISSIONS } from "@fb/shared";
 import { requireAdminPage } from "@/lib/admin-guard";
 
 // Every /admin route is dynamic + gated. The gate runs here so it protects the
@@ -18,6 +20,9 @@ const NAV: { href: string; label: string }[] = [
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const ctx = await requireAdminPage();
+  const nav = can(ctx, PERMISSIONS.ADMIN_MANAGE)
+    ? [...NAV, { href: "/admin/admins", label: "المشرفون" }]
+    : NAV;
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -31,7 +36,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             {ctx.role === "SUPER_ADMIN" ? "مشرف أعلى" : "مشرف"}
           </span>
           <nav className="flex flex-wrap items-center gap-1 text-sm">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
