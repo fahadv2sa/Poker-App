@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -9,6 +10,16 @@ import { readAdminSessionUserId } from "@/lib/admin-session";
 import { adminLogoutAction } from "./login/actions";
 
 export const dynamic = "force-dynamic";
+
+// The /admin section gets its OWN PWA manifest — a separate "admin" home-screen
+// app that launches at /admin/login (start_url + scope=/admin), overriding the
+// game's root manifest for these routes. iOS uses the apple-web-app title + the
+// current page on Add-to-Home-Screen, so install it while on /admin/login.
+export const metadata: Metadata = {
+  title: "لوحة التحكم",
+  manifest: "/admin.webmanifest",
+  appleWebApp: { capable: true, title: "لوحة التحكم", statusBarStyle: "black-translucent" },
+};
 
 const NAV: { href: string; label: string }[] = [
   { href: "/admin", label: "الرئيسية" },
