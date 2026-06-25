@@ -108,6 +108,16 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
 - **Suggested fix (later):** a per-room kicked-user set checked on `room:join` to block rejoin
   after an admin kick.
 
+## D10 — Admin 2FA not built (recommended hardening) — DEFERRED (documented)
+- **Found:** Phase 6 (hardening checkpoint).
+- **What:** the dashboard gate is session + admin-row + optional IP allowlist (`ADMIN_IP_ALLOWLIST`,
+  implemented). True multi-factor (TOTP) step-up for `/admin` is **not** built.
+- **Why it matters:** the super-admin is the highest-value account; 2FA is the strongest single
+  hardening. Lower-cost mitigations (IP allowlist, ban enforcement, audit) are already in place.
+- **Suggested fix (later):** TOTP secret on a `platform.admin_mfa` row, enrolled per admin, verified as a
+  post-login step-up; natural fit at the P3 separate-origin boundary. Design noted in
+  `docs/admin-dashboard/OPERATIONS.md` (Security posture).
+
 ## D4 — Prisma config deprecation + major upgrade available — DEFERRED
 - **Found:** Phase 0 (generate/migrate output).
 - **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also

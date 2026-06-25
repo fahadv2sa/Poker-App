@@ -8,7 +8,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 vi.mock("@/auth", () => ({ auth: vi.fn() }));
-vi.mock("@fb/admin-core", () => ({ loadAdminContext: vi.fn() }));
+vi.mock("@fb/admin-core", () => ({ loadAdminContext: vi.fn(), can: vi.fn() }));
+vi.mock("next/headers", () => ({
+  // No IP allowlist configured in tests → the guard's IP check is a pass-through.
+  headers: vi.fn(async () => ({ get: () => null })),
+}));
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");

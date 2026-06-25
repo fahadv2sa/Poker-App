@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { can, loadAdminContext, type AdminContext } from "@fb/admin-core";
 import type { PermissionKey } from "@fb/shared";
 import { auth } from "@/auth";
+import { ipAllowed } from "./admin-ip";
 
 /**
  * Server-side gate for the entire /admin area.
@@ -14,6 +16,12 @@ import { auth } from "@/auth";
  * /admin, so it adds nothing to player-facing traffic.
  */
 export async function requireAdminPage(): Promise<AdminContext> {
+  // Optional IP allowlist (opt-in via ADMIN_IP_ALLOWLIST). Checked first, so a
+  // disallowed source 404s before any identity work — same no-leak posture.
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  if (!ipAllowed(process.env.ADMIN_IP_ALLOWLIST, ip)) notFound();
+
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) notFound();
