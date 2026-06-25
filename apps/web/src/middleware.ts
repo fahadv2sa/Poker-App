@@ -40,22 +40,12 @@ export function middleware(req: NextRequest) {
   const passthrough =
     !onAdminHost || pathname.startsWith("/admin") || pathname.startsWith("/api");
 
-  let res: NextResponse;
-  if (passthrough) {
-    res = NextResponse.next();
-  } else {
-    const url = req.nextUrl.clone();
-    url.pathname = "/admin/login";
-    url.search = "";
-    res = NextResponse.redirect(url);
-  }
+  if (passthrough) return NextResponse.next();
 
-  // TEMP diagnostic (hostnames only, no secrets) — removed once confirmed on prod.
-  res.headers.set(
-    "x-fb-mw",
-    `adminHosts=${[...ADMIN_HOSTS].join("|") || "none"};cands=${candidates.join("|")};match=${onAdminHost}`,
-  );
-  return res;
+  const url = req.nextUrl.clone();
+  url.pathname = "/admin/login";
+  url.search = "";
+  return NextResponse.redirect(url);
 }
 
 export const config = {
