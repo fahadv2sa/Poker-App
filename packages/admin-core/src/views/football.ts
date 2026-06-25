@@ -14,9 +14,12 @@ export type PlayerSort =
   | "name_asc"
   | "tier_asc"
   | "birth_desc"
-  | "birth_asc";
+  | "birth_asc"
+  | "height_desc"
+  | "weight_desc";
 /** Data-quality gaps an admin can filter on (to find what needs enrichment). */
 export type PlayerMissing = "photo" | "name_ar" | "fame" | "clubs" | "season_stats";
+export type TournamentType = "WORLD_CUP" | "EURO_COPA" | "CHAMPIONS_LEAGUE";
 
 export interface PlayerFilter {
   q?: string;
@@ -28,6 +31,15 @@ export interface PlayerFilter {
   fameMin?: number;
   fameMax?: number;
   club?: string;
+  nationalTeam?: string;
+  tournament?: TournamentType;
+  tourMin?: number;
+  birthYearMin?: number;
+  birthYearMax?: number;
+  heightMin?: number;
+  heightMax?: number;
+  weightMin?: number;
+  weightMax?: number;
   missing?: PlayerMissing;
   sort?: PlayerSort;
 }
@@ -55,6 +67,21 @@ function buildWhere(f: PlayerFilter): Prisma.PlayerWhereInput {
   if (f.club) {
     and.push({ playerClubs: { some: { club: { name: { contains: f.club, mode: "insensitive" } } } } });
   }
+  if (f.nationalTeam) {
+    and.push({ nationalTeams: { some: { club: { name: { contains: f.nationalTeam, mode: "insensitive" } } } } });
+  }
+  if (f.tournament || typeof f.tourMin === "number") {
+    const some: Prisma.PlayerTournamentStatWhereInput = {};
+    if (f.tournament) some.tournamentType = f.tournament;
+    if (typeof f.tourMin === "number") some.appearances = { gte: f.tourMin };
+    and.push({ tournamentStats: { some } });
+  }
+  if (typeof f.birthYearMin === "number") and.push({ birthYear: { gte: f.birthYearMin } });
+  if (typeof f.birthYearMax === "number") and.push({ birthYear: { lte: f.birthYearMax } });
+  if (typeof f.heightMin === "number") and.push({ heightCm: { gte: f.heightMin } });
+  if (typeof f.heightMax === "number") and.push({ heightCm: { lte: f.heightMax } });
+  if (typeof f.weightMin === "number") and.push({ weightKg: { gte: f.weightMin } });
+  if (typeof f.weightMax === "number") and.push({ weightKg: { lte: f.weightMax } });
 
   switch (f.missing) {
     case "photo":
@@ -89,6 +116,10 @@ function buildOrder(sort?: PlayerSort): Prisma.PlayerOrderByWithRelationInput[] 
       return [{ birthYear: { sort: "desc", nulls: "last" } }, { name: "asc" }];
     case "birth_asc":
       return [{ birthYear: { sort: "asc", nulls: "last" } }, { name: "asc" }];
+    case "height_desc":
+      return [{ heightCm: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+    case "weight_desc":
+      return [{ weightKg: { sort: "desc", nulls: "last" } }, { name: "asc" }];
     case "fame_desc":
     default:
       return [{ fameScore: { sort: "desc", nulls: "last" } }, { name: "asc" }];
@@ -109,6 +140,8 @@ export interface AdminPlayerListItem {
   legendScore: number | null;
   active: boolean;
   hasPhoto: boolean;
+  photoUrl: string | null;
+  heightCm: number | null;
 }
 
 export interface PlayersPage {
@@ -123,6 +156,7 @@ const LIST_SELECT = {
   name: true,
   nameAr: true,
   birthYear: true,
+  heightCm: true,
   fameScore: true,
   tier: true,
   isLegend: true,
@@ -148,6 +182,8 @@ function toListItem(p: Prisma.PlayerGetPayload<{ select: typeof LIST_SELECT }>):
     legendScore: p.legendScore,
     active: p.active,
     hasPhoto: p.photoUrl !== null,
+    photoUrl: p.photoUrl,
+    heightCm: p.heightCm,
   };
 }
 
