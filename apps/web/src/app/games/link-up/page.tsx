@@ -109,15 +109,14 @@ export default async function HomePage({
   const roomClosed = (await searchParams).closed === "1";
 
   // Game-scoped data only — the platform profile (avatar/name/likes/friends) moved
-  // to the hub (/). Here we need the Link Up wallet balance + install-reward flag,
-  // level/XP (for rank + the level-up celebration), and the friends count (rank
-  // tile badge). Level/XP are shown in /stats, not on this page.
+  // to the hub (/) and the wallet balance lives on the Bank page (/bank). Here we
+  // need the install-reward flag, level/XP (for rank + the level-up celebration),
+  // and the friends count (rank tile badge). Level/XP are shown in /stats.
   const [user, metrics, friendCount] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
         installRewardAt: true,
-        wallet: { select: { balance: true } },
       },
     }),
     prisma.playerMetrics.findUnique({
@@ -142,7 +141,6 @@ export default async function HomePage({
       },
     })) + 1;
 
-  const coins = Number(user.wallet?.balance ?? 0n).toLocaleString("en-US");
   const friends = friendCount.toLocaleString("en-US");
   const rank = `#${rankNum.toLocaleString("en-US")}`;
   // One-time "add to home screen" reward state (server-authoritative flag).
@@ -166,14 +164,6 @@ export default async function HomePage({
         <Logo glow className="size-9" />
         <span className="text-lg font-black tracking-wide">لينك اب</span>
       </header>
-
-      {/* ── golden coins band — your Link Up wallet (stays in the game; you need it
-              to play). Now leads the page since the profile moved to the hub. ── */}
-      <div className="coins-bar relative z-10 mt-6 flex items-center justify-center gap-2.5 rounded-2xl px-5 py-3.5">
-        <span aria-hidden className="text-xl">🪙</span>
-        <span className="num text-2xl font-black text-gold">{coins}</span>
-        <span className="text-sm font-bold text-gold/80">كوين</span>
-      </div>
 
       {/* ── 3) center play stage — lit orb flanked by two icons per side. RTL: the
               first stack (create/join) sits on the RIGHT, the last on the LEFT. */}
