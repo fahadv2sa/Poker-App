@@ -6,33 +6,50 @@ import type { NextRequest } from "next/server";
  *
  * When `ADMIN_HOST` is set (e.g. "panel.fmgtech.dev") and a request arrives on
  * that host, ONLY the admin area is served — every other path redirects to
- * /admin/login. This makes the admin panel its own ORIGIN (and PWA), so iOS can
- * never collapse the admin home-screen icon onto the game, which lives on a
- * different host. The game host is untouched.
+ * /admin/login, so the admin panel is its own origin/PWA and iOS can never
+ * collapse its home-screen icon onto the game (different host).
  *
- * SAFE BY DEFAULT: if `ADMIN_HOST` is unset, or the request is on any other host
- * (the game), this is a no-op — the game behaves exactly as before.
+ * Behind Cloudflare + Railway the real public host can land in `x-forwarded-host`
+ * or `nextUrl.host` rather than the raw `host` header, so we match against ALL of
+ * them. Safe by default: ADMIN_HOST unset / any other host (the game) → no-op.
  */
 export function middleware(req: NextRequest) {
-  const adminHost = process.env.ADMIN_HOST;
-  if (!adminHost) return NextResponse.next();
+  const adminHost = (process.env.ADMIN_HOST ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
 
-  const host = (req.headers.get("host") ?? "").toLowerCase();
-  if (host !== adminHost.toLowerCase()) return NextResponse.next();
+  const candidates = [
+    req.nextUrl.host,
+    req.headers.get("x-forwarded-host"),
+    req.headers.get("host"),
+  ].map((h) => (h ?? "").toLowerCase().split(",")[0]!.trim());
 
-  // On the admin host: admin pages, API (used by the admin UI), and Next
-  // internals pass through; everything else goes to the admin login.
+  const onAdminHost = adminHost !== "" && candidates.includes(adminHost);
+
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api")) {
-    return NextResponse.next();
+  const passthrough =
+    !onAdminHost || pathname.startsWith("/admin") || pathname.startsWith("/api");
+
+  let res: NextResponse;
+  if (passthrough) {
+    res = NextResponse.next();
+  } else {
+    const url = req.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.search = "";
+    res = NextResponse.redirect(url);
   }
-  const url = req.nextUrl.clone();
-  url.pathname = "/admin/login";
-  url.search = "";
-  return NextResponse.redirect(url);
+
+  // TEMP diagnostic (hostnames only, no secrets) — removed once confirmed working.
+  res.headers.set(
+    "x-fb-mw",
+    `admin=${adminHost || "unset"};cands=${candidates.join("|")};match=${onAdminHost}`,
+  );
+  return res;
 }
 
 export const config = {
-  // Skip Next internals + any static file (has a dot: .png/.webmanifest/.js/...).
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
