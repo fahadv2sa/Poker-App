@@ -57,6 +57,44 @@ async function main(): Promise<void> {
       res.end(JSON.stringify({ rooms }));
       return;
     }
+    if (req.method === "GET" && url.startsWith("/internal/admin/rooms")) {
+      // Admin live-room inspection (super-admin dashboard, read-only). Returns
+      // per-seat identity, so unlike /internal/rooms the token is REQUIRED — if
+      // INTERNAL_API_TOKEN is unset or mismatched, the endpoint is closed (401).
+      if (!internalToken || req.headers["x-internal-token"] !== internalToken) {
+        res.writeHead(401, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "unauthorized" }));
+        return;
+      }
+      const rooms = store.list().map((room) => {
+        const s = room.state;
+        return {
+          gameId: s.gameId,
+          roomName: s.roomName,
+          kind: s.kind ?? "MANUAL",
+          difficulty: s.difficulty ?? null,
+          phase: s.phase,
+          status: s.status,
+          maxPlayers: s.maxPlayers,
+          handNumber: s.handNumber,
+          dealerSeat: s.dealerSeat,
+          currentTurnSeat: s.currentTurnSeat,
+          seats: s.players.map((p) => ({
+            seat: p.seat,
+            playerNumber: p.playerNumber,
+            username: p.username,
+            status: p.status,
+            connected: p.connected,
+            isBot: p.isBot ?? false,
+            committedTotal: p.committedTotal.toString(),
+            available: p.available.toString(),
+          })),
+        };
+      });
+      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.end(JSON.stringify({ rooms }));
+      return;
+    }
     res.writeHead(404, { "content-type": "application/json" });
     res.end(JSON.stringify({ error: "not_found" }));
   });

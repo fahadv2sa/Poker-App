@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { loadAdminContext, type AdminContext } from "@fb/admin-core";
+import { can, loadAdminContext, type AdminContext } from "@fb/admin-core";
+import type { PermissionKey } from "@fb/shared";
 import { auth } from "@/auth";
 
 /**
@@ -20,5 +21,19 @@ export async function requireAdminPage(): Promise<AdminContext> {
   const ctx = await loadAdminContext(userId);
   if (!ctx) notFound();
 
+  return ctx;
+}
+
+/**
+ * Like `requireAdminPage`, but also requires a specific permission for the
+ * section. A logged-in admin lacking the grant gets a 404 (same no-leak posture
+ * as a non-admin). SUPER_ADMIN passes everything via `can()`.
+ */
+export async function requireAdminCan(
+  permission: PermissionKey,
+  scope?: string,
+): Promise<AdminContext> {
+  const ctx = await requireAdminPage();
+  if (!can(ctx, permission, scope)) notFound();
   return ctx;
 }

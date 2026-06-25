@@ -85,6 +85,18 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
 - **Suggested fix (later):** document the flag as the standard local-build command, or
   self-host the two fonts via `next/font/local` so the build needs no network (faster + robust).
 
+## D8 — Live-rooms view needs game-server deploy + INTERNAL_API_TOKEN in prod — DEFERRED (operational, prod)
+- **Found:** Phase 2 (live rooms).
+- **What:** `/admin/live` reads the new authenticated `GET /internal/admin/rooms` on the
+  game-server. In prod this needs (a) the game-server redeployed with this endpoint, and
+  (b) `INTERNAL_API_TOKEN` set on BOTH the web and game-server services (the endpoint is
+  closed/401 without it). The pre-launch audit already flagged `INTERNAL_API_TOKEN` as unset.
+- **Why it matters:** until both are done, `/admin/live` shows a graceful "couldn't fetch"
+  message (no crash). Every other Phase 2 view works straight from the DB.
+- **Suggested fix (later, prod, needs approval):** set `INTERNAL_API_TOKEN` on web +
+  game-server in Railway and deploy the game-server with the endpoint (mind D5 — the deploy
+  branch must contain this code).
+
 ## D4 — Prisma config deprecation + major upgrade available — DEFERRED
 - **Found:** Phase 0 (generate/migrate output).
 - **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also
