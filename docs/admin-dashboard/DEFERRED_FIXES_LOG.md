@@ -12,6 +12,28 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
 
 ---
 
+## ✅ Fixes pass (2026-06-25) — resolutions
+Run after all 6 phases. Each fix is code-only + local; nothing applied to prod (still your call).
+- **D1 — RESOLVED (local; prod apply pending approval).** New migration
+  `20260625085150_fix_updated_at_default_drift` drops the 4 redundant `updated_at` defaults.
+  Verified no raw-SQL INSERT relies on them (only a raw UPDATE on `player_metrics`, unaffected).
+  Applied to LOCAL + test DB; `migrate status` → "up to date". Prod apply deferred (alters live
+  tables; instant non-blocking metadata change — apply via migrate-first with the Phase 3 migration).
+- **D3 — RESOLVED.** Root `engines.node` widened to `>=20` (kills the WARN on Node 24);
+  `.nvmrc`/`.node-version` stay `20`, so the Railway deploy runtime is unchanged.
+- **D6 — RESOLVED.** Removed the render-time `admin.dashboard_access` audit write from the admin
+  home Server Component. Read-access is no longer audited; every admin **write** remains audited at
+  its action (the security-meaningful events).
+- **D9 — RESOLVED (effective once the game-server is deployed — D8).** Added a per-room kick ban
+  (`Map<gameId, Set<userId>>`) populated on kick, checked on `room:join` (blocks rejoin incl. manual
+  rooms), cleared on teardown.
+- **D4 — STILL DEFERRED (intentional).** The Prisma `package.json#prisma` deprecation + v6→v7 upgrade
+  is Prisma-7-prep, best done as its own deliberate upgrade — not a quick fix. Not broken today.
+- **D5 / D8 — operational (prod), not code fixes.** Handled by the deploy steps (apply migrations to
+  prod before deploying the branch; set `INTERNAL_API_TOKEN` on both services). See OPERATIONS.md.
+
+---
+
 ## D1 — Schema/DB drift: stray `DROP DEFAULT` on 4 live tables — DEFERRED
 - **Found:** Phase 0 (migration generation).
 - **What:** `prisma migrate dev` proposed 4 unrelated statements:

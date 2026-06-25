@@ -1,23 +1,17 @@
-import { getOverview, recordAdminAction } from "@fb/admin-core";
+import { getOverview } from "@fb/admin-core";
 import { requireAdminPage } from "@/lib/admin-guard";
 import { Card, PageTitle, StatTile, fmtCoins } from "./_ui";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Phase 2 — dashboard home: cross-domain headline counts (full visibility entry
- * point). Records a dashboard access in the audit log. (Access-audit granularity
- * is intentionally coarse for now — see DEFERRED_FIXES_LOG D6.)
+ * Dashboard home: cross-domain headline counts (full visibility entry point).
+ * No DB write happens during render (D6 fix) — read-access is not audited; every
+ * admin WRITE is audited at its action. The gate still enforces admin-only.
  */
 export default async function AdminHomePage() {
-  const ctx = await requireAdminPage();
+  await requireAdminPage();
   const o = await getOverview();
-
-  await recordAdminAction({
-    actorUserId: ctx.userId,
-    action: "admin.dashboard_access",
-    metadata: { role: ctx.role },
-  });
 
   return (
     <div className="space-y-6">

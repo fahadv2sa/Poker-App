@@ -91,6 +91,10 @@ export function attachSocketHandlers(
   bots?: BotRuntime,
 ): AdminControls {
   const runtimes = new Map<string, RoomRuntime>();
+  // gameId → userIds an admin has kicked from THIS room. Blocks rejoin (incl.
+  // manual rooms, which otherwise allow it). Lives with the in-memory room and is
+  // cleared on teardown — rooms are ephemeral, so a fresh gameId starts clean.
+  const kickedByRoom = new Map<string, Set<string>>();
 
   const buildDeps = (
     gameId: string,
@@ -227,6 +231,7 @@ export function attachSocketHandlers(
       io.in(roomKey(gameId)).socketsLeave(roomKey(gameId));
       rt.seats.clear();
       runtimes.delete(gameId);
+      kickedByRoom.delete(gameId);
       store.delete(gameId);
     } finally {
       closingGames.delete(gameId);
@@ -255,6 +260,12 @@ export function attachSocketHandlers(
         const rt = await getRuntime(game.id);
         // getRuntime returns null for ABANDONED (closed) rooms — gone for good.
         if (!rt) return emitError(socket, "ROOM_NOT_FOUND", "الغرفة غير موجودة");
+
+        // An admin kick bans this user from rejoining THIS room (manual rooms
+        // included, which otherwise allow rejoin while open).
+        if (kickedByRoom.get(game.id)?.has(user.userId)) {
+          return emitError(socket, "KICKED", "تمت إزالتك من هذه الطاولة");
+        }
 
         // Is this user already a seated member of this room? (The rejoin rule
         // depends on room kind.) Rooms have no password — a private room is simply
@@ -495,6 +506,13 @@ export function attachSocketHandlers(
       if (!player) return "no_seat";
       const sid = rt.seats.get(seat);
       const { username, userId } = player;
+      // Ban this user from rejoining the room (true kick — manual rooms included).
+      let banned = kickedByRoom.get(gameId);
+      if (!banned) {
+        banned = new Set<string>();
+        kickedByRoom.set(gameId, banned);
+      }
+      banned.add(userId);
       // Mirror the voluntary-leave path exactly: handlePlayerLeft refunds/folds the
       // live hand correctly; then force the socket out and tear down if empty.
       cancelGrace(gameId, userId);
