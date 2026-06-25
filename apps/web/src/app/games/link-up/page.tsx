@@ -26,47 +26,6 @@ function SatButton({ href, icon, label }: { href: string; icon: string; label: s
   );
 }
 
-/** A clearly-square nav tile shown just above the bottom bar (global rank /
- *  friends): icon + a value badge + title. Pure navigation (Link). */
-function SquareTile({
-  href,
-  icon,
-  title,
-  badge,
-  tone,
-}: {
-  href: string;
-  icon: string;
-  title: string;
-  badge: string;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="home-square group flex flex-col items-center justify-center gap-2 rounded-2xl p-4 text-center"
-    >
-      <span
-        className="relative grid size-12 place-items-center rounded-xl text-2xl"
-        style={{
-          background: `color-mix(in oklch, ${tone} 16%, transparent)`,
-          border: `1px solid color-mix(in oklch, ${tone} 32%, transparent)`,
-        }}
-        aria-hidden
-      >
-        {icon}
-        <span
-          className="num absolute -end-2 -top-2 rounded-full bg-[#0b0f1a] px-1.5 py-0.5 text-[0.62rem] font-bold"
-          style={{ border: `1px solid color-mix(in oklch, ${tone} 50%, transparent)`, color: tone }}
-        >
-          {badge}
-        </span>
-      </span>
-      <span className="text-sm font-bold">{title}</span>
-    </Link>
-  );
-}
-
 /** One item in the fixed bottom bar. `active` marks the current screen. */
 function BottomItem({
   href,
@@ -110,9 +69,9 @@ export default async function HomePage({
 
   // Game-scoped data only — the platform profile (avatar/name/likes/friends) moved
   // to the hub (/) and the wallet balance lives on the Bank page (/bank). Here we
-  // need the install-reward flag, level/XP (for rank + the level-up celebration),
-  // and the friends count (rank tile badge). Level/XP are shown in /stats.
-  const [user, metrics, friendCount] = await Promise.all([
+  // need the install-reward flag and level/XP (for the global rank + the level-up
+  // celebration). Level/XP are shown in /stats.
+  const [user, metrics] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -122,9 +81,6 @@ export default async function HomePage({
     prisma.playerMetrics.findUnique({
       where: { userId },
       select: { level: true, xp: true, celebratedLevel: true },
-    }),
-    prisma.friendship.count({
-      where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
     }),
   ]);
   if (!user) redirect("/login");
@@ -141,7 +97,6 @@ export default async function HomePage({
       },
     })) + 1;
 
-  const friends = friendCount.toLocaleString("en-US");
   const rank = `#${rankNum.toLocaleString("en-US")}`;
   // One-time "add to home screen" reward state (server-authoritative flag).
   const installRewardClaimed = user.installRewardAt != null;
@@ -195,12 +150,18 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ── two square nav tiles just above the bottom bar: global rank + friends.
-              Both dynamic (computed rank / accepted-friends count). ────────── */}
-      <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
-        <SquareTile href="/rank" icon="🏆" title="الرانك العام" badge={rank} tone="var(--gold)" />
-        <SquareTile href="/friends" icon="👥" title="الأصدقاء" badge={friends} tone="var(--accent)" />
-      </div>
+      {/* ── distinctive gold rank bar, right beneath the Quick Play orb. Replaces
+              the old square tiles; friends now lives only in the platform profile.
+              Dynamic (computed global rank). Tap → /rank. ─────────────────────── */}
+      <Link
+        href="/rank"
+        aria-label="الرانك العام"
+        className="coins-bar relative z-10 mt-3 flex items-center justify-center gap-3 rounded-2xl px-5 py-3.5 transition active:scale-[0.98]"
+      >
+        <span aria-hidden className="text-xl">🏆</span>
+        <span className="text-sm font-bold text-gold/85">الرانك العام</span>
+        <span className="num text-lg font-black text-gold">{rank}</span>
+      </Link>
 
       {/* ── 4) fixed bottom bar — guide · home · settings(profile). Home (🏠) leads
               to the PLATFORM hub (/) where all games + the profile live. Centered
