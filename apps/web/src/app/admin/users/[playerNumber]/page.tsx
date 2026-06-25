@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { findUserIdByPlayerNumber, getUserDetail } from "@fb/admin-core";
+import { can, findUserIdByPlayerNumber, getUserDetail } from "@fb/admin-core";
 import { PERMISSIONS } from "@fb/shared";
 import { requireAdminCan } from "@/lib/admin-guard";
 import { Card, KV, PageTitle, TableWrap, fmtCoins, fmtDate } from "../../_ui";
+import { UserControls } from "./controls";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export default async function AdminUserDetailPage({
 }: {
   params: Promise<{ playerNumber: string }>;
 }) {
-  await requireAdminCan(PERMISSIONS.USERS_READ);
+  const ctx = await requireAdminCan(PERMISSIONS.USERS_READ);
   const { playerNumber } = await params;
   const pn = Number(playerNumber);
   if (!Number.isInteger(pn)) notFound();
@@ -22,6 +23,15 @@ export default async function AdminUserDetailPage({
   const u = await getUserDetail(userId);
   if (!u) notFound();
 
+  const isSelf = ctx.userId === u.id;
+  const controlPerms = {
+    adjust: can(ctx, PERMISSIONS.COINS_ADJUST),
+    verify: can(ctx, PERMISSIONS.USERS_VERIFY_EMAIL),
+    ban: can(ctx, PERMISSIONS.USERS_BAN) && !isSelf,
+    reset: can(ctx, PERMISSIONS.USERS_RESET_PASSWORD),
+    delete: can(ctx, PERMISSIONS.USERS_DELETE) && !isSelf && !u.admin,
+  };
+
   return (
     <div className="space-y-5">
       <Link href="/admin/users" className="text-sm text-muted-foreground hover:underline">
@@ -29,7 +39,7 @@ export default async function AdminUserDetailPage({
       </Link>
       <PageTitle
         title={u.nickname ?? u.username}
-        sub={`#${u.playerNumber} · ${u.isBot ? "بوت" : "بشري"}`}
+        sub={`#${u.playerNumber} · ${u.isBot ? "بوت" : "بشري"}${u.disabled ? " · معطّل" : ""}`}
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -93,6 +103,21 @@ export default async function AdminUserDetailPage({
               ))}
             </tbody>
           </TableWrap>
+        )}
+      </Card>
+
+      <Card title="الإجراءات">
+        {u.isBot ? (
+          <p className="text-sm text-muted-foreground">
+            حساب آلي (بوت) — يُدار عبر سكربتات البوت، لا عبر هذه الأدوات.
+          </p>
+        ) : (
+          <UserControls
+            playerNumber={u.playerNumber}
+            verified={u.emailVerified}
+            disabled={u.disabled}
+            perms={controlPerms}
+          />
         )}
       </Card>
     </div>

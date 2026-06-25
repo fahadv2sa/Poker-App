@@ -18,6 +18,8 @@ export const WALLET_TX_TYPES = [
   "FOLD_FORFEIT",
   // One-time reward for adding the app to the home screen (PWA install).
   "INSTALL_REWARD",
+  // Manual admin balance correction (dashboard) — still through the ledger.
+  "ADMIN_ADJUST",
 ] as const;
 export type WalletTxType = (typeof WALLET_TX_TYPES)[number];
 

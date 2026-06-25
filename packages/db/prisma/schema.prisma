@@ -38,6 +38,10 @@ enum WalletTxType {
   REFUND
   FOLD_FORFEIT
   INSTALL_REWARD
+  // Manual balance correction made by an admin via the dashboard. Goes through
+  // the SAME append-only ledger primitive (row lock + idempotency) — never a
+  // direct balance write — so wallet integrity (Section 6) is preserved.
+  ADMIN_ADJUST
 
   @@map("wallet_tx_type")
   @@schema("link_up")
@@ -198,6 +202,10 @@ model User {
   // granted (null = never claimed). Persists across uninstall/reinstall so the
   // reward can be granted at most once per account.
   installRewardAt DateTime? @map("install_reward_at") @db.Timestamptz(6)
+  // Admin moderation: when set, the account is disabled (banned). Login is
+  // blocked (web `authorize`) and the realtime handshake is rejected. Nullable;
+  // null = active. Set/cleared only via the admin dashboard, audited.
+  disabledAt   DateTime? @map("disabled_at") @db.Timestamptz(6)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

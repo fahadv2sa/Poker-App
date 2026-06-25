@@ -55,6 +55,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const ok = await verifyPassword(user.passwordHash, password);
         if (!ok) return null;
 
+        // Disabled (banned) by an admin → refuse with a generic failure (never
+        // reveal the account is banned). Set/cleared from the admin dashboard.
+        if (user.disabledAt) return null;
+
         // Login gate: password is correct, but block until the email is verified.
         // Existing accounts were grandfathered (email_verified_at backfilled), so
         // only genuinely-unverified new signups hit this.
@@ -76,7 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const userId = await verifyOtpLoginToken(token);
         if (!userId) return null;
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user || !user.emailVerifiedAt) return null;
+        if (!user || !user.emailVerifiedAt || user.disabledAt) return null;
         return { id: user.id, name: user.username, playerNumber: user.playerNumber };
       },
     }),

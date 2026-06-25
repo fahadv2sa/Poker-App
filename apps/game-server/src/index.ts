@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import { rateLimit, type RateStore } from "@fb/shared";
-import { isSessionInactive, touchUserActivity } from "@fb/db";
+import { isSessionInactive, isUserDisabled, touchUserActivity } from "@fb/db";
 import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { PrismaRoomPersistence } from "./persistence.js";
@@ -126,6 +126,11 @@ async function main(): Promise<void> {
       // so the socket layer agrees with the web cookie. Fails OPEN on DB error.
       if (await isSessionInactive(claims.userId)) {
         return next(new Error("SESSION_EXPIRED"));
+      }
+      // Disabled (banned) by an admin → refuse the realtime connection too, so a
+      // ban takes effect on the next (re)connect, not just at web login.
+      if (await isUserDisabled(claims.userId)) {
+        return next(new Error("UNAUTHENTICATED"));
       }
       socket.data.user = claims;
       // Establishing the connection counts as activity (throttled + guarded).

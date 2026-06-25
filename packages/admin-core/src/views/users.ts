@@ -95,6 +95,7 @@ export interface AdminUserDetail {
   nickname: string | null;
   email: string | null;
   emailVerified: boolean;
+  disabled: boolean;
   isBot: boolean;
   likesReceived: number;
   lastActiveAt: string;
@@ -125,6 +126,7 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | n
       nickname: true,
       email: true,
       emailVerifiedAt: true,
+      disabledAt: true,
       likesReceived: true,
       lastActiveAt: true,
       createdAt: true,
@@ -171,6 +173,7 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | n
     nickname: u.nickname,
     email: u.email,
     emailVerified: u.emailVerifiedAt !== null,
+    disabled: u.disabledAt !== null,
     isBot: u.playerNumber >= BOT_PLAYER_NUMBER_BASE,
     likesReceived: u.likesReceived,
     lastActiveAt: u.lastActiveAt.toISOString(),

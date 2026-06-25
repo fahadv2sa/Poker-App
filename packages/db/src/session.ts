@@ -59,3 +59,21 @@ export async function isSessionInactive(userId: string): Promise<boolean> {
     return false; // fail open: never lock everyone out on a DB error
   }
 }
+
+/**
+ * True iff this account has been disabled (banned) by an admin (`disabled_at` is
+ * set). Used by the web login (`authorize`) and the realtime handshake to refuse
+ * a disabled user. Fails OPEN (returns false) on any error — consistent with the
+ * inactivity check — so a DB hiccup never locks everyone out.
+ */
+export async function isUserDisabled(userId: string): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { disabledAt: true },
+    });
+    return user?.disabledAt != null;
+  } catch {
+    return false;
+  }
+}
