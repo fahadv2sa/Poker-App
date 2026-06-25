@@ -6,7 +6,7 @@ import { SessionExpiredError, verifyRealtimeToken } from "./auth.js";
 import { loadRanks } from "./factory.js";
 import { PrismaRoomPersistence } from "./persistence.js";
 import { reconcileOrphanedGames } from "./recovery.js";
-import { attachSocketHandlers } from "./socket.js";
+import { attachSocketHandlers, type AdminControls } from "./socket.js";
 import { InMemoryRoomStore } from "./store.js";
 import { loadBotIdentities } from "./bots/identities.js";
 import { BotRuntime } from "./bots/runtime.js";
@@ -31,71 +31,136 @@ async function main(): Promise<void> {
   // INTERNAL_API_TOKEN. Socket.IO delegates non-engine.io requests to this
   // handler, so a plain createServer(handler) is the correct pattern.
   const internalToken = process.env.INTERNAL_API_TOKEN;
+  // Bot runtime + the live-control surface are constructed later in main(); the
+  // HTTP handler (created now) reads them at REQUEST time, by when they're set.
+  let bots: BotRuntime | undefined;
+  let adminControls: AdminControls | undefined;
+  const JSON_HEADERS = { "content-type": "application/json", "cache-control": "no-store" } as const;
+
   const httpServer = createServer((req, res) => {
-    const url = req.url ?? "";
-    if (req.method === "GET" && url.startsWith("/internal/rooms")) {
+    const method = req.method ?? "GET";
+    const u = new URL(req.url ?? "/", "http://localhost");
+    const path = u.pathname;
+
+    // Public-ish live-occupancy read for the room list (token optional).
+    if (method === "GET" && path === "/internal/rooms") {
       if (internalToken && req.headers["x-internal-token"] !== internalToken) {
-        res.writeHead(401, { "content-type": "application/json" });
+        res.writeHead(401, JSON_HEADERS);
         res.end(JSON.stringify({ error: "unauthorized" }));
         return;
       }
       const rooms = store.list().map((room) => {
         const s = room.state;
         const connected = s.players.filter((p) => p.connected);
-        const bots = connected.filter((p) => p.isBot).length;
+        const botCount = connected.filter((p) => p.isBot).length;
         return {
           gameId: s.gameId,
           filled: connected.length,
           max: s.maxPlayers,
-          bots,
-          humans: connected.length - bots,
+          bots: botCount,
+          humans: connected.length - botCount,
           phase: s.phase,
           status: s.status,
         };
       });
-      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
+      res.writeHead(200, JSON_HEADERS);
       res.end(JSON.stringify({ rooms }));
       return;
     }
-    if (req.method === "GET" && url.startsWith("/internal/admin/rooms")) {
-      // Admin live-room inspection (super-admin dashboard, read-only). Returns
-      // per-seat identity, so unlike /internal/rooms the token is REQUIRED — if
-      // INTERNAL_API_TOKEN is unset or mismatched, the endpoint is closed (401).
+
+    // Admin surface (super-admin dashboard). The token is ALWAYS required here —
+    // these return identity and perform live control. Closed (401) if unset.
+    if (path.startsWith("/internal/admin/")) {
       if (!internalToken || req.headers["x-internal-token"] !== internalToken) {
-        res.writeHead(401, { "content-type": "application/json" });
+        res.writeHead(401, JSON_HEADERS);
         res.end(JSON.stringify({ error: "unauthorized" }));
         return;
       }
-      const rooms = store.list().map((room) => {
-        const s = room.state;
-        return {
-          gameId: s.gameId,
-          roomName: s.roomName,
-          kind: s.kind ?? "MANUAL",
-          difficulty: s.difficulty ?? null,
-          phase: s.phase,
-          status: s.status,
-          maxPlayers: s.maxPlayers,
-          handNumber: s.handNumber,
-          dealerSeat: s.dealerSeat,
-          currentTurnSeat: s.currentTurnSeat,
-          seats: s.players.map((p) => ({
-            seat: p.seat,
-            playerNumber: p.playerNumber,
-            username: p.username,
-            status: p.status,
-            connected: p.connected,
-            isBot: p.isBot ?? false,
-            committedTotal: p.committedTotal.toString(),
-            available: p.available.toString(),
-          })),
+
+      if (method === "GET" && path === "/internal/admin/rooms") {
+        const rooms = store.list().map((room) => {
+          const s = room.state;
+          return {
+            gameId: s.gameId,
+            roomName: s.roomName,
+            kind: s.kind ?? "MANUAL",
+            difficulty: s.difficulty ?? null,
+            phase: s.phase,
+            status: s.status,
+            maxPlayers: s.maxPlayers,
+            handNumber: s.handNumber,
+            dealerSeat: s.dealerSeat,
+            currentTurnSeat: s.currentTurnSeat,
+            seats: s.players.map((p) => ({
+              seat: p.seat,
+              playerNumber: p.playerNumber,
+              username: p.username,
+              status: p.status,
+              connected: p.connected,
+              isBot: p.isBot ?? false,
+              committedTotal: p.committedTotal.toString(),
+              available: p.available.toString(),
+            })),
+          };
+        });
+        const botsMeta = {
+          enabled: !!bots,
+          paused: bots?.isPaused ?? false,
+          available: bots?.availableIdentities ?? 0,
         };
-      });
-      res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
-      res.end(JSON.stringify({ rooms }));
+        res.writeHead(200, JSON_HEADERS);
+        res.end(JSON.stringify({ rooms, bots: botsMeta }));
+        return;
+      }
+
+      if (method === "POST" && path === "/internal/admin/close") {
+        const gameId = u.searchParams.get("gameId") ?? "";
+        void Promise.resolve(adminControls?.closeRoom(gameId) ?? "unavailable")
+          .then((result) => {
+            res.writeHead(result === "closed" ? 200 : result === "not_found" ? 404 : 503, JSON_HEADERS);
+            res.end(JSON.stringify({ result }));
+          })
+          .catch((err) => {
+            res.writeHead(500, JSON_HEADERS);
+            res.end(JSON.stringify({ error: String(err) }));
+          });
+        return;
+      }
+
+      if (method === "POST" && path === "/internal/admin/kick") {
+        const gameId = u.searchParams.get("gameId") ?? "";
+        const seat = Number(u.searchParams.get("seat"));
+        if (!Number.isInteger(seat)) {
+          res.writeHead(400, JSON_HEADERS);
+          res.end(JSON.stringify({ error: "bad_seat" }));
+          return;
+        }
+        void Promise.resolve(adminControls?.kickSeat(gameId, seat) ?? "unavailable")
+          .then((result) => {
+            res.writeHead(result === "kicked" ? 200 : result === "unavailable" ? 503 : 404, JSON_HEADERS);
+            res.end(JSON.stringify({ result }));
+          })
+          .catch((err) => {
+            res.writeHead(500, JSON_HEADERS);
+            res.end(JSON.stringify({ error: String(err) }));
+          });
+        return;
+      }
+
+      if (method === "POST" && path === "/internal/admin/bots") {
+        const paused = u.searchParams.get("paused") === "true";
+        bots?.setPaused(paused);
+        res.writeHead(200, JSON_HEADERS);
+        res.end(JSON.stringify({ enabled: !!bots, paused: bots?.isPaused ?? false }));
+        return;
+      }
+
+      res.writeHead(404, JSON_HEADERS);
+      res.end(JSON.stringify({ error: "not_found" }));
       return;
     }
-    res.writeHead(404, { "content-type": "application/json" });
+
+    res.writeHead(404, JSON_HEADERS);
     res.end(JSON.stringify({ error: "not_found" }));
   });
 
@@ -154,7 +219,6 @@ async function main(): Promise<void> {
   // off (default) nothing is constructed and the game is exactly as before. When
   // on, load the bot identities (the reserved player_number block; empty until
   // the Phase 5 importer runs) and build the bot runtime.
-  let bots: BotRuntime | undefined;
   if (process.env.BOTS_ENABLED === "true") {
     const identities = await loadBotIdentities();
     bots = new BotRuntime(identities);
@@ -163,7 +227,7 @@ async function main(): Promise<void> {
     console.log("[bots] disabled");
   }
 
-  attachSocketHandlers(io, store, ranks, bots);
+  adminControls = attachSocketHandlers(io, store, ranks, bots);
 
   httpServer.listen(port, () => {
     console.log(`Game server listening on :${port} (CORS origin ${origin})`);

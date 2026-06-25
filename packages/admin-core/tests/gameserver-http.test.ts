@@ -52,3 +52,48 @@ describe("createHttpAdminGameServerClient", () => {
     await expect(client.listRoomsDetailed()).rejects.toThrow(/401/);
   });
 });
+
+function callOf(f: unknown): [string, { method?: string }] {
+  return (f as { mock: { calls: [string, { method?: string }][] } }).mock.calls[0]!;
+}
+
+describe("admin live controls (HTTP)", () => {
+  it("getLive returns rooms + bots meta (defaults when bots absent)", async () => {
+    const withBots = fakeFetch(true, { rooms: sampleRooms, bots: { enabled: true, paused: true, available: 5 } });
+    const c1 = createHttpAdminGameServerClient({ baseUrl: "http://gs", token: "s", fetchImpl: withBots });
+    const live = await c1.getLive();
+    expect(live.rooms).toHaveLength(1);
+    expect(live.bots).toEqual({ enabled: true, paused: true, available: 5 });
+
+    const noBots = fakeFetch(true, { rooms: sampleRooms });
+    const c2 = createHttpAdminGameServerClient({ baseUrl: "http://gs", token: "s", fetchImpl: noBots });
+    expect((await c2.getLive()).bots).toEqual({ enabled: false, paused: false, available: 0 });
+  });
+
+  it("forceCloseRoom POSTs to /close with the gameId", async () => {
+    const f = fakeFetch(true, { result: "closed" });
+    const c = createHttpAdminGameServerClient({ baseUrl: "http://gs", token: "s", fetchImpl: f });
+    expect(await c.forceCloseRoom("g1")).toBe("closed");
+    const [url, init] = callOf(f);
+    expect(url).toBe("http://gs/internal/admin/close?gameId=g1");
+    expect(init.method).toBe("POST");
+  });
+
+  it("kickSeat POSTs to /kick with gameId + seat", async () => {
+    const f = fakeFetch(true, { result: "kicked" });
+    const c = createHttpAdminGameServerClient({ baseUrl: "http://gs", token: "s", fetchImpl: f });
+    expect(await c.kickSeat("g1", 3)).toBe("kicked");
+    const [url, init] = callOf(f);
+    expect(url).toBe("http://gs/internal/admin/kick?gameId=g1&seat=3");
+    expect(init.method).toBe("POST");
+  });
+
+  it("setBotsPaused POSTs to /bots and returns the meta", async () => {
+    const f = fakeFetch(true, { enabled: true, paused: true, available: 5 });
+    const c = createHttpAdminGameServerClient({ baseUrl: "http://gs", token: "s", fetchImpl: f });
+    expect((await c.setBotsPaused(true)).paused).toBe(true);
+    const [url, init] = callOf(f);
+    expect(url).toBe("http://gs/internal/admin/bots?paused=true");
+    expect(init.method).toBe("POST");
+  });
+});

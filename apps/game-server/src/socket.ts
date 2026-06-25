@@ -63,6 +63,19 @@ interface SocketUser {
 }
 
 /**
+ * Live-runtime controls for the super-admin dashboard, returned by
+ * `attachSocketHandlers` and invoked from the internal HTTP endpoint. They reuse
+ * the same teardown/leave paths the live game uses, so refunds (through the
+ * ledger) and client notifications stay correct.
+ */
+export interface AdminControls {
+  /** Force-close a live table: void+refund its hand (room.close) and tear it down. */
+  closeRoom(gameId: string): Promise<"closed" | "not_found">;
+  /** Remove one seat (same as a voluntary leave) and disconnect its socket. */
+  kickSeat(gameId: string, seat: number): Promise<"kicked" | "not_found" | "no_seat">;
+}
+
+/**
  * Wire the authoritative Socket.IO handlers (Section 12). Every client input is
  * validated with the shared Zod schemas; the server is the only referee. Hole
  * cards are emitted only to their owner — never in the broadcast state:sync.
@@ -76,7 +89,7 @@ export function attachSocketHandlers(
   store: RoomStore,
   ranks: RankInfo[],
   bots?: BotRuntime,
-): void {
+): AdminControls {
   const runtimes = new Map<string, RoomRuntime>();
 
   const buildDeps = (
@@ -461,6 +474,43 @@ export function attachSocketHandlers(
       );
     });
   });
+
+  // ── Admin controls (super-admin dashboard) ───────────────────────────────
+  // Reuse the SAME proven teardown/leave paths the live game uses, so refunds
+  // (through the ledger) and notifications stay correct — the admin layer never
+  // reinvents the money path.
+  const controls: AdminControls = {
+    async closeRoom(gameId) {
+      const rt = runtimes.get(gameId);
+      if (!rt) return "not_found";
+      // Reuse the host-close reason for the client notice (the player just sees
+      // the table was closed; no client/contract change needed).
+      await closeAndTeardown(gameId, rt, "CLOSED_BY_HOST");
+      return "closed";
+    },
+    async kickSeat(gameId, seat) {
+      const rt = runtimes.get(gameId);
+      if (!rt) return "not_found";
+      const player = rt.room.state.players.find((p) => p.seat === seat && p.connected);
+      if (!player) return "no_seat";
+      const sid = rt.seats.get(seat);
+      const { username, userId } = player;
+      // Mirror the voluntary-leave path exactly: handlePlayerLeft refunds/folds the
+      // live hand correctly; then force the socket out and tear down if empty.
+      cancelGrace(gameId, userId);
+      rt.seats.delete(seat);
+      rt.room.handlePlayerLeft(seat);
+      io.to(roomKey(gameId)).emit(SERVER_EVENTS.playerLeft, { seat, username });
+      if (sid) io.sockets.sockets.get(sid)?.disconnect(true);
+      if (hasConnectedHuman(rt.room.state.players)) {
+        io.to(roomKey(gameId)).emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, null));
+      } else {
+        await closeAndTeardown(gameId, rt, "EMPTY");
+      }
+      return "kicked";
+    },
+  };
+  return controls;
 }
 
 // ---------------------------------------------------------------------------

@@ -17,6 +17,10 @@ export class BotRuntime {
   readonly controller: BotController;
   private readonly pool: BotIdentityPool;
   private readonly rng: () => number;
+  /** Runtime kill-switch (admin dashboard). When paused, NO new cold-start fills
+   *  happen; existing bot tables continue and close normally. Resets to false on
+   *  restart — BOTS_ENABLED remains the persistent on/off switch. */
+  private paused = false;
 
   constructor(
     identities: readonly BotIdentity[],
@@ -29,6 +33,15 @@ export class BotRuntime {
 
   get availableIdentities(): number {
     return this.pool.available;
+  }
+
+  get isPaused(): boolean {
+    return this.paused;
+  }
+
+  /** Pause/resume cold-start bot fills at runtime (admin kill-switch). */
+  setPaused(paused: boolean): void {
+    this.paused = paused;
   }
 
   /** Return one bot identity to the pool — used when a human takes a bot's seat
@@ -44,6 +57,7 @@ export class BotRuntime {
    * Call AFTER the human grace, just before GameRoom.start().
    */
   fill(state: RoomState): number {
+    if (this.paused) return 0; // admin kill-switch — no new fills while paused
     const connected = state.players.filter((p) => p.connected);
     const humans = connected.filter((p) => !p.isBot);
     // Only fill genuine cold-start tables: at least one human, but fewer than

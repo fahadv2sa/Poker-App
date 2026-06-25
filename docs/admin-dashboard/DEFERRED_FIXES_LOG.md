@@ -97,6 +97,17 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
   game-server in Railway and deploy the game-server with the endpoint (mind D5 — the deploy
   branch must contain this code).
 
+## D9 — Admin kick from a MANUAL room doesn't prevent rejoin — DEFERRED (refinement)
+- **Found:** Phase 4 (kick seat).
+- **What:** `kickSeat` removes the seat + disconnects the socket (reusing the proven leave
+  path, so the live-hand refund/fold stays correct). For QUICK_PLAY rooms the no-rejoin rule
+  makes it a true kick; for MANUAL rooms the kicked player can rejoin via the invite code/link
+  (manual rooms allow rejoin while open).
+- **Why it matters:** there is no per-room ban yet. For a problematic player on a manual table,
+  the stronger tools are **force-close the table** (Phase 4) or **disable the account** (Phase 3).
+- **Suggested fix (later):** a per-room kicked-user set checked on `room:join` to block rejoin
+  after an admin kick.
+
 ## D4 — Prisma config deprecation + major upgrade available — DEFERRED
 - **Found:** Phase 0 (generate/migrate output).
 - **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also
