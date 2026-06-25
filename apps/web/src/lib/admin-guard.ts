@@ -1,41 +1,40 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { can, loadAdminContext, type AdminContext } from "@fb/admin-core";
 import type { PermissionKey } from "@fb/shared";
-import { auth } from "@/auth";
 import { ipAllowed } from "./admin-ip";
+import { readAdminSessionUserId } from "./admin-session";
 
 /**
- * Server-side gate for the entire /admin area.
+ * Server-side gate for the /admin dashboard pages.
  *
- * Resolves the session, loads the admin context, and returns it for an active
- * admin. For ANYONE else — unauthenticated, or a logged-in non-admin — it calls
- * `notFound()` (a 404), never a 403 or a redirect. The admin surface is therefore
- * invisible to non-admins: there is no signal that /admin even exists. This is the
+ * Authentication is the INDEPENDENT admin session (its own cookie), NOT the
+ * players' game login. Anyone without a valid admin session — or whose account is
+ * not (or no longer) an ACTIVE admin — is sent to `/admin/login`. This is the
  * single place page-level admin authorization is decided, and it runs ONLY under
  * /admin, so it adds nothing to player-facing traffic.
  */
 export async function requireAdminPage(): Promise<AdminContext> {
-  // Optional IP allowlist (opt-in via ADMIN_IP_ALLOWLIST). Checked first, so a
-  // disallowed source 404s before any identity work — same no-leak posture.
+  // Optional IP allowlist (opt-in via ADMIN_IP_ALLOWLIST), checked first.
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   if (!ipAllowed(process.env.ADMIN_IP_ALLOWLIST, ip)) notFound();
 
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) notFound();
+  const userId = await readAdminSessionUserId();
+  if (!userId) redirect("/admin/login");
 
+  // Re-checked on every request, so revoking/suspending an admin takes effect
+  // immediately (the session cookie alone never grants access).
   const ctx = await loadAdminContext(userId);
-  if (!ctx) notFound();
+  if (!ctx) redirect("/admin/login");
 
   return ctx;
 }
 
 /**
  * Like `requireAdminPage`, but also requires a specific permission for the
- * section. A logged-in admin lacking the grant gets a 404 (same no-leak posture
- * as a non-admin). SUPER_ADMIN passes everything via `can()`.
+ * section. A logged-in admin lacking the grant gets a 404. SUPER_ADMIN passes
+ * everything via `can()`.
  */
 export async function requireAdminCan(
   permission: PermissionKey,

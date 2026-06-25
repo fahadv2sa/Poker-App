@@ -1,56 +1,55 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * The /admin gate must be invisible to non-admins: unauthenticated users AND
- * logged-in non-admins both get a 404 (notFound), never a 403 or redirect, with
- * no signal the area exists. Active admins get their context. We mock auth, the
- * admin-core context loader, and Next's notFound (made to throw so control stops).
+ * The /admin gate authenticates via the INDEPENDENT admin session (cookie), not
+ * the game login. No session, or an account that is not an active admin → redirect
+ * to /admin/login. An active admin → returns the context. We mock the session
+ * reader, the admin-core loader, and Next's redirect/notFound (made to throw so
+ * control stops) + headers (IP allowlist pass-through).
  */
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
 vi.mock("@fb/admin-core", () => ({ loadAdminContext: vi.fn(), can: vi.fn() }));
-vi.mock("next/headers", () => ({
-  // No IP allowlist configured in tests → the guard's IP check is a pass-through.
-  headers: vi.fn(async () => ({ get: () => null })),
-}));
+vi.mock("@/lib/admin-session", () => ({ readAdminSessionUserId: vi.fn() }));
+vi.mock("next/headers", () => ({ headers: vi.fn(async () => ({ get: () => null })) }));
 vi.mock("next/navigation", () => ({
+  redirect: vi.fn((url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  }),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
 }));
 
-import { auth } from "@/auth";
 import { loadAdminContext } from "@fb/admin-core";
-import { notFound } from "next/navigation";
+import { readAdminSessionUserId } from "@/lib/admin-session";
+import { redirect } from "next/navigation";
 import { requireAdminPage } from "@/lib/admin-guard";
 
-const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const loadCtx = loadAdminContext as unknown as ReturnType<typeof vi.fn>;
-const notFoundMock = notFound as unknown as ReturnType<typeof vi.fn>;
+const readSession = readAdminSessionUserId as unknown as ReturnType<typeof vi.fn>;
+const redirectMock = redirect as unknown as ReturnType<typeof vi.fn>;
 
 beforeEach(() => vi.clearAllMocks());
 
 describe("requireAdminPage", () => {
-  it("404s when unauthenticated (no context lookup, no existence leak)", async () => {
-    authMock.mockResolvedValue(null);
-    await expect(requireAdminPage()).rejects.toThrow("NEXT_NOT_FOUND");
-    expect(notFoundMock).toHaveBeenCalledTimes(1);
+  it("redirects to /admin/login when there is no admin session", async () => {
+    readSession.mockResolvedValue(null);
+    await expect(requireAdminPage()).rejects.toThrow("NEXT_REDIRECT:/admin/login");
     expect(loadCtx).not.toHaveBeenCalled();
   });
 
-  it("404s when authenticated but NOT an admin", async () => {
-    authMock.mockResolvedValue({ user: { id: "u-1" } });
+  it("redirects to /admin/login when the session user is not an active admin", async () => {
+    readSession.mockResolvedValue("u-1");
     loadCtx.mockResolvedValue(null);
-    await expect(requireAdminPage()).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(requireAdminPage()).rejects.toThrow("NEXT_REDIRECT:/admin/login");
     expect(loadCtx).toHaveBeenCalledWith("u-1");
-    expect(notFoundMock).toHaveBeenCalledTimes(1);
   });
 
-  it("returns the context for an active admin (no 404)", async () => {
-    authMock.mockResolvedValue({ user: { id: "u-super" } });
+  it("returns the context for an active admin (no redirect)", async () => {
+    readSession.mockResolvedValue("u-super");
     const ctx = { userId: "u-super", role: "SUPER_ADMIN", grants: new Map() };
     loadCtx.mockResolvedValue(ctx);
     await expect(requireAdminPage()).resolves.toBe(ctx);
-    expect(notFoundMock).not.toHaveBeenCalled();
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 });

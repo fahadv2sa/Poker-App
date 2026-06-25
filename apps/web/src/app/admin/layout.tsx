@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { can } from "@fb/admin-core";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { can, loadAdminContext } from "@fb/admin-core";
 import { PERMISSIONS } from "@fb/shared";
-import { requireAdminPage } from "@/lib/admin-guard";
+import { ipAllowed } from "@/lib/admin-ip";
+import { readAdminSessionUserId } from "@/lib/admin-session";
+import { adminLogoutAction } from "./login/actions";
 
-// Every /admin route is dynamic + gated. The gate runs here so it protects the
-// whole route group: any nested admin page is unreachable without passing it
-// (non-admins get a 404, never a hint that the area exists).
 export const dynamic = "force-dynamic";
 
 const NAV: { href: string; label: string }[] = [
@@ -18,8 +19,25 @@ const NAV: { href: string; label: string }[] = [
   { href: "/admin/live", label: "الطاولات المباشرة" },
 ];
 
+/**
+ * Admin chrome. The IP allowlist (if set) covers the whole /admin area including
+ * the login page. Authorization for the DASHBOARD PAGES is enforced by each page
+ * (`requireAdminPage`/`requireAdminCan`) — this layout only renders chrome: the
+ * nav when an admin session is present, or nothing (login page) when it isn't.
+ */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const ctx = await requireAdminPage();
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  if (!ipAllowed(process.env.ADMIN_IP_ALLOWLIST, ip)) notFound();
+
+  const userId = await readAdminSessionUserId();
+  const ctx = userId ? await loadAdminContext(userId) : null;
+
+  // No admin session (e.g. the login page) → bare chrome, no nav.
+  if (!ctx) {
+    return <div className="min-h-dvh bg-background text-foreground">{children}</div>;
+  }
+
   const nav = can(ctx, PERMISSIONS.ADMIN_MANAGE)
     ? [...NAV, { href: "/admin/admins", label: "المشرفون" }]
     : NAV;
@@ -46,6 +64,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               </Link>
             ))}
           </nav>
+          <form action={adminLogoutAction} className="ms-auto">
+            <button className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground">
+              خروج
+            </button>
+          </form>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
