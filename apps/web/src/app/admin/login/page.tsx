@@ -6,9 +6,13 @@ import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
 
-// Override the manifest at the PAGE (deepest) segment — this is where "Add to
-// Home Screen" happens, so the installed admin icon launches /admin/login.
-export const metadata: Metadata = { manifest: "/admin.webmanifest" };
+// Override at the PAGE (deepest) segment — this is where "Add to Home Screen"
+// happens, so the installed admin icon launches /admin/login AND uses the
+// distinct admin icon (apple-touch-icon for iOS; Android uses the manifest icons).
+export const metadata: Metadata = {
+  manifest: "/admin.webmanifest",
+  icons: { apple: [{ url: "/admin-icon-512.png", sizes: "512x512", type: "image/png" }] },
+};
 
 export default async function AdminLoginPage() {
   // Already an active admin? Skip the form.

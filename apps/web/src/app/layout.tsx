@@ -21,6 +21,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // Canonical origin — REQUIRED so og:image / twitter:image resolve to an
+  // ABSOLUTE https URL (social crawlers reject relative/localhost image URLs;
+  // this was the missing piece that made share previews silently not render).
+  metadataBase: new URL("https://game1.fmgtech.dev"),
   title: "فوتبول بي",
   description: "تحديات كرة قدم",
   manifest: "/manifest.webmanifest",
@@ -42,11 +46,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ar_AR",
     siteName: "فوتبول بي",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "فوتبول بي" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "فوتبول بي",
     description: "تحديات كرة قدم",
+    images: ["/og.png"],
   },
 };
 
