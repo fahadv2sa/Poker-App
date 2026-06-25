@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // response"). Fix: apps/web/.next is a directory junction to a path under
   // %TEMP% so OneDrive never syncs the build output. See README / setup.
   // Internal workspace packages are shipped as TypeScript source.
-  transpilePackages: ["@fb/db", "@fb/shared", "@fb/engine"],
+  transpilePackages: ["@fb/admin-core", "@fb/db", "@fb/shared", "@fb/engine"],
   // Native / engine-backed modules must not be bundled by the server compiler.
   serverExternalPackages: ["@node-rs/argon2", "@prisma/client"],
   webpack: (config) => {

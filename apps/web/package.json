@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fb/admin-core": "workspace:*",
     "@fb/db": "workspace:*",
     "@fb/shared": "workspace:*",
     "@node-rs/argon2": "^2.0.2",

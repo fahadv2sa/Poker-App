@@ -60,6 +60,31 @@ Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to
   the migration) into the deploy branch, or switch the deploy branch to the merged result,
   before the next prod deploy. No deploy is in progress, so nothing is broken right now.
 
+## D6 — Admin access-audit granularity / render-time write — DEFERRED
+- **Found:** Phase 1 (admin shell).
+- **What:** the `/admin` landing page records an `admin.dashboard_access` audit row
+  inside the Server Component render (`apps/web/src/app/admin/page.tsx`).
+- **Why it matters:** a DB write during render can fire more than once per real visit
+  (React dev double-render; RSC prefetch if a link to /admin is ever added). Today there
+  is no link to /admin and admins reach it by typing the URL, so it's effectively one row
+  per visit — acceptable for the Phase 1 gate proof, but not the right long-term shape.
+- **Suggested fix (later):** move access logging out of render — e.g. log on admin
+  sign-in, or via a route handler / server action invoked once on mount; consider a
+  per-session throttle so the audit log isn't padded with access rows.
+
+## D7 — Web build fails without `--use-system-ca` (corporate TLS + next/font) — DEFERRED (env)
+- **Found:** Phase 1 (web production build).
+- **What:** `next build` fetches `Inter` + `Tajawal` from Google Fonts at build time
+  (`apps/web/src/app/layout.tsx`); behind this machine's corporate TLS interception the cert
+  fails (`unable to verify the first certificate`) and the build aborts.
+- **Why it matters:** any LOCAL production build on this machine fails unless prefixed with
+  `NODE_OPTIONS=--use-system-ca`. Railway is unaffected (no interception there), so prod
+  deploys are fine.
+- **Action taken (blocking, env-only):** re-ran the build as
+  `NODE_OPTIONS=--use-system-ca pnpm --filter @fb/web build` to verify Phase 1. Not a code change.
+- **Suggested fix (later):** document the flag as the standard local-build command, or
+  self-host the two fonts via `next/font/local` so the build needs no network (faster + robust).
+
 ## D4 — Prisma config deprecation + major upgrade available — DEFERRED
 - **Found:** Phase 0 (generate/migrate output).
 - **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also
