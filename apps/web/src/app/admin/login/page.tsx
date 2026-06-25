@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { loadAdminContext } from "@fb/admin-core";
 import { readAdminSessionUserId } from "@/lib/admin-session";
 import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
+
+// Override the manifest at the PAGE (deepest) segment — this is where "Add to
+// Home Screen" happens, so the installed admin icon launches /admin/login.
+export const metadata: Metadata = { manifest: "/admin.webmanifest" };
 
 export default async function AdminLoginPage() {
   // Already an active admin? Skip the form.
