@@ -6,3 +6,4 @@ export * from "./profile.js";
 export * from "./auth.schemas.js";
 export * from "./ws.js";
 export * from "./rate-limit.js";
+export * from "./admin.js";

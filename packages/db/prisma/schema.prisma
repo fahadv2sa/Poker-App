@@ -216,6 +216,7 @@ model User {
   friendReqSent Friendship[] @relation("FriendRequester")
   friendReqRecv Friendship[] @relation("FriendAddressee")
   emailOtp      EmailOtp?
+  admin         Admin?
 
   @@map("users")
   @@schema("platform")
@@ -941,4 +942,94 @@ model GameResult {
   @@index([gameId])
   @@map("game_results")
   @@schema("link_up")
+}
+
+// ----------------------------------------------------------------------------
+// Admin authority (platform-owned; super-admin dashboard — Proposal 2, Phase 0)
+// Lives in the `platform` schema because an admin is a PLATFORM fact, keyed on
+// the opaque user_id (the cross-game identity contract): any current/future game
+// inherits the same admin identity. These tables are read ONLY by the admin
+// dashboard, never by gameplay, so they never touch the live-game hot path.
+// ----------------------------------------------------------------------------
+
+// Two FIXED tiers. The extensible axis is PERMISSIONS (string keys in
+// @fb/shared), NOT this enum — adding a capability needs no migration.
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+
+  @@map("admin_role")
+  @@schema("platform")
+}
+
+enum AdminStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@map("admin_status")
+  @@schema("platform")
+}
+
+// One row per admin. SUPER_ADMIN has implicit all-permissions; ADMIN holds only
+// the explicit grants in admin_permissions. Anti-lockout rules (never remove the
+// last active super-admin, etc.) are enforced in @fb/admin-core, not the schema.
+model Admin {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @unique @map("user_id") @db.Uuid
+  role            AdminRole
+  status          AdminStatus @default(ACTIVE)
+  grantedByUserId String?     @map("granted_by_user_id") @db.Uuid
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  revokedAt       DateTime?   @map("revoked_at") @db.Timestamptz(6)
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions     AdminPermission[]
+
+  @@index([role])
+  @@map("admins")
+  @@schema("platform")
+}
+
+// Per-admin permission grants (only meaningful for ADMIN; SUPER_ADMIN bypasses).
+// `permissionKey` is a string from the @fb/shared PERMISSIONS registry — kept as
+// a string (NOT a Postgres enum) so a new capability is add-a-row, no migration.
+// `scope` lets a grant target the platform or a specific game (e.g. "link_up").
+model AdminPermission {
+  id              String   @id @default(uuid()) @db.Uuid
+  adminId         String   @map("admin_id") @db.Uuid
+  permissionKey   String   @map("permission_key")
+  scope           String   @default("platform")
+  grantedByUserId String?  @map("granted_by_user_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  admin           Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@unique([adminId, permissionKey, scope])
+  @@index([adminId])
+  @@map("admin_permissions")
+  @@schema("platform")
+}
+
+// Append-only audit log of every admin action. Intentionally has NO foreign key
+// to users so the history survives even if an actor account is later deleted —
+// audit must be immutable. Queried ONLY by the dashboard; append-only + indexed,
+// so it can grow without ever touching the live game (retention added later).
+model AdminAuditLog {
+  seq         BigInt   @id @default(autoincrement())
+  actorUserId String   @map("actor_user_id") @db.Uuid
+  action      String
+  targetType  String?  @map("target_type")
+  targetId    String?  @map("target_id")
+  scope       String?
+  before      Json?    @db.JsonB
+  after       Json?    @db.JsonB
+  metadata    Json?    @db.JsonB
+  ip          String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_audit_log")
+  @@schema("platform")
 }

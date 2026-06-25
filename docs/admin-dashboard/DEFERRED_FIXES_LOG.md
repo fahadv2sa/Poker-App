@@ -1,0 +1,54 @@
+# Deferred Fixes Log — Super-Admin Dashboard build
+
+**Working rule (set 2026-06-25):** while building the dashboard phases, the default is
+**spot it → log it → do NOT fix it**. We finish all phases first, then do every fix as one
+deliberate pass at the end. Exception: if something **blocks** the current phase, fix it to
+keep moving, state clearly what + why, and still log it here. Anything **prod-touching**
+always needs explicit approval before running.
+
+This log is carried forward verbatim into every phase report so nothing is lost.
+
+Legend: **DEFERRED** = found, not fixed (default). **FIXED (blocking)** = had to fix to proceed.
+
+---
+
+## D1 — Schema/DB drift: stray `DROP DEFAULT` on 4 live tables — DEFERRED
+- **Found:** Phase 0 (migration generation).
+- **What:** `prisma migrate dev` proposed 4 unrelated statements:
+  `ALTER TABLE ... ALTER COLUMN "updated_at" DROP DEFAULT` on
+  `football.player_season_stats`, `link_up.player_metrics`, `platform.friendships`,
+  `platform.user_avatars`.
+- **Where:** the local DB has a DB-level default (`CURRENT_TIMESTAMP`) on these `updated_at`
+  columns, but the Prisma schema marks them `@updatedAt` with no `@default`, so Prisma wants
+  the DB default dropped. Pre-existing drift, unrelated to the admin feature.
+- **Why it matters:** low runtime risk (these are `@updatedAt`, always set by the Prisma
+  client on write), but it's real schema↔DB drift that will keep surfacing in every future
+  `migrate dev` and pollute unrelated migrations. Prod almost certainly has the same drift.
+- **Action taken:** **removed** these 4 statements from the admin migration so it stays purely
+  additive (note left in the migration SQL). Drift itself left untouched.
+- **Suggested fix (later):** one dedicated, reviewed migration that drops these defaults
+  (verify no raw-SQL INSERT relies on them first), applied prod via migrate-first.
+
+## D2 — `football_poker_test` DB was completely unmigrated — FIXED (blocking, local only)
+- **Found:** Phase 0 (running admin-core tests).
+- **What:** the local test DB (`TEST_DATABASE_URL` → `football_poker_test`) had **no tables**,
+  so any DB-backed test failed with `platform.users does not exist`.
+- **Why it blocked:** Phase 0's bootstrap/idempotency tests can't run without a migrated test DB.
+- **Action taken (necessary):** ran `prisma migrate deploy` against `football_poker_test`
+  (local only, non-prod) to apply all 24 migrations. Tests then passed (admin-core 6/6).
+- **Suggested fix (later):** add a documented `db:test:setup` script / note so the test DB is
+  reproducibly migrated; consider a CI step. Local-only; no prod impact.
+
+## D3 — Node engine pin mismatch (Node 24 vs pinned 20) — DEFERRED
+- **Found:** Phase 0 (every pnpm command prints `WARN Unsupported engine`).
+- **What:** root `engines` + `.nvmrc`/`.node-version` pin Node 20; the machine runs Node 24.
+- **Why it matters:** noise only; builds/tests pass. Pre-existing (also noted in the
+  pre-launch audit).
+- **Suggested fix (later):** widen the pin to `>=20` or align the local Node version.
+
+## D4 — Prisma config deprecation + major upgrade available — DEFERRED
+- **Found:** Phase 0 (generate/migrate output).
+- **What:** `package.json#prisma` is deprecated (Prisma 7 wants `prisma.config.ts`); also
+  Prisma 6.19.3 → 7.8.0 major upgrade is available.
+- **Why it matters:** purely informational now; a v7 upgrade is a separate, deliberate task.
+- **Suggested fix (later):** migrate to `prisma.config.ts`; evaluate the v7 upgrade on its own.
