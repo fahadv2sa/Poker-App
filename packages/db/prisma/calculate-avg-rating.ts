@@ -26,11 +26,13 @@ async function main() {
   let done = 0;
   for (let i = 0; i < entries.length; i += 200) {
     const slice = entries.slice(i, i + 200);
-    await Promise.all(slice.map((e) => prisma.player.update({ where: { id: e.id }, data: { avgRating: e.avg } })));
+    await Promise.all(
+      slice.map((e) => prisma.player.update({ where: { id: e.id }, data: { avgRating: e.avg, avgRatingN: e.n } })),
+    );
     done += slice.length;
   }
   const total = await prisma.player.count({ where: { avgRating: { not: null } } });
-  console.log(`avg_rating written for ${done} players (total with avg_rating: ${total}).`);
+  console.log(`avg_rating (+ sample size) written for ${done} players (total with avg_rating: ${total}).`);
 }
 
 main()

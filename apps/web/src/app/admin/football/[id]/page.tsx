@@ -112,7 +112,7 @@ export default async function AdminPlayerDetailPage({ params }: { params: Promis
         <Card title="الشهرة والتقييم">
           <dl className="text-sm">
             <KV k="درجة الشهرة" v={p.fameScore !== null ? p.fameScore.toFixed(2) : DASH} num />
-            <KV k="متوسط تقييم المباريات" v={p.avgRating !== null ? `${p.avgRating.toFixed(2)} / 10` : DASH} num />
+            <KV k="متوسط تقييم المباريات" v={p.avgRating !== null ? `${p.avgRating.toFixed(2)} / 10  (${p.avgRatingN} موسم)` : DASH} num />
             <KV k="الفئة (Tier)" v={n(p.tier)} num />
             <KV k="مواسم الدوريات الكبرى" v={n(p.top5LeagueSeasons)} num />
             <KV k="أسطورة" v={p.isLegend ? "نعم" : "لا"} />

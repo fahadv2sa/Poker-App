@@ -159,6 +159,10 @@ export function PlayerFilters({ options, current, view }: { options: Options; cu
           </div>
         </div>
         <div>
+          <label className={label}>أدنى مواسم مقيّمة</label>
+          <input name="ratedMin" defaultValue={v("ratedMin")} inputMode="numeric" placeholder="0" className={`${input} num`} />
+        </div>
+        <div>
           <label className={label}>الطول (سم) من–إلى</label>
           <div className="flex gap-1">
             <input name="heightMin" defaultValue={v("heightMin")} inputMode="numeric" placeholder="من" className={`${input} num`} />

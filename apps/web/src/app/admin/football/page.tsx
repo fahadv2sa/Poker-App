@@ -41,6 +41,7 @@ function parseFilter(sp: SP): PlayerFilter {
     fameMax: num(sp.fameMax),
     avgMin: num(sp.avgMin),
     avgMax: num(sp.avgMax),
+    ratedMin: num(sp.ratedMin),
     club: sp.club?.trim() || undefined,
     nationalTeam: sp.nationalTeam?.trim() || undefined,
     tournament: inSet(sp.tournament, TOURNAMENTS) as TournamentType | undefined,
@@ -73,6 +74,7 @@ function filterParams(f: PlayerFilter): Record<string, string | undefined> {
     fameMax: s(f.fameMax),
     avgMin: s(f.avgMin),
     avgMax: s(f.avgMax),
+    ratedMin: s(f.ratedMin),
     birthYearMin: s(f.birthYearMin),
     birthYearMax: s(f.birthYearMax),
     heightMin: s(f.heightMin),
@@ -89,7 +91,7 @@ function filterParams(f: PlayerFilter): Record<string, string | undefined> {
 const CHIP_LABEL: Record<string, string> = {
   q: "بحث", club: "نادٍ", nationalTeam: "منتخب", nationality: "الجنسية", position: "المركز",
   tier: "الفئة", legend: "أسطورة", active: "الحالة", sort: "ترتيب", fameMin: "شهرة ≥", fameMax: "شهرة ≤",
-  avgMin: "تقييم ≥", avgMax: "تقييم ≤",
+  avgMin: "تقييم ≥", avgMax: "تقييم ≤", ratedMin: "مواسم مقيّمة ≥",
   birthYearMin: "ميلاد ≥", birthYearMax: "ميلاد ≤", heightMin: "طول ≥", heightMax: "طول ≤",
   weightMin: "وزن ≥", weightMax: "وزن ≤", tournament: "بطولة", tourMin: "مشاركات ≥", missing: "جودة",
 };
@@ -113,6 +115,12 @@ export default async function AdminFootballPage({ searchParams }: { searchParams
   await requireAdminCan(PERMISSIONS.FOOTBALL_READ);
   const sp = await searchParams;
   const filter = parseFilter(sp);
+  // Sample-size guard: sorting by average rating defaults to a minimum number of
+  // rated season-lines so the top isn't a tiny-sample fluke. The user can lower
+  // it (e.g. ratedMin=0) to see the raw average for everyone.
+  if ((filter.sort === "avg_desc" || filter.sort === "avg_asc") && filter.ratedMin === undefined) {
+    filter.ratedMin = 20;
+  }
   const view = sp.view === "cards" ? "cards" : "table";
   const skip = Math.max(0, Number(sp.skip ?? 0) || 0);
 
@@ -239,7 +247,16 @@ export default async function AdminFootballPage({ searchParams }: { searchParams
                 </td>
                 <td className="num px-3 py-2 text-muted-foreground">{p.birthYear ?? "—"}</td>
                 <td className="num px-3 py-2 text-muted-foreground">{p.heightCm ? `${p.heightCm}` : "—"}</td>
-                <td className="num px-3 py-2 font-bold text-emerald-300">{p.avgRating !== null ? p.avgRating.toFixed(2) : "—"}</td>
+                <td className="num px-3 py-2">
+                  {p.avgRating !== null ? (
+                    <>
+                      <span className="font-bold text-emerald-300">{p.avgRating.toFixed(2)}</span>
+                      <span className="text-[0.7rem] text-muted-foreground"> ·{p.avgRatingN}</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="num px-3 py-2">{p.fameScore !== null ? p.fameScore.toFixed(1) : "—"}</td>
                 <td className="num px-3 py-2">{p.tier ?? "—"}</td>
                 <td className="px-3 py-2">

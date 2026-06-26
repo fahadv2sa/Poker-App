@@ -621,6 +621,9 @@ model Player {
   // season/competition lines (player_season_stats.rating). Display/data only —
   // NEVER read by the rank engine. Null when the player has no rated season.
   avgRating         Float? @map("avg_rating")
+  // How many rated season/competition lines that average is based on (sample
+  // size). 0 when none. Lets rankings guard against tiny-sample flukes.
+  avgRatingN        Int    @default(0) @map("avg_rating_n")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

@@ -34,6 +34,7 @@ export interface PlayerFilter {
   fameMax?: number;
   avgMin?: number;
   avgMax?: number;
+  ratedMin?: number; // minimum rated season-lines (sample-size guard)
   club?: string;
   nationalTeam?: string;
   tournament?: TournamentType;
@@ -70,6 +71,7 @@ function buildWhere(f: PlayerFilter): Prisma.PlayerWhereInput {
   if (typeof f.fameMax === "number") and.push({ fameScore: { lte: f.fameMax } });
   if (typeof f.avgMin === "number") and.push({ avgRating: { gte: f.avgMin } });
   if (typeof f.avgMax === "number") and.push({ avgRating: { lte: f.avgMax } });
+  if (typeof f.ratedMin === "number") and.push({ avgRatingN: { gte: f.ratedMin } });
   if (f.club) {
     and.push({ playerClubs: { some: { club: { name: { contains: f.club, mode: "insensitive" } } } } });
   }
@@ -153,6 +155,7 @@ export interface AdminPlayerListItem {
   photoUrl: string | null;
   heightCm: number | null;
   avgRating: number | null;
+  avgRatingN: number;
 }
 
 export interface PlayersPage {
@@ -171,6 +174,7 @@ const LIST_SELECT = {
   fameScore: true,
   tier: true,
   avgRating: true,
+  avgRatingN: true,
   isLegend: true,
   legendScore: true,
   active: true,
@@ -197,6 +201,7 @@ function toListItem(p: Prisma.PlayerGetPayload<{ select: typeof LIST_SELECT }>):
     photoUrl: p.photoUrl,
     heightCm: p.heightCm,
     avgRating: p.avgRating,
+    avgRatingN: p.avgRatingN,
   };
 }
 
@@ -366,6 +371,7 @@ export interface AdminPlayerFull {
   fameScore: number | null;
   tier: number | null;
   avgRating: number | null;
+  avgRatingN: number;
   top5LeagueSeasons: number;
   createdAt: string;
   updatedAt: string;
@@ -407,6 +413,7 @@ export async function getPlayerDetail(id: string): Promise<AdminPlayerFull | nul
       fameScore: true,
       tier: true,
       avgRating: true,
+      avgRatingN: true,
       top5LeagueSeasons: true,
       createdAt: true,
       updatedAt: true,
@@ -527,6 +534,7 @@ export async function getPlayerDetail(id: string): Promise<AdminPlayerFull | nul
     fameScore: p.fameScore,
     tier: p.tier,
     avgRating: p.avgRating,
+    avgRatingN: p.avgRatingN,
     top5LeagueSeasons: p.top5LeagueSeasons,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
