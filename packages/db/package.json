@@ -21,6 +21,7 @@
     "diff-import": "tsx prisma/differential-import.ts",
     "transliterate:names": "tsx prisma/transliterate-names.ts",
     "calculate:scores": "tsx prisma/calculate-scores.ts",
+    "calculate:avg-rating": "tsx prisma/calculate-avg-rating.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

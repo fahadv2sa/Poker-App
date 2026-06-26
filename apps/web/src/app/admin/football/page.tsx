@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 const TAKE = 48;
 
 const POSITIONS = ["GK", "DEF", "MID", "FWD"];
-const SORTS = ["fame_desc", "fame_asc", "name_asc", "tier_asc", "birth_desc", "birth_asc", "height_desc", "weight_desc"];
+const SORTS = ["fame_desc", "fame_asc", "name_asc", "tier_asc", "birth_desc", "birth_asc", "height_desc", "weight_desc", "avg_desc", "avg_asc"];
 const MISSING = ["photo", "name_ar", "fame", "clubs", "season_stats"];
 const TOURNAMENTS = ["WORLD_CUP", "EURO_COPA", "CHAMPIONS_LEAGUE"];
 
@@ -39,6 +39,8 @@ function parseFilter(sp: SP): PlayerFilter {
     active: bool(sp.active),
     fameMin: num(sp.fameMin),
     fameMax: num(sp.fameMax),
+    avgMin: num(sp.avgMin),
+    avgMax: num(sp.avgMax),
     club: sp.club?.trim() || undefined,
     nationalTeam: sp.nationalTeam?.trim() || undefined,
     tournament: inSet(sp.tournament, TOURNAMENTS) as TournamentType | undefined,
@@ -69,6 +71,8 @@ function filterParams(f: PlayerFilter): Record<string, string | undefined> {
     sort: f.sort,
     fameMin: s(f.fameMin),
     fameMax: s(f.fameMax),
+    avgMin: s(f.avgMin),
+    avgMax: s(f.avgMax),
     birthYearMin: s(f.birthYearMin),
     birthYearMax: s(f.birthYearMax),
     heightMin: s(f.heightMin),
@@ -85,6 +89,7 @@ function filterParams(f: PlayerFilter): Record<string, string | undefined> {
 const CHIP_LABEL: Record<string, string> = {
   q: "بحث", club: "نادٍ", nationalTeam: "منتخب", nationality: "الجنسية", position: "المركز",
   tier: "الفئة", legend: "أسطورة", active: "الحالة", sort: "ترتيب", fameMin: "شهرة ≥", fameMax: "شهرة ≤",
+  avgMin: "تقييم ≥", avgMax: "تقييم ≤",
   birthYearMin: "ميلاد ≥", birthYearMax: "ميلاد ≤", heightMin: "طول ≥", heightMax: "طول ≤",
   weightMin: "وزن ≥", weightMax: "وزن ≤", tournament: "بطولة", tourMin: "مشاركات ≥", missing: "جودة",
 };
@@ -210,6 +215,7 @@ export default async function AdminFootballPage({ searchParams }: { searchParams
               <th className="px-3 py-2 font-bold">المركز</th>
               <th className="px-3 py-2 font-bold">الميلاد</th>
               <th className="px-3 py-2 font-bold">الطول</th>
+              <th className="px-3 py-2 font-bold">التقييم</th>
               <th className="px-3 py-2 font-bold">الشهرة</th>
               <th className="px-3 py-2 font-bold">الفئة</th>
               <th className="px-3 py-2 font-bold">أسطورة</th>
@@ -233,6 +239,7 @@ export default async function AdminFootballPage({ searchParams }: { searchParams
                 </td>
                 <td className="num px-3 py-2 text-muted-foreground">{p.birthYear ?? "—"}</td>
                 <td className="num px-3 py-2 text-muted-foreground">{p.heightCm ? `${p.heightCm}` : "—"}</td>
+                <td className="num px-3 py-2 font-bold text-emerald-300">{p.avgRating !== null ? p.avgRating.toFixed(2) : "—"}</td>
                 <td className="num px-3 py-2">{p.fameScore !== null ? p.fameScore.toFixed(1) : "—"}</td>
                 <td className="num px-3 py-2">{p.tier ?? "—"}</td>
                 <td className="px-3 py-2">
@@ -305,6 +312,11 @@ function PlayerCard({ p }: { p: AdminPlayerListItem }) {
       </div>
       <div className="flex flex-wrap items-center justify-center gap-1.5">
         <PosBadge code={p.position} />
+        {p.avgRating !== null ? (
+          <span className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-1.5 py-0.5 text-xs font-bold text-emerald-300">
+            ⌀ {p.avgRating.toFixed(1)}
+          </span>
+        ) : null}
         {p.fameScore !== null ? (
           <span className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-xs font-bold text-primary">
             {p.fameScore.toFixed(0)}

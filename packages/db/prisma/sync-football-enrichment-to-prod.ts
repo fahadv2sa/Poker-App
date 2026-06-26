@@ -27,6 +27,9 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/client";
 
 const COMMIT = process.argv.includes("--commit");
+// --players-only: push the player columns (bio + scores + avg_rating) but SKIP
+// the season/tournament wipe+reload (used when only player columns changed).
+const PLAYERS_ONLY = process.argv.includes("--players-only");
 const BATCH = 5000;
 
 const PROD_URL = process.env.PROD_DATABASE_URL;
@@ -88,6 +91,7 @@ async function main() {
           tier: true,
           isLegend: true,
           legendScore: true,
+          avgRating: true,
         },
       }),
     ),
@@ -161,6 +165,7 @@ async function main() {
               tier: p.tier,
               isLegend: p.isLegend,
               legendScore: p.legendScore,
+              avgRating: p.avgRating,
             },
           }),
         ),
@@ -168,6 +173,14 @@ async function main() {
     );
     pDone += slice.length;
     log(`[player] updated ${pDone}/${localPlayers.length}`);
+  }
+
+  if (PLAYERS_ONLY) {
+    log(`\n[players-only] skipping season/tournament reload.`);
+    const vFame = await retry(() => prod.player.count({ where: { avgRating: { not: null } } }));
+    log(`[verify] prod players_with_avg_rating=${vFame}`);
+    log(`COMMIT complete (players-only).`);
+    return;
   }
 
   // 3a) tournament — wipe (our-data-only) then insert remapped

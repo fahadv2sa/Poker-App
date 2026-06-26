@@ -617,6 +617,10 @@ model Player {
   // Fame tier 1-4 (1 = most famous), derived from fame_score rank by
   // calculate-scores. Drives the difficulty dealing filter (Part 3).
   tier              Int?
+  // Average API-Football match rating (~0-10) across all the player's rated
+  // season/competition lines (player_season_stats.rating). Display/data only —
+  // NEVER read by the rank engine. Null when the player has no rated season.
+  avgRating         Float? @map("avg_rating")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

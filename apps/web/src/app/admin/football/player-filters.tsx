@@ -19,6 +19,8 @@ const SORTS: { value: string; label: string }[] = [
   { value: "birth_asc", label: "الأقدم ميلادًا" },
   { value: "height_desc", label: "الأطول" },
   { value: "weight_desc", label: "الأثقل" },
+  { value: "avg_desc", label: "متوسط التقييم (الأعلى)" },
+  { value: "avg_asc", label: "متوسط التقييم (الأقل)" },
 ];
 const TOURNAMENTS: { value: string; label: string }[] = [
   { value: "WORLD_CUP", label: "كأس العالم" },
@@ -147,6 +149,13 @@ export function PlayerFilters({ options, current, view }: { options: Options; cu
           <div className="flex gap-1">
             <input name="birthYearMin" defaultValue={v("birthYearMin")} inputMode="numeric" placeholder="من" className={`${input} num`} />
             <input name="birthYearMax" defaultValue={v("birthYearMax")} inputMode="numeric" placeholder="إلى" className={`${input} num`} />
+          </div>
+        </div>
+        <div>
+          <label className={label}>متوسط التقييم من–إلى</label>
+          <div className="flex gap-1">
+            <input name="avgMin" defaultValue={v("avgMin")} inputMode="decimal" placeholder="من" className={`${input} num`} />
+            <input name="avgMax" defaultValue={v("avgMax")} inputMode="decimal" placeholder="إلى" className={`${input} num`} />
           </div>
         </div>
         <div>

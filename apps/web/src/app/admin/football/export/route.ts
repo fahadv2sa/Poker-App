@@ -13,7 +13,7 @@ import { requireAdminCan } from "@/lib/admin-guard";
 export const dynamic = "force-dynamic";
 
 const POSITIONS = ["GK", "DEF", "MID", "FWD"];
-const SORTS = ["fame_desc", "fame_asc", "name_asc", "tier_asc", "birth_desc", "birth_asc", "height_desc", "weight_desc"];
+const SORTS = ["fame_desc", "fame_asc", "name_asc", "tier_asc", "birth_desc", "birth_asc", "height_desc", "weight_desc", "avg_desc", "avg_asc"];
 const MISSING = ["photo", "name_ar", "fame", "clubs", "season_stats"];
 const TOURNAMENTS = ["WORLD_CUP", "EURO_COPA", "CHAMPIONS_LEAGUE"];
 
@@ -41,6 +41,8 @@ function parse(sp: URLSearchParams): PlayerFilter {
     active: bool("active"),
     fameMin: num("fameMin"),
     fameMax: num("fameMax"),
+    avgMin: num("avgMin"),
+    avgMax: num("avgMax"),
     club: get("club"),
     nationalTeam: get("nationalTeam"),
     tournament: inSet("tournament", TOURNAMENTS) as TournamentType | undefined,
@@ -64,6 +66,7 @@ const HEADERS = [
   "position",
   "birth_year",
   "height_cm",
+  "avg_rating",
   "fame_score",
   "tier",
   "is_legend",
@@ -94,6 +97,7 @@ export async function GET(req: NextRequest) {
         cell(p.position),
         cell(p.birthYear),
         cell(p.heightCm),
+        cell(p.avgRating),
         cell(p.fameScore),
         cell(p.tier),
         cell(p.isLegend),

@@ -16,7 +16,9 @@ export type PlayerSort =
   | "birth_desc"
   | "birth_asc"
   | "height_desc"
-  | "weight_desc";
+  | "weight_desc"
+  | "avg_desc"
+  | "avg_asc";
 /** Data-quality gaps an admin can filter on (to find what needs enrichment). */
 export type PlayerMissing = "photo" | "name_ar" | "fame" | "clubs" | "season_stats";
 export type TournamentType = "WORLD_CUP" | "EURO_COPA" | "CHAMPIONS_LEAGUE";
@@ -30,6 +32,8 @@ export interface PlayerFilter {
   active?: boolean;
   fameMin?: number;
   fameMax?: number;
+  avgMin?: number;
+  avgMax?: number;
   club?: string;
   nationalTeam?: string;
   tournament?: TournamentType;
@@ -64,6 +68,8 @@ function buildWhere(f: PlayerFilter): Prisma.PlayerWhereInput {
   if (typeof f.active === "boolean") and.push({ active: f.active });
   if (typeof f.fameMin === "number") and.push({ fameScore: { gte: f.fameMin } });
   if (typeof f.fameMax === "number") and.push({ fameScore: { lte: f.fameMax } });
+  if (typeof f.avgMin === "number") and.push({ avgRating: { gte: f.avgMin } });
+  if (typeof f.avgMax === "number") and.push({ avgRating: { lte: f.avgMax } });
   if (f.club) {
     and.push({ playerClubs: { some: { club: { name: { contains: f.club, mode: "insensitive" } } } } });
   }
@@ -120,6 +126,10 @@ function buildOrder(sort?: PlayerSort): Prisma.PlayerOrderByWithRelationInput[] 
       return [{ heightCm: { sort: "desc", nulls: "last" } }, { name: "asc" }];
     case "weight_desc":
       return [{ weightKg: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+    case "avg_desc":
+      return [{ avgRating: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+    case "avg_asc":
+      return [{ avgRating: { sort: "asc", nulls: "last" } }, { name: "asc" }];
     case "fame_desc":
     default:
       return [{ fameScore: { sort: "desc", nulls: "last" } }, { name: "asc" }];
@@ -142,6 +152,7 @@ export interface AdminPlayerListItem {
   hasPhoto: boolean;
   photoUrl: string | null;
   heightCm: number | null;
+  avgRating: number | null;
 }
 
 export interface PlayersPage {
@@ -159,6 +170,7 @@ const LIST_SELECT = {
   heightCm: true,
   fameScore: true,
   tier: true,
+  avgRating: true,
   isLegend: true,
   legendScore: true,
   active: true,
@@ -184,6 +196,7 @@ function toListItem(p: Prisma.PlayerGetPayload<{ select: typeof LIST_SELECT }>):
     hasPhoto: p.photoUrl !== null,
     photoUrl: p.photoUrl,
     heightCm: p.heightCm,
+    avgRating: p.avgRating,
   };
 }
 
@@ -352,6 +365,7 @@ export interface AdminPlayerFull {
   legendScore: number | null;
   fameScore: number | null;
   tier: number | null;
+  avgRating: number | null;
   top5LeagueSeasons: number;
   createdAt: string;
   updatedAt: string;
@@ -392,6 +406,7 @@ export async function getPlayerDetail(id: string): Promise<AdminPlayerFull | nul
       legendScore: true,
       fameScore: true,
       tier: true,
+      avgRating: true,
       top5LeagueSeasons: true,
       createdAt: true,
       updatedAt: true,
@@ -511,6 +526,7 @@ export async function getPlayerDetail(id: string): Promise<AdminPlayerFull | nul
     legendScore: p.legendScore,
     fameScore: p.fameScore,
     tier: p.tier,
+    avgRating: p.avgRating,
     top5LeagueSeasons: p.top5LeagueSeasons,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
