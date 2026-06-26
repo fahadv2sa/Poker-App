@@ -22,7 +22,9 @@ import { resolve } from "node:path";
 import { prisma } from "../src/client";
 
 const BASE = "https://v3.football.api-sports.io";
-const CHECKPOINT = resolve(process.cwd(), ".tournament-progress.json");
+// Overridable so the checkpoint can live OUTSIDE OneDrive (which locks
+// frequently-written files → EBUSY mid-run). Default keeps the legacy location.
+const CHECKPOINT = process.env.TOURNAMENT_CHECKPOINT ?? resolve(process.cwd(), ".tournament-progress.json");
 
 // API-Football league ids for the tracked competitions.
 const WORLD_CUP = 1;
@@ -111,7 +113,25 @@ function loadCheckpoint(): Checkpoint {
   }
 }
 function saveCheckpoint(cp: Checkpoint) {
-  if (!DRY_RUN) writeFileSync(CHECKPOINT, JSON.stringify(cp));
+  if (DRY_RUN) return;
+  // OneDrive / antivirus can briefly lock the checkpoint mid-write (EBUSY/EPERM).
+  // Retry through a transient lock so it can't kill an otherwise-healthy run.
+  for (let i = 0; ; i++) {
+    try {
+      writeFileSync(CHECKPOINT, JSON.stringify(cp));
+      return;
+    } catch (e) {
+      const code = (e as { code?: string }).code;
+      if ((code === "EBUSY" || code === "EPERM") && i < 50) {
+        const until = Date.now() + 100;
+        while (Date.now() < until) {
+          /* brief synchronous backoff */
+        }
+        continue;
+      }
+      throw e;
+    }
+  }
 }
 
 // --- API typings ----------------------------------------------------------

@@ -82,6 +82,12 @@ async function main() {
           birthCountry: true,
           heightCm: true,
           weightKg: true,
+          // recomputed scores + fame inputs (folded in after the imports)
+          top5LeagueSeasons: true,
+          fameScore: true,
+          tier: true,
+          isLegend: true,
+          legendScore: true,
         },
       }),
     ),
@@ -104,9 +110,10 @@ async function main() {
   ]);
   log(`[prod] player_season_stats=${prodSeasons}  player_tournament_stats=${prodTour} (target tables)`);
 
-  // 2) bio updates — local players carrying any enrichment bio field
-  const bioRows = localPlayers.filter((p) => BIO_FIELDS.some((f) => p[f] !== null && p[f] !== undefined));
-  log(`\n[bio] prod players to UPDATE with bio columns: ${bioRows.length}`);
+  // 2) player updates — bio + fame inputs + recomputed scores, for EVERY mapped
+  //    player (scores/top5 apply to all, not just those carrying bio).
+  const withBio = localPlayers.filter((p) => BIO_FIELDS.some((f) => p[f] !== null && p[f] !== undefined)).length;
+  log(`\n[player] prod players to UPDATE (bio+scores): ${localPlayers.length}  (of which carry bio: ${withBio})`);
 
   // 3) tournament stats — orphan check via DB-side grouping
   const [tourTotal, tourGroups] = await Promise.all([
@@ -132,10 +139,10 @@ async function main() {
   // ───────────────────────── WRITE PATH (only with --commit) ─────────────────
   log(`\n>>> COMMIT: applying to prod...`);
 
-  // 2a) bio updates (batched, modest concurrency)
-  let bioDone = 0;
-  for (let i = 0; i < bioRows.length; i += 200) {
-    const slice = bioRows.slice(i, i + 200);
+  // 2a) player updates — bio + fame inputs + recomputed scores (batched)
+  let pDone = 0;
+  for (let i = 0; i < localPlayers.length; i += 200) {
+    const slice = localPlayers.slice(i, i + 200);
     await Promise.all(
       slice.map((p) =>
         retry(() =>
@@ -149,13 +156,18 @@ async function main() {
               birthCountry: p.birthCountry,
               heightCm: p.heightCm,
               weightKg: p.weightKg,
+              top5LeagueSeasons: p.top5LeagueSeasons,
+              fameScore: p.fameScore,
+              tier: p.tier,
+              isLegend: p.isLegend,
+              legendScore: p.legendScore,
             },
           }),
         ),
       ),
     );
-    bioDone += slice.length;
-    log(`[bio] updated ${bioDone}/${bioRows.length}`);
+    pDone += slice.length;
+    log(`[player] updated ${pDone}/${localPlayers.length}`);
   }
 
   // 3a) tournament — wipe (our-data-only) then insert remapped
@@ -195,12 +207,14 @@ async function main() {
   }
 
   // verify
-  const [vSeason, vTour, vBirth] = await Promise.all([
+  const [vSeason, vTour, vBirth, vTop5, vFame] = await Promise.all([
     retry(() => prod.playerSeasonStat.count()),
     retry(() => prod.playerTournamentStat.count()),
     retry(() => prod.player.count({ where: { birthDate: { not: null } } })),
+    retry(() => prod.player.count({ where: { top5LeagueSeasons: { gt: 0 } } })),
+    retry(() => prod.player.count({ where: { fameScore: { not: null } } })),
   ]);
-  log(`\n[verify] prod season_stats=${vSeason} tournament_stats=${vTour} players_with_birthDate=${vBirth}`);
+  log(`\n[verify] prod season_stats=${vSeason} tournament_stats=${vTour} birthDate=${vBirth} top5=${vTop5} fame=${vFame}`);
   log(`COMMIT complete.`);
 }
 
