@@ -26,14 +26,15 @@
 import "./_ensure-system-ca";
 import "dotenv/config";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { prisma } from "../src/client";
 import { apiGet, QuotaStop, requestsMade } from "./import-api-football";
 
 const BASE = "https://v3.football.api-sports.io";
-// Checkpoint path is overridable so it can live OUTSIDE OneDrive (which locks
-// frequently-written files → EBUSY mid-run). Default keeps the legacy location.
-const CHECKPOINT = process.env.ENRICH_CHECKPOINT ?? resolve(process.cwd(), ".enrich-progress.json");
+// Checkpoint lives OUTSIDE OneDrive by DEFAULT (OS temp dir) — OneDrive locks
+// frequently-written files → EBUSY mid-run. Override with ENRICH_CHECKPOINT.
+const CHECKPOINT = process.env.ENRICH_CHECKPOINT ?? resolve(tmpdir(), "fb-enrich-progress.json");
 
 const argv = process.argv.slice(2);
 const flag = (f: string) => argv.includes(f);

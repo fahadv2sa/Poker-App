@@ -18,13 +18,14 @@
 import "./_ensure-system-ca";
 import "dotenv/config";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { prisma } from "../src/client";
 
 const BASE = "https://v3.football.api-sports.io";
-// Overridable so the checkpoint can live OUTSIDE OneDrive (which locks
-// frequently-written files → EBUSY mid-run). Default keeps the legacy location.
-const CHECKPOINT = process.env.TOURNAMENT_CHECKPOINT ?? resolve(process.cwd(), ".tournament-progress.json");
+// Checkpoint lives OUTSIDE OneDrive by DEFAULT (OS temp dir) — OneDrive locks
+// frequently-written files → EBUSY mid-run. Override with TOURNAMENT_CHECKPOINT.
+const CHECKPOINT = process.env.TOURNAMENT_CHECKPOINT ?? resolve(tmpdir(), "fb-tournament-progress.json");
 
 // API-Football league ids for the tracked competitions.
 const WORLD_CUP = 1;
