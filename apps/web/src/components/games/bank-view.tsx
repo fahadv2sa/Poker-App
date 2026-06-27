@@ -49,8 +49,8 @@ export function BankView({
         className="lu-frame mt-5 flex flex-col items-center gap-2 rounded-3xl px-6 pb-6 pt-7 text-center"
         style={{ background: "radial-gradient(120% 90% at 50% -6%, rgba(255,106,26,0.16), transparent 62%), linear-gradient(180deg, rgba(30,26,19,0.92), rgba(11,10,9,0.96))" }}
       >
-        {/* gold vault medallion — ember glow + breathing pulse (the vault art
-            carries its own ring, so no extra rotating ring needed). */}
+        {/* gold bank-building medallion — centered icon with the ember glow ring
+            + breathing pulse around it. */}
         <div className="relative grid place-items-center">
           <span
             aria-hidden
@@ -59,7 +59,7 @@ export function BankView({
           />
           <span className="lu-anim-breathe relative size-28 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_34px_rgba(255,106,26,0.4)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/bank-vault.png" alt="" className="absolute inset-0 size-full object-cover" />
+            <img src="/bank-icon.png" alt="" className="absolute inset-0 size-full object-cover" />
           </span>
         </div>
 
