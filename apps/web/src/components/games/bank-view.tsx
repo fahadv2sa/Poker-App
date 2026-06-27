@@ -49,25 +49,17 @@ export function BankView({
         className="lu-frame mt-5 flex flex-col items-center gap-2 rounded-3xl px-6 pb-6 pt-7 text-center"
         style={{ background: "radial-gradient(120% 90% at 50% -6%, rgba(255,106,26,0.16), transparent 62%), linear-gradient(180deg, rgba(30,26,19,0.92), rgba(11,10,9,0.96))" }}
       >
-        {/* coin medallion + gold glow ring */}
+        {/* gold vault medallion — ember glow + breathing pulse (the vault art
+            carries its own ring, so no extra rotating ring needed). */}
         <div className="relative grid place-items-center">
           <span
             aria-hidden
-            className="lu-anim-pulse absolute size-40 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 45%, transparent 70%)" }}
-          />
-          <span
-            aria-hidden
-            className="lu-anim-spin absolute size-[8.5rem] rounded-full"
-            style={{
-              background: "conic-gradient(from 0deg, transparent, rgba(242,210,122,0.7), transparent 32%, transparent 62%, rgba(255,179,71,0.6), transparent 92%)",
-              WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
-              mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
-            }}
+            className="lu-anim-pulse absolute size-44 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,106,26,0.42), rgba(255,106,26,0.12) 46%, transparent 70%)" }}
           />
           <span className="lu-anim-breathe relative size-28 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_34px_rgba(255,106,26,0.4)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/coin-fire.png" alt="" className="absolute inset-0 size-full object-cover" />
+            <img src="/bank-vault.png" alt="" className="absolute inset-0 size-full object-cover" />
           </span>
         </div>
 

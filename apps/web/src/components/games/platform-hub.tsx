@@ -254,7 +254,7 @@ function HubMenu({ logoutAction }: { logoutAction?: () => void | Promise<void> }
       {open ? (
         <div
           role="menu"
-          className="lu-frame absolute z-30 mt-2 flex w-48 flex-col overflow-hidden rounded-2xl p-1.5 text-sm"
+          className="lu-frame absolute top-full z-50 mt-2 flex w-48 flex-col overflow-hidden rounded-2xl p-1.5 text-sm shadow-2xl"
           style={{ insetInlineEnd: 0 } as CSSProperties}
         >
           {logoutAction ? (
