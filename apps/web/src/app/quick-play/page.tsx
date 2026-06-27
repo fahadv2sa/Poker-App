@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { PageHeader } from "@/components/page-header";
+import { LuHeader, LuScreen } from "@/components/games/lu-screen";
 import { signRealtimeToken } from "@/lib/realtime-token";
 import { QuickPlay } from "@/components/quick-play";
 
@@ -19,14 +19,11 @@ export default async function QuickPlayPage() {
   });
 
   return (
-    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 pb-6 sm:px-6 sm:pb-10 page-top">
-      <div aria-hidden className="arena-rail" />
-
-      <PageHeader icon="⚡" title="لعب سريع" subtitle="انضمّ لطاولة عشوائية فورًا" />
-
-      <div className="relative z-10">
+    <LuScreen>
+      <LuHeader icon={<span className="text-xl">⚡</span>} title="لعب سريع" subtitle="انضمّ لطاولة عشوائية فورًا" />
+      <div className="mt-3">
         <QuickPlay token={token} />
       </div>
-    </main>
+    </LuScreen>
   );
 }

@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@fb/db";
 import { auth } from "@/auth";
-import { PageHeader } from "@/components/page-header";
-import { Panel } from "@/components/panel";
+import { LuHeader, LuPanel, LuScreen } from "@/components/games/lu-screen";
 import { JoinForm } from "./join-form";
 import { RoomBrowser, type RoomCardData } from "./room-browser";
 
@@ -106,17 +105,15 @@ export default async function RoomsPage() {
   }));
 
   return (
-    <main className="relative mx-auto max-w-5xl overflow-hidden px-4 pb-6 sm:px-6 sm:pb-10 page-top">
-      <div aria-hidden className="arena-rail" />
+    <LuScreen>
+      <LuHeader icon={<span className="text-xl">♣</span>} title="دخول غرفة" subtitle="انضمّ بكود دعوة أو من الغرف" />
 
-      <PageHeader icon="♣" title="دخول غرفة" subtitle="انضمّ بكود دعوة أو من الغرف" accent="cyan" />
-
-      <Panel accent className="relative z-10 mb-4">
-        <h2 className="mb-4 text-lg font-bold">دخول بكود</h2>
+      <LuPanel className="mb-4 mt-3">
+        <h2 className="mb-4 text-lg font-bold text-[var(--lu-cream)]">دخول بكود</h2>
         <JoinForm />
-      </Panel>
+      </LuPanel>
 
       <RoomBrowser publicRooms={publicRooms} friendsRooms={friendsRooms} />
-    </main>
+    </LuScreen>
   );
 }

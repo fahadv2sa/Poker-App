@@ -11,12 +11,7 @@ export interface RoomCardData {
   creator: string;
   difficulty: string;
   maxPlayers: number;
-  /**
-   * Seats currently filled, as the USER perceives them. For Public (Quick Play)
-   * rooms this is the live occupancy INCLUDING bots, so bot-held seats read as
-   * taken and the table looks appropriately full — bots are never labeled or
-   * surfaced as available. For Friends (manual) rooms it's the human count.
-   */
+  /** Seats currently filled, as the USER perceives them (Public = live incl. bots). */
   filled: number;
   mode: "MANUAL" | "AUTO";
   kind: "PUBLIC" | "FRIENDS";
@@ -27,30 +22,29 @@ const DIFFICULTY_AR: Record<string, string> = {
   MEDIUM: "متوسط",
   ELITE: "النخبة",
 };
+// Gold-world tones.
 const DIFFICULTY_TONE: Record<string, string> = {
-  EASY: "var(--primary)",
-  MEDIUM: "var(--accent)",
-  ELITE: "var(--gold)",
+  EASY: "#c9962e",
+  MEDIUM: "#ff6a1a",
+  ELITE: "#f2d27a",
 };
 
 /** Cinematic, premium room card. Presentational only — links to the table. */
 function RoomCard({ r }: { r: RoomCardData }) {
-  const tone = DIFFICULTY_TONE[r.difficulty] ?? "var(--accent)";
+  const tone = DIFFICULTY_TONE[r.difficulty] ?? "#c9962e";
   const pct = r.maxPlayers > 0 ? Math.min(100, (r.filled / r.maxPlayers) * 100) : 0;
   const isPublic = r.kind === "PUBLIC";
   return (
     <Link
       href={`/table/${r.id}`}
-      className="room-card group relative flex flex-col gap-3 overflow-hidden rounded-2xl p-4 sm:p-5"
+      className="lu-frame lu-btn group relative flex flex-col gap-3 overflow-hidden rounded-2xl p-4 sm:p-5"
     >
-      {/* difficulty-tinted glow corner */}
       <span
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 size-28 rounded-full opacity-50 blur-2xl transition group-hover:opacity-80"
         style={{ background: `radial-gradient(circle, color-mix(in oklch, ${tone} 40%, transparent), transparent 70%)` }}
       />
 
-      {/* header: name + mode/lock badges */}
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <span
@@ -64,23 +58,22 @@ function RoomCard({ r }: { r: RoomCardData }) {
             {isPublic ? "⚡" : "♣"}
           </span>
           <div className="min-w-0">
-            <strong className="block truncate text-base leading-tight">{r.roomName}</strong>
-            <span className="text-xs text-muted-foreground">المنشئ: {r.creator}</span>
+            <strong className="block truncate text-base leading-tight text-[var(--lu-cream)]">{r.roomName}</strong>
+            <span className="text-xs text-[var(--lu-tan)]">المنشئ: {r.creator}</span>
           </div>
         </div>
         <span
           className={cn(
-            "shrink-0 rounded-full border px-2 py-0.5 text-[0.66rem] font-bold",
+            "shrink-0 rounded-full px-2 py-0.5 text-[0.66rem] font-bold ring-1",
             r.mode === "AUTO"
-              ? "border-primary/40 bg-primary/10 text-primary"
-              : "border-accent/40 bg-accent/10 text-accent",
+              ? "text-[var(--lu-gold-1)] ring-[var(--lu-gold-1)]/40"
+              : "text-[var(--lu-ember-glow)] ring-[var(--lu-ember)]/40",
           )}
         >
           {r.mode === "AUTO" ? "تلقائي" : "يدوي"}
         </span>
       </div>
 
-      {/* meta row: difficulty + players */}
       <div className="relative flex flex-wrap items-center gap-2 text-xs">
         <span
           className="rounded-full px-2.5 py-1 font-bold"
@@ -94,15 +87,14 @@ function RoomCard({ r }: { r: RoomCardData }) {
         </span>
       </div>
 
-      {/* players progress */}
       <div className="relative">
         <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">اللاعبون</span>
-          <span className="num font-bold">
+          <span className="text-[var(--lu-tan)]">اللاعبون</span>
+          <span className="num font-bold text-[var(--lu-cream)]">
             {r.filled} / {r.maxPlayers}
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-white/8">
+        <div className="h-2 overflow-hidden rounded-full bg-white/[0.08]">
           <div
             className="h-full rounded-full transition-[width]"
             style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${tone}, color-mix(in oklch, ${tone} 60%, white))` }}
@@ -110,14 +102,11 @@ function RoomCard({ r }: { r: RoomCardData }) {
         </div>
       </div>
 
-      {/* CTA */}
       <div className="relative mt-0.5 flex items-center justify-between">
-        <span className="text-[0.7rem] text-muted-foreground">
+        <span className="text-[0.7rem] text-[var(--lu-tan)]">
           {isPublic ? "انضمام بعد انتهاء الجولة الحالية" : "متاحة للدخول"}
         </span>
-        <span
-          className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm font-bold text-primary transition group-hover:bg-primary/20"
-        >
+        <span className="rounded-full px-3 py-1 text-sm font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40 transition group-hover:bg-[var(--lu-gold-1)]/10">
           دخول →
         </span>
       </div>
@@ -131,7 +120,7 @@ function EmptyState({ text, glyph }: { text: string; glyph: string }) {
       <span className="text-3xl opacity-60" aria-hidden>
         {glyph}
       </span>
-      <p className="text-muted-foreground">{text}</p>
+      <p className="text-[var(--lu-tan)]">{text}</p>
     </div>
   );
 }
@@ -155,15 +144,15 @@ export function RoomBrowser({
       className={cn(
         "flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition",
         tab === id
-          ? "bg-primary/15 text-primary shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--primary)_40%,transparent)]"
-          : "text-muted-foreground hover:text-foreground",
+          ? "text-[var(--lu-gold-1)] shadow-[inset_0_0_0_1px_rgba(242,210,122,0.4)]"
+          : "text-[var(--lu-tan)] hover:text-[var(--lu-cream)]",
       )}
     >
       {label}
       <span
         className={cn(
           "num rounded-full px-1.5 text-[0.66rem]",
-          tab === id ? "bg-primary/20 text-primary" : "bg-white/8 text-muted-foreground",
+          tab === id ? "text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40" : "bg-white/[0.08] text-[var(--lu-tan)]",
         )}
       >
         {count}
@@ -173,7 +162,7 @@ export function RoomBrowser({
 
   return (
     <div className="relative z-10">
-      <div className="mb-4 flex gap-2 rounded-2xl border border-border/70 bg-card/50 p-1.5 backdrop-blur">
+      <div className="lu-frame mb-4 flex gap-2 rounded-2xl p-1.5">
         <Tab id="public" label="الغرف العامة" count={publicRooms.length} />
         <Tab id="friends" label="غرف الأصدقاء" count={friendsRooms.length} />
       </div>

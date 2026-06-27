@@ -6,7 +6,6 @@ import { QUICK_PLAY, type Difficulty } from "@fb/shared";
 import { connectQueue, type QueueConnection } from "@/lib/realtime";
 import { sound } from "@/lib/sound";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const TIERS: ReadonlyArray<{ value: Difficulty; label: string; desc: string }> = [
@@ -58,12 +57,6 @@ export function QuickPlay({ token }: { token: string }) {
   }
 
   function joinTier(t: Difficulty) {
-    // Unlock + preload audio on THIS user gesture. Quick Play then navigates
-    // straight into a (bot) table the player may just watch without clicking, so
-    // this is the last guaranteed gesture before sounds must fire — the browser
-    // autoplay policy needs the AudioContext resumed inside a real gesture, else
-    // the table's sound hooks stay silent. (The sound manager is a module
-    // singleton, so the unlock persists across the client-side navigation.)
     sound.unlock();
     void sound.preload();
     setError(null);
@@ -92,20 +85,19 @@ export function QuickPlay({ token }: { token: string }) {
     const max = state?.max ?? QUICK_PLAY.maxSeats;
     const ready = count >= min;
     return (
-      <Card className="panel overflow-hidden p-0">
+      <div className="lu-frame overflow-hidden rounded-3xl">
         <div
           className="flex flex-col items-center gap-3 px-6 py-8 text-center"
-          style={{
-            background:
-              "radial-gradient(120% 90% at 50% -10%, color-mix(in oklch, var(--accent) 18%, transparent), transparent 60%)",
-          }}
+          style={{ background: "radial-gradient(120% 90% at 50% -10%, rgba(255,106,26,0.16), transparent 60%)" }}
         >
-          <span className="text-sm tracking-[0.2em] text-accent/80">لعب سريع · {TIERS.find((x) => x.value === tier)?.label}</span>
-          <span className="num text-5xl font-black">
-            {count}
-            <span className="text-2xl text-muted-foreground"> / {max}</span>
+          <span className="text-sm tracking-[0.2em] text-[var(--lu-gold-1)]/80">
+            لعب سريع · {TIERS.find((x) => x.value === tier)?.label}
           </span>
-          <span className="text-sm text-muted-foreground">
+          <span className="num text-5xl font-black text-[var(--lu-cream)]">
+            {count}
+            <span className="text-2xl text-[var(--lu-tan)]"> / {max}</span>
+          </span>
+          <span className="text-sm text-[var(--lu-tan)]">
             {ready ? "اكتمل العدد الأدنى — تبدأ المباراة قريبًا" : `بانتظار ${min} لاعبين على الأقل…`}
           </span>
 
@@ -116,28 +108,30 @@ export function QuickPlay({ token }: { token: string }) {
                 key={i}
                 className={cn(
                   "size-3 rounded-full transition",
-                  i < count ? "bg-primary glow-primary" : "bg-white/12",
+                  i < count
+                    ? "bg-[var(--lu-ember)] shadow-[0_0_10px_rgba(255,106,26,0.6)]"
+                    : "bg-white/12",
                 )}
               />
             ))}
           </div>
 
           {secs != null ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1 text-gold">
+            <div className="lu-chip mt-2 inline-flex items-center gap-2 rounded-full px-4 py-1 text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
               تبدأ خلال <span className="num text-lg font-black">{secs}</span> ثانية
             </div>
           ) : (
-            <div className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="size-2 animate-ping rounded-full bg-accent" /> جارٍ البحث عن لاعبين…
+            <div className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--lu-tan)]">
+              <span className="size-2 animate-ping rounded-full bg-[var(--lu-ember)]" /> جارٍ البحث عن لاعبين…
             </div>
           )}
         </div>
-        <div className="border-t border-border/60 p-4">
-          <Button variant="ghost" className="w-full text-destructive hover:text-destructive" onClick={leave}>
+        <div className="border-t border-white/10 p-4">
+          <Button variant="ghost" className="w-full text-[#d9694f] hover:text-[#d9694f]" onClick={leave}>
             مغادرة الطابور
           </Button>
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -145,11 +139,11 @@ export function QuickPlay({ token }: { token: string }) {
   return (
     <div className="flex flex-col gap-4">
       {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+        <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
           {error}
         </div>
       ) : null}
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-[var(--lu-tan)]">
         اختر المستوى وانضمّ إلى الطابور — تبدأ المباراة تلقائيًا عند اكتمال {QUICK_PLAY.minPlayers} لاعبين.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -158,11 +152,11 @@ export function QuickPlay({ token }: { token: string }) {
             key={t.value}
             type="button"
             onClick={() => joinTier(t.value)}
-            className="tile flex flex-col gap-1 p-5 text-right"
+            className="lu-btn lu-frame flex flex-col gap-1 rounded-2xl p-5 text-right"
           >
-            <span className="text-lg font-black">{t.label}</span>
-            <span className="text-xs text-muted-foreground">{t.desc}</span>
-            <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-xs text-gold">
+            <span className="text-lg font-black text-[var(--lu-cream)]">{t.label}</span>
+            <span className="text-xs text-[var(--lu-tan)]">{t.desc}</span>
+            <span className="lu-chip mt-2 inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-xs text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
               رهان الدخول 🪙 <span className="num font-bold">{QUICK_PLAY.entryByTier[t.value]}</span>
             </span>
           </button>
