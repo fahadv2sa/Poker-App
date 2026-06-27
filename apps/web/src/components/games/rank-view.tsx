@@ -134,7 +134,7 @@ export function RankView({
 }) {
   return (
     <LuScreen>
-      <LuHeader icon={<TrophyIcon size={22} />} title="الرانك العام" subtitle="ترتيب جميع اللاعبين حسب المستوى" />
+      <LuHeader icon={<TrophyIcon size={22} />} title="التصنيف" subtitle="ترتيب جميع اللاعبين حسب المستوى" />
 
       {podium.length > 0 ? (
         <section

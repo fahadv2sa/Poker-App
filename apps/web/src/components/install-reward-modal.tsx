@@ -143,10 +143,10 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
               <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-[var(--lu-cream)]">
                 <ol className="flex flex-col gap-2 text-start">
                   {[
-                    "اضغط زر المشاركة من متصفح سفاري",
-                    "إضافة إلى الشاشة الرئيسية / الهوم سكرين",
-                    "افتح التطبيق من الأيقونة التي ستظهر مع التطبيقات",
-                    "ستحصل تلقائيًا على 10 آلاف كوين كهدية",
+                    "اضغط على (...) الثلاث نقاط في المتصفح",
+                    "اذهب إلى مشاركة الصفحة",
+                    "اختر إضافة إلى الشاشة الرئيسية",
+                    "قم بالدخول من الأيقونة في الشاشة الرئيسية",
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-2 leading-relaxed">
                       <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-[var(--lu-gold-1)]/15 text-[0.7rem] font-bold text-[var(--lu-gold-1)]">
@@ -162,13 +162,24 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
                 {busy ? "جارٍ التثبيت…" : "🚀 ثبّت التطبيق واحصل على المكافأة"}
               </Button>
             ) : (
-              // Chromium without a live prompt (or unsupported): manual hint.
+              // Chromium without a live prompt (or unsupported): stepped manual hint.
               <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-[var(--lu-cream)]">
-                <p className="leading-relaxed">
-                  افتح قائمة المتصفّح ثم{" "}
-                  <span className="font-bold text-[var(--lu-gold-1)]">«تثبيت التطبيق / إضافة إلى الشاشة الرئيسية»</span>
-                </p>
-                <p className="mt-1 text-xs text-[var(--lu-tan)]">
+                <ol className="flex flex-col gap-2 text-start">
+                  {[
+                    "اضغط على (...) الثلاث نقاط في المتصفح",
+                    "اذهب إلى مشاركة الصفحة",
+                    "اختر إضافة إلى الشاشة الرئيسية",
+                    "قم بالدخول من الأيقونة في الشاشة الرئيسية",
+                  ].map((step, i) => (
+                    <li key={i} className="flex items-start gap-2 leading-relaxed">
+                      <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-[var(--lu-gold-1)]/15 text-[0.7rem] font-bold text-[var(--lu-gold-1)]">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-2 text-xs text-[var(--lu-tan)]">
                   ستصلك المكافأة تلقائيًا بعد التثبيت.
                 </p>
               </div>

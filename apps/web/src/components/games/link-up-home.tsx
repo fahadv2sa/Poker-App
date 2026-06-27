@@ -251,7 +251,7 @@ function RankStrip({ rank, totalPlayers }: { rank: string; totalPlayers?: string
   return (
     <Link
       href="/rank"
-      aria-label="الرانك العام"
+      aria-label="التصنيف"
       className="lu-btn lu-frame mt-2.5 flex shrink-0 items-center justify-between rounded-2xl px-5 py-3"
     >
       {/* right cluster (first child in RTL): trophy + label */}
