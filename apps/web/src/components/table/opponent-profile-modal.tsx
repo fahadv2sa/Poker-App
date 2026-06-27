@@ -27,7 +27,7 @@ interface PublicProfile {
 /** Stadium-scoreboard stat tile. */
 function StatTile({ icon, label, value, tone }: { icon: string; label: string; value: string; tone: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[#070b14]/60 px-2 py-3 text-center">
+    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[#0b0908]/60 px-2 py-3 text-center">
       <span aria-hidden className="text-base leading-none">
         {icon}
       </span>
@@ -125,14 +125,14 @@ export function OpponentProfileModal({
               className="relative flex flex-col items-center gap-2 px-6 pb-5 pt-7"
               style={{
                 background:
-                  "radial-gradient(120% 90% at 50% -20%, color-mix(in oklch, var(--accent) 28%, transparent), transparent 60%), linear-gradient(180deg, color-mix(in oklch, var(--accent) 8%, transparent), transparent)",
+                  "radial-gradient(120% 90% at 50% -20%, rgba(255,106,26,0.26), transparent 60%), linear-gradient(180deg, rgba(201,150,46,0.08), transparent)",
               }}
             >
               <SeatAvatar
                 playerNumber={p.playerNumber}
                 seed={p.avatarSeed}
                 size={84}
-                className="ring-2 ring-accent/70 shadow-[0_0_28px_rgba(56,189,248,0.35)]"
+                className="ring-2 ring-[var(--lu-gold-1)]/70 shadow-[0_0_28px_rgba(255,106,26,0.35)]"
               />
               <div className="text-center">
                 <div className="text-xl font-black">{p.displayName}</div>
@@ -145,12 +145,12 @@ export function OpponentProfileModal({
 
             {/* scoreboard */}
             <div className="grid grid-cols-3 gap-2 px-5 pb-2">
-              <StatTile icon="❤️" label="الإعجابات" value={String(p.likes)} tone="text-primary" />
-              <StatTile icon="👥" label="الأصدقاء" value={String(p.friends)} tone="text-accent" />
-              <StatTile icon="🏆" label="الانتصارات" value={String(p.wins)} tone="text-primary" />
-              <StatTile icon="💔" label="الخسارات" value={String(p.losses)} tone="text-destructive" />
-              <StatTile icon="📈" label="أكبر رهان فائز" value={p.biggestWin} tone="text-gold" />
-              <StatTile icon="📉" label="أكبر رهان خاسر" value={p.biggestLoss} tone="text-destructive" />
+              <StatTile icon="❤️" label="الإعجابات" value={String(p.likes)} tone="text-[var(--lu-ember-glow)]" />
+              <StatTile icon="👥" label="الأصدقاء" value={String(p.friends)} tone="text-[var(--lu-gold-1)]" />
+              <StatTile icon="🏆" label="الانتصارات" value={String(p.wins)} tone="text-[var(--lu-gold-1)]" />
+              <StatTile icon="💔" label="الخسارات" value={String(p.losses)} tone="text-[#d9694f]" />
+              <StatTile icon="📈" label="أكبر رهان فائز" value={p.biggestWin} tone="text-[var(--lu-gold-1)]" />
+              <StatTile icon="📉" label="أكبر رهان خاسر" value={p.biggestLoss} tone="text-[#d9694f]" />
             </div>
 
             {/* actions */}
@@ -165,7 +165,7 @@ export function OpponentProfileModal({
                   {p.likedByMe ? "❤️ معجَب" : "🤍 إعجاب"}
                 </Button>
                 {p.friendState === "none" ? (
-                  <Button disabled={busy} onClick={sendRequest} className="w-full">
+                  <Button disabled={busy} onClick={sendRequest} className="btn-gold-cta w-full text-black">
                     ➕ إضافة كصديق
                   </Button>
                 ) : p.friendState === "pending_out" ? (
@@ -174,7 +174,7 @@ export function OpponentProfileModal({
                   </Button>
                 ) : p.friendState === "pending_in" ? (
                   <div className="grid grid-cols-2 gap-2">
-                    <Button disabled={busy} onClick={() => respond("accept")}>
+                    <Button disabled={busy} onClick={() => respond("accept")} className="btn-gold-cta text-black">
                       قبول الطلب
                     </Button>
                     <Button

@@ -44,7 +44,7 @@ const rand = (n: number) => (Math.random() - 0.5) * n;
 function ChipSprite({ label }: { label?: string }) {
   return (
     <span
-      className="grid place-items-center rounded-full border-2 border-gold/70 bg-[#0b0f1a] text-[0.6rem] font-black text-gold shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
+      className="grid place-items-center rounded-full border-2 border-gold/70 bg-[#0b0908] text-[0.6rem] font-black text-gold shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
       style={{ width: SIZE, height: SIZE }}
     >
       {label ? <span className="num leading-none">{label}</span> : "🪙"}
@@ -226,7 +226,7 @@ export function TurnFrame({
             rx={Math.max(0, radius - stroke / 2)}
             ry={Math.max(0, radius - stroke / 2)}
             fill="none"
-            stroke={danger ? "var(--destructive)" : "var(--primary)"}
+            stroke={danger ? "var(--lu-ember)" : "var(--lu-gold-1)"}
             strokeWidth={stroke}
             strokeLinecap="round"
             pathLength={100}
@@ -311,7 +311,7 @@ export function StreetFlourish({ phase }: { phase: string }) {
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
             className={cn(
-              "rounded-2xl border border-accent/40 bg-[#0b0f1a]/80 px-8 py-3 text-2xl font-black text-accent",
+              "rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/80 px-8 py-3 text-2xl font-black text-[var(--lu-gold-1)]",
               "shadow-2xl backdrop-blur",
             )}
           >
