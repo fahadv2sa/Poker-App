@@ -1,59 +1,13 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@fb/db";
 import { BANK_CLAIM_PER_LEVEL, BOT_PLAYER_NUMBER_BASE, INSTALL_REWARD_AMOUNT } from "@fb/shared";
 import { auth } from "@/auth";
-import { Logo } from "@/components/logo";
 import { InstallRewardModal } from "@/components/install-reward-modal";
 import { LevelUpModal } from "@/components/level-up-modal";
 import { RoomClosedNotice } from "@/components/room-closed-notice";
-import { cn } from "@/lib/utils";
+import { LinkUpHome } from "@/components/games/link-up-home";
 
 export const dynamic = "force-dynamic";
-
-/** One satellite control around the central Quick Play orb: icon chip + label.
- *  Pure navigation (Link) — routes are unchanged. */
-function SatButton({ href, icon, label }: { href: string; icon: string; label: string }) {
-  return (
-    <Link href={href} className="group flex w-[4.75rem] flex-col items-center gap-1.5 text-center">
-      <span className="sat-ico" aria-hidden>
-        {icon}
-      </span>
-      <span className="text-xs font-semibold leading-tight text-muted-foreground transition group-hover:text-foreground">
-        {label}
-      </span>
-    </Link>
-  );
-}
-
-/** One item in the fixed bottom bar. `active` marks the current screen. */
-function BottomItem({
-  href,
-  icon,
-  label,
-  active = false,
-}: {
-  href: string;
-  icon: string;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[0.7rem] transition",
-        active ? "text-primary" : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {active ? <span aria-hidden className="home-tab-active absolute inset-0 rounded-xl" /> : null}
-      <span className="relative text-xl leading-none transition group-active:scale-90" aria-hidden>
-        {icon}
-      </span>
-      <span className="relative font-semibold">{label}</span>
-    </Link>
-  );
-}
 
 export default async function HomePage({
   searchParams,
@@ -108,72 +62,12 @@ export default async function HomePage({
   const leveledUp = levelNum > (metrics?.celebratedLevel ?? 1);
   const dailyBankAmount = (Number(BANK_CLAIM_PER_LEVEL) * levelNum).toLocaleString("en-US");
 
+  // Visual layer = the redesigned gold-on-black home (docs/DESIGN_BRIEF.md §8).
+  // All data/logic is unchanged: the computed rank is passed in, and the
+  // server-authoritative modals render alongside it exactly as before.
   return (
-    <main className="relative mx-auto flex min-h-[100dvh] max-w-md flex-col px-4 pb-28 page-top">
-      <div aria-hidden className="arena-rail" />
-
-      {/* ── 1) top bar — brand only: Football B logo on the RIGHT, game name on
-              the LEFT (RTL: first child = right, last child = left). The profile,
-              sound, and menu now live on the platform hub (/). ─────────────── */}
-      <header className="relative z-30 flex items-center justify-between rounded-2xl border border-white/10 bg-gradient-to-l from-white/[0.05] to-transparent px-4 py-2.5">
-        <Logo glow className="size-9" />
-        <span className="text-lg font-black tracking-wide">لينك اب</span>
-      </header>
-
-      {/* ── 3) center play stage — lit orb flanked by two icons per side. RTL: the
-              first stack (create/join) sits on the RIGHT, the last on the LEFT. */}
-      <section className="play-stage relative z-10 flex flex-1 items-center justify-center gap-3 py-8 sm:gap-6">
-        <div className="relative z-10 flex flex-col gap-7">
-          <SatButton href="/create-room" icon="♠" label="إنشاء غرفة" />
-          <SatButton href="/rooms" icon="♣" label="دخول غرفة" />
-        </div>
-
-        <Link
-          href="/quick-play"
-          aria-label="اللعب السريع"
-          data-sound="quick-play"
-          className="play-orb relative z-10 grid size-44 shrink-0 place-items-center rounded-full text-center text-primary-foreground sm:size-52"
-        >
-          <span className="flex flex-col items-center gap-1 leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]">
-            <span aria-hidden className="text-3xl sm:text-4xl">⚡</span>
-            <span className="text-xl font-black sm:text-2xl">
-              اللعب
-              <br />
-              السريع
-            </span>
-          </span>
-        </Link>
-
-        <div className="relative z-10 flex flex-col gap-7">
-          <SatButton href="/stats" icon="📊" label="الإحصائيات" />
-          <SatButton href="/bank" icon="🏦" label="البنك" />
-        </div>
-      </section>
-
-      {/* ── distinctive gold rank bar, right beneath the Quick Play orb. Replaces
-              the old square tiles; friends now lives only in the platform profile.
-              Dynamic (computed global rank). Tap → /rank. ─────────────────────── */}
-      <Link
-        href="/rank"
-        aria-label="الرانك العام"
-        className="coins-bar relative z-10 mt-3 flex items-center justify-center gap-3 rounded-2xl px-5 py-3.5 transition active:scale-[0.98]"
-      >
-        <span aria-hidden className="text-xl">🏆</span>
-        <span className="text-sm font-bold text-gold/85">الرانك العام</span>
-        <span className="num text-lg font-black text-gold">{rank}</span>
-      </Link>
-
-      {/* ── 4) fixed bottom bar — guide · home · settings(profile). Home (🏠) leads
-              to the PLATFORM hub (/) where all games + the profile live. Centered
-              to the same column width on desktop; safe-area aware on mobile. ── */}
-      <nav
-        aria-label="شريط التنقل"
-        className="home-tabbar fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md items-stretch justify-around gap-1 px-4 pt-2 pb-[max(0.55rem,env(safe-area-inset-bottom))]"
-      >
-        <BottomItem href="/guide" icon="📖" label="دليل اللعب" />
-        <BottomItem href="/" icon="🏠" label="الرئيسية" />
-        <BottomItem href="/profile" icon="⚙️" label="الإعدادات" />
-      </nav>
+    <>
+      <LinkUpHome rank={rank} />
 
       {/* Level-up celebration (takes priority over the install prompt; on a
           higher z-index). Server-authoritative; only mounted when pending. */}
@@ -185,6 +79,6 @@ export default async function HomePage({
 
       {/* Redirected here from a closed/ABANDONED table link → brief notice. */}
       {roomClosed ? <RoomClosedNotice /> : null}
-    </main>
+    </>
   );
 }

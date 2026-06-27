@@ -549,3 +549,152 @@
     padding-top: 2.5rem;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Link Up — gold-on-black redesign (the new visual system; see
+ * docs/DESIGN_BRIEF.md §8). SCOPED + ADDITIVE: new --lu-* tokens and .lu-*
+ * utilities used ONLY by the redesigned Link Up home for now. Nothing here
+ * touches the existing Arena-Felt classes or tokens, so every other page
+ * renders exactly as before until it is migrated to this system.
+ *
+ * Techniques (metallic-gold text/frames, bevels, ember + breathe + ring motion)
+ * were re-authored natively from the approved v0 visual target — no external
+ * code was imported.
+ * ────────────────────────────────────────────────────────────────────────── */
+:root {
+  --lu-base: #0e0c0b;
+  --lu-abyss: #07060a;
+  --lu-panel: #16130f;
+  --lu-cream: #f3ecdd;
+  --lu-tan: #b9a879;
+  --lu-ember: #ff6a1a;
+  --lu-ember-glow: #ffb347;
+  --lu-gold-1: #f2d27a;
+  --lu-gold-2: #c9962e;
+  --lu-gold-3: #8a6a20;
+}
+
+@layer utilities {
+  /* Real-metal gold fill for text (gradient clipped to the glyphs). */
+  .lu-gold-text {
+    background: linear-gradient(
+      160deg,
+      #fff4cf 0%, #f7e6b0 16%, #f2d27a 34%, #c9962e 58%, #8a6a20 78%, #f0d488 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 0 18px rgba(255, 179, 71, 0.25);
+  }
+  /* Etched-into-metal title depth. */
+  .lu-gold-title {
+    letter-spacing: -0.01em;
+    filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 22px rgba(255, 138, 40, 0.18));
+  }
+
+  /* Glass-metal surface with a gradient-bevel border + inner depth. */
+  .lu-frame {
+    position: relative;
+    background:
+      radial-gradient(120% 90% at 50% 0%, rgba(60, 50, 34, 0.55), rgba(20, 17, 13, 0.9) 55%),
+      linear-gradient(180deg, rgba(30, 26, 19, 0.92), rgba(11, 10, 9, 0.96));
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 234, 180, 0.14),
+      inset 0 -10px 24px rgba(0, 0, 0, 0.55),
+      0 10px 26px rgba(0, 0, 0, 0.55);
+  }
+  .lu-frame::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      150deg,
+      rgba(255, 240, 196, 0.95), rgba(201, 150, 46, 0.55) 30%, rgba(40, 32, 20, 0.25) 55%,
+      rgba(138, 106, 32, 0.45) 78%, rgba(255, 224, 150, 0.85) 100%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .lu-frame::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 18%, transparent 42%);
+    pointer-events: none;
+  }
+
+  /* Pressable gold surface: glossy top edge, deep body, lift on hover, push on tap. */
+  .lu-btn {
+    position: relative;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 240, 200, 0.22),
+      inset 0 -12px 22px rgba(0, 0, 0, 0.5),
+      0 12px 22px rgba(0, 0, 0, 0.55);
+  }
+  .lu-btn:hover {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 240, 200, 0.3),
+      inset 0 -12px 22px rgba(0, 0, 0, 0.5),
+      0 14px 26px rgba(0, 0, 0, 0.6),
+      0 0 22px rgba(255, 138, 40, 0.25);
+  }
+  .lu-btn:active {
+    transform: translateY(2px) scale(0.985);
+    box-shadow:
+      inset 0 2px 6px rgba(0, 0, 0, 0.6),
+      0 4px 10px rgba(0, 0, 0, 0.5),
+      0 0 18px rgba(255, 138, 40, 0.3);
+  }
+
+  /* Gold chip behind icons. */
+  .lu-chip {
+    background: radial-gradient(100% 100% at 50% 0%, rgba(70, 58, 36, 0.8), rgba(13, 11, 9, 0.95));
+    box-shadow: inset 0 1px 0 rgba(255, 234, 180, 0.2), inset 0 -6px 12px rgba(0, 0, 0, 0.55);
+  }
+
+  .lu-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(242, 210, 122, 0.55) 20%, rgba(201, 150, 46, 0.6) 50%, rgba(242, 210, 122, 0.55) 80%, transparent);
+  }
+
+  /* CSS gold-sphere fallback for the hero — shows until the Midjourney
+     /gold-fire-football.png asset is dropped into apps/web/public. */
+  .lu-orb {
+    background: radial-gradient(120% 120% at 38% 26%, #fff0c0 0%, #f2d27a 16%, #c9962e 44%, #6e521a 76%, #2c1f0b 100%);
+    box-shadow:
+      inset 0 6px 14px rgba(255, 245, 210, 0.5),
+      inset 0 -22px 40px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(242, 210, 122, 0.3);
+  }
+}
+
+@keyframes lu-ember-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+@keyframes lu-hero-breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 24px rgba(255, 106, 26, 0.45)); }
+  50% { transform: scale(1.03); filter: drop-shadow(0 0 40px rgba(255, 106, 26, 0.7)); }
+}
+@keyframes lu-float-ember {
+  0% { transform: translate(0, 0) scale(0.7); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { transform: translate(var(--dx, 6px), -70px) scale(0.3); opacity: 0; }
+}
+@keyframes lu-ring-spin { to { transform: rotate(360deg); } }
+
+.lu-anim-breathe { animation: lu-hero-breathe 4s ease-in-out infinite; }
+.lu-anim-pulse { animation: lu-ember-pulse 3.4s ease-in-out infinite; }
+.lu-anim-spin { animation: lu-ring-spin 12s linear infinite; }
+.lu-anim-spin-rev { animation: lu-ring-spin 18s linear infinite reverse; }
+/* The global prefers-reduced-motion rule above already neutralizes these. */
