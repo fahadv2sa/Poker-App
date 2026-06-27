@@ -139,13 +139,13 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
             </div>
 
             {ios ? (
-              // iOS: no install prompt — a clear numbered step list (one per line).
+              // iOS Safari: no install prompt — a clear numbered step list (one per line).
               <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-[var(--lu-cream)]">
                 <ol className="flex flex-col gap-2 text-start">
                   {[
-                    "اضغط على (...) الثلاث نقاط في المتصفح",
-                    "اذهب إلى مشاركة الصفحة",
-                    "اختر إضافة إلى الشاشة الرئيسية",
+                    "اضغط على زر المشاركة في متصفّح سفاري",
+                    "اختر «إضافة إلى الشاشة الرئيسية»",
+                    "اضغط «إضافة» في الأعلى",
                     "قم بالدخول من الأيقونة في الشاشة الرئيسية",
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-2 leading-relaxed">
