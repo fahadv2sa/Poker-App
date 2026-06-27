@@ -40,11 +40,11 @@ export function PlatformHub({
   logoutAction?: () => void | Promise<void>;
 }) {
   return (
-    <main className="relative mx-auto flex min-h-[100dvh] max-w-[26rem] flex-col overflow-hidden bg-[var(--lu-abyss)] px-5 pb-8 page-top">
+    <main className="relative mx-auto flex h-[100dvh] max-w-[26rem] flex-col overflow-hidden bg-[var(--lu-abyss)] px-5 pb-5 page-top">
       <GoldGradientDefs />
       <Atmosphere />
 
-      <div className="relative z-10 flex flex-1 flex-col">
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {/* top bar: emblem + brand (right) · sound + menu (left) */}
         <header className="flex shrink-0 items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -60,19 +60,19 @@ export function PlatformHub({
         </header>
 
         {/* identity card — avatar + name only */}
-        <section className="lu-frame mt-6 flex flex-col items-center gap-3 rounded-3xl p-6">
+        <section className="lu-frame mt-4 flex shrink-0 flex-col items-center gap-2 rounded-3xl p-4">
           <Link href="/profile" aria-label="الملف الشخصي" className="transition active:scale-95">
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="size-24 rounded-full object-cover shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
+                className="size-20 rounded-full object-cover shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
               />
             ) : (
               <div
                 aria-hidden
-                className="grid size-24 place-items-center rounded-full text-4xl font-black text-white shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
+                className="grid size-20 place-items-center rounded-full text-3xl font-black text-white shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
                 style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))` }}
               >
                 {initial}
@@ -85,13 +85,23 @@ export function PlatformHub({
         {/* premium subscribe card — between identity and the games grid */}
         <SubscribeCard />
 
-        {/* games grid — 2×2 */}
-        <h2 className="mb-3 mt-7 text-center text-sm font-bold text-[var(--lu-tan)]">اختر لعبة</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {games.map((g) => (
-            <GameCard key={g.id} game={g} />
-          ))}
-        </div>
+        {/* games grid — flex-fills the remaining height so the whole page fits
+            one screen with no scroll (the 2×2 cards scale to the space) */}
+        <section className="mt-4 flex min-h-0 flex-1 flex-col">
+          <h2 className="mb-2 shrink-0 text-center text-sm font-bold text-[var(--lu-tan)]">اختر لعبة</h2>
+          <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-2.5">
+            {games.map((g) => (
+              <GameCard key={g.id} game={g} />
+            ))}
+          </div>
+        </section>
+
+        {/* developer credit — subtle, pinned at the bottom under the cards */}
+        <footer className="shrink-0 pt-3 text-center">
+          <p className="text-[11px] font-medium tracking-wide text-[var(--lu-tan)]/75">
+            Powered By <span className="lu-gold-text font-bold">Fmg-Tech</span>
+          </p>
+        </footer>
       </div>
     </main>
   );
@@ -132,7 +142,7 @@ function SubscribeCard() {
       href="/subscribe"
       data-sound="quick-play"
       aria-label="اشترك الآن واحصل على المزايا الكاملة"
-      className="lu-btn lu-sub lu-sub-rim group relative mt-6 flex items-center gap-4 overflow-hidden rounded-3xl p-5 transition active:scale-[0.98]"
+      className="lu-btn lu-sub lu-sub-rim group relative mt-4 flex shrink-0 items-center gap-4 overflow-hidden rounded-3xl p-5 transition active:scale-[0.98]"
     >
       {/* gradient-bevel gold border (same metal edge as lu-frame). The absolute
           overlay is on the OUTER span; the inner span carries `.lu-frame` so its
@@ -184,7 +194,7 @@ function SubscribeCard() {
 
 function GameCard({ game }: { game: GameEntry }) {
   const live = game.status === "live" && game.href;
-  const base = "lu-frame relative flex aspect-[4/5] flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl p-4 text-center";
+  const base = "lu-frame relative flex h-full min-h-0 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-3xl p-3 text-center";
 
   const art = live ? (
     <span className="relative grid place-items-center">
