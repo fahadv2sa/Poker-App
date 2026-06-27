@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 /**
  * "كيف تلعب" — three tap-to-reveal cards. Collapsed by default; each toggles
  * independently with a smooth grid-rows height reveal (reduced-motion safe).
+ * Gold-on-black redesign (docs/DESIGN_BRIEF.md §8) — data/logic unchanged.
  *
- * Data is passed in from the server page so the content stays data-driven:
  *   - ranks   → the shared HAND_RANK_CATALOG (Card 1)
  *   - badges  → the active rows of the badges table (Card 3)
  * Card 2 is hand-written guidance and uses the exact in-game action vocabulary.
@@ -27,37 +27,10 @@ export type BadgeItem = {
   descriptionAr: string;
 };
 
-type Accent = "gold" | "primary" | "accent";
-
-const ACCENT: Record<
-  Accent,
-  { chip: string; openBorder: string; openGlow: string; chevron: string }
-> = {
-  gold: {
-    chip: "bg-gold/15 text-gold ring-1 ring-gold/30",
-    openBorder: "border-gold/45",
-    openGlow: "shadow-[0_0_22px_rgba(212,175,55,0.14)]",
-    chevron: "text-gold",
-  },
-  primary: {
-    chip: "bg-primary/15 text-primary ring-1 ring-primary/30",
-    openBorder: "border-primary/45",
-    openGlow: "shadow-[0_0_22px_color-mix(in_oklch,var(--primary)_22%,transparent)]",
-    chevron: "text-primary",
-  },
-  accent: {
-    chip: "bg-accent/15 text-accent ring-1 ring-accent/30",
-    openBorder: "border-accent/45",
-    openGlow: "shadow-[0_0_22px_color-mix(in_oklch,var(--accent)_22%,transparent)]",
-    chevron: "text-accent",
-  },
-};
-
 function Panel({
   icon,
   title,
   subtitle,
-  accent,
   open,
   onToggle,
   children,
@@ -65,19 +38,17 @@ function Panel({
   icon: string;
   title: string;
   subtitle: string;
-  accent: Accent;
   open: boolean;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
   const panelId = useId();
-  const a = ACCENT[accent];
 
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border bg-card shadow-sm transition-colors",
-        open ? cn(a.openBorder, a.openGlow) : "border-border",
+        "lu-frame overflow-hidden rounded-2xl transition-shadow",
+        open && "shadow-[0_0_22px_rgba(255,106,26,0.16)]",
       )}
     >
       <button
@@ -85,31 +56,23 @@ function Panel({
         onClick={onToggle}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex w-full items-center gap-4 p-4 text-right transition-colors hover:bg-secondary/30 sm:p-5"
+        className="flex w-full items-center gap-4 p-4 text-right transition-colors hover:bg-white/[0.03] sm:p-5"
       >
         <span
           aria-hidden
-          className={cn(
-            "grid size-11 shrink-0 place-items-center rounded-xl text-2xl",
-            a.chip,
-          )}
+          className="lu-chip grid size-11 shrink-0 place-items-center rounded-xl text-2xl ring-1 ring-[var(--lu-gold-1)]/30"
         >
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-base font-extrabold text-foreground sm:text-lg">
-            {title}
-          </span>
-          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground sm:text-sm">
-            {subtitle}
-          </span>
+          <span className="block text-base font-extrabold text-[var(--lu-cream)] sm:text-lg">{title}</span>
+          <span className="mt-0.5 block text-xs leading-snug text-[var(--lu-tan)] sm:text-sm">{subtitle}</span>
         </span>
         <svg
           aria-hidden
           viewBox="0 0 24 24"
           className={cn(
-            "size-5 shrink-0 transition-transform duration-300 motion-reduce:transition-none",
-            a.chevron,
+            "size-5 shrink-0 text-[var(--lu-gold-1)] transition-transform duration-300 motion-reduce:transition-none",
             open && "rotate-180",
           )}
           fill="none"
@@ -133,7 +96,7 @@ function Panel({
         <div className="overflow-hidden">
           <div
             className={cn(
-              "border-t border-border/60 p-4 transition-opacity duration-200 sm:p-5",
+              "border-t border-white/10 p-4 transition-opacity duration-200 sm:p-5",
               open ? "opacity-100 delay-100" : "opacity-0",
             )}
           >
@@ -148,12 +111,12 @@ function Panel({
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <li className="flex gap-3">
-      <span className="num grid size-7 shrink-0 place-items-center rounded-full bg-primary/15 text-sm font-black text-primary">
+      <span className="num lu-chip grid size-7 shrink-0 place-items-center rounded-full text-sm font-black text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/35">
         {n}
       </span>
       <span className="min-w-0 flex-1 pt-0.5 text-sm leading-relaxed">
-        <strong className="font-bold text-foreground">{title} — </strong>
-        <span className="text-muted-foreground">{children}</span>
+        <strong className="font-bold text-[var(--lu-cream)]">{title} — </strong>
+        <span className="text-[var(--lu-tan)]">{children}</span>
       </span>
     </li>
   );
@@ -165,53 +128,46 @@ export function HowToPlay({ ranks, badges }: { ranks: RankItem[]; badges: BadgeI
 
   return (
     <div className="flex flex-col gap-3">
-      {/* ── Card 1 — Rank guide (gold) ─────────────────────────────────────── */}
+      {/* ── Card 1 — Rank guide ────────────────────────────────────────────── */}
       <Panel
         icon="🃏"
         title="دليل الترابطات"
         subtitle="الترابطات التسعة من الأقوى إلى الأضعف وشروط تحقّقها"
-        accent="gold"
         open={!!open.ranks}
         onToggle={() => toggle("ranks")}
       >
-        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="mb-4 text-sm leading-relaxed text-[var(--lu-tan)]">
           عند الكشف يفوز صاحب الترابط الأقوى المُحقّق. هذه الترابطات مرتّبة من الأقوى (1) إلى الأضعف.
         </p>
         <ul className="flex flex-col gap-2.5">
           {ranks.map((h, i) => (
-            <li
-              key={h.code}
-              className="flex items-start gap-3 rounded-xl border border-border/60 bg-secondary/20 p-3"
-            >
-              <span className="num grid size-8 shrink-0 place-items-center rounded-full border border-gold/50 bg-gold/10 text-sm font-black text-gold">
+            <li key={h.code} className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+              <span className="num grid size-8 shrink-0 place-items-center rounded-full text-sm font-black text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/50">
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <h3 className="text-base font-extrabold text-foreground">{h.nameAr}</h3>
-                  <span className="text-xs text-muted-foreground">{h.nameEn}</span>
+                  <h3 className="text-base font-extrabold text-[var(--lu-cream)]">{h.nameAr}</h3>
+                  <span className="text-xs text-[var(--lu-tan)]">{h.nameEn}</span>
                 </div>
-                <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-                  {h.descriptionAr}
-                </p>
+                <p className="mt-0.5 text-sm leading-relaxed text-[var(--lu-tan)]">{h.descriptionAr}</p>
               </div>
             </li>
           ))}
         </ul>
       </Panel>
 
-      {/* ── Card 2 — How to play / win & lose (neon mint) ──────────────────── */}
+      {/* ── Card 2 — How to play / win & lose ──────────────────────────────── */}
       <Panel
         icon="🎮"
         title="شرح طريقة اللعب والمكسب والخسارة"
         subtitle="مجرى الجولة، المراهنة، وكيف يُحسم الفائز"
-        accent="primary"
         open={!!open.howto}
         onToggle={() => toggle("howto")}
       >
         <div className="flex flex-col gap-5 text-sm">
           <div>
-            <h3 className="mb-2 font-extrabold text-primary">مجرى الجولة</h3>
+            <h3 className="mb-2 font-extrabold text-[var(--lu-gold-1)]">مجرى الجولة</h3>
             <ol className="flex flex-col gap-3">
               <Step n={1} title="الأنتي">
                 كل لاعب يدفع <span className="num">50</span> كوين إجباريًا في بداية الجولة لتكوين
@@ -222,11 +178,11 @@ export function HowToPlay({ ranks, badges }: { ranks: RankItem[]; badges: BadgeI
                 تدريجيًا عبر الأدوار.
               </Step>
               <Step n={3} title="المراهنة">
-                في كل دور تختار: <strong className="text-foreground">تمرير</strong> أو{" "}
-                <strong className="text-foreground">مساواة</strong> الرهان،{" "}
-                <strong className="text-foreground">رفع</strong> المبلغ،{" "}
-                <strong className="text-foreground">كل الرصيد</strong>، أو{" "}
-                <strong className="text-foreground">انسحاب</strong>. لديك{" "}
+                في كل دور تختار: <strong className="text-[var(--lu-cream)]">تمرير</strong> أو{" "}
+                <strong className="text-[var(--lu-cream)]">مساواة</strong> الرهان،{" "}
+                <strong className="text-[var(--lu-cream)]">رفع</strong> المبلغ،{" "}
+                <strong className="text-[var(--lu-cream)]">كل الرصيد</strong>، أو{" "}
+                <strong className="text-[var(--lu-cream)]">انسحاب</strong>. لديك{" "}
                 <span className="num">60</span> ثانية لكل قرار.
               </Step>
               <Step n={4} title="الكشف">
@@ -237,31 +193,31 @@ export function HowToPlay({ ranks, badges }: { ranks: RankItem[]; badges: BadgeI
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-primary">
+            <div className="rounded-xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/[0.06] p-4">
+              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-[var(--lu-gold-1)]">
                 <span aria-hidden>🏆</span> كيف تفوز
               </h3>
-              <ul className="flex list-disc flex-col gap-1.5 pe-4 text-muted-foreground">
+              <ul className="flex list-disc flex-col gap-1.5 pe-4 text-[var(--lu-tan)]">
                 <li>صاحب الترابط الأقوى عند الكشف يكسب القِدر كاملًا ويُضاف إلى رصيدك.</li>
                 <li>إذا انسحب كل المنافسين، تكسب القِدر تلقائيًا دون حاجة للكشف.</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-destructive">
+            <div className="rounded-xl border border-[#d9694f]/30 bg-[#d9694f]/[0.06] p-4">
+              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-[#d9694f]">
                 <span aria-hidden>💔</span> كيف تخسر
               </h3>
-              <ul className="flex list-disc flex-col gap-1.5 pe-4 text-muted-foreground">
+              <ul className="flex list-disc flex-col gap-1.5 pe-4 text-[var(--lu-tan)]">
                 <li>إذا كان ترابطك أضعف عند الكشف، تخسر ما راهنت به في القِدر.</li>
                 <li>عند الانسحاب تخسر نصف رهانك فقط (يبقى في القِدر) ويُعاد لك الباقي فورًا.</li>
               </ul>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
-            <h3 className="mb-1.5 flex items-center gap-1.5 font-extrabold text-gold">
+          <div className="rounded-xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/[0.06] p-4">
+            <h3 className="mb-1.5 flex items-center gap-1.5 font-extrabold text-[var(--lu-gold-1)]">
               <span aria-hidden>🪙</span> معنى الكوين
             </h3>
-            <p className="leading-relaxed text-muted-foreground">
+            <p className="leading-relaxed text-[var(--lu-tan)]">
               الكوين هو رصيد اللعب — تكسبه أو تخسره داخل الطاولة فقط. عند نفاده اطلب{" "}
               <span className="num">1000</span> كوين من البنك (حتى مرتين كل <span className="num">24</span>{" "}
               ساعة). لا بيع ولا شراء ولا تحويل.
@@ -270,39 +226,33 @@ export function HowToPlay({ ranks, badges }: { ranks: RankItem[]; badges: BadgeI
         </div>
       </Panel>
 
-      {/* ── Card 3 — Badges (cyan frame, gold badges) ─────────────────────── */}
+      {/* ── Card 3 — Badges ────────────────────────────────────────────────── */}
       <Panel
         icon="🏅"
         title="شرح الشارات وكيفية الحصول عليها"
         subtitle="الشارات تُمنح تلقائيًا حسب أسلوب لعبك"
-        accent="accent"
         open={!!open.badges}
         onToggle={() => toggle("badges")}
       >
         {badges.length > 0 ? (
           <ul className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
             {badges.map((b) => (
-              <li
-                key={b.id}
-                className="flex items-start gap-3 rounded-xl border border-border/60 bg-secondary/20 p-4"
-              >
+              <li key={b.id} className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/20 p-4">
                 <span
                   aria-hidden
-                  className="grid size-11 shrink-0 place-items-center rounded-full bg-gold/15 text-2xl ring-1 ring-gold/30"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-[var(--lu-gold-1)]/15 text-2xl ring-1 ring-[var(--lu-gold-1)]/30"
                 >
                   {b.icon}
                 </span>
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <strong className="font-bold text-foreground">{b.nameAr}</strong>
-                  <span className="text-sm leading-snug text-muted-foreground">
-                    {b.descriptionAr}
-                  </span>
+                  <strong className="font-bold text-[var(--lu-cream)]">{b.nameAr}</strong>
+                  <span className="text-sm leading-snug text-[var(--lu-tan)]">{b.descriptionAr}</span>
                 </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">لا توجد شارات معرّفة حاليًا.</p>
+          <p className="text-sm text-[var(--lu-tan)]">لا توجد شارات معرّفة حاليًا.</p>
         )}
       </Panel>
     </div>

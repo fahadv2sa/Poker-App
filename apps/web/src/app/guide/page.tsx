@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { HAND_RANK_CATALOG } from "@fb/shared";
 import { prisma } from "@fb/db";
 import { auth } from "@/auth";
-import { BackButton } from "@/components/back-button";
+import { LuHeader, LuScreen } from "@/components/games/lu-screen";
+import { GuideIcon } from "@/components/games/lu-icons";
 import { HowToPlay } from "./how-to-play";
 
 /**
@@ -28,20 +29,12 @@ export default async function GuidePage() {
     .map((h) => ({ code: h.code, nameAr: h.nameAr, nameEn: h.nameEn, descriptionAr: h.descriptionAr }));
 
   return (
-    <main className="mx-auto max-w-3xl px-4 pb-6 sm:px-6 sm:pb-10 page-top">
-      <header className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-xl font-black">
-          <span className="size-3 rounded-full bg-primary glow-primary" />
-          كيف تلعب
-        </div>
-        <BackButton />
-      </header>
-
-      <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-        كل ما تحتاجه للبدء — اضغط أي بطاقة لعرض تفاصيلها.
+    <LuScreen>
+      <LuHeader icon={<GuideIcon size={22} />} title="كيف تلعب" subtitle="كل ما تحتاجه للبدء" />
+      <p className="mb-4 mt-2 text-sm leading-relaxed text-[var(--lu-tan)]">
+        اضغط أي بطاقة لعرض تفاصيلها.
       </p>
-
       <HowToPlay ranks={ranks} badges={badges} />
-    </main>
+    </LuScreen>
   );
 }
