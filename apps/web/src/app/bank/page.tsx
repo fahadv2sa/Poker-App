@@ -48,7 +48,6 @@ export default async function BankPage() {
     <BankView
       balance={balance}
       amount={amount}
-      level={status.level}
       claimedToday={status.claimedToday}
       resetText={resetText}
       history={historyRows}
