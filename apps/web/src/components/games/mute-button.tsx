@@ -17,7 +17,7 @@ export function MuteButton({ className, size = 18 }: { className?: string; size?
         sound.unlock();
         const next = !uiMuted;
         setUiMuted(next);
-        if (!next) sound.playUi("click");
+        if (!next) sound.playUi("tap");
       }}
       className={cn("lu-btn lu-frame grid size-10 place-items-center rounded-xl", className)}
     >

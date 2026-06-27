@@ -28,6 +28,11 @@ export const SOUND_NAMES = [
   "lose",
   "notify",
   "click",
+  // Unified UI navigation tap (deep/muted) — played ONLY on the UI bus (playUi)
+  // for every button/icon press outside the live table. The table's gameplay
+  // clips above are unaffected. `click` is kept solely for the table's own
+  // mute-toggle confirmation (master bus).
+  "tap",
 ] as const;
 export type SoundName = (typeof SOUND_NAMES)[number];
 

@@ -154,7 +154,7 @@ function MuteButton() {
         sound.unlock();
         const next = !uiMuted;
         setUiMuted(next);
-        if (!next) sound.playUi("click");
+        if (!next) sound.playUi("tap");
       }}
       className="lu-btn grid size-10 place-items-center rounded-xl lu-frame"
     >

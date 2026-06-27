@@ -23,7 +23,7 @@ export function UiSoundToggle({ className }: { className?: string }) {
         sound.unlock();
         const next = !uiMuted;
         setUiMuted(next);
-        if (!next) sound.playUi("click"); // small confirmation when re-enabling
+        if (!next) sound.playUi("tap"); // small confirmation when re-enabling
       }}
       className={cn(
         "kebab-btn grid size-11 shrink-0 place-items-center rounded-2xl text-foreground/85 hover:text-foreground",
