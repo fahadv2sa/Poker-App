@@ -5,8 +5,8 @@ import { FootballCard, OpponentSeat, SeatAvatar } from "@/components/table/parts
 
 /**
  * PREVIEW ONLY — a STATIC reconstruction of the live-table look (gold-on-black),
- * with mock data and no socket. One-screen (h-[100dvh], no scroll) so the fit
- * can be judged. The real table is verified by playing a bot hand. Throwaway.
+ * with mock data and no socket. One-screen (h-[100dvh], no scroll). The real
+ * table is verified by playing a bot hand. Throwaway.
  */
 
 const card = (playerId: string, name: string, nameAr: string, fame: number): CardView => ({
@@ -43,6 +43,15 @@ const opponents = [
   player(5, "ريان", "WAITING", 50),
 ];
 
+function StatTile({ label, value, glyph, tone }: { label: string; value: string; glyph?: string; tone: string }) {
+  return (
+    <div className={`flex min-w-[3.1rem] flex-col items-center justify-center rounded-2xl border px-1.5 py-1 sm:min-w-[4.5rem] sm:px-2.5 sm:py-1.5 ${tone}`}>
+      <span className="text-[0.55rem] font-bold opacity-75">{label}</span>
+      <span className="num flex items-center gap-1 text-sm font-black leading-none">{glyph} {value}</span>
+    </div>
+  );
+}
+
 export default function TablePreview() {
   return (
     <main className="mx-auto flex h-[100dvh] max-w-5xl flex-col overflow-hidden bg-[var(--lu-abyss)] px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
@@ -70,18 +79,18 @@ export default function TablePreview() {
             style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.18), transparent)" }}
           />
 
-          <div className="relative flex flex-1 flex-col items-center justify-center gap-1 py-0.5">
-            {/* fire-gold ball centerpiece (live: ember glow + breathe), behind the pot */}
-            <span
-              aria-hidden
-              className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-52 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
-            />
-            <span className="lu-anim-breathe pointer-events-none absolute left-1/2 top-1/2 z-0 size-32 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-90">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/table-ball.png" alt="" className="size-full object-cover" />
-            </span>
+          {/* fire-gold ball — LIVE centerpiece on the felt CENTER CIRCLE (midpoint) */}
+          <span
+            aria-hidden
+            className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-56 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
+          />
+          <span className="lu-anim-breathe pointer-events-none absolute left-1/2 top-1/2 z-0 size-36 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-90">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/table-ball.png" alt="" className="size-full object-cover" />
+          </span>
 
+          <div className="relative flex flex-1 flex-col items-center justify-center gap-1 py-0.5">
             <div className="glow-gold relative z-10 flex flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/80 px-7 py-2 shadow-lg backdrop-blur">
               <span className="text-[0.58rem] font-bold tracking-[0.25em] text-gold/70">المجمّع</span>
               <span className="num text-3xl font-black leading-none text-gold">1,240</span>
@@ -95,12 +104,8 @@ export default function TablePreview() {
             </div>
           </div>
 
+          {/* my hole cards — no label row above them anymore */}
           <section className="relative z-10 flex flex-col items-center gap-1">
-            <div className="flex items-center gap-2 text-[0.7rem] text-white/75">
-              <span>بطاقتاك</span>
-              <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">D</span>
-              <span className="text-gold">· رهانك 🪙 <span className="num">150</span></span>
-            </div>
             <div className="flex justify-center gap-2">
               {hole.map((c, i) => (
                 <FootballCard key={c.playerId} card={c} index={i} size="lg" widthClass="w-[60px] sm:w-[132px]" />
@@ -109,23 +114,21 @@ export default function TablePreview() {
           </section>
         </section>
 
-        {/* HUD */}
-        <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-stretch justify-center gap-2">
-          <div className="flex min-w-[4.25rem] flex-col items-center justify-center rounded-2xl border border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 px-2.5 py-1 text-[var(--lu-gold-1)]">
-            <span className="text-[0.55rem] font-bold opacity-75">رصيدي</span>
-            <span className="num text-sm font-black">🪙 4,850</span>
-          </div>
-          <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--lu-ember-glow)]/50 bg-[#0b0908]/75 px-3 py-1.5 lu-glow-ember backdrop-blur">
-            <SeatAvatar playerNumber={1001} seed="me" size={34} sizeClass="size-9" className="ring-2 ring-[var(--lu-ember-glow)]" />
+        {/* bottom strip — profile · bet · balance · net */}
+        <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-stretch justify-center gap-1.5">
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--lu-ember-glow)]/50 bg-[#0b0908]/75 px-2.5 py-1.5 lu-glow-ember backdrop-blur">
+            <div className="relative">
+              <SeatAvatar playerNumber={1001} seed="me" size={32} sizeClass="size-8" className="ring-2 ring-[var(--lu-ember-glow)]" />
+              <span title="الموزّع" className="absolute -bottom-0.5 -left-0.5 z-10 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow">D</span>
+            </div>
             <div className="flex flex-col leading-tight">
               <span className="text-xs font-bold">أنت</span>
-              <span className="text-[0.62rem] font-bold text-[var(--lu-ember-glow)]">دورك…</span>
+              <span className="text-[0.6rem] font-bold text-[var(--lu-ember-glow)]">دورك…</span>
             </div>
           </div>
-          <div className="flex min-w-[4.25rem] flex-col items-center justify-center rounded-2xl border border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 px-2.5 py-1 text-[var(--lu-gold-1)]">
-            <span className="text-[0.55rem] font-bold opacity-75">صافي</span>
-            <span className="num text-sm font-black">▲ 420</span>
-          </div>
+          <StatTile label="رهانك" glyph="🪙" value="150" tone="border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]" />
+          <StatTile label="رصيدي" glyph="🪙" value="4,850" tone="border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]" />
+          <StatTile label="صافي" glyph="▲" value="420" tone="border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]" />
         </div>
       </div>
 

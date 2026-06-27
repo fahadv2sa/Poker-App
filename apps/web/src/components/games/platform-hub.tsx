@@ -154,9 +154,17 @@ function GameCard({ game }: { game: GameEntry }) {
   const base = "lu-frame relative flex aspect-[4/5] flex-col items-center justify-center gap-2 overflow-hidden rounded-3xl p-4 text-center";
 
   const art = live ? (
-    <span className="lu-anim-breathe relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgba(255,106,26,0.3)]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/gold-fire-football.png" alt="" className="absolute inset-0 size-full object-cover" />
+    <span className="relative grid place-items-center">
+      {/* ember glow halo — same live treatment as the table/home ball */}
+      <span
+        aria-hidden
+        className="lu-anim-pulse absolute size-24 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), transparent 66%)" }}
+      />
+      <span className="lu-anim-breathe relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgba(255,106,26,0.3)]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/table-ball.png" alt="" className="absolute inset-0 size-full object-cover" />
+      </span>
     </span>
   ) : (
     <span className="lu-chip grid size-16 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/20">

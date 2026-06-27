@@ -113,7 +113,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        "flex min-w-[4.25rem] flex-col items-center justify-center rounded-2xl border px-2.5 py-1 backdrop-blur transition sm:min-w-[5.25rem] sm:px-3 sm:py-1.5",
+        "flex min-w-[3.1rem] flex-col items-center justify-center rounded-2xl border px-1.5 py-1 backdrop-blur transition sm:min-w-[4.5rem] sm:px-2.5 sm:py-1.5",
         tones[tone],
       )}
     >
@@ -356,6 +356,22 @@ export function GameTable({
               className="pointer-events-none absolute inset-x-0 top-0 h-24"
               style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.18), transparent)" }}
             />
+            {/* fire-gold football — LIVE centerpiece on the pitch CENTER CIRCLE
+                (the felt midpoint). Ember glow + breathing; sits BEHIND everything
+                (z-0) so the pot total + cards render above and stay legible.
+                Reduced-motion neutralizes the animation globally. */}
+            <span
+              aria-hidden
+              className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-56 -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-80"
+              style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
+            />
+            <span
+              aria-hidden
+              className="lu-anim-breathe pointer-events-none absolute left-1/2 top-1/2 z-0 size-36 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-90 sm:size-48"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/table-ball.png" alt="" className="size-full object-cover" />
+            </span>
 
             {/* In-felt toasts/notices (your turn, raise, fold…) — feedback now
                 lives ON the table instead of a fixed page overlay. */}
@@ -382,22 +398,6 @@ export function GameTable({
 
             {/* focal point: pot scoreboard + community + timer */}
             <div className="relative flex flex-1 flex-col items-center justify-center gap-1 py-0.5 sm:gap-4 sm:py-2">
-              {/* fire-gold football — LIVE pulsing centerpiece behind the pot
-                  (ember glow + breathing, like the home hero). Sits BEHIND the
-                  pot + community (z-0); both render above it and stay legible.
-                  Reduced-motion neutralizes the animation globally. */}
-              <span
-                aria-hidden
-                className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-52 -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-72"
-                style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
-              />
-              <span
-                aria-hidden
-                className="lu-anim-breathe pointer-events-none absolute left-1/2 top-1/2 z-0 size-32 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-90 sm:size-44"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/table-ball.png" alt="" className="size-full object-cover" />
-              </span>
               <motion.div
                 key={anim("potCountUp") ? "pot" : s.pot}
                 data-fx="pot"
@@ -471,28 +471,6 @@ export function GameTable({
               data-fx={yourSeat != null ? `seat-${yourSeat}` : undefined}
               className="relative z-10 flex flex-col items-center gap-1"
             >
-              <div className="flex items-center gap-2 text-[0.7rem] text-white/75 sm:text-xs">
-                <span>بطاقتاك</span>
-                {me?.isDealer ? (
-                  anim("dealerButton") ? (
-                    <motion.span
-                      layoutId="dealer-button"
-                      className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black"
-                    >
-                      D
-                    </motion.span>
-                  ) : (
-                    <span className="grid size-4 place-items-center rounded-full bg-white text-[0.6rem] font-black text-black">
-                      D
-                    </span>
-                  )
-                ) : null}
-                {me && me.committedTotal > 0 ? (
-                  <span className="text-gold">
-                    · رهانك 🪙 <span className="num">{me.committedTotal}</span>
-                  </span>
-                ) : null}
-              </div>
               <div className="flex justify-center gap-2 sm:gap-3">
                 {view.hole.length > 0 ? (
                   view.hole.map((c, i) => (
@@ -512,35 +490,55 @@ export function GameTable({
               felt: total coins (RIGHT), your profile (center), session net P/L
               (LEFT). In RTL the first child renders rightmost. */}
           {me ? (
-            <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-stretch justify-center gap-2 sm:mt-3">
-              {/* total coins — to the RIGHT of the profile */}
-              <StatCard label="رصيدي" glyph="🪙" value={shownBalance} tone="gold" />
-
-              {/* profile — center; the player's nickname, no coins */}
+            <div className="mx-auto mt-1.5 flex w-full max-w-3xl shrink-0 items-stretch justify-center gap-1.5 sm:mt-3 sm:gap-2">
+              {/* profile — nickname + dealer button moved cleanly onto the avatar
+                  (matches the opponent seats; keeps dealer clarity, no clutter) */}
               <div
                 className={cn(
-                  "flex items-center gap-2.5 rounded-2xl border bg-[#0b0908]/75 px-3 py-1.5 backdrop-blur transition",
+                  "flex items-center gap-2 rounded-2xl border bg-[#0b0908]/75 px-2.5 py-1.5 backdrop-blur transition",
                   isMyTurn ? "border-[var(--lu-ember-glow)]/50 lu-glow-ember" : "border-[var(--lu-gold-1)]/15",
                 )}
               >
-                <SeatAvatar
-                  playerNumber={me.playerNumber}
-                  seed={me.username}
-                  size={34}
-                  sizeClass="size-9 sm:size-10"
-                  className={cn("ring-1", isMyTurn ? "ring-2 ring-[var(--lu-ember-glow)]" : "ring-white/15")}
-                />
+                <div className="relative">
+                  <SeatAvatar
+                    playerNumber={me.playerNumber}
+                    seed={me.username}
+                    size={32}
+                    sizeClass="size-8 sm:size-10"
+                    className={cn("ring-1", isMyTurn ? "ring-2 ring-[var(--lu-ember-glow)]" : "ring-white/15")}
+                  />
+                  {me.isDealer ? (
+                    anim("dealerButton") ? (
+                      <motion.span
+                        layoutId="dealer-button"
+                        title="الموزّع"
+                        className="absolute -bottom-0.5 -left-0.5 z-10 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
+                      >
+                        D
+                      </motion.span>
+                    ) : (
+                      <span
+                        title="الموزّع"
+                        className="absolute -bottom-0.5 -left-0.5 z-10 grid size-4 place-items-center rounded-full bg-white text-[0.55rem] font-black text-black shadow"
+                      >
+                        D
+                      </span>
+                    )
+                  ) : null}
+                </div>
                 <div className="flex flex-col leading-tight">
-                  <span className="max-w-[7rem] truncate text-xs font-bold sm:max-w-[10rem] sm:text-sm">
-                    {nickname}
-                  </span>
+                  <span className="max-w-[4.5rem] truncate text-xs font-bold sm:max-w-[9rem] sm:text-sm">{nickname}</span>
                   {isMyTurn ? (
-                    <span className="text-[0.62rem] font-bold text-[var(--lu-ember-glow)] sm:text-xs">دورك…</span>
+                    <span className="text-[0.6rem] font-bold text-[var(--lu-ember-glow)] sm:text-xs">دورك…</span>
                   ) : null}
                 </div>
               </div>
 
-              {/* session net profit/loss — to the LEFT of the profile */}
+              {/* my current bet — relocated here from above the cards (same live value) */}
+              <StatCard label="رهانك" glyph="🪙" value={Number(me.committedTotal)} tone="gold" />
+              {/* total coins */}
+              <StatCard label="رصيدي" glyph="🪙" value={shownBalance} tone="gold" />
+              {/* session net profit/loss */}
               <StatCard
                 label="صافي"
                 glyph={net > 0 ? "▲" : net < 0 ? "▼" : undefined}

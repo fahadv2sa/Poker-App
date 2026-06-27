@@ -202,34 +202,13 @@ function Hero() {
               "radial-gradient(circle, rgba(255,106,26,0.45), rgba(255,106,26,0.12) 42%, transparent 68%)",
           }}
         />
-        {/* rotating gold ring */}
-        <span
-          aria-hidden
-          className="lu-anim-spin absolute size-[13.5rem] rounded-full"
-          style={{
-            background:
-              "conic-gradient(from 0deg, transparent, rgba(242,210,122,0.65), transparent 30%, transparent 60%, rgba(255,179,71,0.6), transparent 92%)",
-            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
-            mask: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))",
-          }}
-        />
-        {/* counter-rotating inner ring */}
-        <span
-          aria-hidden
-          className="lu-anim-spin-rev absolute size-[13rem] rounded-full opacity-70"
-          style={{
-            background: "conic-gradient(from 180deg, transparent, rgba(255,224,150,0.5), transparent 22%)",
-            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px))",
-            mask: "radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px))",
-          }}
-        />
-
-        {/* the hero ball — Midjourney asset if present, else the CSS gold orb */}
+        {/* the hero ball — the SAME live fire-gold football as the table center
+            (ember glow + breathing pulse, no rings), so home and table match. */}
         <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgba(255,106,26,0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
           {hasImg ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src="/gold-fire-football.png"
+              src="/table-ball.png"
               alt="كرة قدم ذهبية محاطة بنيران — ابدأ اللعب"
               onError={() => setHasImg(false)}
               className="absolute inset-0 size-full object-cover"
