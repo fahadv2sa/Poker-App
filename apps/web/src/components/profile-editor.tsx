@@ -77,15 +77,15 @@ export function ProfileEditor({
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-4 border-t border-border/60 pt-6">
-      <h2 className="text-lg font-bold">تعديل الملف</h2>
+    <div className="mt-6 flex flex-col gap-4 border-t border-white/10 pt-6">
+      <h2 className="text-lg font-bold text-[var(--lu-cream)]">تعديل الملف</h2>
 
       {msg ? (
         <div
           className={
             msg.ok
-              ? "rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-primary"
-              : "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground"
+              ? "rounded-md border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/10 px-3 py-2 text-sm text-[var(--lu-gold-1)]"
+              : "rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]"
           }
         >
           {msg.text}
@@ -93,7 +93,7 @@ export function ProfileEditor({
       ) : null}
 
       <form onSubmit={saveNickname} className="flex flex-col gap-2">
-        <Label htmlFor="nickname">النيك نيم</Label>
+        <Label htmlFor="nickname" className="text-[var(--lu-cream)]">النيك نيم</Label>
         <div className="flex gap-2">
           <Input
             id="nickname"
@@ -102,17 +102,17 @@ export function ProfileEditor({
             placeholder="اسمك المعروض (اختياري)"
             maxLength={20}
           />
-          <Button type="submit" disabled={busy} className="shrink-0">
+          <Button type="submit" disabled={busy} className="btn-gold-cta shrink-0 text-black">
             حفظ
           </Button>
         </div>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-[var(--lu-tan)]">
           2–20 حرفًا. اتركه فارغًا للعودة إلى اسم المستخدم.
         </span>
       </form>
 
       <div className="flex flex-col gap-2">
-        <Label>الصورة الرمزية</Label>
+        <Label className="text-[var(--lu-cream)]">الصورة الرمزية</Label>
         <div className="flex flex-wrap items-center gap-2">
           <input
             ref={fileRef}

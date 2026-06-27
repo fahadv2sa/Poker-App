@@ -196,6 +196,16 @@ export function HeartIcon(p: IconProps) {
   );
 }
 
+/** Single user / profile. */
+export function UserIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle {...stroke} cx="12" cy="8" r="3.6" />
+      <path {...stroke} d="M5 20a7 7 0 0 1 14 0" />
+    </Svg>
+  );
+}
+
 /** Friends — two people. */
 export function UsersIcon(p: IconProps) {
   return (
