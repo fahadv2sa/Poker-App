@@ -134,8 +134,12 @@ function SubscribeCard() {
       aria-label="اشترك الآن واحصل على المزايا الكاملة"
       className="lu-btn lu-sub lu-sub-rim group relative mt-6 flex items-center gap-4 overflow-hidden rounded-3xl p-5 transition active:scale-[0.98]"
     >
-      {/* gradient-bevel gold border (same metal edge as lu-frame) */}
-      <span aria-hidden className="lu-frame pointer-events-none absolute inset-0 rounded-3xl" style={{ background: "transparent", boxShadow: "none" }} />
+      {/* gradient-bevel gold border (same metal edge as lu-frame). The absolute
+          overlay is on the OUTER span; the inner span carries `.lu-frame` so its
+          `position: relative` can't defeat the overlay's positioning. */}
+      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl">
+        <span className="lu-frame block size-full rounded-3xl" style={{ background: "transparent", boxShadow: "none" }} />
+      </span>
       {/* sweeping gold sheen */}
       <span aria-hidden className="lu-sub-sheen" />
       {/* floating embers */}

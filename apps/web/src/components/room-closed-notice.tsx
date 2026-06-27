@@ -20,12 +20,18 @@ export function RoomClosedNotice() {
   }, []);
 
   if (!show) return null;
+  // Positioning wrapper kept SEPARATE from `.lu-frame`: `.lu-frame` sets
+  // `position: relative` and (being in a later @layer utilities block than
+  // Tailwind core) overrides `fixed`, which would drop the toast back into flow.
+  // Outer div owns the floating position; inner div owns the gold surface.
   return (
-    <div
-      role="alert"
-      className="lu-frame fixed inset-x-0 top-4 z-50 mx-auto w-fit max-w-[90%] rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-[var(--lu-ember-glow)] shadow-xl"
-    >
-      انتهت هذه الغرفة
+    <div className="fixed inset-x-0 top-4 z-50 mx-auto w-fit max-w-[90%]">
+      <div
+        role="alert"
+        className="lu-frame rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-[var(--lu-ember-glow)] shadow-xl"
+      >
+        انتهت هذه الغرفة
+      </div>
     </div>
   );
 }
