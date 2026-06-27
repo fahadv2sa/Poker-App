@@ -23,7 +23,7 @@ export function RoomClosedNotice() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-0 top-4 z-50 mx-auto w-fit max-w-[90%] rounded-xl border border-destructive/40 bg-card px-4 py-2.5 text-center text-sm font-semibold text-destructive-foreground shadow-xl backdrop-blur"
+      className="lu-frame fixed inset-x-0 top-4 z-50 mx-auto w-fit max-w-[90%] rounded-xl px-4 py-2.5 text-center text-sm font-semibold text-[var(--lu-ember-glow)] shadow-xl"
     >
       انتهت هذه الغرفة
     </div>

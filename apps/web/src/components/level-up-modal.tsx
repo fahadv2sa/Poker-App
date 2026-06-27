@@ -17,7 +17,7 @@ import { sound } from "@/lib/sound";
  * (advancing celebrated_level) BEFORE refreshing, so it never re-shows.
  */
 
-const CONFETTI_COLORS = ["var(--gold)", "var(--primary)", "var(--accent)", "#ffffff"];
+const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "#fff4cf"];
 const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
   left: (i * 37 + 5) % 100,
   delay: (i % 10) * 0.28,
@@ -85,7 +85,7 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: "spring", stiffness: 280, damping: 22 }}
-              className="panel panel-accent relative w-full max-w-sm overflow-hidden p-6 text-center"
+              className="lu-frame relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center"
             >
               {/* radial light-burst behind the emblem */}
               <div
@@ -93,32 +93,32 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
                 className="pointer-events-none absolute inset-0"
                 style={{
                   background:
-                    "radial-gradient(60% 48% at 50% 32%, color-mix(in oklch, var(--gold) 22%, transparent), transparent 70%)",
+                    "radial-gradient(60% 48% at 50% 32%, rgba(255,106,26,0.22), transparent 70%)",
                 }}
               />
 
               <div className="relative">
-                <div className="text-[0.7rem] font-bold tracking-[0.3em] text-gold/80">🎉 ترقية</div>
-                <h2 className="mt-1 text-lg font-black">وصلت للمستوى</h2>
+                <div className="text-[0.7rem] font-bold tracking-[0.3em] text-[var(--lu-gold-1)]/80">🎉 ترقية</div>
+                <h2 className="mt-1 text-lg font-black text-[var(--lu-cream)]">وصلت للمستوى</h2>
 
                 {/* animated, glowing level emblem — the hero number */}
                 <motion.div
                   initial={{ scale: 0, rotate: -25 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.12 }}
-                  className="glow-gold badge-shine mx-auto my-4 grid size-28 place-items-center rounded-full border-2 border-gold/60 bg-gradient-to-b from-gold/25 to-card"
+                  className="glow-gold badge-shine mx-auto my-4 grid size-28 place-items-center rounded-full border-2 border-[var(--lu-gold-1)]/60 bg-gradient-to-b from-[var(--lu-gold-2)]/25 to-[#0b0908]"
                 >
-                  <span className="num text-6xl font-black text-gold [text-shadow:0_2px_16px_color-mix(in_oklch,var(--gold)_50%,transparent)]">
+                  <span className="num lu-gold-text lu-gold-title text-6xl font-black">
                     {newLevel}
                   </span>
                 </motion.div>
 
-                <p className="text-sm leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-[var(--lu-tan)]">
                   صار بإمكانك سحب{" "}
-                  <span className="num font-black text-gold">{dailyBank}</span> كوين يوميًا من البنك 🏦
+                  <span className="num font-black text-[var(--lu-gold-1)]">{dailyBank}</span> كوين يوميًا من البنك 🏦
                 </p>
 
-                <Button onClick={() => setOpen(false)} size="lg" className="btn-gold-cta mt-6 w-full">
+                <Button onClick={() => setOpen(false)} size="lg" className="btn-gold-cta mt-6 w-full text-black">
                   متابعة
                 </Button>
               </div>

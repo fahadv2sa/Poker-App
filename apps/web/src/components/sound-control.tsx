@@ -26,7 +26,7 @@ export function SoundControl({ className }: { className?: string }) {
           if (!next) sound.play("click");
         }}
         onMouseEnter={() => setOpen(true)}
-        className="grid size-8 place-items-center rounded-full border border-white/15 bg-card/70 text-foreground/80 transition hover:border-white/30 hover:text-foreground"
+        className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[#0b0908]/70 text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45 hover:text-[var(--lu-cream)]"
       >
         {muted || volume === 0 ? <IconMuted /> : <IconSound />}
       </button>
@@ -53,7 +53,7 @@ export function SoundControl({ className }: { className?: string }) {
             setVolume(v);
             if (muted && v > 0) setMuted(false);
           }}
-          className="w-24 cursor-pointer accent-[var(--primary)]"
+          className="w-24 cursor-pointer accent-[var(--lu-gold-1)]"
         />
       </div>
     </div>

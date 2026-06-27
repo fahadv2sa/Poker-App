@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { EmblemIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 import { cn } from "@/lib/utils";
 import {
   hasInstallPrompt,
@@ -98,52 +98,49 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={cn(
-          "panel panel-accent fade-rise relative w-full max-w-sm overflow-hidden p-6 text-center",
-        )}
+        className={cn("lu-frame fade-rise relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center")}
       >
+        <GoldGradientDefs />
         <button
           type="button"
           aria-label="إغلاق"
           onClick={dismiss}
-          className="absolute end-3 top-3 grid size-8 place-items-center rounded-full bg-white/5 text-lg text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
+          className="absolute end-3 top-3 grid size-8 place-items-center rounded-full bg-white/5 text-lg text-[var(--lu-tan)] transition hover:bg-white/10 hover:text-[var(--lu-cream)]"
         >
           ✕
         </button>
 
         {/* glowing app mark */}
-        <div className="mx-auto mb-3 grid size-20 place-items-center rounded-3xl border border-gold/30 bg-gold/10 [box-shadow:0_0_28px_color-mix(in_oklch,var(--gold)_28%,transparent)]">
-          <Logo glow className="size-12" />
+        <div className="mx-auto mb-3 grid size-20 place-items-center rounded-3xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/10 [box-shadow:0_0_28px_rgba(255,106,26,0.28)]">
+          <EmblemIcon size={44} />
         </div>
 
         {done ? (
           <>
-            <h2 className="text-xl font-black text-gold">تمت إضافة المكافأة! 🎉</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              أُضيفت <span className="num font-bold text-gold">{amount}</span> كوين — رصيدك الآن{" "}
-              <span className="num font-bold text-foreground">{done}</span>.
+            <h2 className="lu-gold-text lu-gold-title text-xl font-black">تمت إضافة المكافأة! 🎉</h2>
+            <p className="mt-1 text-sm text-[var(--lu-tan)]">
+              أُضيفت <span className="num font-bold text-[var(--lu-gold-1)]">{amount}</span> كوين — رصيدك الآن{" "}
+              <span className="num font-bold text-[var(--lu-cream)]">{done}</span>.
             </p>
-            <Button onClick={() => setOpen(false)} size="lg" className="btn-gold-cta mt-5 w-full">
+            <Button onClick={() => setOpen(false)} size="lg" className="btn-gold-cta mt-5 w-full text-black">
               رائع
             </Button>
           </>
         ) : (
           <>
-            <h2 className="text-xl font-black leading-tight">أضِف اللعبة إلى شاشتك</h2>
-            <p className="mt-1 text-sm text-muted-foreground">مكافأة لمرة واحدة عند التثبيت</p>
+            <h2 className="text-xl font-black leading-tight text-[var(--lu-cream)]">أضِف اللعبة إلى شاشتك</h2>
+            <p className="mt-1 text-sm text-[var(--lu-tan)]">مكافأة لمرة واحدة عند التثبيت</p>
 
             {/* the reward — the hero number */}
             <div className="my-5 flex items-center justify-center gap-2">
               <span aria-hidden className="text-3xl">🪙</span>
-              <span className="num text-4xl font-black text-gold [text-shadow:0_2px_10px_color-mix(in_oklch,var(--gold)_35%,transparent)]">
-                {amount}
-              </span>
-              <span className="self-end pb-1 text-sm font-bold text-gold/80">كوين</span>
+              <span className="num lu-gold-text lu-gold-title text-4xl font-black">{amount}</span>
+              <span className="self-end pb-1 text-sm font-bold text-[var(--lu-gold-1)]/80">كوين</span>
             </div>
 
             {ios ? (
               // iOS: no install prompt — a clear numbered step list (one per line).
-              <div className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-sm">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-[var(--lu-cream)]">
                 <ol className="flex flex-col gap-2 text-start">
                   {[
                     "اضغط زر المشاركة من متصفح سفاري",
@@ -152,7 +149,7 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
                     "ستحصل تلقائيًا على 10 آلاف كوين كهدية",
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-2 leading-relaxed">
-                      <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-gold/15 text-[0.7rem] font-bold text-gold">
+                      <span className="num grid size-5 shrink-0 place-items-center rounded-full bg-[var(--lu-gold-1)]/15 text-[0.7rem] font-bold text-[var(--lu-gold-1)]">
                         {i + 1}
                       </span>
                       <span>{step}</span>
@@ -161,17 +158,17 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
                 </ol>
               </div>
             ) : canPrompt ? (
-              <Button onClick={onInstall} disabled={busy} size="lg" className="btn-gold-cta w-full">
+              <Button onClick={onInstall} disabled={busy} size="lg" className="btn-gold-cta w-full text-black">
                 {busy ? "جارٍ التثبيت…" : "🚀 ثبّت التطبيق واحصل على المكافأة"}
               </Button>
             ) : (
               // Chromium without a live prompt (or unsupported): manual hint.
-              <div className="rounded-xl border border-border/70 bg-secondary/30 p-3 text-sm">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-[var(--lu-cream)]">
                 <p className="leading-relaxed">
                   افتح قائمة المتصفّح ثم{" "}
-                  <span className="font-bold text-foreground">«تثبيت التطبيق / إضافة إلى الشاشة الرئيسية»</span>
+                  <span className="font-bold text-[var(--lu-gold-1)]">«تثبيت التطبيق / إضافة إلى الشاشة الرئيسية»</span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-xs text-[var(--lu-tan)]">
                   ستصلك المكافأة تلقائيًا بعد التثبيت.
                 </p>
               </div>
@@ -180,7 +177,7 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
             <button
               type="button"
               onClick={dismiss}
-              className="mt-4 text-xs text-muted-foreground transition hover:text-foreground"
+              className="mt-4 text-xs text-[var(--lu-tan)] transition hover:text-[var(--lu-cream)]"
             >
               ربما لاحقًا
             </button>

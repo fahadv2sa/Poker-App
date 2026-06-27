@@ -1223,10 +1223,10 @@ function TableSummary({
     >
       <div className="relative z-10 my-auto w-full max-w-2xl space-y-3">
         {/* header: title + reason + X (→ home) */}
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-card/85 px-4 py-3 backdrop-blur">
+        <div className="lu-frame flex items-center justify-between gap-3 rounded-2xl px-4 py-3">
           <div className="flex min-w-0 flex-col">
-            <span className="text-base font-black sm:text-lg">ملخص الطاولة</span>
-            <span className="truncate text-[0.7rem] text-muted-foreground sm:text-xs">
+            <span className="lu-gold-text lu-gold-title text-base font-black sm:text-lg">ملخص الطاولة</span>
+            <span className="truncate text-[0.7rem] text-[var(--lu-tan)] sm:text-xs">
               {closedReason === "CLOSED_BY_HOST"
                 ? "أغلق المضيف الطاولة"
                 : closedReason === "EMPTY"
@@ -1238,7 +1238,7 @@ function TableSummary({
             type="button"
             onClick={onClose}
             aria-label="إغلاق والعودة للرئيسية"
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-white/15 bg-black/40 text-lg text-white/85 transition hover:bg-black/65 hover:text-white"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-black/40 text-lg text-[var(--lu-cream)]/85 transition hover:border-[var(--lu-gold-1)]/45 hover:bg-black/65 hover:text-[var(--lu-cream)]"
           >
             ✕
           </button>
@@ -1260,19 +1260,19 @@ function TableSummary({
 function SummaryRoundCard({ rd }: { rd: RoundSummary }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/12 bg-card/70 backdrop-blur">
+    <div className="lu-frame overflow-hidden rounded-2xl">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 px-4 py-3 text-start"
       >
-        <span className="num grid size-8 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 text-xs font-black text-gold">
+        <span className="num grid size-8 shrink-0 place-items-center rounded-full border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/10 text-xs font-black text-[var(--lu-gold-1)]">
           {rd.round}
         </span>
-        <span className="flex-1 text-sm font-bold">الجولة {rd.round}</span>
+        <span className="flex-1 text-sm font-bold text-[var(--lu-cream)]">الجولة {rd.round}</span>
         <span
           aria-hidden
-          className={cn("text-muted-foreground transition-transform", open && "rotate-180")}
+          className={cn("text-[var(--lu-tan)] transition-transform", open && "rotate-180")}
         >
           ▾
         </span>
