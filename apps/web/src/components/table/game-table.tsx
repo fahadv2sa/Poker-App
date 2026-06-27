@@ -29,7 +29,7 @@ const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 // Fixed (non-random) confetti pieces for the winner screen — deterministic so
 // there's no hydration mismatch and it stays cheap. Purely decorative; the
 // global reduced-motion rule hides them. Colors map to the brand palette.
-const CONFETTI_COLORS = ["var(--gold)", "var(--primary)", "var(--accent)", "#ffffff"];
+const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "#fff4cf"];
 const CONFETTI = Array.from({ length: 26 }, (_, i) => ({
   left: (i * 37 + 5) % 100,
   delay: (i % 10) * 0.32,
@@ -83,7 +83,7 @@ function PotChip({ index, amount }: { index: number; amount?: number }) {
     <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/[0.06] px-2 py-0.5 text-xs font-bold text-gold/90">
       <PotIcon className="size-3.5 opacity-90" />
       <span className="num font-black">{index + 1}</span>
-      {amount != null ? <span className="num text-primary">+{amount}</span> : null}
+      {amount != null ? <span className="num text-[var(--lu-gold-1)]">+{amount}</span> : null}
     </span>
   );
 }
@@ -105,9 +105,9 @@ function StatCard({
   glyph?: string;
 }) {
   const tones = {
-    gold: "border-gold/45 bg-gold/10 text-gold shadow-[0_0_12px_rgba(212,175,55,0.22)]",
-    up: "border-emerald-400/50 bg-emerald-400/10 text-emerald-300 shadow-[0_0_14px_rgba(16,185,129,0.3)]",
-    down: "border-destructive/50 bg-destructive/10 text-destructive shadow-[0_0_12px_rgba(239,68,68,0.25)]",
+    gold: "border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_12px_rgba(255,106,26,0.2)]",
+    up: "border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_14px_rgba(255,179,71,0.25)]",
+    down: "border-[#d9694f]/50 bg-[#d9694f]/10 text-[#d9694f] shadow-[0_0_12px_rgba(217,105,79,0.25)]",
   } as const;
   const sign = signed ? (value > 0 ? "+" : value < 0 ? "−" : "") : "";
   return (
@@ -249,7 +249,7 @@ export function GameTable({
         header pinned top, the play area flexing, and the action bar pinned bottom;
         safe-area insets keep clear of the notch / home indicator. Desktop keeps
         the original scrollable, centered layout via sm: breakpoints. */}
-    <main className="mx-auto flex h-[100dvh] max-w-5xl flex-col overflow-hidden px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:h-auto sm:min-h-screen sm:overflow-visible sm:px-6 sm:py-6">
+    <main className="mx-auto flex h-[100dvh] max-w-5xl flex-col overflow-hidden bg-[var(--lu-abyss)] px-3 pt-[max(0.6rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:h-auto sm:min-h-screen sm:overflow-visible sm:px-6 sm:py-6">
       {/* ---------------------------------------------------------- top bar
           During play this stays minimal: ONLY mute, host-only Close Table, and
           Exit. The logo, room name, phase chip and coins were removed to
@@ -318,7 +318,7 @@ export function GameTable({
               around the far edge of the table, so the felt is freed for play. */}
           <div className="relative z-10 -mb-5 flex w-full max-w-3xl flex-nowrap items-end justify-center gap-1 px-1 sm:-mb-7 sm:gap-3">
             {opponents.length === 0 ? (
-              <span className="mb-5 rounded-full border border-white/10 bg-[#070b14]/70 px-3 py-1.5 text-xs text-white/50 sm:mb-7">
+              <span className="mb-5 rounded-full border border-white/10 bg-[#0b0908]/70 px-3 py-1.5 text-xs text-white/50 sm:mb-7">
                 بانتظار لاعبين آخرين…
               </span>
             ) : (
@@ -346,22 +346,15 @@ export function GameTable({
               holds all 7 cards (board + your hole), the pot, in-felt toasts and
               the play animations. Flexes to fill the freed vertical space. */}
           <section
-            className="felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] border border-primary/15 px-3 pb-3 pt-8 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
-            style={{ boxShadow: "inset 0 0 0 1px rgba(46,230,166,0.06), inset 0 0 70px rgba(0,0,0,0.5), 0 18px 50px rgba(0,0,0,0.5)" }}
+            className="lu-felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] border border-[var(--lu-gold-1)]/20 px-3 pb-3 pt-8 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
+            style={{ boxShadow: "inset 0 0 0 1px rgba(242,210,122,0.1), inset 0 0 70px rgba(0,0,0,0.55), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
-            {/* Pitch markings — the felt reads as a football pitch (decorative,
-                static, zero perf cost). */}
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.12]">
-              <div className="absolute inset-3 rounded-[36px] border-2 border-white" />
-              <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white" />
-              <div className="absolute left-1/2 top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white sm:size-36" />
-              <div className="absolute left-1/2 top-1/2 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-            </div>
-            {/* Stadium floodlight rim along the top edge. */}
+            {/* (Pitch markings come baked into the molten-gold felt asset.) */}
+            {/* Warm gold floodlight rim along the top edge. */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-x-0 top-0 h-24"
-              style={{ background: "radial-gradient(60% 100% at 50% 0%, color-mix(in oklch, var(--accent) 22%, transparent), transparent)" }}
+              style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.18), transparent)" }}
             />
 
             {/* In-felt toasts/notices (your turn, raise, fold…) — feedback now
@@ -389,13 +382,19 @@ export function GameTable({
 
             {/* focal point: pot scoreboard + community + timer */}
             <div className="relative flex flex-1 flex-col items-center justify-center gap-2 py-1 sm:gap-4 sm:py-2">
+              {/* fire-gold ring centerpiece behind the pot (screen-blended glow) */}
+              <span
+                aria-hidden
+                className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-48 -translate-x-1/2 -translate-y-1/2 mix-blend-screen sm:size-64"
+                style={{ backgroundImage: "url(/table-ring.png)", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "center" }}
+              />
               <motion.div
                 key={anim("potCountUp") ? "pot" : s.pot}
                 data-fx="pot"
                 initial={{ scale: 0.85, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                className="glow-gold relative flex flex-col items-center gap-0.5 rounded-2xl border border-gold/40 bg-[#0b0f1a]/75 px-7 py-2 shadow-lg backdrop-blur"
+                className="glow-gold relative z-10 flex flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/80 px-7 py-2 shadow-lg backdrop-blur"
               >
                 {/* #4 absorb ripple — replays on each pot change */}
                 {anim("potCountUp") ? (
@@ -425,7 +424,7 @@ export function GameTable({
                   {s.pots.map((p, i) => (
                     <span
                       key={i}
-                      className="rounded-full border border-gold/30 bg-[#0b0f1a]/50 px-2.5 py-1 text-gold/90"
+                      className="rounded-full border border-gold/30 bg-[#0b0908]/50 px-2.5 py-1 text-gold/90"
                       title={`مؤهلون: ${p.eligibleSeats.join("، ") || "—"}`}
                     >
                       {i === 0 ? "المجمّع الرئيسي" : `جانبي ${i}`}: 🪙{" "}
@@ -510,8 +509,8 @@ export function GameTable({
               {/* profile — center; the player's nickname, no coins */}
               <div
                 className={cn(
-                  "flex items-center gap-2.5 rounded-2xl border bg-[#070b14]/70 px-3 py-1.5 backdrop-blur transition",
-                  isMyTurn ? "border-primary/50 glow-primary" : "border-white/10",
+                  "flex items-center gap-2.5 rounded-2xl border bg-[#0b0908]/75 px-3 py-1.5 backdrop-blur transition",
+                  isMyTurn ? "border-[var(--lu-ember-glow)]/50 lu-glow-ember" : "border-[var(--lu-gold-1)]/15",
                 )}
               >
                 <SeatAvatar
@@ -519,14 +518,14 @@ export function GameTable({
                   seed={me.username}
                   size={34}
                   sizeClass="size-9 sm:size-10"
-                  className={cn("ring-1", isMyTurn ? "ring-2 ring-primary" : "ring-white/15")}
+                  className={cn("ring-1", isMyTurn ? "ring-2 ring-[var(--lu-ember-glow)]" : "ring-white/15")}
                 />
                 <div className="flex flex-col leading-tight">
                   <span className="max-w-[7rem] truncate text-xs font-bold sm:max-w-[10rem] sm:text-sm">
                     {nickname}
                   </span>
                   {isMyTurn ? (
-                    <span className="text-[0.62rem] font-bold text-primary sm:text-xs">دورك…</span>
+                    <span className="text-[0.62rem] font-bold text-[var(--lu-ember-glow)] sm:text-xs">دورك…</span>
                   ) : null}
                 </div>
               </div>
@@ -737,7 +736,7 @@ function LobbyPanel({
           <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-[0.68rem] font-bold tracking-[0.18em] text-gold">
             <span aria-hidden>🎟️</span> كود الدعوة
           </span>
-          <div className="num inline-flex rounded-xl border border-gold/40 bg-[#0b0f1a]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
+          <div className="num inline-flex rounded-xl border border-gold/40 bg-[#0b0908]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
             {inviteCode}
           </div>
           <p className="text-xs text-muted-foreground">ادعُ أصدقاءك بالكود أو شارك الرابط مباشرة</p>
@@ -759,13 +758,13 @@ function LobbyPanel({
           onClick={onStart}
           disabled={!canStart}
           size="lg"
-          className={cn("w-full text-base font-bold", canStart && "btn-cta glow-primary")}
+          className={cn("w-full text-base font-bold", canStart && "btn-gold-cta text-black lu-glow-ember")}
         >
           {canStart ? "ابدأ اللعبة" : "بانتظار انضمام لاعب…"}
         </Button>
       ) : (
         <div className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-card/50 py-3 text-sm text-muted-foreground">
-          <span aria-hidden className="size-2 animate-pulse rounded-full bg-primary" />
+          <span aria-hidden className="size-2 animate-pulse rounded-full bg-[var(--lu-ember)]" />
           بانتظار أن يبدأ المضيف اللعبة…
         </div>
       )}
@@ -814,7 +813,7 @@ function ActionBar({
       className="flex flex-col gap-1.5 sm:gap-3"
     >
       <div className="flex items-center justify-between text-xs sm:text-sm">
-        <span className="font-bold text-primary">دورك</span>
+        <span className="font-bold text-[var(--lu-ember-glow)]">دورك</span>
         {owed > 0 ? (
           <span className="text-muted-foreground">
             للمساواة: 🪙 <span className="num font-semibold text-foreground">{owed}</span>
@@ -851,12 +850,16 @@ function ActionBar({
             ) : (
               <Button
                 onClick={() => onAction("CALL")}
-                className={cn("bg-accent text-accent-foreground hover:bg-accent/90", tap, sz)}
+                className={cn("bg-[var(--lu-gold-2)] text-black hover:bg-[var(--lu-gold-1)]", tap, sz)}
               >
                 مساواة <span className="num">{owed}</span>
               </Button>
             )}
-            <Button variant="secondary" className={cn(tap, sz)} onClick={() => onAction("ALLIN")}>
+            <Button
+              variant="secondary"
+              className={cn("border border-[var(--lu-ember)]/50 bg-[var(--lu-ember)]/15 text-[var(--lu-ember-glow)] hover:bg-[var(--lu-ember)]/25", tap, sz)}
+              onClick={() => onAction("ALLIN")}
+            >
               كل الرصيد
             </Button>
             <Button variant="destructive" className={cn(tap, sz)} onClick={() => setFoldConfirm(true)}>
@@ -884,7 +887,7 @@ function ActionBar({
             <Button
               onClick={() => onAction("RAISE", raiseNum)}
               disabled={!raiseValid}
-              className={cn("shrink-0", tap, sz)}
+              className={cn("btn-gold-cta shrink-0 text-black", tap, sz)}
             >
               رفع{raiseValid ? <> إلى <span className="num">{raiseNum}</span></> : null}
             </Button>
@@ -1138,14 +1141,14 @@ function RoundAnnouncement({
           initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.28, ease: "easeOut" }}
-          className="rounded-2xl border border-slate-400/40 bg-gradient-to-b from-slate-400/15 to-card/90 p-5 text-center shadow-2xl"
+          className="rounded-2xl border border-[var(--lu-tan)]/40 bg-gradient-to-b from-[var(--lu-tan)]/15 to-card/90 p-5 text-center shadow-2xl"
         >
           <div className="mb-1 flex justify-center">
-            <span className="grid size-12 place-items-center rounded-full border border-slate-300/40 bg-slate-400/10 text-2xl">
+            <span className="grid size-12 place-items-center rounded-full border border-[var(--lu-tan)]/40 bg-[var(--lu-tan)]/10 text-2xl">
               🤝
             </span>
           </div>
-          <div className="text-3xl font-black tracking-wide text-slate-200">تعادل!</div>
+          <div className="text-3xl font-black tracking-wide text-[var(--lu-cream)]">تعادل!</div>
           <p className="mt-1 text-sm text-muted-foreground">لا فائز — استُردّت المساهمات.</p>
           {/* All players side by side. */}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
@@ -1155,7 +1158,7 @@ function RoundAnnouncement({
                   playerNumber={pl.playerNumber}
                   seed={pl.username}
                   size={44}
-                  className="ring-1 ring-slate-300/30"
+                  className="ring-1 ring-[var(--lu-gold-1)]/30"
                 />
                 <span className="max-w-full truncate text-[0.68rem] text-muted-foreground">
                   {pl.seat === yourSeat ? "أنت" : pl.username}
@@ -1301,12 +1304,12 @@ function MoneyMath({ r }: { r: GameResultEntry }) {
         </span>
         <span aria-hidden className="text-muted-foreground/50">•</span>
         <span className="text-muted-foreground">
-          ربح <b className="text-primary">{grossWon}</b>
+          ربح <b className="text-[var(--lu-gold-1)]">{grossWon}</b>
         </span>
         <span aria-hidden className="text-muted-foreground/50">•</span>
         <span className="text-muted-foreground">
           صافي{" "}
-          <b className={r.coinsDelta >= 0 ? "text-primary" : "text-destructive"}>
+          <b className={r.coinsDelta >= 0 ? "text-[var(--lu-gold-1)]" : "text-[#d9694f]"}>
             {r.coinsDelta >= 0 ? "+" : ""}
             {r.coinsDelta}
           </b>
@@ -1405,11 +1408,11 @@ function PlayerResultCard({
           data-fx={gold ? `win-${r.seat}` : undefined}
           className={cn(
             "num shrink-0 text-base font-extrabold",
-            gold && "rounded-full bg-primary/15 px-2.5 py-0.5",
+            gold && "rounded-full bg-[var(--lu-gold-2)]/15 px-2.5 py-0.5",
             r.coinsDelta > 0
-              ? "text-primary"
+              ? "text-[var(--lu-gold-1)]"
               : r.coinsDelta < 0
-                ? "text-destructive"
+                ? "text-[#d9694f]"
                 : "text-muted-foreground",
           )}
         >
@@ -1466,7 +1469,7 @@ function BestRankRow({ bestRank }: { bestRank: BestRankPayload }) {
   const [open, setOpen] = useState(false);
   const has = Boolean(bestRank.rankNameAr);
   return (
-    <div className="overflow-hidden rounded-xl border border-primary/30 bg-primary/5">
+    <div className="overflow-hidden rounded-xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/[0.06]">
       <button
         type="button"
         onClick={() => has && setOpen((o) => !o)}
@@ -1474,7 +1477,7 @@ function BestRankRow({ bestRank }: { bestRank: BestRankPayload }) {
         className="flex w-full items-center gap-2 p-2.5 text-start disabled:cursor-default"
       >
         <span aria-hidden className="text-base">🃏</span>
-        <span className="flex-1 text-xs font-bold text-primary">أقوى ترابط لديك</span>
+        <span className="flex-1 text-xs font-bold text-[var(--lu-gold-1)]">أقوى ترابط لديك</span>
         <span className="truncate text-xs text-gold">{bestRank.rankNameAr ?? "لا ترابط مكتمل"}</span>
         {has ? (
           <span aria-hidden className={cn("text-muted-foreground transition-transform", open && "rotate-180")}>
@@ -1483,7 +1486,7 @@ function BestRankRow({ bestRank }: { bestRank: BestRankPayload }) {
         ) : null}
       </button>
       {open && has ? (
-        <div className="border-t border-primary/20 p-2.5 text-center">
+        <div className="border-t border-[var(--lu-gold-1)]/20 p-2.5 text-center">
           <div className="mb-2 text-xs">
             <ClaimExplanation rankNameAr={bestRank.rankNameAr} groups={bestRank.evidence} />
           </div>
@@ -1516,7 +1519,7 @@ function ResultAction({
 }) {
   const tone =
     variant === "primary"
-      ? "border-primary/50 bg-primary/15 text-primary hover:bg-primary/25"
+      ? "border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/15 text-[var(--lu-gold-1)] hover:bg-[var(--lu-gold-2)]/25"
       : variant === "destructive"
         ? "border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/20"
         : "border-white/15 bg-card/70 text-foreground/80 hover:border-white/30";
@@ -1545,7 +1548,7 @@ function WaitingHint({ phase, turnName }: { phase: string; turnName: string | nu
         "بانتظار اختيارات اللاعبين…"
       ) : turnName != null ? (
         <>
-          الدور على <span className="font-bold text-primary">{turnName}</span>…
+          الدور على <span className="font-bold text-[var(--lu-gold-1)]">{turnName}</span>…
         </>
       ) : (
         "بانتظار الجولة…"
