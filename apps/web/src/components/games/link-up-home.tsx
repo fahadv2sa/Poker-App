@@ -73,9 +73,17 @@ export function LinkUpHome({
 
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <TopBar />
+        {/* Flex spacers distribute the slack evenly. The top spacer (grow-3)
+            equals the sum of the three lower spacers (grow-1 each), so the hero
+            keeps its exact vertical position while the space that used to be dead
+            below it becomes even gaps: hero → cards → التصنيف → nav. */}
+        <div aria-hidden className="grow-[3]" />
         <Hero />
+        <div aria-hidden className="grow" />
         <ActionGrid />
+        <div aria-hidden className="grow" />
         <RankStrip rank={rank} totalPlayers={totalPlayers} />
+        <div aria-hidden className="grow" />
       </div>
 
       <BottomNav />
@@ -166,7 +174,7 @@ function MuteButton() {
 function Hero() {
   const [hasImg, setHasImg] = useState(true);
   return (
-    <section className="flex min-h-0 flex-1 flex-col items-center justify-center py-2">
+    <section className="flex shrink-0 flex-col items-center py-2">
       <Link
         href="/quick-play"
         data-sound="quick-play"
@@ -252,7 +260,7 @@ function RankStrip({ rank, totalPlayers }: { rank: string; totalPlayers?: string
     <Link
       href="/rank"
       aria-label="التصنيف"
-      className="lu-btn lu-frame mt-2.5 flex shrink-0 items-center justify-between rounded-2xl px-5 py-3"
+      className="lu-btn lu-frame flex shrink-0 items-center justify-between rounded-2xl px-5 py-3"
     >
       {/* right cluster (first child in RTL): trophy + label */}
       <div className="flex items-center gap-3">
