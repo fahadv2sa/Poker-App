@@ -281,26 +281,35 @@ function HubMenu({ logoutAction }: { logoutAction?: () => void | Promise<void> }
         <MenuDotsIcon size={18} />
       </button>
       {open ? (
+        // Positioning wrapper is kept SEPARATE from `.lu-frame`: `.lu-frame` sets
+        // `position: relative` and (being in a later @layer utilities block than
+        // Tailwind core) overrides the `absolute` utility — which previously pulled
+        // the menu back into flow and reflowed the header. The outer div owns the
+        // floating position; the inner div owns the gold surface.
         <div
-          role="menu"
-          className="lu-frame absolute top-full z-50 mt-2 flex w-48 flex-col overflow-hidden rounded-2xl p-1.5 text-sm shadow-2xl"
+          className="absolute top-full z-50 mt-2 w-48"
           style={{ insetInlineEnd: 0 } as CSSProperties}
         >
-          {logoutAction ? (
-            <form action={logoutAction} className="contents">
-              <button
-                role="menuitem"
-                type="submit"
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-[var(--lu-cream)] transition hover:bg-white/5"
-              >
+          <div
+            role="menu"
+            className="lu-frame flex flex-col overflow-hidden rounded-2xl p-1.5 text-sm shadow-2xl"
+          >
+            {logoutAction ? (
+              <form action={logoutAction} className="contents">
+                <button
+                  role="menuitem"
+                  type="submit"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-start text-[var(--lu-cream)] transition hover:bg-white/5"
+                >
+                  <LogoutIcon size={18} /> تسجيل الخروج
+                </button>
+              </form>
+            ) : (
+              <span className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[var(--lu-tan)]">
                 <LogoutIcon size={18} /> تسجيل الخروج
-              </button>
-            </form>
-          ) : (
-            <span className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[var(--lu-tan)]">
-              <LogoutIcon size={18} /> تسجيل الخروج
-            </span>
-          )}
+              </span>
+            )}
+          </div>
         </div>
       ) : null}
     </div>
