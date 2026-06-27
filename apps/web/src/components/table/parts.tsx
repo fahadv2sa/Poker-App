@@ -232,11 +232,15 @@ export function FootballCard({
   variant = "game",
   reveal,
   widthClass,
+  compact = false,
 }: {
   card?: CardView | null;
   back?: boolean;
   index?: number;
   size?: "md" | "lg";
+  /** Visual-only: shorter card (square photo + shorter back) so wider cards can
+   *  stack in two rows without growing too tall. Opt-in; default unchanged. */
+  compact?: boolean;
   /** "game" (default) reveals only photo/name/score on expand; "result" reveals
    *  the full player details. The card FACE is minimal in both contexts. */
   variant?: "game" | "result";
@@ -263,7 +267,7 @@ export function FootballCard({
       <div
         className={cn(
           "flex items-center justify-center rounded-xl border border-[var(--lu-gold-1)]/25 text-2xl text-[var(--lu-gold-1)]/45",
-          "aspect-[2/3]",
+          compact ? "aspect-[4/5]" : "aspect-[2/3]",
           "[background:repeating-linear-gradient(135deg,#0b0908,#0b0908_7px,#16120c_7px,#16120c_14px)]",
           "shadow-[inset_0_1px_0_rgba(255,234,180,0.08)]",
           width,
@@ -335,7 +339,7 @@ export function FootballCard({
     >
       {/* Photo — dominates the top, rounded by the card's overflow-hidden. */}
       <div className="relative w-full overflow-hidden bg-[#0b1322]">
-        <div className="aspect-[4/5] w-full">
+        <div className={cn(compact ? "aspect-square" : "aspect-[4/5]", "w-full")}>
           {showPhoto ? (
             // Remote provider image; plain <img> avoids next/image remote config.
             // eslint-disable-next-line @next/next/no-img-element

@@ -757,10 +757,19 @@
  * (fire-gold football centerpiece), both cropped from the approved references.
  * ────────────────────────────────────────────────────────────────────────── */
 .lu-felt {
+  /* Signature molten gold-on-black stone surface, EVENLY LIT (table-felt-even.png
+     — the original felt mirror-balanced 4 ways so the lighting is symmetric on
+     all sides; no lopsided bright/dark side). A faint, symmetric gold football
+     pitch-LINE overlay (table-pitch.svg, stretched to all four sides) frames it.
+     The pitch lines are a thin overlay on the molten surface, never a replacement. */
   background-color: #08060a;
-  background-image: linear-gradient(rgba(8,6,10,0.35), rgba(8,6,10,0.35)), url("/table-felt.png");
-  background-size: cover;
-  background-position: center;
+  background-image:
+    url("/table-pitch.svg"),
+    linear-gradient(rgba(8, 6, 10, 0.35), rgba(8, 6, 10, 0.35)),
+    url("/table-felt-even.png");
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: center, center, center;
+  background-size: 100% 100%, cover, cover;
   box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.55), 0 18px 50px rgba(0, 0, 0, 0.5);
 }
 /* Gold turn-pulse for the active seat (replaces the mint .animate-turn). */

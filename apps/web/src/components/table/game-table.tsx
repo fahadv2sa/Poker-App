@@ -349,7 +349,7 @@ export function GameTable({
             className="lu-felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[28px] border border-[var(--lu-gold-1)]/20 px-2 pb-2 pt-5 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
             style={{ boxShadow: "inset 0 0 0 1px rgba(242,210,122,0.1), inset 0 0 70px rgba(0,0,0,0.55), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
-            {/* (Pitch markings come baked into the molten-gold felt asset.) */}
+            {/* (Molten surface + faint gold pitch-line overlay come from `.lu-felt`.) */}
             {/* Warm gold floodlight rim along the top edge. */}
             <div
               aria-hidden
@@ -444,16 +444,24 @@ export function GameTable({
                 </div>
               ) : null}
 
-              <div className="relative z-10 flex flex-nowrap justify-center gap-1 sm:gap-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <FootballCard
-                    key={i}
-                    index={i}
-                    card={s.communityCards[i] ?? null}
-                    back={!s.communityCards[i]}
-                    reveal="flip"
-                    widthClass="w-[46px] sm:w-[118px]"
-                  />
+              {/* community board — TWO rows (3 + 2) so each card is wider and
+                  the player name reads clearly. Same 5 slots / same indices /
+                  same reveal: only the arrangement changed (visual-only). */}
+              <div className="relative z-10 flex flex-col items-center gap-1 sm:gap-2">
+                {[[0, 1, 2], [3, 4]].map((row, r) => (
+                  <div key={r} className="flex justify-center gap-1.5 sm:gap-2.5">
+                    {row.map((i) => (
+                      <FootballCard
+                        key={i}
+                        index={i}
+                        card={s.communityCards[i] ?? null}
+                        back={!s.communityCards[i]}
+                        reveal="flip"
+                        compact
+                        widthClass="w-[64px] sm:w-[112px]"
+                      />
+                    ))}
+                  </div>
                 ))}
               </div>
 
