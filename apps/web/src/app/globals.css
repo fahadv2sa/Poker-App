@@ -701,8 +701,8 @@
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Link Up — LIVE TABLE surfaces (gold-on-black). Additive; used ONLY by the
- * table reskin. Assets: /table-felt.png (molten pitch) + /table-ring.png (pot
- * ring), both cropped from the approved references.
+ * table reskin. Assets: /table-felt.png (molten pitch) + /table-ball.png
+ * (fire-gold football centerpiece), both cropped from the approved references.
  * ────────────────────────────────────────────────────────────────────────── */
 .lu-felt {
   background-color: #08060a;

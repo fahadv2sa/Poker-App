@@ -311,7 +311,7 @@ export function GameTable({
         <>
           {/* Play area — flexes to fill the space between the pinned header and
               action bar on mobile; normal flow on desktop. */}
-          <div className="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto sm:flex-none sm:gap-0 sm:overflow-visible">
+          <div className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden sm:flex-none sm:gap-0 sm:overflow-visible">
           {/* opponents ring — a gentle top ARC hugging the felt's OUTER rim
               (outside the green, overlapping the edge via the negative margin).
               A subtle per-seat translateY makes the row read as players seated
@@ -346,7 +346,7 @@ export function GameTable({
               holds all 7 cards (board + your hole), the pot, in-felt toasts and
               the play animations. Flexes to fill the freed vertical space. */}
           <section
-            className="lu-felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 overflow-hidden rounded-[28px] border border-[var(--lu-gold-1)]/20 px-3 pb-3 pt-8 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
+            className="lu-felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[28px] border border-[var(--lu-gold-1)]/20 px-2 pb-2 pt-5 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
             style={{ boxShadow: "inset 0 0 0 1px rgba(242,210,122,0.1), inset 0 0 70px rgba(0,0,0,0.55), 0 18px 50px rgba(0,0,0,0.5)" }}
           >
             {/* (Pitch markings come baked into the molten-gold felt asset.) */}
@@ -381,13 +381,23 @@ export function GameTable({
             </div>
 
             {/* focal point: pot scoreboard + community + timer */}
-            <div className="relative flex flex-1 flex-col items-center justify-center gap-2 py-1 sm:gap-4 sm:py-2">
-              {/* fire-gold ring centerpiece behind the pot (screen-blended glow) */}
+            <div className="relative flex flex-1 flex-col items-center justify-center gap-1 py-0.5 sm:gap-4 sm:py-2">
+              {/* fire-gold football — LIVE pulsing centerpiece behind the pot
+                  (ember glow + breathing, like the home hero). Sits BEHIND the
+                  pot + community (z-0); both render above it and stay legible.
+                  Reduced-motion neutralizes the animation globally. */}
               <span
                 aria-hidden
-                className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-48 -translate-x-1/2 -translate-y-1/2 mix-blend-screen sm:size-64"
-                style={{ backgroundImage: "url(/table-ring.png)", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "center" }}
+                className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-52 -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-72"
+                style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
               />
+              <span
+                aria-hidden
+                className="lu-anim-breathe pointer-events-none absolute left-1/2 top-1/2 z-0 size-32 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-90 sm:size-44"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/table-ball.png" alt="" className="size-full object-cover" />
+              </span>
               <motion.div
                 key={anim("potCountUp") ? "pot" : s.pot}
                 data-fx="pot"
@@ -434,7 +444,7 @@ export function GameTable({
                 </div>
               ) : null}
 
-              <div className="flex flex-nowrap justify-center gap-1 sm:gap-2">
+              <div className="relative z-10 flex flex-nowrap justify-center gap-1 sm:gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <FootballCard
                     key={i}
@@ -442,7 +452,7 @@ export function GameTable({
                     card={s.communityCards[i] ?? null}
                     back={!s.communityCards[i]}
                     reveal="flip"
-                    widthClass="w-[58px] sm:w-[118px]"
+                    widthClass="w-[46px] sm:w-[118px]"
                   />
                 ))}
               </div>
@@ -486,12 +496,12 @@ export function GameTable({
               <div className="flex justify-center gap-2 sm:gap-3">
                 {view.hole.length > 0 ? (
                   view.hole.map((c, i) => (
-                    <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" />
+                    <FootballCard key={c.playerId} card={c} index={i} size="lg" reveal="deal" widthClass="w-[60px] sm:w-[132px]" />
                   ))
                 ) : (
                   <>
-                    <FootballCard back size="lg" />
-                    <FootballCard back size="lg" />
+                    <FootballCard back size="lg" widthClass="w-[60px] sm:w-[132px]" />
+                    <FootballCard back size="lg" widthClass="w-[60px] sm:w-[132px]" />
                   </>
                 )}
               </div>
