@@ -3,6 +3,7 @@ import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { readPendingReset } from "@/lib/password-reset";
 import { VerifyForm } from "@/components/verify-form";
+import { LuAtmosphere } from "@/components/games/lu-screen";
 import { confirmResetCodeAction, requestResetCodeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +31,8 @@ export default async function ResetVerifyPage() {
   if (!user?.email) redirect("/forgot");
 
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden px-4 pb-10 page-top">
-      <div aria-hidden className="arena-rail" />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[var(--lu-abyss)] px-4 pb-10 page-top">
+      <LuAtmosphere />
       <VerifyForm
         maskedEmail={maskEmail(user.email)}
         confirmAction={confirmResetCodeAction}

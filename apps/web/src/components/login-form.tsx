@@ -7,10 +7,9 @@ import { loginAction, type AuthFormState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
-import { Panel } from "@/components/panel";
+import { EmblemIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 
-/** Login card (RTL, premium): one identifier field (email OR username) + password. */
+/** Login card (RTL, gold-on-black): one identifier field (email OR username) + password. */
 export function LoginForm({ notice }: { notice?: string }) {
   const [state, formAction, pending] = useActionState<AuthFormState | undefined, FormData>(
     loginAction,
@@ -22,33 +21,38 @@ export function LoginForm({ notice }: { notice?: string }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md"
+      className="relative z-10 w-full max-w-md"
     >
+      <GoldGradientDefs />
+
+      {/* emblem hero */}
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <Logo glow className="size-20" />
-        <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ تحديات كرة قدم</div>
+        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgba(255,106,26,0.3)]">
+          <EmblemIcon size={40} />
+        </span>
+        <div className="lu-gold-text lu-gold-title text-2xl font-black">فوتبول بي</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-[var(--lu-gold-1)]">★ تحديات كرة قدم</div>
       </div>
 
-      <Panel accent>
+      <div className="lu-frame rounded-3xl p-6">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl">تسجيل الدخول</h1>
-            <p className="text-sm text-muted-foreground">أهلًا بعودتك إلى الطاولة</p>
+            <h1 className="text-2xl font-black text-[var(--lu-cream)]">تسجيل الدخول</h1>
+            <p className="text-sm text-[var(--lu-tan)]">أهلًا بعودتك إلى الطاولة</p>
           </div>
 
           {state?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+            <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
               {state.error}
             </div>
           ) : notice ? (
-            <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">
+            <div className="rounded-md border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/10 px-3 py-2 text-sm text-[var(--lu-gold-1)]">
               {notice}
             </div>
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="identifier">اسم المستخدم أو البريد الإلكتروني</Label>
+            <Label htmlFor="identifier" className="text-[var(--lu-cream)]">اسم المستخدم أو البريد الإلكتروني</Label>
             <Input
               id="identifier"
               name="identifier"
@@ -60,8 +64,8 @@ export function LoginForm({ notice }: { notice?: string }) {
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">كلمة المرور</Label>
-              <Link href="/forgot" className="text-xs font-bold text-primary hover:underline">
+              <Label htmlFor="password" className="text-[var(--lu-cream)]">كلمة المرور</Label>
+              <Link href="/forgot" className="text-xs font-bold text-[var(--lu-gold-1)] hover:underline">
                 نسيت كلمة المرور؟
               </Link>
             </div>
@@ -75,18 +79,18 @@ export function LoginForm({ notice }: { notice?: string }) {
             />
           </div>
 
-          <Button type="submit" size="lg" disabled={pending} className="btn-cta w-full">
+          <Button type="submit" size="lg" disabled={pending} className="btn-gold-cta w-full text-black">
             {pending ? "جارٍ المعالجة…" : "دخول"}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-[var(--lu-tan)]">
             ليس لديك حساب؟{" "}
-            <Link href="/register" className="font-bold text-primary hover:underline">
+            <Link href="/register" className="font-bold text-[var(--lu-gold-1)] hover:underline">
               أنشئ حسابًا
             </Link>
           </p>
         </form>
-      </Panel>
+      </div>
     </motion.div>
   );
 }

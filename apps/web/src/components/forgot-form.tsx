@@ -8,10 +8,9 @@ import type { AuthFormState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
-import { Panel } from "@/components/panel";
+import { EmblemIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 
-/** Forgot-password step 1 (RTL): enter email-or-username to receive a reset code. */
+/** Forgot-password step 1 (RTL, gold): enter email-or-username to receive a reset code. */
 export function ForgotForm() {
   const [state, formAction, pending] = useActionState<AuthFormState | undefined, FormData>(
     forgotPasswordAction,
@@ -23,36 +22,39 @@ export function ForgotForm() {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md"
+      className="relative z-10 w-full max-w-md"
     >
+      <GoldGradientDefs />
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <Logo glow className="size-20" />
-        <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ استعادة كلمة المرور</div>
+        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgba(255,106,26,0.3)]">
+          <EmblemIcon size={40} />
+        </span>
+        <div className="lu-gold-text lu-gold-title text-2xl font-black">فوتبول بي</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-[var(--lu-gold-1)]">★ استعادة كلمة المرور</div>
       </div>
 
-      <Panel accent>
+      <div className="lu-frame rounded-3xl p-6">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl">نسيت كلمة المرور؟</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-black text-[var(--lu-cream)]">نسيت كلمة المرور؟</h1>
+            <p className="text-sm text-[var(--lu-tan)]">
               أدخل اسم المستخدم أو البريد الإلكتروني وسنرسل لك رمزًا لإعادة التعيين
             </p>
           </div>
 
           {state?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+            <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
               {state.error}
             </div>
           ) : null}
           {state?.notice ? (
-            <div className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+            <div className="rounded-md border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/10 px-3 py-2 text-sm text-[var(--lu-gold-1)]">
               {state.notice}
             </div>
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="identifier">اسم المستخدم أو البريد الإلكتروني</Label>
+            <Label htmlFor="identifier" className="text-[var(--lu-cream)]">اسم المستخدم أو البريد الإلكتروني</Label>
             <Input
               id="identifier"
               name="identifier"
@@ -62,18 +64,18 @@ export function ForgotForm() {
             />
           </div>
 
-          <Button type="submit" size="lg" disabled={pending} className="btn-cta w-full">
+          <Button type="submit" size="lg" disabled={pending} className="btn-gold-cta w-full text-black">
             {pending ? "جارٍ الإرسال…" : "إرسال الرمز"}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-[var(--lu-tan)]">
             تذكّرت كلمة المرور؟{" "}
-            <Link href="/login" className="font-bold text-primary hover:underline">
+            <Link href="/login" className="font-bold text-[var(--lu-gold-1)] hover:underline">
               العودة لتسجيل الدخول
             </Link>
           </p>
         </form>
-      </Panel>
+      </div>
     </motion.div>
   );
 }

@@ -3,6 +3,7 @@ import { prisma } from "@fb/db";
 import { auth } from "@/auth";
 import { readPendingVerification } from "@/lib/pending-verification";
 import { VerifyForm } from "@/components/verify-form";
+import { LuAtmosphere } from "@/components/games/lu-screen";
 import { confirmCodeAction, requestCodeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,8 @@ export default async function VerifyPage() {
   if (user.emailVerifiedAt) redirect("/login"); // already verified → just log in
 
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden px-4 pb-10 page-top">
-      <div aria-hidden className="arena-rail" />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[var(--lu-abyss)] px-4 pb-10 page-top">
+      <LuAtmosphere />
       <VerifyForm
         maskedEmail={maskEmail(user.email)}
         confirmAction={confirmCodeAction}

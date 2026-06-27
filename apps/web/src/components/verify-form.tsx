@@ -6,14 +6,13 @@ import type { OtpFormState } from "@/lib/otp-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
-import { Panel } from "@/components/panel";
+import { EmblemIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 
 type ConfirmAction = (prev: OtpFormState | undefined, formData: FormData) => Promise<OtpFormState>;
 type ResendAction = (prev: OtpFormState | undefined) => Promise<OtpFormState>;
 
 /**
- * Reusable email-OTP code-entry card (RTL, premium): clean 6-digit entry + resend
+ * Reusable email-OTP code-entry card (RTL, gold): clean 6-digit entry + resend
  * with live cooldown. Used by both signup verification and password reset — the
  * caller supplies the server actions and copy, so behaviour-after-success differs
  * while the UI stays consistent.
@@ -55,31 +54,34 @@ export function VerifyForm({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md"
+      className="relative z-10 w-full max-w-md"
     >
+      <GoldGradientDefs />
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <Logo glow className="size-20" />
-        <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ {badge}</div>
+        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgba(255,106,26,0.3)]">
+          <EmblemIcon size={40} />
+        </span>
+        <div className="lu-gold-text lu-gold-title text-2xl font-black">فوتبول بي</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-[var(--lu-gold-1)]">★ {badge}</div>
       </div>
 
-      <Panel accent>
+      <div className="lu-frame rounded-3xl p-6">
         <form action={confirm} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl">{title}</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-black text-[var(--lu-cream)]">{title}</h1>
+            <p className="text-sm text-[var(--lu-tan)]">
               أرسلنا رمزًا من ٦ أرقام إلى <span className="num" dir="ltr">{maskedEmail}</span>
             </p>
           </div>
 
           {confirmState?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+            <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
               {confirmState.error}
             </div>
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="code">الرمز</Label>
+            <Label htmlFor="code" className="text-[var(--lu-cream)]">الرمز</Label>
             <Input
               id="code"
               name="code"
@@ -94,17 +96,17 @@ export function VerifyForm({
             />
           </div>
 
-          <Button type="submit" size="lg" disabled={confirming} className="btn-cta w-full">
+          <Button type="submit" size="lg" disabled={confirming} className="btn-gold-cta w-full text-black">
             {confirming ? "جارٍ التحقق…" : submitLabel}
           </Button>
         </form>
 
         <div className="mt-4 flex flex-col items-center gap-2 text-center">
           {resendState?.sent ? (
-            <p className="text-sm text-emerald-400">تم إرسال رمز جديد إلى بريدك</p>
+            <p className="text-sm text-[var(--lu-gold-1)]">تم إرسال رمز جديد إلى بريدك</p>
           ) : null}
           {resendState?.error && !resendState.cooldownSeconds ? (
-            <p className="text-sm text-destructive-foreground">{resendState.error}</p>
+            <p className="text-sm text-[#d9694f]">{resendState.error}</p>
           ) : null}
           <form action={resend}>
             <Button
@@ -112,7 +114,7 @@ export function VerifyForm({
               variant="ghost"
               size="sm"
               disabled={resending || cooldown > 0}
-              className="text-primary"
+              className="text-[var(--lu-gold-1)]"
             >
               {cooldown > 0
                 ? `إعادة الإرسال بعد ${cooldown} ثانية`
@@ -122,7 +124,7 @@ export function VerifyForm({
             </Button>
           </form>
         </div>
-      </Panel>
+      </div>
     </motion.div>
   );
 }

@@ -1,14 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { ForgotForm } from "@/components/forgot-form";
 import { LuAtmosphere } from "@/components/games/lu-screen";
 
-export const dynamic = "force-dynamic";
+/** PREVIEW ONLY — no auth; renders the forgot-password form. */
+export const dynamic = "force-static";
 
-export default async function ForgotPage() {
-  const session = await auth();
-  if (session?.user?.id) redirect("/");
-
+export default function ForgotPreview() {
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[var(--lu-abyss)] px-4 pb-10 page-top">
       <LuAtmosphere />

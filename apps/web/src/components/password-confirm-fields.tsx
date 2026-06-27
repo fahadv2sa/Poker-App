@@ -32,7 +32,7 @@ export function PasswordConfirmFields({
   return (
     <>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">{passwordLabel}</Label>
+        <Label htmlFor="password" className="text-[var(--lu-cream)]">{passwordLabel}</Label>
         <Input
           id="password"
           name="password"
@@ -46,7 +46,7 @@ export function PasswordConfirmFields({
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+        <Label htmlFor="confirmPassword" className="text-[var(--lu-cream)]">تأكيد كلمة المرور</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -60,11 +60,11 @@ export function PasswordConfirmFields({
         />
         {showIndicator ? (
           matches ? (
-            <p className="flex items-center gap-1 text-xs font-bold text-emerald-400">
+            <p className="flex items-center gap-1 text-xs font-bold text-[var(--lu-gold-1)]">
               ✓ كلمتا المرور متطابقتان
             </p>
           ) : (
-            <p className="flex items-center gap-1 text-xs font-bold text-destructive-foreground">
+            <p className="flex items-center gap-1 text-xs font-bold text-[#d9694f]">
               ✕ كلمتا المرور غير متطابقتين
             </p>
           )

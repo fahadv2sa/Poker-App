@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { readResetAuthorized } from "@/lib/password-reset";
 import { ResetPasswordForm } from "@/components/reset-password-form";
+import { LuAtmosphere } from "@/components/games/lu-screen";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,8 @@ export default async function ResetPasswordPage() {
   if (!userId) redirect("/forgot");
 
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden px-4 pb-10 page-top">
-      <div aria-hidden className="arena-rail" />
+    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[var(--lu-abyss)] px-4 pb-10 page-top">
+      <LuAtmosphere />
       <ResetPasswordForm />
     </main>
   );

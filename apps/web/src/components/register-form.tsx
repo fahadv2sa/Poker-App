@@ -9,8 +9,7 @@ import type { AuthFormState } from "@/app/login/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Logo } from "@/components/logo";
-import { Panel } from "@/components/panel";
+import { EmblemIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 import { PasswordConfirmFields } from "@/components/password-confirm-fields";
 
 type FieldStatus = "idle" | "checking" | "invalid" | "taken" | "ok";
@@ -28,12 +27,12 @@ function StatusLine({
   takenMsg: string;
 }) {
   if (status === "checking")
-    return <p className="text-xs text-muted-foreground">جارٍ التحقق…</p>;
+    return <p className="text-xs text-[var(--lu-tan)]">جارٍ التحقق…</p>;
   if (status === "invalid")
-    return <p className="text-xs font-bold text-destructive-foreground">✕ {invalidMsg}</p>;
+    return <p className="text-xs font-bold text-[#d9694f]">✕ {invalidMsg}</p>;
   if (status === "taken")
-    return <p className="text-xs font-bold text-destructive-foreground">✕ {takenMsg}</p>;
-  if (status === "ok") return <p className="text-xs font-bold text-emerald-400">✓ متاح</p>;
+    return <p className="text-xs font-bold text-[#d9694f]">✕ {takenMsg}</p>;
+  if (status === "ok") return <p className="text-xs font-bold text-[var(--lu-gold-1)]">✓ متاح</p>;
   return null;
 }
 
@@ -83,33 +82,36 @@ export function RegisterForm() {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md"
+      className="relative z-10 w-full max-w-md"
     >
+      <GoldGradientDefs />
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <Logo glow className="size-20" />
-        <div className="text-2xl font-black">فوتبول بي</div>
-        <div className="text-xs font-bold tracking-[0.15em] text-gold">★ تحديات كرة قدم</div>
+        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgba(255,106,26,0.3)]">
+          <EmblemIcon size={40} />
+        </span>
+        <div className="lu-gold-text lu-gold-title text-2xl font-black">فوتبول بي</div>
+        <div className="text-xs font-bold tracking-[0.15em] text-[var(--lu-gold-1)]">★ تحديات كرة قدم</div>
       </div>
 
-      <Panel accent>
+      <div className="lu-frame rounded-3xl p-6">
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl">إنشاء حساب</h1>
-            <p className="text-sm text-muted-foreground">أنشئ حسابك وابدأ اللعب</p>
+            <h1 className="text-2xl font-black text-[var(--lu-cream)]">إنشاء حساب</h1>
+            <p className="text-sm text-[var(--lu-tan)]">أنشئ حسابك وابدأ اللعب</p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-center text-sm font-bold text-gold">
+          <div className="lu-chip flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-center text-sm font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
             🎁 ابدأ برصيد <span className="num">1000</span> كوين مجانًا
           </div>
 
           {state?.error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive-foreground">
+            <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
               {state.error}
             </div>
           ) : null}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email">البريد الإلكتروني</Label>
+            <Label htmlFor="email" className="text-[var(--lu-cream)]">البريد الإلكتروني</Label>
             <Input
               id="email"
               name="email"
@@ -134,7 +136,7 @@ export function RegisterForm() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="username">اسم المستخدم</Label>
+            <Label htmlFor="username" className="text-[var(--lu-cream)]">اسم المستخدم</Label>
             <Input
               id="username"
               name="username"
@@ -162,19 +164,19 @@ export function RegisterForm() {
             type="submit"
             size="lg"
             disabled={pending || !pwValid || blocking(emailStatus) || blocking(usernameStatus)}
-            className="btn-cta w-full"
+            className="btn-gold-cta w-full text-black"
           >
             {pending ? "جارٍ المعالجة…" : "إنشاء الحساب"}
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-[var(--lu-tan)]">
             لديك حساب بالفعل؟{" "}
-            <Link href="/login" className="font-bold text-primary hover:underline">
+            <Link href="/login" className="font-bold text-[var(--lu-gold-1)] hover:underline">
               سجّل الدخول
             </Link>
           </p>
         </form>
-      </Panel>
+      </div>
     </motion.div>
   );
 }
