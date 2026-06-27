@@ -19,18 +19,16 @@ export default async function HubPage() {
   const userId = session?.user?.id;
   if (!userId) redirect("/login");
 
-  // Platform-level profile: identity (avatar/name) + social (likes/friends). Level/
-  // XP live in each game's statistics; coins live inside each game. Never economy
-  // here — the hub is shared across all games.
-  const [user, avatar, friendCount] = await Promise.all([
+  // Platform-level profile: identity only (avatar/name). Likes/friends still live
+  // in the system but are no longer surfaced on the hub. Level/XP live in each
+  // game's statistics; coins live inside each game. Never economy here — the hub
+  // is shared across all games.
+  const [user, avatar] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { username: true, nickname: true, avatarSeed: true, likesReceived: true },
+      select: { username: true, nickname: true, avatarSeed: true },
     }),
     prisma.userAvatar.findUnique({ where: { userId }, select: { updatedAt: true } }),
-    prisma.friendship.count({
-      where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { addresseeId: userId }] },
-    }),
   ]);
   if (!user) redirect("/login");
 
@@ -40,8 +38,6 @@ export default async function HubPage() {
     : null;
   const hue = hueFromSeed(user.avatarSeed ?? user.username);
   const initial = displayName.charAt(0).toUpperCase();
-  const likes = user.likesReceived.toLocaleString("en-US");
-  const friends = friendCount.toLocaleString("en-US");
 
   // Reuses the existing sign-out server action (same as the game lobby).
   const logout = async () => {
@@ -55,8 +51,6 @@ export default async function HubPage() {
       avatarUrl={avatarUrl}
       hue={hue}
       initial={initial}
-      likes={likes}
-      friends={friends}
       games={GAMES}
       logoutAction={logout}
     />

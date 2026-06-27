@@ -6,22 +6,21 @@ import { sound, useUiSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import type { GameEntry } from "@/lib/games";
 import {
+  CrownIcon,
   EmblemIcon,
   GoldGradientDefs,
-  HeartIcon,
   LockIcon,
   LogoutIcon,
   MenuDotsIcon,
   SoundOffIcon,
   SoundOnIcon,
-  UsersIcon,
 } from "./lu-icons";
 
 /**
  * Platform hub (Football B), gold-on-black redesign (docs/DESIGN_BRIEF.md §8).
- * VISUAL LAYER ONLY: identity-only front door — avatar/name + likes/friends and a
- * 2×2 game grid. All values arrive as props from the server page; the logout
- * server action is passed through and used in a plain <form>, so auth is
+ * VISUAL LAYER ONLY: identity-only front door — avatar/name, a premium Subscribe
+ * card, and a 2×2 game grid. All values arrive as props from the server page; the
+ * logout server action is passed through and used in a plain <form>, so auth is
  * unchanged. Re-implemented natively from the locked target (no external code).
  */
 export function PlatformHub({
@@ -29,8 +28,6 @@ export function PlatformHub({
   avatarUrl,
   hue,
   initial,
-  likes,
-  friends,
   games,
   logoutAction,
 }: {
@@ -38,8 +35,6 @@ export function PlatformHub({
   avatarUrl: string | null;
   hue: number;
   initial: string;
-  likes: string;
-  friends: string;
   games: GameEntry[];
   /** Sign-out server action. Optional so the visual preview harness can omit it. */
   logoutAction?: () => void | Promise<void>;
@@ -64,7 +59,7 @@ export function PlatformHub({
           </div>
         </header>
 
-        {/* identity card — avatar, name, likes + friends */}
+        {/* identity card — avatar + name only */}
         <section className="lu-frame mt-6 flex flex-col items-center gap-3 rounded-3xl p-6">
           <Link href="/profile" aria-label="الملف الشخصي" className="transition active:scale-95">
             {avatarUrl ? (
@@ -85,12 +80,10 @@ export function PlatformHub({
             )}
           </Link>
           <span className="max-w-[12rem] truncate text-lg font-bold text-[var(--lu-cream)]">{displayName}</span>
-
-          <div className="mt-1 flex items-center gap-10">
-            <Stat icon={<HeartIcon size={18} />} value={likes} label="إعجاب" />
-            <Stat icon={<UsersIcon size={18} />} value={friends} label="الأصدقاء" href="/friends" />
-          </div>
         </section>
+
+        {/* premium subscribe card — between identity and the games grid */}
+        <SubscribeCard />
 
         {/* games grid — 2×2 */}
         <h2 className="mb-3 mt-7 text-center text-sm font-bold text-[var(--lu-tan)]">اختر لعبة</h2>
@@ -131,21 +124,57 @@ function Atmosphere() {
   );
 }
 
-function Stat({ icon, value, label, href }: { icon: React.ReactNode; value: string; label: string; href?: string }) {
-  const body = (
-    <>
-      <span className="lu-chip grid size-11 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/30">{icon}</span>
-      <span className="num text-sm font-extrabold leading-none text-[var(--lu-cream)]">{value}</span>
-      <span className="text-[0.66rem] text-[var(--lu-tan)]">{label}</span>
-    </>
-  );
-  const cls = "group flex w-16 flex-col items-center gap-1.5 text-center";
-  return href ? (
-    <Link href={href} className={cn(cls, "transition active:scale-95")}>
-      {body}
+/** Premium, live Subscribe card — gold frame, breathing ember aura, a slow gold
+ *  sheen sweep and floating embers. Taps through to /subscribe. Visual only. */
+function SubscribeCard() {
+  return (
+    <Link
+      href="/subscribe"
+      data-sound="quick-play"
+      aria-label="اشترك الآن واحصل على المزايا الكاملة"
+      className="lu-btn lu-sub lu-sub-rim group relative mt-6 flex items-center gap-4 overflow-hidden rounded-3xl p-5 transition active:scale-[0.98]"
+    >
+      {/* gradient-bevel gold border (same metal edge as lu-frame) */}
+      <span aria-hidden className="lu-frame pointer-events-none absolute inset-0 rounded-3xl" style={{ background: "transparent", boxShadow: "none" }} />
+      {/* sweeping gold sheen */}
+      <span aria-hidden className="lu-sub-sheen" />
+      {/* floating embers */}
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+        <span className="lu-anim-float absolute bottom-3 right-8 size-1 rounded-full bg-[var(--lu-ember)]" style={{ ["--dx" as string]: "8px", animationDelay: "0s" }} />
+        <span className="lu-anim-float absolute bottom-2 right-16 size-[3px] rounded-full bg-[var(--lu-ember-glow)]" style={{ ["--dx" as string]: "-6px", animationDelay: "1.3s" }} />
+        <span className="lu-anim-float absolute bottom-4 right-24 size-1 rounded-full bg-[var(--lu-ember)]" style={{ ["--dx" as string]: "4px", animationDelay: "2.6s" }} />
+      </span>
+
+      {/* crown medallion with a breathing ember halo */}
+      <span className="relative grid shrink-0 place-items-center">
+        <span
+          aria-hidden
+          className="lu-anim-pulse absolute size-16 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(255,106,26,0.45), transparent 66%)" }}
+        />
+        <span className="lu-chip relative grid size-14 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_8px_24px_rgba(255,106,26,0.28)]">
+          <CrownIcon size={28} />
+        </span>
+      </span>
+
+      {/* copy */}
+      <span className="relative z-10 flex min-w-0 flex-1 flex-col">
+        <span className="lu-gold-text lu-gold-title text-lg font-black leading-tight">اشترك الآن</span>
+        <span className="truncate text-[0.82rem] font-medium text-[var(--lu-tan)]">واحصل على المزايا الكاملة</span>
+      </span>
+
+      {/* forward chevron (RTL: points left, into the card) */}
+      <svg
+        aria-hidden
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        className="relative z-10 shrink-0 transition-transform group-hover:-translate-x-0.5"
+        style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5)) drop-shadow(0 0 5px rgba(255,179,71,0.35))" }}
+      >
+        <path d="M14 6l-6 6 6 6" fill="none" stroke="url(#lu-gold)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </Link>
-  ) : (
-    <div className={cls}>{body}</div>
   );
 }
 

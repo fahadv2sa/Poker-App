@@ -122,6 +122,25 @@ export function TrophyIcon(p: IconProps) {
   );
 }
 
+/** Crown — premium / subscription mark (solid gold). */
+export function CrownIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path
+        fill="url(#lu-gold-fill)"
+        stroke="url(#lu-gold)"
+        strokeWidth={1.2}
+        strokeLinejoin="round"
+        d="M4 17.6 2.6 7.8 7.6 10.7 12 4.6 16.4 10.7 21.4 7.8 20 17.6Z"
+      />
+      <path {...stroke} strokeWidth={1.2} d="M4.6 15h14.8" opacity={0.65} />
+      <circle cx={12} cy={8.4} r={0.9} fill="url(#lu-gold)" stroke="none" />
+      <circle cx={6} cy={11.2} r={0.7} fill="url(#lu-gold)" stroke="none" />
+      <circle cx={18} cy={11.2} r={0.7} fill="url(#lu-gold)" stroke="none" />
+    </Svg>
+  );
+}
+
 /** Guide — an open book. */
 export function GuideIcon(p: IconProps) {
   return (

@@ -697,7 +697,59 @@
 .lu-anim-pulse { animation: lu-ember-pulse 3.4s ease-in-out infinite; }
 .lu-anim-spin { animation: lu-ring-spin 12s linear infinite; }
 .lu-anim-spin-rev { animation: lu-ring-spin 18s linear infinite reverse; }
+.lu-anim-float { animation: lu-float-ember 3.8s ease-in-out infinite; }
 /* The global prefers-reduced-motion rule above already neutralizes these. */
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Link Up — SUBSCRIBE card (hub). Additive, gold-on-black. A live premium card:
+ * a slow gold sheen sweeping across the metal, a breathing ember aura behind the
+ * crown medallion, and a softly pulsing gold rim. Reduced-motion is neutralized
+ * by the global rule above. Used only by the hub Subscribe card.
+ * ────────────────────────────────────────────────────────────────────────── */
+.lu-sub {
+  background:
+    radial-gradient(120% 160% at 88% 0%, rgba(255, 138, 40, 0.16), transparent 60%),
+    radial-gradient(120% 90% at 50% 0%, rgba(60, 50, 34, 0.55), rgba(20, 17, 13, 0.92) 55%),
+    linear-gradient(180deg, rgba(34, 28, 19, 0.94), rgba(11, 10, 9, 0.97));
+}
+/* Slow diagonal gold sheen sweeping across the surface. */
+.lu-sub-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lu-sub-sheen::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -75%;
+  width: 45%;
+  height: 220%;
+  transform: rotate(18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 240, 196, 0.04) 30%,
+    rgba(255, 224, 150, 0.28) 50%,
+    rgba(255, 240, 196, 0.04) 70%,
+    transparent
+  );
+  animation: lu-sub-sweep 5.2s ease-in-out 0.6s infinite;
+}
+@keyframes lu-sub-sweep {
+  0% { left: -75%; opacity: 0; }
+  18% { opacity: 1; }
+  55% { opacity: 1; }
+  72%, 100% { left: 165%; opacity: 0; }
+}
+/* Softly pulsing gold rim glow around the whole card. */
+.lu-sub-rim { animation: lu-sub-rim 3.6s ease-in-out infinite; }
+@keyframes lu-sub-rim {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255, 234, 180, 0.16), 0 10px 26px rgba(0, 0, 0, 0.55), 0 0 16px rgba(255, 138, 40, 0.14); }
+  50% { box-shadow: inset 0 1px 0 rgba(255, 234, 180, 0.22), 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 138, 40, 0.34); }
+}
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Link Up — LIVE TABLE surfaces (gold-on-black). Additive; used ONLY by the
