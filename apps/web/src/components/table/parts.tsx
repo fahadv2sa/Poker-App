@@ -107,8 +107,8 @@ export function PlayerCardModal({
         onClick={(e) => e.stopPropagation()}
         className={cn(
           "relative my-auto max-h-[92vh] w-[88vw] max-w-[360px] overflow-y-auto rounded-2xl border text-center shadow-2xl",
-          "bg-linear-to-b from-[#202a44] to-[#0e1626]",
-          legendary ? "border-gold/80 shadow-[0_0_34px_rgba(212,175,55,0.6)]" : "border-white/15",
+          "bg-linear-to-b from-[#16120c] to-[#0b0908]",
+          legendary ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_34px_rgba(255,106,26,0.5)]" : "border-[var(--lu-gold-1)]/30",
         )}
       >
         <button
@@ -121,7 +121,7 @@ export function PlayerCardModal({
         </button>
 
         {/* Large photo */}
-        <div className="relative w-full overflow-hidden bg-[#0b1322]">
+        <div className="relative w-full overflow-hidden bg-[#0b0908]">
           <div className="aspect-[4/5] w-full">
             {showPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -133,7 +133,7 @@ export function PlayerCardModal({
                 className="h-full w-full object-cover object-top"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#1b2742] to-[#0b1322]">
+              <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#16120c] to-[#0b0908]">
                 <span className="text-6xl font-black tracking-wide text-white/40">
                   {cardInitials(card.name)}
                 </span>
@@ -149,8 +149,8 @@ export function PlayerCardModal({
             className={cn(
               "flex w-full items-center justify-center gap-1.5 py-1 text-base font-black tabular-nums",
               legendary
-                ? "bg-gold text-black shadow-[0_0_12px_rgba(212,175,55,0.7)]"
-                : "border-y border-gold/30 bg-linear-to-b from-gold/30 to-gold/10 text-gold",
+                ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_12px_rgba(255,106,26,0.6)]"
+                : "border-y border-[var(--lu-gold-1)]/30 bg-linear-to-b from-[var(--lu-gold-2)]/30 to-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]",
             )}
             title={`درجة الشهرة: ${Math.round(fame)}/100`}
           >
@@ -184,7 +184,7 @@ export function PlayerCardModal({
 
               {/* Full career club history */}
               <div>
-                <div className="mb-1.5 text-xs font-semibold text-gold/80">مسيرة الأندية</div>
+                <div className="mb-1.5 text-xs font-semibold text-[var(--lu-gold-1)]/80">مسيرة الأندية</div>
                 {clubs.length === 0 ? (
                   <p className="text-sm text-muted-foreground">—</p>
                 ) : (
@@ -262,10 +262,10 @@ export function FootballCard({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-xl border border-white/10 text-2xl text-white/30",
+          "flex items-center justify-center rounded-xl border border-[var(--lu-gold-1)]/25 text-2xl text-[var(--lu-gold-1)]/45",
           "aspect-[2/3]",
-          "[background:repeating-linear-gradient(135deg,#101a30,#101a30_7px,#16223c_7px,#16223c_14px)]",
-          "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
+          "[background:repeating-linear-gradient(135deg,#0b0908,#0b0908_7px,#16120c_7px,#16120c_14px)]",
+          "shadow-[inset_0_1px_0_rgba(255,234,180,0.08)]",
           width,
         )}
         aria-label="بطاقة مغلقة"
@@ -322,13 +322,13 @@ export function FootballCard({
       }}
       className={cn(
         "group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border text-center",
-        "bg-linear-to-b from-[#202a44] to-[#0e1626]",
-        "shadow-[0_6px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
-        "transition duration-200 hover:-translate-y-0.5 hover:border-gold/40",
-        "hover:shadow-[0_12px_26px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        "bg-linear-to-b from-[#16120c] to-[#0b0908]",
+        "shadow-[0_6px_16px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,234,180,0.08)]",
+        "transition duration-200 hover:-translate-y-0.5 hover:border-[var(--lu-gold-1)]/60",
+        "hover:shadow-[0_12px_26px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,234,180,0.1)]",
         legendary
-          ? "border-gold/80 shadow-[0_0_20px_rgba(212,175,55,0.55),inset_0_1px_0_rgba(255,255,255,0.08)]"
-          : "border-white/10",
+          ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_20px_rgba(255,106,26,0.5),inset_0_1px_0_rgba(255,234,180,0.1)]"
+          : "border-[var(--lu-gold-1)]/35",
         width,
       )}
       title={card.name}
@@ -348,7 +348,7 @@ export function FootballCard({
               className="h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.05]"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#1b2742] to-[#0b1322]">
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#16120c] to-[#0b0908]">
               <span
                 className={cn(
                   "font-black tracking-wide text-white/40",
@@ -371,8 +371,8 @@ export function FootballCard({
           className={cn(
             "flex w-full items-center justify-center gap-1 font-black tabular-nums",
             legendary
-              ? "bg-gold text-black shadow-[0_0_10px_rgba(212,175,55,0.7)]"
-              : "border-y border-gold/30 bg-linear-to-b from-gold/30 to-gold/10 text-gold",
+              ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_10px_rgba(255,106,26,0.6)]"
+              : "border-y border-[var(--lu-gold-1)]/30 bg-linear-to-b from-[var(--lu-gold-2)]/30 to-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]",
             size === "lg" ? "py-0.5 text-[0.6rem] sm:text-[0.72rem]" : "py-px text-[0.56rem]",
           )}
           title={`درجة الشهرة: ${Math.round(fame)}/100`}
@@ -478,10 +478,10 @@ export function SeatAvatar({
 /** The cinematic per-seat action labels + tone. FOLD is intentionally absent —
  *  it keeps its persistent greyed-out + «انسحب» seat state instead of a flash. */
 const SEAT_ACTION_FX: Record<string, { label: string; cls: string }> = {
-  CHECK: { label: "مرّر", cls: "border-sky-300/60 bg-sky-500/90 text-white" },
-  CALL: { label: "ساوى", cls: "border-emerald-300/60 bg-emerald-500/90 text-white" },
-  RAISE: { label: "رفع", cls: "border-gold/70 bg-gold/95 text-black" },
-  ALLIN: { label: "كل الرصيد", cls: "border-red-300/70 bg-destructive/95 text-white" },
+  CHECK: { label: "مرّر", cls: "border-white/30 bg-[#1a160f]/95 text-[var(--lu-cream)]" },
+  CALL: { label: "ساوى", cls: "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/95 text-black" },
+  RAISE: { label: "رفع", cls: "border-[var(--lu-ember-glow)]/70 bg-[var(--lu-ember)]/95 text-black" },
+  ALLIN: { label: "كل الرصيد", cls: "border-[var(--lu-ember-glow)]/70 bg-[var(--lu-ember)]/95 text-white" },
 };
 
 /** Subscribe to a seat's transient action cue (fxBus). Returns the latest action
@@ -522,9 +522,9 @@ export function OpponentSeat({
   const remainingMs = useRemainingMs(deadlineTs ?? null);
   const actionFx = useSeatAction(player.seat);
   const ring = isActive
-    ? "ring-2 ring-primary glow-primary"
+    ? "ring-2 ring-[var(--lu-ember-glow)] lu-glow-ember"
     : allin
-      ? "ring-2 ring-gold glow-gold"
+      ? "ring-2 ring-[var(--lu-gold-1)] glow-gold"
       : "ring-1 ring-white/15";
   return (
     <motion.div
@@ -534,9 +534,9 @@ export function OpponentSeat({
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
-        "relative flex w-[58px] flex-col items-center gap-0.5 rounded-2xl border border-white/10 bg-[#070b14]/65 px-1 py-1 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:px-1.5 sm:py-2",
-        onOpenProfile && "cursor-pointer hover:border-primary/40 hover:bg-[#0a1020]/80",
-        isActive && "animate-turn border-primary/50",
+        "relative flex w-[58px] flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/15 bg-[#0b0908]/70 px-1 py-1 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:px-1.5 sm:py-2",
+        onOpenProfile && "cursor-pointer hover:border-[var(--lu-gold-1)]/40 hover:bg-[#16120c]/85",
+        isActive && "lu-turn border-[var(--lu-ember-glow)]/50",
         folded && "opacity-45 grayscale",
       )}
     >
@@ -572,7 +572,7 @@ export function OpponentSeat({
         {/* #7 fold stamp */}
         {folded && anim("foldMuck") ? (
           <span className="absolute inset-0 grid place-items-center">
-            <span className="-rotate-12 rounded border border-destructive/70 bg-[#070b14]/70 px-1.5 text-[0.55rem] font-black tracking-wider text-destructive">
+            <span className="-rotate-12 rounded border border-[var(--lu-ember)]/70 bg-[#0b0908]/75 px-1.5 text-[0.55rem] font-black tracking-wider text-[var(--lu-ember-glow)]">
               انسحب
             </span>
           </span>
@@ -586,7 +586,7 @@ export function OpponentSeat({
       <span className="max-w-full truncate text-[0.6rem] font-bold leading-tight sm:text-[0.72rem]">{player.username}</span>
       <span className="text-[0.55rem] leading-none sm:text-[0.6rem]">
         {isActive ? (
-          <span className="font-bold text-primary">يلعب…</span>
+          <span className="font-bold text-[var(--lu-ember-glow)]">يلعب…</span>
         ) : (
           <span className="text-muted-foreground">{STATUS_AR[player.status] ?? player.status}</span>
         )}
@@ -665,7 +665,7 @@ export function Countdown({
       <span
         className={cn(
           "num rounded-full px-1.5 py-0.5 text-[0.62rem] font-bold tabular-nums",
-          danger ? "bg-destructive/20 text-destructive" : "bg-primary/15 text-primary",
+          danger ? "bg-[var(--lu-ember)]/20 text-[var(--lu-ember-glow)]" : "bg-[var(--lu-gold-2)]/15 text-[var(--lu-gold-1)]",
         )}
       >
         {secs}
@@ -677,7 +677,7 @@ export function Countdown({
       <span
         className={cn(
           "num text-sm font-bold tabular-nums",
-          danger ? "text-destructive" : "text-primary",
+          danger ? "text-[var(--lu-ember-glow)]" : "text-[var(--lu-gold-1)]",
         )}
       >
         ⏱ {secs} ث
@@ -686,7 +686,7 @@ export function Countdown({
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-200 ease-linear",
-            danger ? "bg-destructive" : "bg-linear-to-l from-primary to-accent",
+            danger ? "bg-[var(--lu-ember)]" : "bg-linear-to-l from-[var(--lu-gold-1)] to-[var(--lu-ember)]",
           )}
           style={{ width: `${pct}%` }}
         />
