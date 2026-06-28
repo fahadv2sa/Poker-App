@@ -1178,15 +1178,18 @@ model TtCatalogEntry {
 model TtCatalogPlayer {
   id               String  @id @default(uuid()) @db.Uuid
   entryId          String  @map("entry_id") @db.Uuid
-  rank             Int // 1 (top) .. 10
+  rank             Int // 1 (top) .. 10; rank 10 may be SHARED by a cutoff tie group
   footballPlayerId String  @map("football_player_id") @db.Uuid
   value            Float // the stat value at build time
   fameAtBuild      Float   @map("fame_at_build")
 
   entry            TtCatalogEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
-  @@unique([entryId, rank])
-  @@index([entryId])
+  // A rank is NOT unique within an entry: the cutoff rank (10) may be shared by
+  // several players tied on the stat value (each a valid rank-10 answer). What is
+  // unique is a player appearing at most once per entry.
+  @@unique([entryId, footballPlayerId])
+  @@index([entryId, rank])
   @@map("tt_catalog_player")
   @@schema("top_10")
 }

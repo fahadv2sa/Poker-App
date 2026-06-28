@@ -20,7 +20,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { prisma, Prisma } from "../src/index";
 import {
-  buildRankingWithExcluded,
+  buildAnswerList,
   classifyDifficulty,
   computeThresholds,
   evaluateGate,
@@ -33,6 +33,7 @@ import {
   TT_ACTIVE_QUESTION_TYPES,
   TT_COMPETITIONS,
   TT_GATE,
+  TT_LIST_SIZE,
   TT_TYPE_META,
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
@@ -74,7 +75,7 @@ interface Admitted {
   fameSum: number;
   players: RankedPlayer[];
   /** Retained so the pre-write assertion can RE-validate the exact shipped list. */
-  eleventhValue: number | null;
+  excludedTopValue: number | null;
   meta: Map<string, ListPlayerMeta>;
 }
 interface Rejected {
@@ -141,20 +142,23 @@ async function main() {
         continue;
       }
       // INTEGRITY GATE (the lasting fix): a list that passes completeness can still
-      // be unsafe — most importantly a boundary tie at rank 10/11, which would mark
-      // a correct answer "wrong" and kill the game. Reject any list that fails the
-      // pure validator; only flawless lists are ever admitted.
-      const { list: players, eleventhValue } = buildRankingWithExcluded(candidates);
+      // be unsafe. A cutoff TIE is NOT an error — `buildAnswerList` keeps every tied
+      // player at rank 10 (each a valid answer). The validator instead enforces that
+      // the tie group is COMPLETE (no tied player excluded), names/ids are clean, and
+      // players are findable. Reject only genuinely unsafe lists.
+      const { list: players, excludedTopValue } = buildAnswerList(candidates);
       const meta = new Map<string, ListPlayerMeta>(
         gRows.map((r) => [r.player_id, { active: r.active, nameAr: r.name_ar }]),
       );
-      const violations = validateRankedList({ list: players, eleventhValue, meta });
+      const violations = validateRankedList({ list: players, excludedTopValue, meta });
       if (violations.length > 0) {
         rejected.push({ type, leagueId, season, reasons: violations, metrics: gate.metrics });
         continue;
       }
-      const fameSum = players.reduce((a, p) => a + p.fame, 0);
-      admitted.push({ type, leagueId, season, fameSum, players, eleventhValue, meta });
+      // Difficulty Σfame stays comparable across questions: sum the top-10 SLOTS
+      // (ranks 1..9 + the strongest rank-10 player), not the whole tie group.
+      const fameSum = players.slice(0, TT_LIST_SIZE).reduce((a, p) => a + p.fame, 0);
+      admitted.push({ type, leagueId, season, fameSum, players, excludedTopValue, meta });
       admittedForType++;
     }
     console.log(`  ${type}: ${admittedForType} admitted / ${groups.size} candidate (comp,season)`);
@@ -163,8 +167,8 @@ async function main() {
   // Rejection-reason tally (so a build clearly reports WHY lists were dropped).
   const rejTally = new Map<string, number>();
   for (const r of rejected) {
-    const key = r.reasons.some((x) => x.startsWith("boundary tie"))
-      ? "integrity: boundary tie at cutoff"
+    const key = r.reasons.some((x) => x.includes("incomplete cutoff"))
+      ? "integrity: incomplete cutoff tie group"
       : r.reasons.some((x) => x.includes("Arabic name"))
         ? "integrity: missing Arabic name"
         : r.reasons.some((x) => x.includes("inactive"))
@@ -191,7 +195,7 @@ async function main() {
   // broken question must never reach the catalog. This is the build-level guarantee.
   const assertionFailures: string[] = [];
   for (const a of admitted) {
-    const violations = validateRankedList({ list: a.players, eleventhValue: a.eleventhValue, meta: a.meta });
+    const violations = validateRankedList({ list: a.players, excludedTopValue: a.excludedTopValue, meta: a.meta });
     if (violations.length > 0) {
       assertionFailures.push(`${a.type} · ${leagueName(a.leagueId)} ${a.season}: ${violations.join("; ")}`);
     }

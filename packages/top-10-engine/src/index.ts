@@ -6,7 +6,7 @@
 
 export type { RankedPlayer, TopTenList, CandidateRow } from "./types.js";
 
-export { compareArabic, compareForRank, buildRanking, buildRankingWithExcluded } from "./ranking.js";
+export { compareArabic, compareForRank, buildRanking, buildAnswerList } from "./ranking.js";
 
 export {
   validateRankedList,

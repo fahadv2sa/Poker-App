@@ -36,26 +36,12 @@ export function compareForRank(a: CandidateRow, b: CandidateRow): number {
  * Build the ranked Top-10 from candidate rows. Only players with a positive value
  * are eligible (a 0/null stat can't be a "top scorer"). Returns up to TT_LIST_SIZE
  * ranked rows; the caller's gate guarantees ≥10 before this is used for a real list.
+ * NOTE: this is the simple, exactly-N slice used by the completeness gate. The
+ * catalog itself is built from {@link buildAnswerList}, which keeps cutoff ties.
  */
 export function buildRanking(rows: readonly CandidateRow[]): RankedPlayer[] {
-  return buildRankingWithExcluded(rows).list;
-}
-
-/**
- * Like {@link buildRanking}, but ALSO returns `eleventhValue` — the stat value of
- * the best EXCLUDED candidate (the 11th place). The catalog validator needs this to
- * reject a "boundary tie": if the 10th and 11th values are equal, the Top-10 cutoff
- * is ambiguous (a contestant who picks the legitimately-tied excluded player would
- * be told "wrong" — a game-killing error). `eleventhValue` is null when there are
- * 10 or fewer eligible candidates.
- */
-export function buildRankingWithExcluded(rows: readonly CandidateRow[]): {
-  list: RankedPlayer[];
-  eleventhValue: number | null;
-} {
   const eligible = rows.filter((r) => (r.value ?? 0) > 0);
-  const sorted = [...eligible].sort(compareForRank);
-  const list = sorted.slice(0, TT_LIST_SIZE).map((r, i) => ({
+  return [...eligible].sort(compareForRank).slice(0, TT_LIST_SIZE).map((r, i) => ({
     rank: i + 1,
     playerId: r.playerId,
     value: r.value ?? 0,
@@ -63,6 +49,53 @@ export function buildRankingWithExcluded(rows: readonly CandidateRow[]): {
     name: r.name,
     nameAr: r.nameAr,
   }));
-  const eleventhValue = sorted.length > TT_LIST_SIZE ? sorted[TT_LIST_SIZE]!.value ?? null : null;
-  return { list, eleventhValue };
+}
+
+/**
+ * Build the ANSWER LIST with INCLUSIVE cutoff ties — the list that ships in the
+ * catalog. Ranks 1..9 are the distinct top nine; **rank 10 is shared by EVERY player
+ * tied at the 10th-place value**. So a tie at the cutoff is NOT an error and does NOT
+ * drop the question: every tied player is a valid rank-10 answer (the game-server
+ * maps them all to rank 10, so naming any of them is accepted, never marked wrong).
+ *
+ * Also returns `excludedTopValue` — the stat value of the best player left OUT (null
+ * if none were excluded). The validator asserts it is STRICTLY below the cutoff
+ * value, which proves the tie group is complete (no tied correct answer was wrongly
+ * excluded). The returned list may therefore contain MORE than TT_LIST_SIZE players.
+ */
+export function buildAnswerList(rows: readonly CandidateRow[]): {
+  list: RankedPlayer[];
+  excludedTopValue: number | null;
+} {
+  const eligible = rows.filter((r) => (r.value ?? 0) > 0);
+  const sorted = [...eligible].sort(compareForRank);
+  const toRanked = (r: CandidateRow, rank: number): RankedPlayer => ({
+    rank,
+    playerId: r.playerId,
+    value: r.value ?? 0,
+    fame: r.fame,
+    name: r.name,
+    nameAr: r.nameAr,
+  });
+
+  // Short list (≤10 eligible): everyone is included with a distinct rank.
+  if (sorted.length <= TT_LIST_SIZE) {
+    return { list: sorted.map((r, i) => toRanked(r, i + 1)), excludedTopValue: null };
+  }
+
+  const cutoffValue = sorted[TT_LIST_SIZE - 1]!.value ?? 0; // the 10th-place value
+  const list: RankedPlayer[] = [];
+  let excludedTopValue: number | null = null;
+  for (let i = 0; i < sorted.length; i++) {
+    const r = sorted[i]!;
+    if (i < TT_LIST_SIZE - 1) {
+      list.push(toRanked(r, i + 1)); // ranks 1..9
+    } else if ((r.value ?? 0) === cutoffValue) {
+      list.push(toRanked(r, TT_LIST_SIZE)); // rank 10 — every player tied at the cutoff
+    } else {
+      excludedTopValue = r.value ?? 0; // highest value among the excluded
+      break;
+    }
+  }
+  return { list, excludedTopValue };
 }

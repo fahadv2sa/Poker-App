@@ -171,7 +171,7 @@ export class Matches {
     const seats = activeSeats(room).map((s) => s.seat);
     const startIndex = (roundNo - 1) % seats.length; // rotate the starting player each round
     const state = initRound(seats, startIndex);
-    room.round = { roundNo, entry, state, hintText: null, hintNumber: 0 };
+    room.round = { roundNo, entry, state, hintText: null, hintNumber: 0, revealedPlayerByRank: new Map() };
     room.endRoundReq = null;
     // overall round timer (10 min default, customizable in created rooms)
     this.clear(room, "round");
@@ -209,15 +209,21 @@ export class Matches {
     const r = room.round;
     if (!r || room.status !== "IN_PROGRESS") return;
     const outcome = resolveOutcome(r.entry, r.state, playerId);
-    if (r.state.mode === "NORMAL") {
-      const { state, events } = normalGuess(r.state, seat, outcome);
-      r.state = state;
-      this.afterRoundStep(room, events);
-    } else {
-      const { state, events } = hintGuess(r.state, seat, outcome);
-      r.state = state;
-      this.afterRoundStep(room, events);
+    const step = r.state.mode === "NORMAL" ? normalGuess(r.state, seat, outcome) : hintGuess(r.state, seat, outcome);
+    r.state = step.state;
+    // Record WHICH player satisfied the revealed rank (matters for a rank-10 tie:
+    // the card must show the player actually named, not an arbitrary tied one).
+    if (outcome.type === "correct" && step.events.some((e) => e.t === "reveal" && e.bySeat === seat)) {
+      r.revealedPlayerByRank.set(outcome.rank, playerId);
     }
+    this.afterRoundStep(room, step.events);
+  }
+
+  /** The player to DISPLAY for a revealed rank: the one actually named (recorded on
+   *  the guess), else the canonical player at that rank (ranks 1..9 and auto-reveals). */
+  private revealedPlayer(r: { entry: CatalogEntry; revealedPlayerByRank: Map<number, string> }, rank: number) {
+    const pid = r.revealedPlayerByRank.get(rank);
+    return (pid && r.entry.players.find((p) => p.playerId === pid)) || r.entry.players.find((p) => p.rank === rank);
   }
 
   /** Interpret engine events: broadcast reveals, (re)schedule timers, advance. */
@@ -228,7 +234,7 @@ export class Matches {
     let roundEnded = false;
     for (const e of events) {
       if (e.t === "reveal") {
-        const cp = r.entry.players.find((p) => p.rank === e.rank)!;
+        const cp = this.revealedPlayer(r, e.rank)!;
         this.deps.emit(room.id, TT_SERVER_EVENTS.reveal, {
           rank: e.rank,
           bySeat: e.bySeat,
@@ -524,7 +530,7 @@ export class Matches {
     const cards = Array.from({ length: 10 }, (_, i) => {
       const rank = i + 1;
       const rev = revealedByRank.get(rank);
-      const cp = r?.entry.players.find((p) => p.rank === rank);
+      const cp = r ? this.revealedPlayer(r, rank) : undefined;
       return {
         rank,
         revealed: !!rev,

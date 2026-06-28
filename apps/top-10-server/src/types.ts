@@ -25,6 +25,11 @@ export interface ActiveRound {
   /** Current hint target's precomputed hint strings + which we've shown. */
   hintText: string | null;
   hintNumber: number;
+  /** rank → the playerId actually revealed for it. For the cutoff rank (10) several
+   *  players can be tied; this records WHICH tied player a contestant named, so the
+   *  revealed card shows that player (not an arbitrary canonical one). Auto-reveals
+   *  (hint exhaustion) leave it unset → the card falls back to the canonical player. */
+  revealedPlayerByRank: Map<number, string>;
 }
 
 export type Timers = {

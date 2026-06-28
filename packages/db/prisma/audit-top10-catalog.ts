@@ -19,7 +19,7 @@ import "./_ensure-system-ca";
 import "dotenv/config";
 import { prisma, Prisma } from "../src/index";
 import {
-  buildRankingWithExcluded,
+  buildAnswerList,
   validateRankedList,
   type CandidateRow,
   type ListPlayerMeta,
@@ -151,22 +151,23 @@ async function main() {
 
     // re-derive the true list for this group from current data
     const g = groups.get(`${type}:${e.leagueId}:${e.season}`);
-    let eleventhValue: number | null = null;
+    let excludedTopValue: number | null = null;
     if (!g) {
       issues.push("no current data for this (type, competition, season) — cannot re-derive");
     } else {
-      const { list: trueList, eleventhValue: ev } = buildRankingWithExcluded(g.rows.map(toCandidate));
-      eleventhValue = ev;
-      // drift: stored vs current-true (id + order + value)
-      const sameLen = trueList.length === storedList.length;
+      const { list: trueList, excludedTopValue: ev } = buildAnswerList(g.rows.map(toCandidate));
+      excludedTopValue = ev;
+      // drift: stored vs current-true. Compare as SETS per rank (rank-10 tie group
+      // order among equals is not significant), so a legitimate tie isn't flagged.
+      const key = (p: { rank: number; playerId: string; value: number }) =>
+        `${p.rank}:${p.playerId}:${Number(p.value)}`;
+      const trueSet = new Set(trueList.map(key));
+      const storedSet = new Set(storedList.map(key));
       const sameSeq =
-        sameLen &&
-        trueList.every(
-          (t, i) => t.playerId === storedList[i]!.playerId && Number(t.value) === Number(storedList[i]!.value),
-        );
+        trueSet.size === storedSet.size && [...trueSet].every((k) => storedSet.has(k));
       if (!sameSeq) {
         driftCount++;
-        issues.push("STORED list differs from the current true Top-10 (data drift since build)");
+        issues.push("STORED list differs from the current true list (data drift since build)");
       }
     }
 
@@ -174,7 +175,7 @@ async function main() {
     const meta = new Map<string, ListPlayerMeta>(
       storedList.map((p) => [p.playerId, metaById.get(p.playerId) ?? { active: false, nameAr: null }]),
     );
-    issues.push(...validateRankedList({ list: storedList, eleventhValue, meta }));
+    issues.push(...validateRankedList({ list: storedList, excludedTopValue, meta }));
 
     if (issues.length > 0) {
       entriesWithIssues++;
