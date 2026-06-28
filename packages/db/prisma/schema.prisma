@@ -1073,10 +1073,12 @@ model AdminAuditLog {
 enum TtQuestionType {
   GOAL_SCORERS
   ASSISTS
-  KEY_PASSES
+  KEY_PASSES // midfielders only
   TACKLES
-  ACCURATE_PASSES
+  ACCURATE_PASSES // midfielders only
   GK_CLEAN_SHEETS
+  KEY_PASSES_ALL // all players (no position filter)
+  ACCURATE_PASSES_ALL // all players (no position filter)
 
   @@map("tt_question_type")
   @@schema("top_10")

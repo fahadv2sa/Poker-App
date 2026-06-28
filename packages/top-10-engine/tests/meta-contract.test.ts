@@ -52,7 +52,35 @@ const PIN = {
     metric: "(dormant — no clean-sheets column yet)",
     sanityMax: 40,
   },
+  KEY_PASSES_ALL: {
+    nameAr: "أكثر اللاعبين تمريراتٍ مفتاحية",
+    nameEn: "Top players by key passes",
+    position: null,
+    metric: "SUM(passes_key) per competition-season",
+    sanityMax: 400,
+  },
+  ACCURATE_PASSES_ALL: {
+    nameAr: "أكثر اللاعبين تمريراتٍ دقيقة",
+    nameEn: "Top players by accurate passes",
+    position: null,
+    metric: "SUM(passes_total × clamp(passes_accuracy,0,100)/100) per competition-season",
+    sanityMax: 5000,
+  },
 } as const;
+
+/** Competition labels are also shown in every title — pin them too so a change (e.g.
+ *  the Euro label) is a deliberate, reviewed edit. */
+const COMP_PIN: Record<number, { nameAr: string; nameEn: string }> = {
+  39: { nameAr: "الدوري الإنجليزي", nameEn: "Premier League" },
+  140: { nameAr: "الدوري الإسباني", nameEn: "La Liga" },
+  135: { nameAr: "الدوري الإيطالي", nameEn: "Serie A" },
+  78: { nameAr: "الدوري الألماني", nameEn: "Bundesliga" },
+  61: { nameAr: "الدوري الفرنسي", nameEn: "Ligue 1" },
+  2: { nameAr: "دوري أبطال أوروبا", nameEn: "UEFA Champions League" },
+  1: { nameAr: "كأس العالم", nameEn: "FIFA World Cup" },
+  4: { nameAr: "بطولة أمم أوروبا", nameEn: "UEFA Euro" },
+  9: { nameAr: "كوبا أمريكا", nameEn: "Copa América" },
+};
 
 describe("TT_TYPE_META contract (label ↔ metric ↔ scope ↔ bound)", () => {
   it("matches the reviewed pin exactly", () => {
@@ -69,11 +97,8 @@ describe("TT_TYPE_META contract (label ↔ metric ↔ scope ↔ bound)", () => {
     }
   });
 
-  it("every competition has a non-empty Arabic + English name and a numeric league id", () => {
-    for (const c of TT_COMPETITIONS) {
-      expect(c.nameAr.trim().length).toBeGreaterThan(0);
-      expect(c.nameEn.trim().length).toBeGreaterThan(0);
-      expect(Number.isInteger(c.leagueId)).toBe(true);
-    }
+  it("competition labels match the reviewed pin exactly", () => {
+    const actual = Object.fromEntries(TT_COMPETITIONS.map((c) => [c.leagueId, { nameAr: c.nameAr, nameEn: c.nameEn }]));
+    expect(actual).toStrictEqual(COMP_PIN);
   });
 });

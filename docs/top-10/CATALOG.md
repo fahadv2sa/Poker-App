@@ -1,20 +1,22 @@
 # Top Ten — Generated Question Catalog (reviewable artifact)
 
-Built: 2026-06-28T20:02:54.528Z
+Built: 2026-06-28T21:07:26.641Z
 
 Gate: regulars-fill ≥ 95% (top 30 by apps, ≥5 apps), ≥20 qualifiers, 10th value > 0, seasons 2010–2025.
 
-Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY.
+Difficulty (Σ fame terciles, inverse): HARD < 562.6 ≤ MEDIUM < 649.9 ≤ EASY.
 
-**Admitted: 215 · Rejected: 325**
+**Admitted: 254 · Rejected: 502**
 
 | Question type | Admitted | Rejected |
 |---|---|---|
 | Top goal scorers (GOAL_SCORERS) | 66 | 42 |
 | Top assist providers (ASSISTS) | 6 | 102 |
 | Top midfielders by key passes (KEY_PASSES) | 67 | 41 |
+| Top players by key passes (KEY_PASSES_ALL) | 25 | 83 |
 | Top defenders by tackles (TACKLES) | 62 | 46 |
 | Top midfielders by accurate passes (ACCURATE_PASSES) | 14 | 94 |
+| Top players by accurate passes (ACCURATE_PASSES_ALL) | 14 | 94 |
 
 ## Admitted (type · competition · season · difficulty · Σfame)
 
@@ -24,7 +26,7 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2018 · EASY · Σ661
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2019 · EASY · Σ726
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2025 · HARD · Σ547
-- ACCURATE_PASSES · كأس أوروبا · 2020 · MEDIUM · Σ577
+- ACCURATE_PASSES · بطولة أمم أوروبا · 2020 · MEDIUM · Σ577
 - ACCURATE_PASSES · كوبا أمريكا · 2016 · HARD · Σ543
 - ACCURATE_PASSES · كوبا أمريكا · 2019 · MEDIUM · Σ612
 - ACCURATE_PASSES · الدوري الإنجليزي · 2025 · HARD · Σ545
@@ -32,10 +34,24 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - ACCURATE_PASSES · الدوري الألماني · 2025 · HARD · Σ521
 - ACCURATE_PASSES · الدوري الإيطالي · 2025 · MEDIUM · Σ581
 - ACCURATE_PASSES · الدوري الإسباني · 2025 · HARD · Σ560
+- ACCURATE_PASSES_ALL · كأس العالم · 2022 · EASY · Σ700
+- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2016 · EASY · Σ722
+- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2017 · EASY · Σ714
+- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2018 · EASY · Σ698
+- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2019 · EASY · Σ746
+- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2025 · MEDIUM · Σ574
+- ACCURATE_PASSES_ALL · بطولة أمم أوروبا · 2020 · EASY · Σ663
+- ACCURATE_PASSES_ALL · كوبا أمريكا · 2016 · MEDIUM · Σ571
+- ACCURATE_PASSES_ALL · كوبا أمريكا · 2019 · EASY · Σ706
+- ACCURATE_PASSES_ALL · الدوري الإنجليزي · 2025 · HARD · Σ527
+- ACCURATE_PASSES_ALL · الدوري الفرنسي · 2025 · HARD · Σ476
+- ACCURATE_PASSES_ALL · الدوري الألماني · 2025 · HARD · Σ546
+- ACCURATE_PASSES_ALL · الدوري الإيطالي · 2025 · MEDIUM · Σ576
+- ACCURATE_PASSES_ALL · الدوري الإسباني · 2025 · MEDIUM · Σ587
 - ASSISTS · الدوري الإنجليزي · 2024 · MEDIUM · Σ636
 - ASSISTS · الدوري الألماني · 2023 · EASY · Σ679
 - ASSISTS · الدوري الألماني · 2024 · MEDIUM · Σ614
-- ASSISTS · الدوري الألماني · 2025 · EASY · Σ646
+- ASSISTS · الدوري الألماني · 2025 · MEDIUM · Σ646
 - ASSISTS · الدوري الإيطالي · 2024 · MEDIUM · Σ644
 - ASSISTS · الدوري الإسباني · 2023 · EASY · Σ709
 - GOAL_SCORERS · دوري أبطال أوروبا · 2011 · EASY · Σ788
@@ -68,18 +84,18 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - GOAL_SCORERS · الدوري الألماني · 2012 · MEDIUM · Σ642
 - GOAL_SCORERS · الدوري الألماني · 2013 · EASY · Σ691
 - GOAL_SCORERS · الدوري الألماني · 2014 · EASY · Σ686
-- GOAL_SCORERS · الدوري الألماني · 2015 · EASY · Σ646
-- GOAL_SCORERS · الدوري الألماني · 2016 · EASY · Σ647
+- GOAL_SCORERS · الدوري الألماني · 2015 · MEDIUM · Σ646
+- GOAL_SCORERS · الدوري الألماني · 2016 · MEDIUM · Σ647
 - GOAL_SCORERS · الدوري الألماني · 2017 · EASY · Σ667
 - GOAL_SCORERS · الدوري الألماني · 2018 · EASY · Σ658
-- GOAL_SCORERS · الدوري الألماني · 2019 · EASY · Σ650
+- GOAL_SCORERS · الدوري الألماني · 2019 · MEDIUM · Σ650
 - GOAL_SCORERS · الدوري الألماني · 2020 · MEDIUM · Σ635
 - GOAL_SCORERS · الدوري الألماني · 2021 · MEDIUM · Σ621
-- GOAL_SCORERS · الدوري الألماني · 2023 · MEDIUM · Σ562
+- GOAL_SCORERS · الدوري الألماني · 2023 · HARD · Σ562
 - GOAL_SCORERS · الدوري الألماني · 2025 · HARD · Σ510
 - GOAL_SCORERS · الدوري الإيطالي · 2010 · MEDIUM · Σ600
 - GOAL_SCORERS · الدوري الإيطالي · 2011 · MEDIUM · Σ615
-- GOAL_SCORERS · الدوري الإيطالي · 2012 · EASY · Σ647
+- GOAL_SCORERS · الدوري الإيطالي · 2012 · MEDIUM · Σ647
 - GOAL_SCORERS · الدوري الإيطالي · 2013 · EASY · Σ694
 - GOAL_SCORERS · الدوري الإيطالي · 2014 · MEDIUM · Σ645
 - GOAL_SCORERS · الدوري الإيطالي · 2015 · MEDIUM · Σ633
@@ -114,8 +130,8 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - KEY_PASSES · دوري أبطال أوروبا · 2023 · EASY · Σ664
 - KEY_PASSES · دوري أبطال أوروبا · 2024 · MEDIUM · Σ582
 - KEY_PASSES · دوري أبطال أوروبا · 2025 · HARD · Σ542
-- KEY_PASSES · كأس أوروبا · 2020 · HARD · Σ458
-- KEY_PASSES · كأس أوروبا · 2024 · EASY · Σ685
+- KEY_PASSES · بطولة أمم أوروبا · 2020 · HARD · Σ458
+- KEY_PASSES · بطولة أمم أوروبا · 2024 · EASY · Σ685
 - KEY_PASSES · كوبا أمريكا · 2019 · EASY · Σ670
 - KEY_PASSES · الدوري الإنجليزي · 2015 · EASY · Σ687
 - KEY_PASSES · الدوري الإنجليزي · 2016 · EASY · Σ664
@@ -140,7 +156,7 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - KEY_PASSES · الدوري الفرنسي · 2024 · HARD · Σ469
 - KEY_PASSES · الدوري الفرنسي · 2025 · HARD · Σ419
 - KEY_PASSES · الدوري الألماني · 2015 · HARD · Σ516
-- KEY_PASSES · الدوري الألماني · 2016 · MEDIUM · Σ562
+- KEY_PASSES · الدوري الألماني · 2016 · HARD · Σ562
 - KEY_PASSES · الدوري الألماني · 2017 · MEDIUM · Σ606
 - KEY_PASSES · الدوري الألماني · 2018 · MEDIUM · Σ594
 - KEY_PASSES · الدوري الألماني · 2019 · MEDIUM · Σ600
@@ -171,22 +187,47 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - KEY_PASSES · الدوري الإسباني · 2023 · MEDIUM · Σ629
 - KEY_PASSES · الدوري الإسباني · 2024 · MEDIUM · Σ569
 - KEY_PASSES · الدوري الإسباني · 2025 · HARD · Σ493
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2015 · EASY · Σ739
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2016 · EASY · Σ790
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2017 · EASY · Σ738
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2018 · EASY · Σ783
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2019 · EASY · Σ806
+- KEY_PASSES_ALL · دوري أبطال أوروبا · 2025 · MEDIUM · Σ590
+- KEY_PASSES_ALL · بطولة أمم أوروبا · 2020 · MEDIUM · Σ568
+- KEY_PASSES_ALL · كوبا أمريكا · 2016 · EASY · Σ739
+- KEY_PASSES_ALL · كوبا أمريكا · 2019 · EASY · Σ746
+- KEY_PASSES_ALL · الدوري الإنجليزي · 2015 · EASY · Σ731
+- KEY_PASSES_ALL · الدوري الإنجليزي · 2016 · EASY · Σ676
+- KEY_PASSES_ALL · الدوري الإنجليزي · 2017 · EASY · Σ686
+- KEY_PASSES_ALL · الدوري الإنجليزي · 2024 · HARD · Σ563
+- KEY_PASSES_ALL · الدوري الفرنسي · 2015 · HARD · Σ512
+- KEY_PASSES_ALL · الدوري الفرنسي · 2016 · MEDIUM · Σ597
+- KEY_PASSES_ALL · الدوري الفرنسي · 2017 · HARD · Σ548
+- KEY_PASSES_ALL · الدوري الفرنسي · 2025 · HARD · Σ471
+- KEY_PASSES_ALL · الدوري الألماني · 2015 · HARD · Σ539
+- KEY_PASSES_ALL · الدوري الإيطالي · 2015 · MEDIUM · Σ630
+- KEY_PASSES_ALL · الدوري الإيطالي · 2016 · MEDIUM · Σ600
+- KEY_PASSES_ALL · الدوري الإيطالي · 2017 · EASY · Σ670
+- KEY_PASSES_ALL · الدوري الإيطالي · 2018 · MEDIUM · Σ644
+- KEY_PASSES_ALL · الدوري الإيطالي · 2023 · MEDIUM · Σ567
+- KEY_PASSES_ALL · الدوري الإسباني · 2018 · EASY · Σ700
+- KEY_PASSES_ALL · الدوري الإسباني · 2022 · HARD · Σ561
 - TACKLES · كأس العالم · 2022 · EASY · Σ664
 - TACKLES · دوري أبطال أوروبا · 2018 · MEDIUM · Σ620
-- TACKLES · دوري أبطال أوروبا · 2019 · EASY · Σ645
+- TACKLES · دوري أبطال أوروبا · 2019 · MEDIUM · Σ645
 - TACKLES · دوري أبطال أوروبا · 2020 · EASY · Σ682
 - TACKLES · دوري أبطال أوروبا · 2021 · MEDIUM · Σ572
 - TACKLES · دوري أبطال أوروبا · 2022 · MEDIUM · Σ636
 - TACKLES · دوري أبطال أوروبا · 2023 · MEDIUM · Σ628
 - TACKLES · دوري أبطال أوروبا · 2024 · HARD · Σ529
 - TACKLES · دوري أبطال أوروبا · 2025 · HARD · Σ511
-- TACKLES · كأس أوروبا · 2020 · HARD · Σ484
-- TACKLES · كأس أوروبا · 2024 · EASY · Σ655
+- TACKLES · بطولة أمم أوروبا · 2020 · HARD · Σ484
+- TACKLES · بطولة أمم أوروبا · 2024 · EASY · Σ655
 - TACKLES · كوبا أمريكا · 2019 · MEDIUM · Σ619
 - TACKLES · كوبا أمريكا · 2024 · HARD · Σ519
 - TACKLES · الدوري الإنجليزي · 2015 · MEDIUM · Σ608
 - TACKLES · الدوري الإنجليزي · 2016 · HARD · Σ553
-- TACKLES · الدوري الإنجليزي · 2017 · MEDIUM · Σ561
+- TACKLES · الدوري الإنجليزي · 2017 · HARD · Σ561
 - TACKLES · الدوري الإنجليزي · 2018 · MEDIUM · Σ582
 - TACKLES · الدوري الإنجليزي · 2019 · MEDIUM · Σ565
 - TACKLES · الدوري الإنجليزي · 2020 · HARD · Σ482
@@ -223,7 +264,7 @@ Difficulty (Σ fame terciles, inverse): HARD < 560.3 ≤ MEDIUM < 645.1 ≤ EASY
 - TACKLES · الدوري الإيطالي · 2023 · HARD · Σ512
 - TACKLES · الدوري الإيطالي · 2024 · HARD · Σ440
 - TACKLES · الدوري الإيطالي · 2025 · HARD · Σ376
-- TACKLES · الدوري الإسباني · 2015 · MEDIUM · Σ562
+- TACKLES · الدوري الإسباني · 2015 · HARD · Σ562
 - TACKLES · الدوري الإسباني · 2017 · HARD · Σ528
 - TACKLES · الدوري الإسباني · 2018 · HARD · Σ528
 - TACKLES · الدوري الإسباني · 2019 · MEDIUM · Σ582

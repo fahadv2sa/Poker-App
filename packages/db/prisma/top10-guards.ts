@@ -28,6 +28,11 @@ export const VALUE_EXPR: Record<TtQuestionType, string> = {
   ACCURATE_PASSES:
     "SUM(CASE WHEN s.passes_accuracy IS NULL THEN NULL ELSE s.passes_total * LEAST(GREATEST(s.passes_accuracy, 0), 100) / 100.0 END)",
   GK_CLEAN_SHEETS: "NULL", // dormant
+  // ALL-PLAYERS variants — identical expressions; the position scope (none) is driven
+  // by TT_TYPE_META[type].position, not by this expression.
+  KEY_PASSES_ALL: "SUM(s.passes_key)",
+  ACCURATE_PASSES_ALL:
+    "SUM(CASE WHEN s.passes_accuracy IS NULL THEN NULL ELSE s.passes_total * LEAST(GREATEST(s.passes_accuracy, 0), 100) / 100.0 END)",
 };
 
 /** The search LIMIT in apps/top-10-web/src/app/api/search/route.ts — keep in sync. */

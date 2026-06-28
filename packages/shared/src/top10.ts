@@ -11,10 +11,12 @@
 export const TT_QUESTION_TYPES = [
   "GOAL_SCORERS",
   "ASSISTS",
-  "KEY_PASSES",
+  "KEY_PASSES", // midfielders only
   "TACKLES",
-  "ACCURATE_PASSES",
+  "ACCURATE_PASSES", // midfielders only
   "GK_CLEAN_SHEETS", // dormant (deferred D1) — no data yet; never admitted by the gate
+  "KEY_PASSES_ALL", // all players (no position filter)
+  "ACCURATE_PASSES_ALL", // all players (no position filter)
 ] as const;
 export type TtQuestionType = (typeof TT_QUESTION_TYPES)[number];
 
@@ -24,8 +26,10 @@ export const TT_ACTIVE_QUESTION_TYPES: readonly TtQuestionType[] = [
   "GOAL_SCORERS",
   "ASSISTS",
   "KEY_PASSES",
+  "KEY_PASSES_ALL",
   "TACKLES",
   "ACCURATE_PASSES",
+  "ACCURATE_PASSES_ALL",
 ];
 
 export const TT_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
@@ -120,6 +124,22 @@ export const TT_TYPE_META: Record<TtQuestionType, TtTypeMeta> = {
     metric: "(dormant — no clean-sheets column yet)",
     sanityMax: 40,
   },
+  KEY_PASSES_ALL: {
+    // Same metric as KEY_PASSES but ALL positions → the title says "اللاعبين" (players).
+    nameAr: "أكثر اللاعبين تمريراتٍ مفتاحية",
+    nameEn: "Top players by key passes",
+    position: null,
+    metric: "SUM(passes_key) per competition-season",
+    sanityMax: 400,
+  },
+  ACCURATE_PASSES_ALL: {
+    // Same metric as ACCURATE_PASSES but ALL positions → the title says "اللاعبين".
+    nameAr: "أكثر اللاعبين تمريراتٍ دقيقة",
+    nameEn: "Top players by accurate passes",
+    position: null,
+    metric: "SUM(passes_total × clamp(passes_accuracy,0,100)/100) per competition-season",
+    sanityMax: 5000,
+  },
 };
 
 // ---- competition whitelist (VERIFIED league_ids) ---------------------------
@@ -141,7 +161,7 @@ export const TT_COMPETITIONS: readonly TtCompetition[] = [
   { leagueId: 61, nameAr: "الدوري الفرنسي", nameEn: "Ligue 1" },
   { leagueId: 2, nameAr: "دوري أبطال أوروبا", nameEn: "UEFA Champions League" },
   { leagueId: 1, nameAr: "كأس العالم", nameEn: "FIFA World Cup" },
-  { leagueId: 4, nameAr: "كأس أوروبا", nameEn: "UEFA Euro" },
+  { leagueId: 4, nameAr: "بطولة أمم أوروبا", nameEn: "UEFA Euro" },
   { leagueId: 9, nameAr: "كوبا أمريكا", nameEn: "Copa América" },
 ];
 

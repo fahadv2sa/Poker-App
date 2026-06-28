@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-06-28T20:02:54.522Z",
+  "builtAt": "2026-06-28T21:07:26.634Z",
   "gate": {
     "seasonMin": 2010,
     "seasonMax": 2025,
@@ -9,11 +9,11 @@
     "minQualifiers": 20
   },
   "thresholds": {
-    "hardMaxSum": 560.2733333333333,
-    "easyMinSum": 645.1033333333332
+    "hardMaxSum": 562.6466666666666,
+    "easyMinSum": 649.9033333333333
   },
-  "admittedCount": 215,
-  "rejectedCount": 325,
+  "admittedCount": 254,
+  "rejectedCount": 502,
   "admitted": [
     {
       "type": "GOAL_SCORERS",
@@ -1620,7 +1620,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2019,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 649.9,
       "top": [
         {
@@ -2135,7 +2135,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2023,
-      "difficulty": "MEDIUM",
+      "difficulty": "HARD",
       "fameSum": 561.8,
       "top": [
         {
@@ -3440,7 +3440,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2015,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 645.5,
       "top": [
         {
@@ -5885,7 +5885,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2016,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 647.1,
       "top": [
         {
@@ -6315,7 +6315,7 @@
       "leagueId": 135,
       "competition": "الدوري الإيطالي",
       "season": 2012,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 646.8,
       "top": [
         {
@@ -11050,7 +11050,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2025,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 645.9,
       "top": [
         {
@@ -13518,7 +13518,7 @@
     {
       "type": "KEY_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2020,
       "difficulty": "HARD",
       "fameSum": 457.8,
@@ -13598,7 +13598,7 @@
     {
       "type": "KEY_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2024,
       "difficulty": "EASY",
       "fameSum": 685,
@@ -15485,7 +15485,7 @@
       "leagueId": 78,
       "competition": "الدوري الألماني",
       "season": 2016,
-      "difficulty": "MEDIUM",
+      "difficulty": "HARD",
       "fameSum": 562,
       "top": [
         {
@@ -17621,6 +17621,2066 @@
       ]
     },
     {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2017,
+      "difficulty": "EASY",
+      "fameSum": 686.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "كيفن دي بروين",
+          "value": 111
+        },
+        {
+          "rank": 2,
+          "name": "أليكسيس سانشيز",
+          "value": 108
+        },
+        {
+          "rank": 3,
+          "name": "كريستيان إريكسن",
+          "value": 96
+        },
+        {
+          "rank": 4,
+          "name": "سيسك فابريجاس",
+          "value": 91
+        },
+        {
+          "rank": 5,
+          "name": "باسكال جروس",
+          "value": 87
+        },
+        {
+          "rank": 6,
+          "name": "مسعود أوزيل",
+          "value": 85
+        },
+        {
+          "rank": 7,
+          "name": "إدين هازارد",
+          "value": 84
+        },
+        {
+          "rank": 8,
+          "name": "شيردان شاكيري",
+          "value": 77
+        },
+        {
+          "rank": 9,
+          "name": "جيلفي سيجوردسون",
+          "value": 76
+        },
+        {
+          "rank": 10,
+          "name": "جودموندسون",
+          "value": 67
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2022,
+      "difficulty": "HARD",
+      "fameSum": 561.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "داردير",
+          "value": 148
+        },
+        {
+          "rank": 2,
+          "name": "موي غوميز",
+          "value": 106
+        },
+        {
+          "rank": 3,
+          "name": "أنطوان غريزمان",
+          "value": 85
+        },
+        {
+          "rank": 4,
+          "name": "ياجو أسباس",
+          "value": 83
+        },
+        {
+          "rank": 5,
+          "name": "سانتي كوميسانيا",
+          "value": 82
+        },
+        {
+          "rank": 6,
+          "name": "غومباو",
+          "value": 73
+        },
+        {
+          "rank": 7,
+          "name": "إسبينو",
+          "value": 72
+        },
+        {
+          "rank": 8,
+          "name": "أليكس غارسيا",
+          "value": 68
+        },
+        {
+          "rank": 9,
+          "name": "أدري إمباربا",
+          "value": 66
+        },
+        {
+          "rank": 9,
+          "name": "إيزي بالاثون",
+          "value": 66
+        },
+        {
+          "rank": 10,
+          "name": "فينيسيوس جونيور",
+          "value": 64
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2015,
+      "difficulty": "MEDIUM",
+      "fameSum": 630.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "لاياتش",
+          "value": 114
+        },
+        {
+          "rank": 2,
+          "name": "هامشيك",
+          "value": 98
+        },
+        {
+          "rank": 3,
+          "name": "بيانيتش",
+          "value": 84
+        },
+        {
+          "rank": 4,
+          "name": "ليوناردو باريديس",
+          "value": 82
+        },
+        {
+          "rank": 5,
+          "name": "آلان",
+          "value": 80
+        },
+        {
+          "rank": 6,
+          "name": "بورخا فاليرو",
+          "value": 77
+        },
+        {
+          "rank": 7,
+          "name": "باولو ديبالا",
+          "value": 75
+        },
+        {
+          "rank": 8,
+          "name": "ريكاردو سابونارا",
+          "value": 74
+        },
+        {
+          "rank": 9,
+          "name": "بونافينتورا",
+          "value": 70
+        },
+        {
+          "rank": 9,
+          "name": "دييجو بيروتي",
+          "value": 70
+        },
+        {
+          "rank": 10,
+          "name": "جورجينيو",
+          "value": 68
+        },
+        {
+          "rank": 10,
+          "name": "فشوويك",
+          "value": 68
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2016,
+      "difficulty": "MEDIUM",
+      "fameSum": 596.6,
+      "top": [
+        {
+          "rank": 1,
+          "name": "رياض بودبوز",
+          "value": 119
+        },
+        {
+          "rank": 2,
+          "name": "مانجاني",
+          "value": 98
+        },
+        {
+          "rank": 3,
+          "name": "أنخيل دي ماريا",
+          "value": 81
+        },
+        {
+          "rank": 4,
+          "name": "لومار",
+          "value": 78
+        },
+        {
+          "rank": 5,
+          "name": "سيري",
+          "value": 76
+        },
+        {
+          "rank": 6,
+          "name": "فيريه",
+          "value": 68
+        },
+        {
+          "rank": 7,
+          "name": "يوسف سابالي",
+          "value": 66
+        },
+        {
+          "rank": 8,
+          "name": "نبيل فقير",
+          "value": 64
+        },
+        {
+          "rank": 8,
+          "name": "تريخو",
+          "value": 64
+        },
+        {
+          "rank": 8,
+          "name": "لوكاس ليما",
+          "value": 64
+        },
+        {
+          "rank": 9,
+          "name": "فلوريان تاوفان",
+          "value": 62
+        },
+        {
+          "rank": 10,
+          "name": "برناردو سيلفا",
+          "value": 61
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2023,
+      "difficulty": "MEDIUM",
+      "fameSum": 567,
+      "top": [
+        {
+          "rank": 1,
+          "name": "ماتياس سوليه",
+          "value": 168
+        },
+        {
+          "rank": 2,
+          "name": "ساليماكرس",
+          "value": 86
+        },
+        {
+          "rank": 3,
+          "name": "جودموندسون",
+          "value": 83
+        },
+        {
+          "rank": 4,
+          "name": "أرثر",
+          "value": 68
+        },
+        {
+          "rank": 4,
+          "name": "مالح",
+          "value": 68
+        },
+        {
+          "rank": 5,
+          "name": "بوليتانو",
+          "value": 67
+        },
+        {
+          "rank": 6,
+          "name": "لويس ألبرتو",
+          "value": 64
+        },
+        {
+          "rank": 7,
+          "name": "لازار سامارجيتش",
+          "value": 62
+        },
+        {
+          "rank": 7,
+          "name": "كامبياغي",
+          "value": 62
+        },
+        {
+          "rank": 8,
+          "name": "فيديريكو ديماركو",
+          "value": 61
+        },
+        {
+          "rank": 8,
+          "name": "كوبمينرز",
+          "value": 61
+        },
+        {
+          "rank": 9,
+          "name": "أنطونيو كاندريفا",
+          "value": 60
+        },
+        {
+          "rank": 10,
+          "name": "رافائيل لياو",
+          "value": 59
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2025,
+      "difficulty": "HARD",
+      "fameSum": 471,
+      "top": [
+        {
+          "rank": 1,
+          "name": "توماسون",
+          "value": 81
+        },
+        {
+          "rank": 2,
+          "name": "فلوريان تاوفان",
+          "value": 80
+        },
+        {
+          "rank": 3,
+          "name": "كلاوس",
+          "value": 70
+        },
+        {
+          "rank": 4,
+          "name": "دونوم",
+          "value": 62
+        },
+        {
+          "rank": 5,
+          "name": "ماسون غرينوود",
+          "value": 61
+        },
+        {
+          "rank": 5,
+          "name": "قبال",
+          "value": 61
+        },
+        {
+          "rank": 6,
+          "name": "لي كانج إن",
+          "value": 60
+        },
+        {
+          "rank": 7,
+          "name": "هاين",
+          "value": 58
+        },
+        {
+          "rank": 8,
+          "name": "ديل كاستيو",
+          "value": 57
+        },
+        {
+          "rank": 8,
+          "name": "جبوهو",
+          "value": 57
+        },
+        {
+          "rank": 9,
+          "name": "أودول",
+          "value": 56
+        },
+        {
+          "rank": 9,
+          "name": "هارالدسون",
+          "value": 56
+        },
+        {
+          "rank": 10,
+          "name": "دانوا",
+          "value": 53
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2020,
+      "difficulty": "MEDIUM",
+      "fameSum": 568.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "أنطوان غريزمان",
+          "value": 48
+        },
+        {
+          "rank": 2,
+          "name": "إدين هازارد",
+          "value": 36
+        },
+        {
+          "rank": 3,
+          "name": "بيانيتش",
+          "value": 34
+        },
+        {
+          "rank": 4,
+          "name": "إيليتش",
+          "value": 33
+        },
+        {
+          "rank": 5,
+          "name": "لازارو",
+          "value": 29
+        },
+        {
+          "rank": 6,
+          "name": "هامشيك",
+          "value": 27
+        },
+        {
+          "rank": 7,
+          "name": "جيلفي سيجوردسون",
+          "value": 24
+        },
+        {
+          "rank": 8,
+          "name": "مارتن أوديغارد",
+          "value": 23
+        },
+        {
+          "rank": 8,
+          "name": "إنيس باردي",
+          "value": 23
+        },
+        {
+          "rank": 9,
+          "name": "إيانيس هاجي",
+          "value": 22
+        },
+        {
+          "rank": 9,
+          "name": "إيزجان أليوسكي",
+          "value": 22
+        },
+        {
+          "rank": 10,
+          "name": "غرانيت تشاكا",
+          "value": 21
+        },
+        {
+          "rank": 10,
+          "name": "هاكان تشالهانوغلو",
+          "value": 21
+        },
+        {
+          "rank": 10,
+          "name": "مارسيل سابيتزر",
+          "value": 21
+        },
+        {
+          "rank": 10,
+          "name": "كاميل جروسيتسكي",
+          "value": 21
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2024,
+      "difficulty": "HARD",
+      "fameSum": 562.5,
+      "top": [
+        {
+          "rank": 1,
+          "name": "ماتيوس كونيا",
+          "value": 116
+        },
+        {
+          "rank": 2,
+          "name": "أنتوني إيلانغا",
+          "value": 100
+        },
+        {
+          "rank": 3,
+          "name": "بيدرو نيتو",
+          "value": 94
+        },
+        {
+          "rank": 3,
+          "name": "رايان آيت نوري",
+          "value": 94
+        },
+        {
+          "rank": 4,
+          "name": "برونو فيرنانديز",
+          "value": 91
+        },
+        {
+          "rank": 4,
+          "name": "محمد صلاح",
+          "value": 91
+        },
+        {
+          "rank": 4,
+          "name": "كول بالمر",
+          "value": 91
+        },
+        {
+          "rank": 5,
+          "name": "إنزو فيرنانديز",
+          "value": 80
+        },
+        {
+          "rank": 6,
+          "name": "جادون سانشو",
+          "value": 76
+        },
+        {
+          "rank": 7,
+          "name": "أليخاندرو غارناتشو",
+          "value": 74
+        },
+        {
+          "rank": 8,
+          "name": "براين مبيومو",
+          "value": 70
+        },
+        {
+          "rank": 8,
+          "name": "داندو واتارا",
+          "value": 70
+        },
+        {
+          "rank": 9,
+          "name": "وان بيساكا",
+          "value": 66
+        },
+        {
+          "rank": 9,
+          "name": "ديان كولوسيفسكي",
+          "value": 66
+        },
+        {
+          "rank": 10,
+          "name": "مارتن أوديغارد",
+          "value": 64
+        },
+        {
+          "rank": 10,
+          "name": "ميكل دامسجارد",
+          "value": 64
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2019,
+      "difficulty": "EASY",
+      "fameSum": 745.6,
+      "top": [
+        {
+          "rank": 1,
+          "name": "أرانغيز",
+          "value": 15
+        },
+        {
+          "rank": 2,
+          "name": "فيليب كوتينيو",
+          "value": 13
+        },
+        {
+          "rank": 3,
+          "name": "خاميس رودريجيز",
+          "value": 12
+        },
+        {
+          "rank": 4,
+          "name": "ليونيل ميسي",
+          "value": 11
+        },
+        {
+          "rank": 5,
+          "name": "غابرييل جيزوس",
+          "value": 10
+        },
+        {
+          "rank": 6,
+          "name": "سيرجيو أجويرو",
+          "value": 9
+        },
+        {
+          "rank": 6,
+          "name": "أليكسيس سانشيز",
+          "value": 9
+        },
+        {
+          "rank": 6,
+          "name": "روبرتو فيرمينو",
+          "value": 9
+        },
+        {
+          "rank": 7,
+          "name": "ليوناردو باريديس",
+          "value": 8
+        },
+        {
+          "rank": 7,
+          "name": "كوبو",
+          "value": 8
+        },
+        {
+          "rank": 8,
+          "name": "لويس سواريز",
+          "value": 7
+        },
+        {
+          "rank": 8,
+          "name": "فيليبي لويس",
+          "value": 7
+        },
+        {
+          "rank": 9,
+          "name": "رودريجو دي بول",
+          "value": 6
+        },
+        {
+          "rank": 9,
+          "name": "ميجيل ألميرون",
+          "value": 6
+        },
+        {
+          "rank": 9,
+          "name": "جاكو شيباساكي",
+          "value": 6
+        },
+        {
+          "rank": 10,
+          "name": "ماركينيوس",
+          "value": 5
+        },
+        {
+          "rank": 10,
+          "name": "داني ألفيش",
+          "value": 5
+        },
+        {
+          "rank": 10,
+          "name": "جيوفاني لو سيلسو",
+          "value": 5
+        },
+        {
+          "rank": 10,
+          "name": "إيسلا",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2015,
+      "difficulty": "EASY",
+      "fameSum": 739.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "نيمار",
+          "value": 36
+        },
+        {
+          "rank": 2,
+          "name": "كوكي",
+          "value": 32
+        },
+        {
+          "rank": 3,
+          "name": "توني كروس",
+          "value": 31
+        },
+        {
+          "rank": 4,
+          "name": "فالبوينا",
+          "value": 29
+        },
+        {
+          "rank": 4,
+          "name": "فيليب لام",
+          "value": 29
+        },
+        {
+          "rank": 5,
+          "name": "دوجلاس كوستا",
+          "value": 26
+        },
+        {
+          "rank": 6,
+          "name": "أنطوان غريزمان",
+          "value": 25
+        },
+        {
+          "rank": 6,
+          "name": "إيسكو",
+          "value": 25
+        },
+        {
+          "rank": 7,
+          "name": "جابرييل فيرنانديز أريناس",
+          "value": 24
+        },
+        {
+          "rank": 8,
+          "name": "كريستيانو رونالدو",
+          "value": 23
+        },
+        {
+          "rank": 8,
+          "name": "تياجو ألكانتارا",
+          "value": 23
+        },
+        {
+          "rank": 9,
+          "name": "أنخيل دي ماريا",
+          "value": 22
+        },
+        {
+          "rank": 9,
+          "name": "كيفن دي بروين",
+          "value": 22
+        },
+        {
+          "rank": 10,
+          "name": "جاريث بيل",
+          "value": 21
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2015,
+      "difficulty": "HARD",
+      "fameSum": 512.1,
+      "top": [
+        {
+          "rank": 1,
+          "name": "رياض بودبوز",
+          "value": 124
+        },
+        {
+          "rank": 2,
+          "name": "أنخيل دي ماريا",
+          "value": 104
+        },
+        {
+          "rank": 3,
+          "name": "رودلان",
+          "value": 80
+        },
+        {
+          "rank": 4,
+          "name": "دي بريفيل",
+          "value": 77
+        },
+        {
+          "rank": 5,
+          "name": "سفيان بوفال",
+          "value": 74
+        },
+        {
+          "rank": 6,
+          "name": "فيريه",
+          "value": 72
+        },
+        {
+          "rank": 7,
+          "name": "فالبوينا",
+          "value": 68
+        },
+        {
+          "rank": 8,
+          "name": "وليد مسلوب",
+          "value": 67
+        },
+        {
+          "rank": 9,
+          "name": "عبد العزيز برادة",
+          "value": 62
+        },
+        {
+          "rank": 10,
+          "name": "مانجاني",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2019,
+      "difficulty": "EASY",
+      "fameSum": 806.3,
+      "top": [
+        {
+          "rank": 1,
+          "name": "حكيم زياش",
+          "value": 31
+        },
+        {
+          "rank": 2,
+          "name": "كيفن دي بروين",
+          "value": 28
+        },
+        {
+          "rank": 2,
+          "name": "جوشوا كيميتش",
+          "value": 28
+        },
+        {
+          "rank": 3,
+          "name": "توماس مولر",
+          "value": 25
+        },
+        {
+          "rank": 4,
+          "name": "توني كروس",
+          "value": 24
+        },
+        {
+          "rank": 4,
+          "name": "داني أولمو",
+          "value": 24
+        },
+        {
+          "rank": 4,
+          "name": "ميناميno",
+          "value": 24
+        },
+        {
+          "rank": 5,
+          "name": "روبرت ليفاندوفسكي",
+          "value": 21
+        },
+        {
+          "rank": 5,
+          "name": "دانيال بودينسي",
+          "value": 21
+        },
+        {
+          "rank": 6,
+          "name": "ويليان",
+          "value": 19
+        },
+        {
+          "rank": 6,
+          "name": "خوسيه كاييخون",
+          "value": 19
+        },
+        {
+          "rank": 7,
+          "name": "أنخيل دي ماريا",
+          "value": 18
+        },
+        {
+          "rank": 7,
+          "name": "جوميز",
+          "value": 18
+        },
+        {
+          "rank": 7,
+          "name": "فالبوينا",
+          "value": 18
+        },
+        {
+          "rank": 8,
+          "name": "ليونيل ميسي",
+          "value": 17
+        },
+        {
+          "rank": 8,
+          "name": "كريم بنزيما",
+          "value": 17
+        },
+        {
+          "rank": 9,
+          "name": "رحيم ستيرلينج",
+          "value": 16
+        },
+        {
+          "rank": 9,
+          "name": "نيمار",
+          "value": 16
+        },
+        {
+          "rank": 9,
+          "name": "غابرييل جيزوس",
+          "value": 16
+        },
+        {
+          "rank": 9,
+          "name": "داني باريخو",
+          "value": 16
+        },
+        {
+          "rank": 10,
+          "name": "تياجو ألكانتارا",
+          "value": 15
+        },
+        {
+          "rank": 10,
+          "name": "كريستوفر نكونكو",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2015,
+      "difficulty": "HARD",
+      "fameSum": 539.1,
+      "top": [
+        {
+          "rank": 1,
+          "name": "باسكال جروس",
+          "value": 96
+        },
+        {
+          "rank": 2,
+          "name": "يونوزوفيتش",
+          "value": 86
+        },
+        {
+          "rank": 3,
+          "name": "هنريك مخيتاريان",
+          "value": 84
+        },
+        {
+          "rank": 4,
+          "name": "هاكان تشالهانوغلو",
+          "value": 83
+        },
+        {
+          "rank": 5,
+          "name": "فيليب كوستيتش",
+          "value": 81
+        },
+        {
+          "rank": 6,
+          "name": "هانت",
+          "value": 80
+        },
+        {
+          "rank": 7,
+          "name": "راوش",
+          "value": 72
+        },
+        {
+          "rank": 8,
+          "name": "ريسه",
+          "value": 65
+        },
+        {
+          "rank": 9,
+          "name": "توماس مولر",
+          "value": 61
+        },
+        {
+          "rank": 9,
+          "name": "جايس",
+          "value": 61
+        },
+        {
+          "rank": 10,
+          "name": "كيوتاكي",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2025,
+      "difficulty": "MEDIUM",
+      "fameSum": 589.6,
+      "top": [
+        {
+          "rank": 1,
+          "name": "خوليان ألفاريز",
+          "value": 34
+        },
+        {
+          "rank": 1,
+          "name": "مايكل أوليسي",
+          "value": 34
+        },
+        {
+          "rank": 1,
+          "name": "أورشيتش",
+          "value": 34
+        },
+        {
+          "rank": 1,
+          "name": "أردا جولر",
+          "value": 34
+        },
+        {
+          "rank": 2,
+          "name": "فلوريان فيرتز",
+          "value": 32
+        },
+        {
+          "rank": 2,
+          "name": "ديزيريه دويه",
+          "value": 32
+        },
+        {
+          "rank": 2,
+          "name": "هاوجه",
+          "value": 32
+        },
+        {
+          "rank": 3,
+          "name": "كيليان مبابي",
+          "value": 31
+        },
+        {
+          "rank": 4,
+          "name": "جوشوا كيميتش",
+          "value": 30
+        },
+        {
+          "rank": 4,
+          "name": "دومينيك سوبوسلاي",
+          "value": 30
+        },
+        {
+          "rank": 5,
+          "name": "تزوليس",
+          "value": 29
+        },
+        {
+          "rank": 6,
+          "name": "أليكس جريمالدو",
+          "value": 28
+        },
+        {
+          "rank": 7,
+          "name": "ديكلان رايس",
+          "value": 27
+        },
+        {
+          "rank": 8,
+          "name": "فيتينيا",
+          "value": 26
+        },
+        {
+          "rank": 9,
+          "name": "محمد صلاح",
+          "value": 25
+        },
+        {
+          "rank": 9,
+          "name": "أشرف حكيمي",
+          "value": 25
+        },
+        {
+          "rank": 9,
+          "name": "لويس دياز",
+          "value": 25
+        },
+        {
+          "rank": 9,
+          "name": "برادلي باركولا",
+          "value": 25
+        },
+        {
+          "rank": 10,
+          "name": "فينيسيوس جونيور",
+          "value": 24
+        },
+        {
+          "rank": 10,
+          "name": "لامين يامال",
+          "value": 24
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2017,
+      "difficulty": "EASY",
+      "fameSum": 670.2,
+      "top": [
+        {
+          "rank": 1,
+          "name": "إنسيني",
+          "value": 103
+        },
+        {
+          "rank": 2,
+          "name": "جوميز",
+          "value": 97
+        },
+        {
+          "rank": 3,
+          "name": "لويس ألبرتو",
+          "value": 91
+        },
+        {
+          "rank": 4,
+          "name": "سوسو",
+          "value": 81
+        },
+        {
+          "rank": 4,
+          "name": "ألكسندر كولاروف",
+          "value": 81
+        },
+        {
+          "rank": 5,
+          "name": "بيناسي",
+          "value": 80
+        },
+        {
+          "rank": 6,
+          "name": "خوسيه كاييخون",
+          "value": 76
+        },
+        {
+          "rank": 7,
+          "name": "إيفان بيريشيتش",
+          "value": 75
+        },
+        {
+          "rank": 8,
+          "name": "أنطونيو كاندريفا",
+          "value": 74
+        },
+        {
+          "rank": 9,
+          "name": "هاكان تشالهانوغلو",
+          "value": 72
+        },
+        {
+          "rank": 9,
+          "name": "لاياتش",
+          "value": 72
+        },
+        {
+          "rank": 10,
+          "name": "ياغو فالكي",
+          "value": 71
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2015,
+      "difficulty": "EASY",
+      "fameSum": 730.8,
+      "top": [
+        {
+          "rank": 1,
+          "name": "مسعود أوزيل",
+          "value": 147
+        },
+        {
+          "rank": 2,
+          "name": "ديميتري باييت",
+          "value": 119
+        },
+        {
+          "rank": 3,
+          "name": "كريستيان إريكسن",
+          "value": 116
+        },
+        {
+          "rank": 4,
+          "name": "ويليان",
+          "value": 83
+        },
+        {
+          "rank": 5,
+          "name": "كيفن دي بروين",
+          "value": 82
+        },
+        {
+          "rank": 6,
+          "name": "إيريك لاميلا",
+          "value": 75
+        },
+        {
+          "rank": 7,
+          "name": "دافيد سيلفا",
+          "value": 70
+        },
+        {
+          "rank": 8,
+          "name": "سيسك فابريجاس",
+          "value": 69
+        },
+        {
+          "rank": 8,
+          "name": "رياض محرز",
+          "value": 69
+        },
+        {
+          "rank": 9,
+          "name": "إدين هازارد",
+          "value": 67
+        },
+        {
+          "rank": 10,
+          "name": "أليكسيس سانشيز",
+          "value": 64
+        },
+        {
+          "rank": 10,
+          "name": "ماركوس ألبرايتون",
+          "value": 64
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2016,
+      "difficulty": "EASY",
+      "fameSum": 790.1,
+      "top": [
+        {
+          "rank": 1,
+          "name": "داني ألفيش",
+          "value": 62
+        },
+        {
+          "rank": 2,
+          "name": "توني كروس",
+          "value": 33
+        },
+        {
+          "rank": 3,
+          "name": "نيمار",
+          "value": 26
+        },
+        {
+          "rank": 4,
+          "name": "كوكي",
+          "value": 25
+        },
+        {
+          "rank": 4,
+          "name": "لوكاس مورا",
+          "value": 25
+        },
+        {
+          "rank": 5,
+          "name": "لومار",
+          "value": 24
+        },
+        {
+          "rank": 6,
+          "name": "أنطوان غريزمان",
+          "value": 23
+        },
+        {
+          "rank": 6,
+          "name": "مارسيلو",
+          "value": 23
+        },
+        {
+          "rank": 7,
+          "name": "عثمان ديمبيليه",
+          "value": 22
+        },
+        {
+          "rank": 8,
+          "name": "كريستيان إريكسن",
+          "value": 21
+        },
+        {
+          "rank": 9,
+          "name": "ليونيل ميسي",
+          "value": 20
+        },
+        {
+          "rank": 9,
+          "name": "كريستيانو رونالدو",
+          "value": 20
+        },
+        {
+          "rank": 9,
+          "name": "ماريو غوتزه",
+          "value": 20
+        },
+        {
+          "rank": 9,
+          "name": "تياجو ألكانتارا",
+          "value": 20
+        },
+        {
+          "rank": 9,
+          "name": "بيانيتش",
+          "value": 20
+        },
+        {
+          "rank": 10,
+          "name": "كريم بنزيما",
+          "value": 19
+        },
+        {
+          "rank": 10,
+          "name": "دافيد سيلفا",
+          "value": 19
+        },
+        {
+          "rank": 10,
+          "name": "آريين روبن",
+          "value": 19
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2018,
+      "difficulty": "EASY",
+      "fameSum": 700,
+      "top": [
+        {
+          "rank": 1,
+          "name": "ليونيل ميسي",
+          "value": 93
+        },
+        {
+          "rank": 2,
+          "name": "جوني",
+          "value": 87
+        },
+        {
+          "rank": 3,
+          "name": "داني باريخو",
+          "value": 83
+        },
+        {
+          "rank": 4,
+          "name": "أنطوان غريزمان",
+          "value": 74
+        },
+        {
+          "rank": 5,
+          "name": "سانتي كازورلا",
+          "value": 73
+        },
+        {
+          "rank": 6,
+          "name": "خوان خوردان",
+          "value": 69
+        },
+        {
+          "rank": 7,
+          "name": "بابلو سارابيا",
+          "value": 68
+        },
+        {
+          "rank": 8,
+          "name": "توني كروس",
+          "value": 64
+        },
+        {
+          "rank": 9,
+          "name": "سواريز",
+          "value": 62
+        },
+        {
+          "rank": 10,
+          "name": "كوكي",
+          "value": 61
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2017,
+      "difficulty": "HARD",
+      "fameSum": 547.8,
+      "top": [
+        {
+          "rank": 1,
+          "name": "ديميتري باييت",
+          "value": 125
+        },
+        {
+          "rank": 2,
+          "name": "بوريجو",
+          "value": 97
+        },
+        {
+          "rank": 3,
+          "name": "مالكوم",
+          "value": 89
+        },
+        {
+          "rank": 4,
+          "name": "دوسيفي",
+          "value": 86
+        },
+        {
+          "rank": 5,
+          "name": "ممفيس ديباي",
+          "value": 78
+        },
+        {
+          "rank": 5,
+          "name": "فلوريان تاوفان",
+          "value": 78
+        },
+        {
+          "rank": 6,
+          "name": "نيمار",
+          "value": 73
+        },
+        {
+          "rank": 7,
+          "name": "كريستوف جرينييه",
+          "value": 70
+        },
+        {
+          "rank": 8,
+          "name": "فيريه",
+          "value": 69
+        },
+        {
+          "rank": 9,
+          "name": "سيري",
+          "value": 66
+        },
+        {
+          "rank": 10,
+          "name": "كاكوتا",
+          "value": 65
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2018,
+      "difficulty": "MEDIUM",
+      "fameSum": 643.9,
+      "top": [
+        {
+          "rank": 1,
+          "name": "جوميز",
+          "value": 115
+        },
+        {
+          "rank": 2,
+          "name": "رودريجو دي بول",
+          "value": 100
+        },
+        {
+          "rank": 3,
+          "name": "سوسو",
+          "value": 99
+        },
+        {
+          "rank": 4,
+          "name": "هاكان تشالهانوغلو",
+          "value": 84
+        },
+        {
+          "rank": 5,
+          "name": "لويس ألبرتو",
+          "value": 78
+        },
+        {
+          "rank": 6,
+          "name": "فيرتو",
+          "value": 76
+        },
+        {
+          "rank": 7,
+          "name": "خوسيه كاييخون",
+          "value": 73
+        },
+        {
+          "rank": 7,
+          "name": "بيانيتش",
+          "value": 73
+        },
+        {
+          "rank": 8,
+          "name": "دريس ميرتنز",
+          "value": 70
+        },
+        {
+          "rank": 9,
+          "name": "إنسيني",
+          "value": 66
+        },
+        {
+          "rank": 10,
+          "name": "بوليتانو",
+          "value": 65
+        },
+        {
+          "rank": 10,
+          "name": "دوفان زاباتا",
+          "value": 65
+        },
+        {
+          "rank": 10,
+          "name": "إيليتش",
+          "value": 65
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2018,
+      "difficulty": "EASY",
+      "fameSum": 783,
+      "top": [
+        {
+          "rank": 1,
+          "name": "حكيم زياش",
+          "value": 44
+        },
+        {
+          "rank": 2,
+          "name": "توني كروس",
+          "value": 29
+        },
+        {
+          "rank": 2,
+          "name": "كريستيان إريكسن",
+          "value": 29
+        },
+        {
+          "rank": 3,
+          "name": "ليونيل ميسي",
+          "value": 28
+        },
+        {
+          "rank": 4,
+          "name": "رحيم ستيرلينج",
+          "value": 26
+        },
+        {
+          "rank": 4,
+          "name": "ممفيس ديباي",
+          "value": 26
+        },
+        {
+          "rank": 5,
+          "name": "كيران تريبير",
+          "value": 25
+        },
+        {
+          "rank": 6,
+          "name": "جوردي ألبا",
+          "value": 23
+        },
+        {
+          "rank": 6,
+          "name": "دوني فان دي بيك",
+          "value": 23
+        },
+        {
+          "rank": 6,
+          "name": "هيرفينج لوزانو",
+          "value": 23
+        },
+        {
+          "rank": 6,
+          "name": "شوني",
+          "value": 23
+        },
+        {
+          "rank": 7,
+          "name": "لويس سواريز",
+          "value": 22
+        },
+        {
+          "rank": 7,
+          "name": "ترينت ألكسندر أرنولد",
+          "value": 22
+        },
+        {
+          "rank": 7,
+          "name": "أليكس تيليس",
+          "value": 22
+        },
+        {
+          "rank": 7,
+          "name": "بيانيتش",
+          "value": 22
+        },
+        {
+          "rank": 8,
+          "name": "أنخيل دي ماريا",
+          "value": 21
+        },
+        {
+          "rank": 8,
+          "name": "نيمار",
+          "value": 21
+        },
+        {
+          "rank": 9,
+          "name": "جيمس ميلنر",
+          "value": 20
+        },
+        {
+          "rank": 10,
+          "name": "دافيد سيلفا",
+          "value": 19
+        },
+        {
+          "rank": 10,
+          "name": "بيليجريني",
+          "value": 19
+        },
+        {
+          "rank": 10,
+          "name": "أليكسي ميرانتشوك",
+          "value": 19
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2017,
+      "difficulty": "EASY",
+      "fameSum": 738.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "خاميس رودريجيز",
+          "value": 52
+        },
+        {
+          "rank": 2,
+          "name": "بانيغا",
+          "value": 39
+        },
+        {
+          "rank": 3,
+          "name": "محمد صلاح",
+          "value": 35
+        },
+        {
+          "rank": 4,
+          "name": "برناردو سيلفا",
+          "value": 34
+        },
+        {
+          "rank": 5,
+          "name": "كيليان مبابي",
+          "value": 28
+        },
+        {
+          "rank": 5,
+          "name": "روبرتو فيرمينو",
+          "value": 28
+        },
+        {
+          "rank": 6,
+          "name": "سيسك فابريجاس",
+          "value": 27
+        },
+        {
+          "rank": 6,
+          "name": "جوشوا كيميتش",
+          "value": 27
+        },
+        {
+          "rank": 7,
+          "name": "توني كروس",
+          "value": 25
+        },
+        {
+          "rank": 7,
+          "name": "إدين هازارد",
+          "value": 25
+        },
+        {
+          "rank": 7,
+          "name": "جيمس ميلنر",
+          "value": 25
+        },
+        {
+          "rank": 8,
+          "name": "نيمار",
+          "value": 24
+        },
+        {
+          "rank": 9,
+          "name": "باولو ديبالا",
+          "value": 21
+        },
+        {
+          "rank": 10,
+          "name": "مارسيلو",
+          "value": 20
+        },
+        {
+          "rank": 10,
+          "name": "راديا ناينجولان",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2016,
+      "difficulty": "EASY",
+      "fameSum": 675.8,
+      "top": [
+        {
+          "rank": 1,
+          "name": "كريستيان إريكسن",
+          "value": 114
+        },
+        {
+          "rank": 2,
+          "name": "كيفن دي بروين",
+          "value": 106
+        },
+        {
+          "rank": 3,
+          "name": "مسعود أوزيل",
+          "value": 102
+        },
+        {
+          "rank": 4,
+          "name": "روبرت سنودجراس",
+          "value": 96
+        },
+        {
+          "rank": 5,
+          "name": "إدين هازارد",
+          "value": 91
+        },
+        {
+          "rank": 6,
+          "name": "دافيد سيلفا",
+          "value": 85
+        },
+        {
+          "rank": 6,
+          "name": "روس باركلي",
+          "value": 85
+        },
+        {
+          "rank": 7,
+          "name": "أليكسيس سانشيز",
+          "value": 83
+        },
+        {
+          "rank": 8,
+          "name": "جيلفي سيجوردسون",
+          "value": 82
+        },
+        {
+          "rank": 9,
+          "name": "روبرتو فيرمينو",
+          "value": 77
+        },
+        {
+          "rank": 10,
+          "name": "ديميتري باييت",
+          "value": 74
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2016,
+      "difficulty": "MEDIUM",
+      "fameSum": 599.7,
+      "top": [
+        {
+          "rank": 1,
+          "name": "برونو فيرنانديز",
+          "value": 110
+        },
+        {
+          "rank": 2,
+          "name": "جوميز",
+          "value": 94
+        },
+        {
+          "rank": 3,
+          "name": "أنطونيو كاندريفا",
+          "value": 83
+        },
+        {
+          "rank": 4,
+          "name": "هامشيك",
+          "value": 80
+        },
+        {
+          "rank": 5,
+          "name": "خوسيه كاييخون",
+          "value": 78
+        },
+        {
+          "rank": 5,
+          "name": "فيليبي أندرسون",
+          "value": 78
+        },
+        {
+          "rank": 6,
+          "name": "محمد صلاح",
+          "value": 75
+        },
+        {
+          "rank": 6,
+          "name": "بيرسا",
+          "value": 75
+        },
+        {
+          "rank": 7,
+          "name": "فالتشينيلي",
+          "value": 74
+        },
+        {
+          "rank": 8,
+          "name": "تاختسيديس",
+          "value": 72
+        },
+        {
+          "rank": 9,
+          "name": "راديا ناينجولان",
+          "value": 69
+        },
+        {
+          "rank": 10,
+          "name": "إيسلا",
+          "value": 68
+        }
+      ]
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2016,
+      "difficulty": "EASY",
+      "fameSum": 738.8,
+      "top": [
+        {
+          "rank": 1,
+          "name": "خاميس رودريجيز",
+          "value": 16
+        },
+        {
+          "rank": 2,
+          "name": "أليكسيس سانشيز",
+          "value": 15
+        },
+        {
+          "rank": 3,
+          "name": "ليونيل ميسي",
+          "value": 13
+        },
+        {
+          "rank": 3,
+          "name": "أنطونيو فالنسيا",
+          "value": 13
+        },
+        {
+          "rank": 4,
+          "name": "هيكتور هيريرا",
+          "value": 11
+        },
+        {
+          "rank": 5,
+          "name": "ماركوس روخو",
+          "value": 10
+        },
+        {
+          "rank": 5,
+          "name": "لايون",
+          "value": 10
+        },
+        {
+          "rank": 6,
+          "name": "خوان كوادرادو",
+          "value": 9
+        },
+        {
+          "rank": 7,
+          "name": "أرتورو فيدال",
+          "value": 8
+        },
+        {
+          "rank": 7,
+          "name": "مونتيرو",
+          "value": 8
+        },
+        {
+          "rank": 8,
+          "name": "أنخيل دي ماريا",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "داني ألفيش",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "فيليبي لويس",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "نيكولاس غايتان",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "أرانغيز",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "كورونا",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "بيدويا",
+          "value": 6
+        },
+        {
+          "rank": 8,
+          "name": "توريس",
+          "value": 6
+        },
+        {
+          "rank": 9,
+          "name": "كريستيان زاباتا",
+          "value": 5
+        },
+        {
+          "rank": 9,
+          "name": "أرياس",
+          "value": 5
+        },
+        {
+          "rank": 9,
+          "name": "توماس رينكون",
+          "value": 5
+        },
+        {
+          "rank": 9,
+          "name": "سالومون روندون",
+          "value": 5
+        },
+        {
+          "rank": 10,
+          "name": "سيرجيو أجويرو",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "غونزالو هيغواين",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "ويليان",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "بانيغا",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "خافيير هيرنانديز",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "رييس",
+          "value": 4
+        },
+        {
+          "rank": 10,
+          "name": "هيرفينج لوزانو",
+          "value": 4
+        }
+      ]
+    },
+    {
       "type": "TACKLES",
       "leagueId": 1,
       "competition": "كأس العالم",
@@ -17885,7 +19945,7 @@
       "leagueId": 2,
       "competition": "دوري أبطال أوروبا",
       "season": 2019,
-      "difficulty": "EASY",
+      "difficulty": "MEDIUM",
       "fameSum": 645.3,
       "top": [
         {
@@ -18558,7 +20618,7 @@
     {
       "type": "TACKLES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2020,
       "difficulty": "HARD",
       "fameSum": 484,
@@ -18653,7 +20713,7 @@
     {
       "type": "TACKLES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2024,
       "difficulty": "EASY",
       "fameSum": 654.9,
@@ -19230,7 +21290,7 @@
       "leagueId": 39,
       "competition": "الدوري الإنجليزي",
       "season": 2017,
-      "difficulty": "MEDIUM",
+      "difficulty": "HARD",
       "fameSum": 561.1,
       "top": [
         {
@@ -21965,7 +24025,7 @@
       "leagueId": 140,
       "competition": "الدوري الإسباني",
       "season": 2015,
-      "difficulty": "MEDIUM",
+      "difficulty": "HARD",
       "fameSum": 562.2,
       "top": [
         {
@@ -23083,7 +25143,7 @@
     {
       "type": "ACCURATE_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2020,
       "difficulty": "MEDIUM",
       "fameSum": 577.2,
@@ -23559,6 +25619,846 @@
           "value": 1252.23
         }
       ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2022,
+      "difficulty": "EASY",
+      "fameSum": 699.7,
+      "top": [
+        {
+          "rank": 1,
+          "name": "رودري",
+          "value": 636.12
+        },
+        {
+          "rank": 2,
+          "name": "نيكولاس أوتاميندي",
+          "value": 529
+        },
+        {
+          "rank": 3,
+          "name": "ماركو بروزوفيتش",
+          "value": 462
+        },
+        {
+          "rank": 4,
+          "name": "يوسكو جفارديول",
+          "value": 458.35
+        },
+        {
+          "rank": 5,
+          "name": "رودريجو دي بول",
+          "value": 458.15
+        },
+        {
+          "rank": 6,
+          "name": "لوكا مودريتش",
+          "value": 454.96
+        },
+        {
+          "rank": 7,
+          "name": "جون ستونز",
+          "value": 430.35
+        },
+        {
+          "rank": 8,
+          "name": "أوريليان تشواميني",
+          "value": 421.2
+        },
+        {
+          "rank": 9,
+          "name": "ماتيو كوفاسيتش",
+          "value": 410.4
+        },
+        {
+          "rank": 10,
+          "name": "إيمريك لابورت",
+          "value": 408.9
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2016,
+      "difficulty": "EASY",
+      "fameSum": 721.9,
+      "top": [
+        {
+          "rank": 1,
+          "name": "داني ألفيش",
+          "value": 1064.68
+        },
+        {
+          "rank": 2,
+          "name": "سمير نصري",
+          "value": 739.2
+        },
+        {
+          "rank": 3,
+          "name": "توني كروس",
+          "value": 736.92
+        },
+        {
+          "rank": 4,
+          "name": "مارك بارترا",
+          "value": 713.8
+        },
+        {
+          "rank": 5,
+          "name": "فايجل",
+          "value": 658.84
+        },
+        {
+          "rank": 6,
+          "name": "تياجو ألكانتارا",
+          "value": 657.02
+        },
+        {
+          "rank": 7,
+          "name": "كوكي",
+          "value": 644.91
+        },
+        {
+          "rank": 8,
+          "name": "جابرييل فيرنانديز أريناس",
+          "value": 592.62
+        },
+        {
+          "rank": 9,
+          "name": "لوكا مودريتش",
+          "value": 579.92
+        },
+        {
+          "rank": 10,
+          "name": "غرانيت تشاكا",
+          "value": 568.98
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2017,
+      "difficulty": "EASY",
+      "fameSum": 714.2,
+      "top": [
+        {
+          "rank": 1,
+          "name": "خاميس رودريجيز",
+          "value": 964.8
+        },
+        {
+          "rank": 2,
+          "name": "فيديريكو فاتسيو",
+          "value": 843.2
+        },
+        {
+          "rank": 3,
+          "name": "بانيغا",
+          "value": 794.64
+        },
+        {
+          "rank": 4,
+          "name": "كايل ووكر",
+          "value": 782.6
+        },
+        {
+          "rank": 5,
+          "name": "توني كروس",
+          "value": 747.96
+        },
+        {
+          "rank": 6,
+          "name": "سيرجيو بوسكيتس",
+          "value": 691.84
+        },
+        {
+          "rank": 7,
+          "name": "نيكولاس أوتاميندي",
+          "value": 672.49
+        },
+        {
+          "rank": 8,
+          "name": "ستيفن نزونزي",
+          "value": 668.85
+        },
+        {
+          "rank": 9,
+          "name": "إيفان راكيتيتش",
+          "value": 604.31
+        },
+        {
+          "rank": 10,
+          "name": "فيراتي",
+          "value": 602.1
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2018,
+      "difficulty": "EASY",
+      "fameSum": 698.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "فرينكي دي يونج",
+          "value": 1016.1
+        },
+        {
+          "rank": 2,
+          "name": "سيرجيو بوسكيتس",
+          "value": 830.76
+        },
+        {
+          "rank": 3,
+          "name": "إيفان راكيتيتش",
+          "value": 743.15
+        },
+        {
+          "rank": 4,
+          "name": "شوني",
+          "value": 731.67
+        },
+        {
+          "rank": 5,
+          "name": "دالي بليند",
+          "value": 720.78
+        },
+        {
+          "rank": 6,
+          "name": "إيمريك لابورت",
+          "value": 689.78
+        },
+        {
+          "rank": 7,
+          "name": "جوردي ألبا",
+          "value": 669.94
+        },
+        {
+          "rank": 8,
+          "name": "ماتياس دي ليخت",
+          "value": 646.85
+        },
+        {
+          "rank": 9,
+          "name": "توني كروس",
+          "value": 570.09
+        },
+        {
+          "rank": 10,
+          "name": "فيتسل",
+          "value": 554.6
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2019,
+      "difficulty": "EASY",
+      "fameSum": 745.7,
+      "top": [
+        {
+          "rank": 1,
+          "name": "تياجو ألكانتارا",
+          "value": 681.3
+        },
+        {
+          "rank": 2,
+          "name": "إلكاي جوندوجان",
+          "value": 613.8
+        },
+        {
+          "rank": 3,
+          "name": "رودري",
+          "value": 581.44
+        },
+        {
+          "rank": 4,
+          "name": "جوشوا كيميتش",
+          "value": 568.98
+        },
+        {
+          "rank": 5,
+          "name": "فيراتي",
+          "value": 511.42
+        },
+        {
+          "rank": 6,
+          "name": "تياجو سيلفا",
+          "value": 506.7
+        },
+        {
+          "rank": 7,
+          "name": "بريسنل كيمبيمبي",
+          "value": 488.7
+        },
+        {
+          "rank": 8,
+          "name": "فان دايك",
+          "value": 482.24
+        },
+        {
+          "rank": 9,
+          "name": "ليوناردو بونوتشي",
+          "value": 479.6
+        },
+        {
+          "rank": 10,
+          "name": "دالي بليند",
+          "value": 474.78
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2025,
+      "difficulty": "MEDIUM",
+      "fameSum": 573.9,
+      "top": [
+        {
+          "rank": 1,
+          "name": "فيتينيا",
+          "value": 1583.79
+        },
+        {
+          "rank": 2,
+          "name": "بافلوفيتش",
+          "value": 1102
+        },
+        {
+          "rank": 3,
+          "name": "جوشوا كيميتش",
+          "value": 1006.2
+        },
+        {
+          "rank": 4,
+          "name": "باتشو",
+          "value": 946.4
+        },
+        {
+          "rank": 5,
+          "name": "ماركينيوس",
+          "value": 888.72
+        },
+        {
+          "rank": 6,
+          "name": "أليكس غارسيا",
+          "value": 877.24
+        },
+        {
+          "rank": 7,
+          "name": "نونو مينديز",
+          "value": 865.92
+        },
+        {
+          "rank": 8,
+          "name": "أشرف حكيمي",
+          "value": 782.31
+        },
+        {
+          "rank": 9,
+          "name": "يوناثان تاه",
+          "value": 766.65
+        },
+        {
+          "rank": 10,
+          "name": "وارن زائير إيمري",
+          "value": 744.38
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2020,
+      "difficulty": "EASY",
+      "fameSum": 663.3,
+      "top": [
+        {
+          "rank": 1,
+          "name": "توبي ألدرفيريلد",
+          "value": 968.88
+        },
+        {
+          "rank": 2,
+          "name": "سيرجيو راموس",
+          "value": 691.92
+        },
+        {
+          "rank": 3,
+          "name": "هامشيك",
+          "value": 654.48
+        },
+        {
+          "rank": 4,
+          "name": "غرانيت تشاكا",
+          "value": 649.06
+        },
+        {
+          "rank": 5,
+          "name": "ميلان شكرينيار",
+          "value": 631.62
+        },
+        {
+          "rank": 6,
+          "name": "دالي بليند",
+          "value": 619.18
+        },
+        {
+          "rank": 7,
+          "name": "ميريح ديميرال",
+          "value": 594
+        },
+        {
+          "rank": 8,
+          "name": "إلكاي جوندوجان",
+          "value": 576.3
+        },
+        {
+          "rank": 9,
+          "name": "بيير إيميل هويبيرج",
+          "value": 519.03
+        },
+        {
+          "rank": 10,
+          "name": "فان دايك",
+          "value": 515.06
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2016,
+      "difficulty": "MEDIUM",
+      "fameSum": 571.2,
+      "top": [
+        {
+          "rank": 1,
+          "name": "بانيغا",
+          "value": 342.65
+        },
+        {
+          "rank": 2,
+          "name": "خارا",
+          "value": 331.5
+        },
+        {
+          "rank": 3,
+          "name": "جاري ميديل",
+          "value": 313.28
+        },
+        {
+          "rank": 4,
+          "name": "نيكولاس أوتاميندي",
+          "value": 296.7
+        },
+        {
+          "rank": 5,
+          "name": "خافيير ماسكيرانو",
+          "value": 294.93
+        },
+        {
+          "rank": 6,
+          "name": "أرانغيز",
+          "value": 275.79
+        },
+        {
+          "rank": 7,
+          "name": "روجيليو فونيس موري",
+          "value": 225.99
+        },
+        {
+          "rank": 8,
+          "name": "إيسلا",
+          "value": 210.82
+        },
+        {
+          "rank": 9,
+          "name": "أرتورو فيدال",
+          "value": 207.9
+        },
+        {
+          "rank": 10,
+          "name": "دياز",
+          "value": 184.5
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2019,
+      "difficulty": "EASY",
+      "fameSum": 706.5,
+      "top": [
+        {
+          "rank": 1,
+          "name": "ماركينيوس",
+          "value": 337.64
+        },
+        {
+          "rank": 2,
+          "name": "تياجو سيلفا",
+          "value": 328.06
+        },
+        {
+          "rank": 3,
+          "name": "داني ألفيش",
+          "value": 321.9
+        },
+        {
+          "rank": 4,
+          "name": "ليوناردو باريديس",
+          "value": 304.38
+        },
+        {
+          "rank": 5,
+          "name": "أرثر",
+          "value": 299.2
+        },
+        {
+          "rank": 6,
+          "name": "نيكولاس أوتاميندي",
+          "value": 225.12
+        },
+        {
+          "rank": 7,
+          "name": "جاري ميديل",
+          "value": 204.7
+        },
+        {
+          "rank": 8,
+          "name": "كاسيميرو",
+          "value": 198.45
+        },
+        {
+          "rank": 9,
+          "name": "إريك بولجار",
+          "value": 191.06
+        },
+        {
+          "rank": 10,
+          "name": "فيليب كوتينيو",
+          "value": 187
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2025,
+      "difficulty": "HARD",
+      "fameSum": 526.7,
+      "top": [
+        {
+          "rank": 1,
+          "name": "فان دايك",
+          "value": 2480.43
+        },
+        {
+          "rank": 2,
+          "name": "لويس دانك",
+          "value": 2285.28
+        },
+        {
+          "rank": 3,
+          "name": "يان فان هيكه",
+          "value": 2190.66
+        },
+        {
+          "rank": 4,
+          "name": "تريفو تشالوباه",
+          "value": 2120.4
+        },
+        {
+          "rank": 5,
+          "name": "مارك غيهي",
+          "value": 2059.46
+        },
+        {
+          "rank": 6,
+          "name": "أندرسون",
+          "value": 2025.55
+        },
+        {
+          "rank": 7,
+          "name": "إزري كونسا",
+          "value": 1988.35
+        },
+        {
+          "rank": 8,
+          "name": "برناردو سيلفا",
+          "value": 1976.4
+        },
+        {
+          "rank": 9,
+          "name": "أندرسن",
+          "value": 1956.5
+        },
+        {
+          "rank": 10,
+          "name": "وليام صليبا",
+          "value": 1935.68
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2025,
+      "difficulty": "HARD",
+      "fameSum": 476.4,
+      "top": [
+        {
+          "rank": 1,
+          "name": "فيتينيا",
+          "value": 2550.99
+        },
+        {
+          "rank": 2,
+          "name": "زابارني",
+          "value": 2079.28
+        },
+        {
+          "rank": 3,
+          "name": "بيير إيميل هويبيرج",
+          "value": 1984.7
+        },
+        {
+          "rank": 4,
+          "name": "وارن زائير إيمري",
+          "value": 1914.87
+        },
+        {
+          "rank": 5,
+          "name": "نياكاتي",
+          "value": 1856.54
+        },
+        {
+          "rank": 6,
+          "name": "رونجييه",
+          "value": 1817.38
+        },
+        {
+          "rank": 7,
+          "name": "سار",
+          "value": 1755.6
+        },
+        {
+          "rank": 8,
+          "name": "ماندي",
+          "value": 1730.82
+        },
+        {
+          "rank": 9,
+          "name": "لوفور",
+          "value": 1661.52
+        },
+        {
+          "rank": 10,
+          "name": "كلينتون ماتا",
+          "value": 1656.9
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2025,
+      "difficulty": "HARD",
+      "fameSum": 545.6,
+      "top": [
+        {
+          "rank": 1,
+          "name": "أليكس غارسيا",
+          "value": 2792.2
+        },
+        {
+          "rank": 2,
+          "name": "جوشوا كيميتش",
+          "value": 2438
+        },
+        {
+          "rank": 3,
+          "name": "إدمون تابسوبا",
+          "value": 2168.1
+        },
+        {
+          "rank": 4,
+          "name": "أنطون",
+          "value": 2104.85
+        },
+        {
+          "rank": 5,
+          "name": "شتيلر",
+          "value": 2049.52
+        },
+        {
+          "rank": 6,
+          "name": "أوربان",
+          "value": 2040.77
+        },
+        {
+          "rank": 7,
+          "name": "روبين كوخ",
+          "value": 1946.49
+        },
+        {
+          "rank": 8,
+          "name": "يوناثان تاه",
+          "value": 1821.12
+        },
+        {
+          "rank": 9,
+          "name": "نيكو شلوتربيك",
+          "value": 1746.8
+        },
+        {
+          "rank": 10,
+          "name": "أندريش",
+          "value": 1673.1
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2025,
+      "difficulty": "MEDIUM",
+      "fameSum": 575.5,
+      "top": [
+        {
+          "rank": 1,
+          "name": "مانويل لوكاتيلي",
+          "value": 2468.4
+        },
+        {
+          "rank": 2,
+          "name": "لوكا مودريتش",
+          "value": 1997.1
+        },
+        {
+          "rank": 3,
+          "name": "بيروني",
+          "value": 1979.25
+        },
+        {
+          "rank": 4,
+          "name": "مانويل أكانجي",
+          "value": 1939.36
+        },
+        {
+          "rank": 5,
+          "name": "بيير كالولو",
+          "value": 1933.36
+        },
+        {
+          "rank": 6,
+          "name": "خاكوبو رامون نافيروس",
+          "value": 1930.11
+        },
+        {
+          "rank": 7,
+          "name": "أليسيو رومانيولي",
+          "value": 1860.93
+        },
+        {
+          "rank": 8,
+          "name": "أوسكار سوليه",
+          "value": 1846.75
+        },
+        {
+          "rank": 9,
+          "name": "لويد كيلي",
+          "value": 1789.04
+        },
+        {
+          "rank": 10,
+          "name": "دا كونها",
+          "value": 1782
+        }
+      ]
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2025,
+      "difficulty": "MEDIUM",
+      "fameSum": 587.5,
+      "top": [
+        {
+          "rank": 1,
+          "name": "باو كوبارسي باريديس",
+          "value": 2604.74
+        },
+        {
+          "rank": 2,
+          "name": "إريك غارسيا",
+          "value": 2161.08
+        },
+        {
+          "rank": 3,
+          "name": "ماركوس ألونسو",
+          "value": 2141.1
+        },
+        {
+          "rank": 4,
+          "name": "دالي بليند",
+          "value": 1875.23
+        },
+        {
+          "rank": 5,
+          "name": "بيدري",
+          "value": 1870.05
+        },
+        {
+          "rank": 6,
+          "name": "لوجون",
+          "value": 1852.23
+        },
+        {
+          "rank": 7,
+          "name": "جيرارد مارتين",
+          "value": 1771.77
+        },
+        {
+          "rank": 8,
+          "name": "جول كوندي",
+          "value": 1749.02
+        },
+        {
+          "rank": 9,
+          "name": "أليكس فيباس",
+          "value": 1743.51
+        },
+        {
+          "rank": 10,
+          "name": "أوريليان تشواميني",
+          "value": 1740.83
+        }
+      ]
     }
   ],
   "rejected": [
@@ -23625,7 +26525,7 @@
     {
       "type": "GOAL_SCORERS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2024,
       "reasons": [
         "rank 4 is missing (need 10 distinct values, ranks 1..10)",
@@ -23653,7 +26553,7 @@
     {
       "type": "GOAL_SCORERS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2020,
       "reasons": [
         "regulars fill 87% < 95%"
@@ -23841,7 +26741,7 @@
     {
       "type": "GOAL_SCORERS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2016,
       "reasons": [
         "rank 5 is missing (need 10 distinct values, ranks 1..10)",
@@ -24058,7 +26958,7 @@
     {
       "type": "GOAL_SCORERS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2012,
       "reasons": [
         "only 12 qualifiers < 20"
@@ -24253,7 +27153,7 @@
     {
       "type": "ASSISTS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2024,
       "reasons": [
         "rank 5 is missing (need 10 distinct values, ranks 1..10)",
@@ -24318,7 +27218,7 @@
     {
       "type": "ASSISTS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2020,
       "reasons": [
         "regulars fill 60% < 95%"
@@ -24682,7 +27582,7 @@
     {
       "type": "ASSISTS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2016,
       "reasons": [
         "regulars fill 3% < 95%",
@@ -25278,7 +28178,7 @@
     {
       "type": "ASSISTS",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2012,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -25403,7 +28303,7 @@
     {
       "type": "KEY_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2012,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -25416,7 +28316,7 @@
     {
       "type": "KEY_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2016,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -25808,6 +28708,987 @@
       "qualifiers": 171
     },
     {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 453
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 449
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 402
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 409
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 473
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 456
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2025,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 413
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 446
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 240
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 400
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 426
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 406
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 293
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 414
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 463
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 440
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 415
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2025,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 348
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 445
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2025,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 400
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 418
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 379
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 441
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 490
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 434
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 439
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 380
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 401
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 477
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2025,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 401
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 387
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 498
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 414
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 422
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 458
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 37% < 95%"
+      ],
+      "fillPct": 37,
+      "qualifiers": 258
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 412
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 50% < 95%"
+      ],
+      "fillPct": 50,
+      "qualifiers": 60
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 391
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 77% < 95%"
+      ],
+      "fillPct": 77,
+      "qualifiers": 94
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 452
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 456
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 87% < 95%"
+      ],
+      "fillPct": 87,
+      "qualifiers": 392
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 90% < 95%"
+      ],
+      "fillPct": 90,
+      "qualifiers": 448
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 429
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 473
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 4 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 4
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 470
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 83% < 95%"
+      ],
+      "fillPct": 83,
+      "qualifiers": 420
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 71% < 95%",
+        "only 9 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 71,
+      "qualifiers": 9
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 93% < 95%"
+      ],
+      "fillPct": 93,
+      "qualifiers": 435
+    },
+    {
+      "type": "KEY_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
       "type": "TACKLES",
       "leagueId": 1,
       "competition": "كأس العالم",
@@ -25934,7 +29815,7 @@
     {
       "type": "TACKLES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2012,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -25947,7 +29828,7 @@
     {
       "type": "TACKLES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2016,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -26545,7 +30426,7 @@
     {
       "type": "ACCURATE_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2012,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -26558,7 +30439,7 @@
     {
       "type": "ACCURATE_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2016,
       "reasons": [
         "regulars fill 0% < 95%",
@@ -26571,7 +30452,7 @@
     {
       "type": "ACCURATE_PASSES",
       "leagueId": 4,
-      "competition": "كأس أوروبا",
+      "competition": "بطولة أمم أوروبا",
       "season": 2024,
       "reasons": [
         "regulars fill 47% < 95%"
@@ -27504,6 +31385,1107 @@
       ],
       "fillPct": 0,
       "qualifiers": 19
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 1,
+      "competition": "كأس العالم",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 17% < 95%"
+      ],
+      "fillPct": 17,
+      "qualifiers": 100
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 80% < 95%"
+      ],
+      "fillPct": 80,
+      "qualifiers": 356
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 40% < 95%"
+      ],
+      "fillPct": 40,
+      "qualifiers": 173
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 124
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 33% < 95%"
+      ],
+      "fillPct": 33,
+      "qualifiers": 137
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 131
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 2,
+      "competition": "دوري أبطال أوروبا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 33% < 95%"
+      ],
+      "fillPct": 33,
+      "qualifiers": 133
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 4,
+      "competition": "بطولة أمم أوروبا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 47% < 95%"
+      ],
+      "fillPct": 47,
+      "qualifiers": 85
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 71% < 95%",
+        "only 19 qualifiers < 20"
+      ],
+      "fillPct": 71,
+      "qualifiers": 19
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 9,
+      "competition": "كوبا أمريكا",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 22
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 116
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 57% < 95%"
+      ],
+      "fillPct": 57,
+      "qualifiers": 274
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 47% < 95%"
+      ],
+      "fillPct": 47,
+      "qualifiers": 240
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 30% < 95%"
+      ],
+      "fillPct": 30,
+      "qualifiers": 197
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 171
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 37% < 95%"
+      ],
+      "fillPct": 37,
+      "qualifiers": 152
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 37% < 95%"
+      ],
+      "fillPct": 37,
+      "qualifiers": 100
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 74
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 23% < 95%"
+      ],
+      "fillPct": 23,
+      "qualifiers": 74
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 13% < 95%"
+      ],
+      "fillPct": 13,
+      "qualifiers": 76
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 39,
+      "competition": "الدوري الإنجليزي",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 17% < 95%"
+      ],
+      "fillPct": 17,
+      "qualifiers": 71
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 50% < 95%"
+      ],
+      "fillPct": 50,
+      "qualifiers": 310
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 236
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 210
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 30% < 95%"
+      ],
+      "fillPct": 30,
+      "qualifiers": 164
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 30% < 95%"
+      ],
+      "fillPct": 30,
+      "qualifiers": 154
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 7% < 95%"
+      ],
+      "fillPct": 7,
+      "qualifiers": 81
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 74
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 10% < 95%"
+      ],
+      "fillPct": 10,
+      "qualifiers": 66
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 68
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 61,
+      "competition": "الدوري الفرنسي",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 13% < 95%"
+      ],
+      "fillPct": 13,
+      "qualifiers": 77
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 224
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 33% < 95%"
+      ],
+      "fillPct": 33,
+      "qualifiers": 205
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 177
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 23% < 95%"
+      ],
+      "fillPct": 23,
+      "qualifiers": 166
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 140
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 23% < 95%"
+      ],
+      "fillPct": 23,
+      "qualifiers": 64
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 13% < 95%"
+      ],
+      "fillPct": 13,
+      "qualifiers": 45
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 13% < 95%"
+      ],
+      "fillPct": 13,
+      "qualifiers": 48
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 17% < 95%"
+      ],
+      "fillPct": 17,
+      "qualifiers": 63
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 78,
+      "competition": "الدوري الألماني",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 7% < 95%"
+      ],
+      "fillPct": 7,
+      "qualifiers": 59
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 63% < 95%"
+      ],
+      "fillPct": 63,
+      "qualifiers": 298
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 50% < 95%"
+      ],
+      "fillPct": 50,
+      "qualifiers": 258
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 47% < 95%"
+      ],
+      "fillPct": 47,
+      "qualifiers": 232
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 195
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 169
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 7% < 95%"
+      ],
+      "fillPct": 7,
+      "qualifiers": 62
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 10% < 95%"
+      ],
+      "fillPct": 10,
+      "qualifiers": 43
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 0% < 95%"
+      ],
+      "fillPct": 0,
+      "qualifiers": 43
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 17% < 95%"
+      ],
+      "fillPct": 17,
+      "qualifiers": 56
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 135,
+      "competition": "الدوري الإيطالي",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 10% < 95%"
+      ],
+      "fillPct": 10,
+      "qualifiers": 57
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2010,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2011,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 2 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 2
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2012,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2013,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2014,
+      "reasons": [
+        "regulars fill 0% < 95%",
+        "only 0 qualifiers < 20",
+        "fewer than 10 players with a positive value"
+      ],
+      "fillPct": 0,
+      "qualifiers": 0
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2015,
+      "reasons": [
+        "regulars fill 43% < 95%"
+      ],
+      "fillPct": 43,
+      "qualifiers": 253
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2016,
+      "reasons": [
+        "regulars fill 30% < 95%"
+      ],
+      "fillPct": 30,
+      "qualifiers": 220
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2017,
+      "reasons": [
+        "regulars fill 33% < 95%"
+      ],
+      "fillPct": 33,
+      "qualifiers": 200
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2018,
+      "reasons": [
+        "regulars fill 27% < 95%"
+      ],
+      "fillPct": 27,
+      "qualifiers": 168
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2019,
+      "reasons": [
+        "regulars fill 23% < 95%"
+      ],
+      "fillPct": 23,
+      "qualifiers": 132
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2020,
+      "reasons": [
+        "regulars fill 20% < 95%"
+      ],
+      "fillPct": 20,
+      "qualifiers": 61
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2021,
+      "reasons": [
+        "regulars fill 13% < 95%"
+      ],
+      "fillPct": 13,
+      "qualifiers": 38
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2022,
+      "reasons": [
+        "regulars fill 7% < 95%"
+      ],
+      "fillPct": 7,
+      "qualifiers": 46
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2023,
+      "reasons": [
+        "regulars fill 7% < 95%"
+      ],
+      "fillPct": 7,
+      "qualifiers": 53
+    },
+    {
+      "type": "ACCURATE_PASSES_ALL",
+      "leagueId": 140,
+      "competition": "الدوري الإسباني",
+      "season": 2024,
+      "reasons": [
+        "regulars fill 3% < 95%"
+      ],
+      "fillPct": 3,
+      "qualifiers": 59
     }
   ]
 }
