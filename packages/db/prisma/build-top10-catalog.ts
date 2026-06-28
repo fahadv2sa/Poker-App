@@ -20,11 +20,14 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { prisma, Prisma } from "../src/index";
 import {
-  buildRanking,
+  buildRankingWithExcluded,
   classifyDifficulty,
   computeThresholds,
   evaluateGate,
+  validateRankedList,
   type CandidateRow,
+  type ListPlayerMeta,
+  type RankedPlayer,
 } from "@fb/top-10-engine";
 import {
   TT_ACTIVE_QUESTION_TYPES,
@@ -58,6 +61,7 @@ interface AggRow {
   fame: number;
   name: string;
   name_ar: string | null;
+  active: boolean;
 }
 
 const leagueName = (id: number) =>
@@ -68,7 +72,10 @@ interface Admitted {
   leagueId: number;
   season: number;
   fameSum: number;
-  players: ReturnType<typeof buildRanking>;
+  players: RankedPlayer[];
+  /** Retained so the pre-write assertion can RE-validate the exact shipped list. */
+  eleventhValue: number | null;
+  meta: Map<string, ListPlayerMeta>;
 }
 interface Rejected {
   type: TtQuestionType;
@@ -89,14 +96,14 @@ async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
            ${valueExpr} AS value,
            SUM(s.games_appearances) AS apps,
            COALESCE(p.fame_score, 0) AS fame,
-           p.name, p.name_ar
+           p.name, p.name_ar, p.active
     FROM football.player_season_stats s
     JOIN football.players p ON p.id = s.player_id
     JOIN football.positions pos ON pos.id = p.position_id
     WHERE s.league_id IN (${leagueList}) AND s.league_id IS NOT NULL
       AND s.season BETWEEN ${TT_GATE.seasonMin} AND ${TT_GATE.seasonMax}
       ${posFilter}
-    GROUP BY s.league_id, s.season, s.player_id, p.fame_score, p.name, p.name_ar
+    GROUP BY s.league_id, s.season, s.player_id, p.fame_score, p.name, p.name_ar, p.active
   `);
 }
 
@@ -133,12 +140,43 @@ async function main() {
         rejected.push({ type, leagueId, season, reasons: gate.reasons, metrics: gate.metrics });
         continue;
       }
-      const players = buildRanking(candidates);
+      // INTEGRITY GATE (the lasting fix): a list that passes completeness can still
+      // be unsafe — most importantly a boundary tie at rank 10/11, which would mark
+      // a correct answer "wrong" and kill the game. Reject any list that fails the
+      // pure validator; only flawless lists are ever admitted.
+      const { list: players, eleventhValue } = buildRankingWithExcluded(candidates);
+      const meta = new Map<string, ListPlayerMeta>(
+        gRows.map((r) => [r.player_id, { active: r.active, nameAr: r.name_ar }]),
+      );
+      const violations = validateRankedList({ list: players, eleventhValue, meta });
+      if (violations.length > 0) {
+        rejected.push({ type, leagueId, season, reasons: violations, metrics: gate.metrics });
+        continue;
+      }
       const fameSum = players.reduce((a, p) => a + p.fame, 0);
-      admitted.push({ type, leagueId, season, fameSum, players });
+      admitted.push({ type, leagueId, season, fameSum, players, eleventhValue, meta });
       admittedForType++;
     }
     console.log(`  ${type}: ${admittedForType} admitted / ${groups.size} candidate (comp,season)`);
+  }
+
+  // Rejection-reason tally (so a build clearly reports WHY lists were dropped).
+  const rejTally = new Map<string, number>();
+  for (const r of rejected) {
+    const key = r.reasons.some((x) => x.startsWith("boundary tie"))
+      ? "integrity: boundary tie at cutoff"
+      : r.reasons.some((x) => x.includes("Arabic name"))
+        ? "integrity: missing Arabic name"
+        : r.reasons.some((x) => x.includes("inactive"))
+          ? "integrity: inactive (unsearchable) player"
+          : r.reasons.some((x) => x.includes("duplicate"))
+            ? "integrity: duplicate in list"
+            : "completeness gate";
+    rejTally.set(key, (rejTally.get(key) ?? 0) + 1);
+  }
+  if (rejTally.size > 0) {
+    console.log("  rejected by reason:");
+    for (const [k, c] of [...rejTally].sort((a, b) => b[1] - a[1])) console.log(`    ${k}: ${c}`);
   }
 
   // Difficulty terciles over ALL admitted lists' Σ fame.
@@ -146,6 +184,24 @@ async function main() {
   console.log(
     `  difficulty thresholds — HARD < ${thresholds.hardMaxSum.toFixed(1)} ≤ MEDIUM < ${thresholds.easyMinSum.toFixed(1)} ≤ EASY`,
   );
+
+  // ---- FINAL SAFETY ASSERTION (no room for error) ----------------------------
+  // Re-validate every admitted list right before it could be written. If anything
+  // unsafe slipped through (e.g. a future code change), ABORT the whole build — a
+  // broken question must never reach the catalog. This is the build-level guarantee.
+  const assertionFailures: string[] = [];
+  for (const a of admitted) {
+    const violations = validateRankedList({ list: a.players, eleventhValue: a.eleventhValue, meta: a.meta });
+    if (violations.length > 0) {
+      assertionFailures.push(`${a.type} · ${leagueName(a.leagueId)} ${a.season}: ${violations.join("; ")}`);
+    }
+  }
+  if (assertionFailures.length > 0) {
+    console.error(`\n❌ BUILD ABORTED — ${assertionFailures.length} admitted list(s) failed the final integrity assertion:`);
+    for (const f of assertionFailures) console.error(`   - ${f}`);
+    throw new Error("Integrity assertion failed — refusing to write an unsafe catalog.");
+  }
+  console.log(`  integrity: all ${admitted.length} admitted lists passed the validator ✓`);
 
   // ---- write the reviewable artifact (always, even on --dry-run) ----
   writeArtifact(admitted, rejected, thresholds);

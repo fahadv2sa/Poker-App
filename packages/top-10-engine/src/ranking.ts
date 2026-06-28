@@ -38,9 +38,24 @@ export function compareForRank(a: CandidateRow, b: CandidateRow): number {
  * ranked rows; the caller's gate guarantees ≥10 before this is used for a real list.
  */
 export function buildRanking(rows: readonly CandidateRow[]): RankedPlayer[] {
+  return buildRankingWithExcluded(rows).list;
+}
+
+/**
+ * Like {@link buildRanking}, but ALSO returns `eleventhValue` — the stat value of
+ * the best EXCLUDED candidate (the 11th place). The catalog validator needs this to
+ * reject a "boundary tie": if the 10th and 11th values are equal, the Top-10 cutoff
+ * is ambiguous (a contestant who picks the legitimately-tied excluded player would
+ * be told "wrong" — a game-killing error). `eleventhValue` is null when there are
+ * 10 or fewer eligible candidates.
+ */
+export function buildRankingWithExcluded(rows: readonly CandidateRow[]): {
+  list: RankedPlayer[];
+  eleventhValue: number | null;
+} {
   const eligible = rows.filter((r) => (r.value ?? 0) > 0);
   const sorted = [...eligible].sort(compareForRank);
-  return sorted.slice(0, TT_LIST_SIZE).map((r, i) => ({
+  const list = sorted.slice(0, TT_LIST_SIZE).map((r, i) => ({
     rank: i + 1,
     playerId: r.playerId,
     value: r.value ?? 0,
@@ -48,4 +63,6 @@ export function buildRanking(rows: readonly CandidateRow[]): RankedPlayer[] {
     name: r.name,
     nameAr: r.nameAr,
   }));
+  const eleventhValue = sorted.length > TT_LIST_SIZE ? sorted[TT_LIST_SIZE]!.value ?? null : null;
+  return { list, eleventhValue };
 }
