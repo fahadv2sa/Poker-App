@@ -60,6 +60,9 @@ export {
 export {
   initRound,
   currentTurnSeat,
+  hiddenCount,
+  allRevealed,
+  nextHintTarget,
   normalGuess,
   normalTimeout,
   beginHintCard,
@@ -69,6 +72,7 @@ export {
   endRound,
   scoreBySeat,
   revealedRanksBySeat,
+  type BoardCard,
   type RoundState,
   type RoundEvent,
   type RevealRecord,

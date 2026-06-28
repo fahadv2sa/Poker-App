@@ -52,16 +52,15 @@ export function buildRanking(rows: readonly CandidateRow[]): RankedPlayer[] {
 }
 
 /**
- * Build the ANSWER LIST with INCLUSIVE cutoff ties — the list that ships in the
- * catalog. Ranks 1..9 are the distinct top nine; **rank 10 is shared by EVERY player
- * tied at the 10th-place value**. So a tie at the cutoff is NOT an error and does NOT
- * drop the question: every tied player is a valid rank-10 answer (the game-server
- * maps them all to rank 10, so naming any of them is accepted, never marked wrong).
+ * Build the ANSWER LIST as the TOP-10 DISTINCT VALUES, DENSE-ranked (1..10), with
+ * EVERY player tied at a value stored at that rank. Ties may appear at ANY rank, and
+ * the list may hold well more than 10 players — no tied player is ever dropped, since
+ * any of them is a valid answer (the runtime cascade/bonus logic resolves how they
+ * score). A value's rank = its position among the distinct values (1 = highest).
  *
- * Also returns `excludedTopValue` — the stat value of the best player left OUT (null
- * if none were excluded). The validator asserts it is STRICTLY below the cutoff
- * value, which proves the tie group is complete (no tied correct answer was wrongly
- * excluded). The returned list may therefore contain MORE than TT_LIST_SIZE players.
+ * Also returns `excludedTopValue` — the highest value among the EXCLUDED players (the
+ * 11th distinct value), or null if there are ≤10 distinct values. The validator uses
+ * it to assert the bottom rank is complete (every player at the 10th value is in).
  */
 export function buildAnswerList(rows: readonly CandidateRow[]): {
   list: RankedPlayer[];
@@ -69,33 +68,22 @@ export function buildAnswerList(rows: readonly CandidateRow[]): {
 } {
   const eligible = rows.filter((r) => (r.value ?? 0) > 0);
   const sorted = [...eligible].sort(compareForRank);
-  const toRanked = (r: CandidateRow, rank: number): RankedPlayer => ({
-    rank,
-    playerId: r.playerId,
-    value: r.value ?? 0,
-    fame: r.fame,
-    name: r.name,
-    nameAr: r.nameAr,
-  });
 
-  // Short list (≤10 eligible): everyone is included with a distinct rank.
-  if (sorted.length <= TT_LIST_SIZE) {
-    return { list: sorted.map((r, i) => toRanked(r, i + 1)), excludedTopValue: null };
-  }
-
-  const cutoffValue = sorted[TT_LIST_SIZE - 1]!.value ?? 0; // the 10th-place value
   const list: RankedPlayer[] = [];
+  let rank = 0;
+  let prevValue: number | null = null;
   let excludedTopValue: number | null = null;
-  for (let i = 0; i < sorted.length; i++) {
-    const r = sorted[i]!;
-    if (i < TT_LIST_SIZE - 1) {
-      list.push(toRanked(r, i + 1)); // ranks 1..9
-    } else if ((r.value ?? 0) === cutoffValue) {
-      list.push(toRanked(r, TT_LIST_SIZE)); // rank 10 — every player tied at the cutoff
-    } else {
-      excludedTopValue = r.value ?? 0; // highest value among the excluded
+  for (const r of sorted) {
+    const v = r.value ?? 0;
+    if (prevValue === null || v !== prevValue) {
+      rank += 1; // new distinct value → next dense rank
+      prevValue = v;
+    }
+    if (rank > TT_LIST_SIZE) {
+      excludedTopValue = v; // first excluded distinct value (the highest excluded)
       break;
     }
+    list.push({ rank, playerId: r.playerId, value: v, fame: r.fame, name: r.name, nameAr: r.nameAr });
   }
   return { list, excludedTopValue };
 }

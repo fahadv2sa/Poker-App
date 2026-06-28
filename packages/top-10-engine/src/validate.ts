@@ -1,34 +1,27 @@
 /**
  * Catalog-list INTEGRITY VALIDATOR (pure). The single source of truth for "is this
- * Top-10 list safe to put in front of a contestant?". A failing list is a direct
- * threat to the game — a contestant who gives a correct answer must NEVER be told
- * "wrong", and every revealed card must show correct, findable information. The
- * catalog builder runs this on every list and REFUSES to ship any that fails; the
- * audit tool runs the same check against the live catalog. Pure: the caller supplies
- * the already-fetched football metadata (this package never touches the DB).
+ * list safe to put in front of a contestant?". A failing list is a direct threat to
+ * the game — a correct answer must NEVER be marked "wrong", and every revealed card
+ * must show correct, findable information. The catalog builder runs this on every
+ * list and REFUSES to ship any that fails; the audit tool runs the same check
+ * against the live catalog. Pure: the caller supplies already-fetched football
+ * metadata (this package never touches the DB).
  *
- * CUTOFF TIES ARE VALID, NOT AN ERROR. Ranks 1..9 are distinct; rank 10 (the cutoff)
- * may be SHARED by several players tied on the stat value — each is a valid rank-10
- * answer. The validator's job is to ensure that whenever there is a cutoff tie, the
- * tie group is COMPLETE: no tied player is left out of the list (which is the only
- * way a tie could mark a correct answer wrong).
+ * The list is the TOP-10 DISTINCT VALUES, dense-ranked 1..10, with every player tied
+ * at a value stored at that rank. Ties are valid at ANY rank (the runtime cascade /
+ * bonus logic resolves how tied players score) — the validator only ensures the data
+ * is sound and complete.
  *
  * Rules enforced (any violation ⇒ the list must not ship):
- *   1. At least TT_LIST_SIZE players; ranks are exactly {1..maxRank} with no gaps;
- *      only the cutoff rank (maxRank, ≤ TT_LIST_SIZE) may be shared by >1 player.
- *   2. Every value is finite and > 0; players sharing a rank share a value; values
- *      are non-increasing across ranks.
- *   3. CUTOFF COMPLETENESS: the best EXCLUDED value is strictly below the cutoff
- *      (rank-maxRank) value — so every player tied at the cutoff is included.
+ *   1. Exactly 10 distinct ranks present: {1..10}, no gaps. (≥10 distinct values.)
+ *   2. Every value is finite and > 0; players sharing a rank share one value; each
+ *      rank's value is strictly greater than the next rank's (distinct per rank).
+ *   3. BOTTOM COMPLETENESS: the best EXCLUDED value is strictly below the rank-10
+ *      value — so every player tied at the 10th value is included (none dropped).
  *   4. No duplicate player id in the list.
- *   5. Every listed player exists in football.players, is `active` (so the search
- *      input can find them), and has a non-empty Arabic name.
+ *   5. Every listed player exists in football.players, is `active` (findable in the
+ *      search input), and has a non-empty Arabic name.
  *   6. No two cards share the same Arabic display name.
- *
- * NOTE on internal ties: two players tied on value but at different ranks (1..9) is
- * NOT a violation — both are in the list, so revealing either is a correct answer;
- * only the order among equals (and thus the points) is decided by the deterministic
- * tiebreak. A tie AT THE CUTOFF is handled by rule 3 (include them all as rank 10).
  */
 import { TT_LIST_SIZE } from "@fb/shared";
 import type { RankedPlayer } from "./types.js";
@@ -41,44 +34,34 @@ export interface ListPlayerMeta {
 }
 
 export interface ValidateListInput {
-  /** The built answer list (ranks 1..9 distinct; rank 10 may be a tie group). */
+  /** The built answer list (dense ranks 1..10; ties allowed at any rank). */
   list: readonly RankedPlayer[];
-  /** Value of the best EXCLUDED candidate; null if none were excluded. */
+  /** Highest value among EXCLUDED players (the 11th distinct value); null if none. */
   excludedTopValue: number | null;
   /** playerId → football metadata (name_ar, active). */
   meta: ReadonlyMap<string, ListPlayerMeta>;
 }
 
-/**
- * Returns the list of integrity violations (human-readable). An EMPTY array means
- * the list is safe to ship. Never throws.
- */
+/** Returns the integrity violations (human-readable). EMPTY ⇒ safe to ship. */
 export function validateRankedList(input: ValidateListInput): string[] {
   const { list, excludedTopValue, meta } = input;
   const v: string[] = [];
-
-  if (list.length < TT_LIST_SIZE) {
-    v.push(`list has ${list.length} players, expected at least ${TT_LIST_SIZE}`);
-  }
 
   // group by rank
   const byRank = new Map<number, RankedPlayer[]>();
   for (const p of list) {
     (byRank.get(p.rank) ?? byRank.set(p.rank, []).get(p.rank)!).push(p);
   }
-  const maxRank = list.length > 0 ? Math.max(...list.map((p) => p.rank)) : 0;
 
-  // 1. rank structure: {1..maxRank} present, each below the cutoff exactly once,
-  //    cutoff rank ≥1 (may tie), maxRank within bounds.
-  if (maxRank > TT_LIST_SIZE) v.push(`max rank ${maxRank} exceeds ${TT_LIST_SIZE}`);
-  for (let r = 1; r < maxRank; r++) {
-    const c = byRank.get(r)?.length ?? 0;
-    if (c === 0) v.push(`rank ${r} is missing (ranks must be contiguous 1..${maxRank})`);
-    else if (c > 1) v.push(`rank ${r} has ${c} players (only the cutoff rank ${maxRank} may tie)`);
+  // 1. exactly the ranks {1..TT_LIST_SIZE}, no gaps.
+  for (let r = 1; r <= TT_LIST_SIZE; r++) {
+    if (!byRank.has(r)) v.push(`rank ${r} is missing (need ${TT_LIST_SIZE} distinct values, ranks 1..${TT_LIST_SIZE})`);
   }
-  if ((byRank.get(maxRank)?.length ?? 0) < 1) v.push(`cutoff rank ${maxRank} has no players`);
+  for (const r of byRank.keys()) {
+    if (r < 1 || r > TT_LIST_SIZE) v.push(`rank ${r} is out of range 1..${TT_LIST_SIZE}`);
+  }
 
-  // 2. values: positive finite; equal within a rank; non-increasing across ranks.
+  // 2. values: positive finite; one value per rank; strictly decreasing across ranks.
   for (const p of list) {
     if (!Number.isFinite(p.value) || p.value <= 0) {
       v.push(`rank ${p.rank}: value ${p.value} is not a positive finite number`);
@@ -86,24 +69,22 @@ export function validateRankedList(input: ValidateListInput): string[] {
   }
   for (const [r, ps] of byRank) {
     const vals = new Set(ps.map((p) => p.value));
-    if (vals.size > 1) v.push(`rank ${r}: tied players have different values (${[...vals].join(" / ")})`);
+    if (vals.size > 1) v.push(`rank ${r}: players have different values (${[...vals].join(" / ")}) — a rank must be one value`);
   }
   const repsByRank = [...byRank.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([r, ps]) => ({ rank: r, value: ps[0]!.value }));
   for (let i = 1; i < repsByRank.length; i++) {
-    if (repsByRank[i]!.value > repsByRank[i - 1]!.value) {
-      v.push(`rank ${repsByRank[i]!.rank}: value ${repsByRank[i]!.value} > previous rank's ${repsByRank[i - 1]!.value}`);
+    if (repsByRank[i]!.value >= repsByRank[i - 1]!.value) {
+      v.push(`rank ${repsByRank[i]!.rank}: value ${repsByRank[i]!.value} is not strictly below rank ${repsByRank[i - 1]!.rank}'s ${repsByRank[i - 1]!.value}`);
     }
   }
 
-  // 3. CUTOFF COMPLETENESS — the lasting fix. Every player tied at the cutoff value
-  //    must be in the list, i.e. the best excluded value is strictly below it. (If a
-  //    tied player were excluded, naming them would be a correct answer marked wrong.)
-  const cutoffValue = byRank.get(maxRank)?.[0]?.value;
-  if (cutoffValue != null && excludedTopValue != null && excludedTopValue >= cutoffValue) {
+  // 3. BOTTOM COMPLETENESS — every player tied at the 10th value must be included.
+  const tenthValue = repsByRank.find((x) => x.rank === TT_LIST_SIZE)?.value;
+  if (tenthValue != null && excludedTopValue != null && excludedTopValue >= tenthValue) {
     v.push(
-      `incomplete cutoff tie: an excluded player has value ${excludedTopValue} ≥ the rank-${maxRank} value ${cutoffValue} — that tied player is a correct answer that would be marked wrong`,
+      `incomplete bottom rank: an excluded player has value ${excludedTopValue} ≥ the rank-${TT_LIST_SIZE} value ${tenthValue} — that tied player is a correct answer that would be marked wrong`,
     );
   }
 

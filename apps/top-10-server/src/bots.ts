@@ -87,10 +87,12 @@ export class TopTenBots {
     const t = setTimeout(() => {
       const r = room.round;
       if (!r || r.state.mode !== "NORMAL") return;
-      const decision = decideNormalTurn(r.state.hidden, skill, Math.random);
+      const hiddenRanks = r.state.cards.filter((c) => !c.revealed).map((c) => c.rank);
+      const decision = decideNormalTurn(hiddenRanks, skill, Math.random);
       if (decision.kind === "guessCorrect") {
-        const cp = r.entry.players.find((p) => p.rank === decision.rank);
-        if (cp) ctl.guess(room, seat, cp.playerId);
+        // map the chosen rank back to an actual hidden card (a rank may be shared by a tie)
+        const cp = r.state.cards.find((c) => !c.revealed && c.rank === decision.rank);
+        ctl.guess(room, seat, cp ? cp.playerId : randomUUID());
       } else {
         ctl.guess(room, seat, randomUUID()); // a wrong (out-of-top-10) pick
       }
@@ -105,14 +107,15 @@ export class TopTenBots {
       if (!seatObj.isBot || seatObj.status !== "ACTIVE") continue;
       if (r.state.lockedSeats.includes(seatObj.seat)) continue;
       const skill = seatObj.botSkill ?? 0.5;
-      const decision = decideHintAnswer(r.state.hidden, skill, Math.random, TT_TIMING.hintAnswerSec);
+      const hiddenRanks = r.state.cards.filter((c) => !c.revealed).map((c) => c.rank);
+      const decision = decideHintAnswer(hiddenRanks, skill, Math.random, TT_TIMING.hintAnswerSec);
       const t = setTimeout(() => {
         const rr = room.round;
         if (!rr || rr.state.mode !== "HINT" || !rr.state.hint || rr.state.hint.phase !== "OPEN") return;
         if (rr.state.lockedSeats.includes(seatObj.seat)) return;
         if (decision.correct && decision.rank != null) {
-          const cp = rr.entry.players.find((p) => p.rank === decision.rank);
-          if (cp) ctl.guess(room, seatObj.seat, cp.playerId);
+          const cp = rr.state.cards.find((c) => !c.revealed && c.rank === decision.rank);
+          ctl.guess(room, seatObj.seat, cp ? cp.playerId : randomUUID());
         } else {
           ctl.guess(room, seatObj.seat, randomUUID());
         }

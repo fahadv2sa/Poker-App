@@ -60,8 +60,14 @@ export type TtQueueJoinInput = z.infer<typeof ttQueueJoinSchema>;
 // ---- server → client (typed) -----------------------------------------------
 
 export type TtCardView = {
-  rank: number;
+  /** Stable display key — never changes as ranks shift, so the grid never reorders. */
+  key: number;
   revealed: boolean;
+  /** Rank/points — ONLY present once revealed (a hidden card never exposes its rank,
+   *  so the contestant never sees the tie cascade move the list). */
+  rank: number | null;
+  /** True for a revealed bonus "+" card (a tied player whose cascade was blocked). */
+  bonus: boolean;
   /** Present only once revealed. */
   player: { id: string; name: string; nameAr: string; value: number } | null;
   bySeat: number | null;
@@ -109,6 +115,8 @@ export type TtRevealEvent = {
   rank: number;
   bySeat: number | null;
   points: number;
+  /** True for a bonus "+" card (a tied player whose cascade was blocked). */
+  bonus: boolean;
   player: { id: string; name: string; nameAr: string; value: number };
 };
 

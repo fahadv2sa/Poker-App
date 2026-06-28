@@ -2,126 +2,90 @@ import { describe, expect, it } from "vitest";
 import { buildAnswerList, validateRankedList, type ListPlayerMeta } from "../src/index.js";
 import type { CandidateRow, RankedPlayer } from "../src/types.js";
 
-/** A valid 10-player list: strictly-decreasing values, distinct names. */
-function goodList(): RankedPlayer[] {
-  return Array.from({ length: 10 }, (_, i) => ({
-    rank: i + 1,
-    playerId: `p${i + 1}`,
-    value: 100 - i,
-    fame: 50 - i,
-    name: `P${i + 1}`,
-    nameAr: `لاعب${i + 1}`,
-  }));
-}
-
-function fullMeta(list: RankedPlayer[]): Map<string, ListPlayerMeta> {
-  return new Map(list.map((p) => [p.playerId, { active: true, nameAr: p.nameAr }]));
-}
-
-function candidates(values: number[]): CandidateRow[] {
+function cands(values: number[]): CandidateRow[] {
   return values.map((v, i) => ({
     playerId: `p${i}`,
     value: v,
     appearances: 10,
-    fame: 1000 - i, // unique fame so tiebreak is deterministic
+    fame: 1000 - i, // unique fame → deterministic tiebreak
     name: `P${i}`,
     nameAr: `ل${i}`,
   }));
 }
 
+function fullMeta(list: readonly RankedPlayer[]): Map<string, ListPlayerMeta> {
+  return new Map(list.map((p) => [p.playerId, { active: true, nameAr: p.nameAr }]));
+}
+
+describe("buildAnswerList (dense ranking, top-10 distinct values, all ties kept)", () => {
+  it("assigns consecutive dense ranks to distinct values and keeps every tied player", () => {
+    // values: 18,18 (rank1), 15 (rank2), 12,12 (rank3), 10,8,6,5,4,3, 2,2 (rank10), 1 (excluded)
+    const { list, excludedTopValue } = buildAnswerList(
+      cands([18, 18, 15, 12, 12, 10, 8, 6, 5, 4, 3, 2, 2, 1]),
+    );
+    const byRank = (r: number) => list.filter((p) => p.rank === r);
+    expect(byRank(1)).toHaveLength(2); // tie at rank 1
+    expect(byRank(2)).toHaveLength(1);
+    expect(byRank(3)).toHaveLength(2); // tie at rank 3
+    expect(byRank(10)).toHaveLength(2); // tie at the bottom rank
+    expect(Math.max(...list.map((p) => p.rank))).toBe(10);
+    expect(excludedTopValue).toBe(1); // the 11th distinct value, strictly below rank-10 (2)
+    expect(validateRankedList({ list, excludedTopValue, meta: fullMeta(list) })).toEqual([]);
+  });
+});
+
 describe("validateRankedList", () => {
-  it("passes a clean strictly-decreasing list", () => {
-    const list = goodList();
-    expect(validateRankedList({ list, excludedTopValue: 90, meta: fullMeta(list) })).toEqual([]);
+  function good() {
+    return buildAnswerList(cands([20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 1]));
+  }
+
+  it("passes a clean 10-distinct-value list", () => {
+    const { list, excludedTopValue } = good();
+    expect(validateRankedList({ list, excludedTopValue, meta: fullMeta(list) })).toEqual([]);
   });
 
-  it("ACCEPTS a cutoff tie when the whole tie group is included (multi rank-10)", () => {
-    // 9 distinct + three players tied at rank 10 (value 12)
-    const list: RankedPlayer[] = [
-      ...Array.from({ length: 9 }, (_, i) => ({
-        rank: i + 1, playerId: `p${i}`, value: 30 - i, fame: 9 - i, name: `P${i}`, nameAr: `ل${i}`,
-      })),
-      { rank: 10, playerId: "t1", value: 12, fame: 5, name: "T1", nameAr: "تي1" },
-      { rank: 10, playerId: "t2", value: 12, fame: 4, name: "T2", nameAr: "تي2" },
-      { rank: 10, playerId: "t3", value: 12, fame: 3, name: "T3", nameAr: "تي3" },
-    ];
-    const meta = fullMeta(list);
-    // best excluded is strictly below the cutoff (11) → complete tie group
-    expect(validateRankedList({ list, excludedTopValue: 11, meta })).toEqual([]);
+  it("REJECTS fewer than 10 distinct values (missing ranks)", () => {
+    const { list, excludedTopValue } = buildAnswerList(cands([9, 8, 7, 6, 5, 4, 3, 2, 1])); // only 9 distinct
+    const v = validateRankedList({ list, excludedTopValue, meta: fullMeta(list) });
+    expect(v.some((m) => m.includes("rank 10 is missing"))).toBe(true);
   });
 
-  it("REJECTS an INCOMPLETE cutoff tie (a tied player was excluded)", () => {
-    const list = goodList();
-    list[9]!.value = 12; // rank 10 value
-    const meta = fullMeta(list);
-    // an excluded player ALSO has value 12 → tie group incomplete → must reject
-    const v = validateRankedList({ list, excludedTopValue: 12, meta });
-    expect(v.some((m) => m.includes("incomplete cutoff tie"))).toBe(true);
+  it("REJECTS an incomplete bottom rank (a tied player at the 10th value excluded)", () => {
+    const { list } = good();
+    // pretend an excluded player ALSO has the rank-10 value (2) → tie group incomplete
+    const tenth = list.find((p) => p.rank === 10)!.value;
+    const v = validateRankedList({ list, excludedTopValue: tenth, meta: fullMeta(list) });
+    expect(v.some((m) => m.includes("incomplete bottom rank"))).toBe(true);
   });
 
-  it("rejects a non-cutoff rank that is shared by >1 player", () => {
-    const list = goodList();
-    list[5]!.rank = 5; // now two players at rank 5, and rank 6 missing
-    const v = validateRankedList({ list, excludedTopValue: 90, meta: fullMeta(list) });
-    expect(v.some((m) => m.includes("only the cutoff rank"))).toBe(true);
-    expect(v.some((m) => m.includes("rank 6 is missing"))).toBe(true);
+  it("rejects two different values sharing a rank", () => {
+    const { list, excludedTopValue } = good();
+    list[0]!.value = 999; // rank 1 now has a different value than its (single) member expects… force a 2nd
+    const tampered = [...list, { rank: 1, playerId: "x", value: 5, fame: 1, name: "X", nameAr: "إكس" }];
+    const v = validateRankedList({ list: tampered, excludedTopValue, meta: fullMeta(tampered) });
+    expect(v.some((m) => m.includes("must be one value") || m.includes("different values"))).toBe(true);
   });
 
   it("flags missing Arabic name, inactive player, and missing row", () => {
-    const list = goodList();
+    const { list, excludedTopValue } = good();
     const meta = fullMeta(list);
-    meta.set("p1", { active: true, nameAr: "   " });
-    meta.set("p2", { active: false, nameAr: "لاعب2" });
-    meta.delete("p3");
-    const v = validateRankedList({ list, excludedTopValue: 90, meta });
+    meta.set(list[0]!.playerId, { active: true, nameAr: "  " });
+    meta.set(list[1]!.playerId, { active: false, nameAr: "اسم" });
+    meta.delete(list[2]!.playerId);
+    const v = validateRankedList({ list, excludedTopValue, meta });
     expect(v.some((m) => m.includes("no Arabic name"))).toBe(true);
     expect(v.some((m) => m.includes("inactive"))).toBe(true);
     expect(v.some((m) => m.includes("missing from football.players"))).toBe(true);
   });
 
-  it("flags duplicate Arabic display names and duplicate ids", () => {
-    const list = goodList();
-    list[1]!.nameAr = list[0]!.nameAr;
-    list[2]!.playerId = list[0]!.playerId;
-    const v = validateRankedList({ list, excludedTopValue: 90, meta: fullMeta(list) });
-    expect(v.some((m) => m.includes("duplicate Arabic display name"))).toBe(true);
+  it("flags duplicate display names and duplicate ids", () => {
+    const { list, excludedTopValue } = good();
+    const meta = fullMeta(list);
+    meta.set(list[1]!.playerId, { active: true, nameAr: list[0]!.nameAr }); // same Arabic name
+    const dupId = [...list, { ...list[0]! }]; // same id twice
+    const v = validateRankedList({ list: dupId, excludedTopValue, meta: fullMeta(dupId) });
     expect(v.some((m) => m.includes("duplicate player id"))).toBe(true);
-  });
-});
-
-describe("buildAnswerList", () => {
-  it("returns exactly 10 with a strict cutoff (no tie)", () => {
-    const { list, excludedTopValue } = buildAnswerList(candidates([20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9]));
-    expect(list).toHaveLength(10);
-    expect(Math.max(...list.map((p) => p.rank))).toBe(10);
-    expect(list.filter((p) => p.rank === 10)).toHaveLength(1);
-    expect(excludedTopValue).toBe(10); // 11th value, strictly below the cutoff 11
-  });
-
-  it("INCLUDES the whole cutoff tie group at rank 10 (restores the question)", () => {
-    // 9th value (11) is strictly above the cutoff (10) → every player tied at 10 is rank 10.
-    const { list, excludedTopValue } = buildAnswerList(
-      candidates([20, 19, 18, 17, 16, 15, 14, 13, 11, 10, 10, 10, 9]),
-    );
-    const rank10 = list.filter((p) => p.rank === 10);
-    expect(rank10).toHaveLength(3); // all three 10s are valid rank-10 answers
-    expect(rank10.every((p) => p.value === 10)).toBe(true);
-    expect(list.filter((p) => p.rank < 10)).toHaveLength(9); // ranks 1..9 distinct
-    expect(excludedTopValue).toBe(9); // strictly below the cutoff 10 → tie group complete
-    const meta = new Map(list.map((p) => [p.playerId, { active: true, nameAr: p.nameAr } as ListPlayerMeta]));
-    expect(validateRankedList({ list, excludedTopValue, meta })).toEqual([]);
-  });
-
-  it("edge: when the cutoff value reaches into the top 9, ranks 1..10 stay intact and all tied players are still included (0% error)", () => {
-    // four 12s spanning positions 9..12. One sits at rank 9, the rest at rank 10 —
-    // every tied player is still in the list (a valid answer), and the list still
-    // passes the validator (no tied player excluded).
-    const { list, excludedTopValue } = buildAnswerList(
-      candidates([20, 19, 18, 17, 16, 15, 14, 13, 12, 12, 12, 12, 9]),
-    );
-    expect(list.filter((p) => p.value === 12)).toHaveLength(4); // all four tied players included
-    expect(Math.max(...list.map((p) => p.rank))).toBe(10); // ranks 1..10 intact
-    const meta = new Map(list.map((p) => [p.playerId, { active: true, nameAr: p.nameAr } as ListPlayerMeta]));
-    expect(validateRankedList({ list, excludedTopValue, meta })).toEqual([]);
+    const v2 = validateRankedList({ list, excludedTopValue, meta });
+    expect(v2.some((m) => m.includes("duplicate Arabic display name"))).toBe(true);
   });
 });

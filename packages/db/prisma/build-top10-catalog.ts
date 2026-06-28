@@ -33,7 +33,6 @@ import {
   TT_ACTIVE_QUESTION_TYPES,
   TT_COMPETITIONS,
   TT_GATE,
-  TT_LIST_SIZE,
   TT_TYPE_META,
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
@@ -155,9 +154,11 @@ async function main() {
         rejected.push({ type, leagueId, season, reasons: violations, metrics: gate.metrics });
         continue;
       }
-      // Difficulty Σfame stays comparable across questions: sum the top-10 SLOTS
-      // (ranks 1..9 + the strongest rank-10 player), not the whole tie group.
-      const fameSum = players.slice(0, TT_LIST_SIZE).reduce((a, p) => a + p.fame, 0);
+      // Difficulty Σfame stays comparable across questions: one representative
+      // (the strongest player) per rank → exactly 10 fame values, regardless of ties.
+      const fameByRank = new Map<number, number>();
+      for (const p of players) fameByRank.set(p.rank, Math.max(fameByRank.get(p.rank) ?? 0, p.fame));
+      const fameSum = [...fameByRank.values()].reduce((a, b) => a + b, 0);
       admitted.push({ type, leagueId, season, fameSum, players, excludedTopValue, meta });
       admittedForType++;
     }
@@ -167,15 +168,17 @@ async function main() {
   // Rejection-reason tally (so a build clearly reports WHY lists were dropped).
   const rejTally = new Map<string, number>();
   for (const r of rejected) {
-    const key = r.reasons.some((x) => x.includes("incomplete cutoff"))
-      ? "integrity: incomplete cutoff tie group"
-      : r.reasons.some((x) => x.includes("Arabic name"))
-        ? "integrity: missing Arabic name"
-        : r.reasons.some((x) => x.includes("inactive"))
-          ? "integrity: inactive (unsearchable) player"
-          : r.reasons.some((x) => x.includes("duplicate"))
-            ? "integrity: duplicate in list"
-            : "completeness gate";
+    const key = r.reasons.some((x) => x.includes("incomplete bottom rank"))
+      ? "integrity: incomplete bottom tie group"
+      : r.reasons.some((x) => x.includes("missing (need") || x.includes("distinct values"))
+        ? "integrity: fewer than 10 distinct values"
+        : r.reasons.some((x) => x.includes("Arabic name"))
+          ? "integrity: missing Arabic name"
+          : r.reasons.some((x) => x.includes("inactive"))
+            ? "integrity: inactive (unsearchable) player"
+            : r.reasons.some((x) => x.includes("duplicate"))
+              ? "integrity: duplicate in list"
+              : "completeness gate";
     rejTally.set(key, (rejTally.get(key) ?? 0) + 1);
   }
   if (rejTally.size > 0) {

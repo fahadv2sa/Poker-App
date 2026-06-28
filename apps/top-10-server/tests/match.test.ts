@@ -107,10 +107,10 @@ describe("Top Ten match orchestration", () => {
     // hint countdown (10s) → open window
     vi.advanceTimersByTime(TT_TIMING.hintCountdownSec * 1000);
     expect(room.round!.state.hint?.phase).toBe("OPEN");
-    const target = room.round!.state.hint!.targetRank; // server picks max hidden = 10
-    matches.guess(room, 0, `p${target}`);
-    const reveals = events[TT_SERVER_EVENTS.reveal] as { rank: number }[];
-    expect(reveals.some((r) => r.rank === target)).toBe(true);
+    const targetId = room.round!.state.hint!.targetPlayerId; // server picks the top hidden card
+    matches.guess(room, 0, targetId);
+    const reveals = events[TT_SERVER_EVENTS.reveal] as { player: { id: string } }[];
+    expect(reveals.some((r) => r.player.id === targetId)).toBe(true);
   });
 
   it("withdrawal below the minimum ends the match (ABANDONED) and zeroes points", () => {
