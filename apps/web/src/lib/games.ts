@@ -22,7 +22,15 @@ export type GameEntry = {
 
 export const GAMES: GameEntry[] = [
   { id: "link-up", nameAr: "لينك اب", href: "/games/link-up", status: "live", icon: "🔗" },
-  { id: "top-10", nameAr: "توب 10", href: null, status: "soon", icon: "🔟" },
+  {
+    id: "top-10",
+    nameAr: "توب 10",
+    // Top Ten runs as its OWN separate web service (cross-origin); the hub links out
+    // to it. Set NEXT_PUBLIC_TOP10_WEB_URL in the hub's env; falls back to local dev.
+    href: process.env.NEXT_PUBLIC_TOP10_WEB_URL ?? "http://localhost:3100",
+    status: "live",
+    icon: "🔟",
+  },
   { id: "guess-player", nameAr: "خمن اللاعب", href: null, status: "soon", icon: "❓" },
   { id: "game-4", nameAr: "قريباً", href: null, status: "soon", icon: "⚽" },
 ];

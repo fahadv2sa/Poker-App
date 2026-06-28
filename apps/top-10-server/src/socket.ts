@@ -1,0 +1,233 @@
+import type { Server, Socket } from "socket.io";
+import {
+  TT_BOTS,
+  TT_CLIENT_EVENTS,
+  TT_MIN_PLAYERS,
+  TT_SERVER_EVENTS,
+  TT_TIMING,
+  ttCreateSchema,
+  ttGuessSchema,
+  ttJoinSchema,
+  ttEndRoundVoteSchema,
+  ttQueueJoinSchema,
+  type RealtimeClaims,
+  type TtDifficulty,
+} from "@fb/shared";
+import type { Matches } from "./match.js";
+import type { MatchRoom } from "./types.js";
+
+export interface BotFiller {
+  /** Fill a quick-play room with bots up to a randomized target in [2,4]. */
+  fillQuickPlay(matches: Matches, room: MatchRoom): void;
+}
+
+interface QueuedPlayer extends RealtimeClaims {
+  socketId: string;
+}
+
+export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: BotFiller): void {
+  // quick-play queues, one per difficulty
+  const queues = new Map<TtDifficulty, Map<string, QueuedPlayer>>();
+  const fillTimers = new Map<TtDifficulty, ReturnType<typeof setTimeout>>();
+
+  const user = (socket: Socket): RealtimeClaims => socket.data.user as RealtimeClaims;
+  const findRoomOf = (userId: string): MatchRoom | undefined =>
+    matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ENDED" && r.status !== "ABANDONED");
+
+  function broadcastQueue(difficulty: TtDifficulty): void {
+    const q = queues.get(difficulty);
+    if (!q) return;
+    const waiting = q.size;
+    const countdown = fillTimers.has(difficulty) ? TT_BOTS.fillWindowSec : null;
+    for (const p of q.values()) {
+      io.to(p.socketId).emit(TT_SERVER_EVENTS.queueState, {
+        difficulty,
+        waiting,
+        needed: TT_MIN_PLAYERS,
+        countdownSec: countdown,
+      });
+    }
+  }
+
+  function startFillTimer(difficulty: TtDifficulty): void {
+    if (fillTimers.has(difficulty)) return;
+    const t = setTimeout(() => {
+      fillTimers.delete(difficulty);
+      flushQueue(difficulty);
+    }, TT_BOTS.fillWindowSec * 1000);
+    fillTimers.set(difficulty, t);
+    broadcastQueue(difficulty);
+  }
+
+  function flushQueue(difficulty: TtDifficulty): void {
+    const q = queues.get(difficulty);
+    if (!q || q.size === 0) return;
+    const players = [...q.values()].slice(0, 4);
+    // need at least the minimum of humans, OR bots to fill the gap
+    if (players.length < TT_MIN_PLAYERS && !botFiller) {
+      // not enough and no bots — keep waiting
+      return;
+    }
+    for (const p of players) q.delete(p.socketId);
+    const room = matches.createQuickPlay(difficulty);
+    for (const p of players) {
+      matches.addSeat(room, p, false);
+      const s = io.sockets.sockets.get(p.socketId);
+      s?.join(room.id);
+      io.to(p.socketId).emit(TT_SERVER_EVENTS.queueMatched, { matchId: room.id });
+    }
+    botFiller?.fillQuickPlay(matches, room);
+    if (room.seats.length < TT_MIN_PLAYERS) {
+      // still short and no bots filled — disband, requeue the humans
+      for (const p of players) {
+        ensureQueue(difficulty).set(p.socketId, p);
+        io.to(p.socketId).emit(TT_SERVER_EVENTS.toast, { text: "بانتظار لاعبين آخرين…" });
+      }
+      matches.removeRoom(room.id);
+      return;
+    }
+    matches.sync(room);
+    matches.start(room, room.seats[0]!.userId);
+    broadcastQueue(difficulty);
+  }
+
+  function ensureQueue(difficulty: TtDifficulty): Map<string, QueuedPlayer> {
+    let q = queues.get(difficulty);
+    if (!q) {
+      q = new Map();
+      queues.set(difficulty, q);
+    }
+    return q;
+  }
+
+  function leaveAllQueues(socketId: string): void {
+    for (const [difficulty, q] of queues) {
+      if (q.delete(socketId)) {
+        if (q.size === 0) {
+          const t = fillTimers.get(difficulty);
+          if (t) {
+            clearTimeout(t);
+            fillTimers.delete(difficulty);
+          }
+        }
+        broadcastQueue(difficulty);
+      }
+    }
+  }
+
+  io.on("connection", (socket) => {
+    const u = user(socket);
+
+    // reconnect: if the player has a held seat, cancel its grace and resync
+    const existing = findRoomOf(u.userId);
+    if (existing) {
+      const seat = existing.seats.find((s) => s.userId === u.userId);
+      if (seat) {
+        if (seat.graceTimer) {
+          clearTimeout(seat.graceTimer);
+          seat.graceTimer = undefined;
+        }
+        seat.connected = true;
+        seat.socketId = socket.id;
+        socket.join(existing.id);
+        matches.sync(existing);
+      }
+    }
+
+    socket.on(TT_CLIENT_EVENTS.create, (raw, ack?: (r: unknown) => void) => {
+      const parsed = ttCreateSchema.safeParse(raw);
+      if (!parsed.success) return ack?.({ error: "INVALID" });
+      const room = matches.createManual(
+        u,
+        parsed.data.difficulty,
+        parsed.data.roundTimerSec ?? TT_TIMING.defaultRoundSec,
+        parsed.data.isPrivate ?? false,
+      );
+      const seat = room.seats[0]!;
+      seat.socketId = socket.id;
+      socket.join(room.id);
+      matches.sync(room);
+      ack?.({ matchId: room.id, inviteCode: room.inviteCode });
+    });
+
+    socket.on(TT_CLIENT_EVENTS.join, (raw, ack?: (r: unknown) => void) => {
+      const parsed = ttJoinSchema.safeParse(raw);
+      if (!parsed.success) return ack?.({ error: "INVALID" });
+      const room = matches.list().find((r) => r.inviteCode === parsed.data.inviteCode && r.status === "LOBBY");
+      if (!room) return ack?.({ error: "NOT_FOUND" });
+      const seat = matches.addSeat(room, u, false);
+      if (!seat) return ack?.({ error: "FULL" });
+      seat.socketId = socket.id;
+      socket.join(room.id);
+      matches.sync(room);
+      ack?.({ matchId: room.id });
+    });
+
+    socket.on(TT_CLIENT_EVENTS.start, () => {
+      const room = findRoomOf(u.userId);
+      if (room) matches.start(room, u.userId);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.guess, (raw) => {
+      const parsed = ttGuessSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const room = findRoomOf(u.userId);
+      if (!room) return;
+      const seat = room.seats.find((s) => s.userId === u.userId);
+      if (seat) matches.guess(room, seat.seat, parsed.data.playerId);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.endRoundRequest, () => {
+      const room = findRoomOf(u.userId);
+      const seat = room?.seats.find((s) => s.userId === u.userId);
+      if (room && seat) matches.requestEndRound(room, seat.seat);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.endRoundVote, (raw) => {
+      const parsed = ttEndRoundVoteSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const room = findRoomOf(u.userId);
+      const seat = room?.seats.find((s) => s.userId === u.userId);
+      if (room && seat) matches.voteEndRound(room, seat.seat, parsed.data.accept);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.queueJoin, (raw) => {
+      const parsed = ttQueueJoinSchema.safeParse(raw);
+      if (!parsed.success) return;
+      leaveAllQueues(socket.id);
+      ensureQueue(parsed.data.difficulty).set(socket.id, { ...u, socketId: socket.id });
+      startFillTimer(parsed.data.difficulty);
+      broadcastQueue(parsed.data.difficulty);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.queueLeave, () => leaveAllQueues(socket.id));
+
+    socket.on(TT_CLIENT_EVENTS.leave, () => {
+      leaveAllQueues(socket.id);
+      const room = findRoomOf(u.userId);
+      if (room) {
+        matches.withdraw(room, u.userId);
+        socket.leave(room.id);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      leaveAllQueues(socket.id);
+      const room = findRoomOf(u.userId);
+      if (!room) return;
+      const seat = room.seats.find((s) => s.userId === u.userId);
+      if (!seat) return;
+      seat.connected = false;
+      if (room.status === "LOBBY") {
+        matches.withdraw(room, u.userId);
+        return;
+      }
+      // hold the seat for the reconnect grace, then treat as a withdrawal
+      seat.graceTimer = setTimeout(() => {
+        const r = matches.get(room.id);
+        if (r) matches.withdraw(r, u.userId);
+      }, TT_TIMING.reconnectGraceMs);
+      matches.sync(room);
+    });
+  });
+}

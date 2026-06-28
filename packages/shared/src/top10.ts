@@ -1,0 +1,194 @@
+/**
+ * Top Ten (توب 10) — shared domain contracts. Single source of truth for the
+ * enums, competition whitelist, timing, scoring, XP, bot, and completeness-gate
+ * constants used across the engine, the game-server, and the web app. These mirror
+ * the Prisma enums in the `top_10` schema (packages/db/prisma/schema.prisma) and the
+ * APPROVED build plan. Keep all tunables here so a change propagates everywhere.
+ */
+
+// ---- enums (mirror top_10.* Prisma enums) ----------------------------------
+
+export const TT_QUESTION_TYPES = [
+  "GOAL_SCORERS",
+  "ASSISTS",
+  "KEY_PASSES",
+  "TACKLES",
+  "ACCURATE_PASSES",
+  "GK_CLEAN_SHEETS", // dormant (deferred D1) — no data yet; never admitted by the gate
+] as const;
+export type TtQuestionType = (typeof TT_QUESTION_TYPES)[number];
+
+/** The types the catalog will actually generate today (GK_CLEAN_SHEETS excluded
+ *  until a clean-sheets column exists; club/national-team types deferred — D3). */
+export const TT_ACTIVE_QUESTION_TYPES: readonly TtQuestionType[] = [
+  "GOAL_SCORERS",
+  "ASSISTS",
+  "KEY_PASSES",
+  "TACKLES",
+  "ACCURATE_PASSES",
+];
+
+export const TT_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
+export type TtDifficulty = (typeof TT_DIFFICULTIES)[number];
+
+export const TT_MATCH_KINDS = ["MANUAL", "QUICK_PLAY"] as const;
+export type TtMatchKind = (typeof TT_MATCH_KINDS)[number];
+
+export const TT_ROUND_MODES = ["NORMAL", "HINT"] as const;
+export type TtRoundMode = (typeof TT_ROUND_MODES)[number];
+
+export const TT_ROUND_END_REASONS = [
+  "ALL_REVEALED",
+  "UNANIMOUS_END",
+  "TIMER",
+  "WITHDRAWAL",
+] as const;
+export type TtRoundEndReason = (typeof TT_ROUND_END_REASONS)[number];
+
+// ---- per-question-type metadata --------------------------------------------
+
+/** The stat column each active type ranks on, plus the position it is scoped to
+ *  (null = any position). `derived` types are computed in SQL at catalog build. */
+export interface TtTypeMeta {
+  readonly nameAr: string;
+  readonly nameEn: string;
+  /** Position code the ranking is restricted to (null = all outfield/any). */
+  readonly position: "GK" | "DEF" | "MID" | "FWD" | null;
+}
+
+export const TT_TYPE_META: Record<TtQuestionType, TtTypeMeta> = {
+  GOAL_SCORERS: { nameAr: "أكثر اللاعبين تسجيلاً للأهداف", nameEn: "Top goal scorers", position: null },
+  ASSISTS: { nameAr: "أكثر اللاعبين صناعةً للأهداف", nameEn: "Top assist providers", position: null },
+  // "تمريرات مفتاحية" = key passes (passes that lead to a shot). NOT "تمريرات حاسمة",
+  // which reads as ASSISTS and made key-pass totals (e.g. 25) look impossible.
+  KEY_PASSES: { nameAr: "أكثر اللاعبين تمريرات مفتاحية", nameEn: "Top key-pass midfielders", position: "MID" },
+  TACKLES: { nameAr: "أكثر المدافعين تدخلات", nameEn: "Top defenders by tackles", position: "DEF" }, // "most tackles" (D4)
+  ACCURATE_PASSES: { nameAr: "أكثر اللاعبين تمريرات دقيقة", nameEn: "Top midfielders by accurate passes", position: "MID" },
+  GK_CLEAN_SHEETS: { nameAr: "أكثر الحراس نظافةً لشباكهم", nameEn: "Top goalkeepers by clean sheets", position: "GK" },
+};
+
+// ---- competition whitelist (VERIFIED league_ids) ---------------------------
+
+export interface TtCompetition {
+  readonly leagueId: number;
+  readonly nameAr: string;
+  readonly nameEn: string;
+}
+
+/** The only competitions Top Ten generates from (brief §6.3). league_ids verified
+ *  against football.player_season_stats. Always filter `league_id IS NOT NULL` and
+ *  to this set — legacy null-id rows duplicate data from another source/era. */
+export const TT_COMPETITIONS: readonly TtCompetition[] = [
+  { leagueId: 39, nameAr: "الدوري الإنجليزي", nameEn: "Premier League" },
+  { leagueId: 140, nameAr: "الدوري الإسباني", nameEn: "La Liga" },
+  { leagueId: 135, nameAr: "الدوري الإيطالي", nameEn: "Serie A" },
+  { leagueId: 78, nameAr: "الدوري الألماني", nameEn: "Bundesliga" },
+  { leagueId: 61, nameAr: "الدوري الفرنسي", nameEn: "Ligue 1" },
+  { leagueId: 2, nameAr: "دوري أبطال أوروبا", nameEn: "UEFA Champions League" },
+  { leagueId: 1, nameAr: "كأس العالم", nameEn: "FIFA World Cup" },
+  { leagueId: 4, nameAr: "كأس أوروبا", nameEn: "UEFA Euro" },
+  { leagueId: 9, nameAr: "كوبا أمريكا", nameEn: "Copa América" },
+];
+
+export const TT_WHITELIST_LEAGUE_IDS: readonly number[] = TT_COMPETITIONS.map((c) => c.leagueId);
+
+// ---- structural constants --------------------------------------------------
+
+export const TT_LIST_SIZE = 10;
+export const TT_MIN_PLAYERS = 2;
+export const TT_MAX_PLAYERS = 4;
+export const TT_ROUNDS_PER_MATCH = 3; // fixed (brief §5.1)
+
+// ---- timing (server-authoritative) -----------------------------------------
+
+export const TT_TIMING = {
+  /** Per-PLAYER turn timer in normal mode (brief §4.1). */
+  turnSec: 30,
+  /** Hint mode: countdown from 10→0 with inputs LOCKED (brief §4.3). */
+  hintCountdownSec: 10,
+  /** Hint mode: open answer window after a hint is shown. */
+  hintAnswerSec: 30,
+  /** Default round timer; customizable in CREATED rooms only (brief §5.2 case 3). */
+  defaultRoundSec: 600,
+  /** Reconnect grace before a dropped socket is treated as a withdrawal (reused
+   *  from Link Up's value). */
+  reconnectGraceMs: 5 * 60 * 1000,
+} as const;
+
+export const TT_HINT = {
+  /** Full rotations with zero correct guesses before switching to HINT (brief §4.2). */
+  rotationsToTrigger: 2,
+  /** Max hints per hidden card; after the 3rd with no correct answer it auto-reveals
+   *  and nobody scores (brief §4.3). */
+  maxHintsPerCard: 3,
+  /** Per-PLAYER wrong attempts in hint mode; on exhaustion the input locks for the
+   *  rest of the round (brief §4.3). */
+  wrongAttemptsPerPlayer: 3,
+} as const;
+
+// ---- scoring & XP ----------------------------------------------------------
+
+/** Points for revealing the card at a given rank = the rank itself (brief §3). */
+export function ttPointsForRank(rank: number): number {
+  return rank;
+}
+
+export const TT_XP = {
+  /** Round XP multiplier by difficulty (brief §9). */
+  difficultyMultiplier: { EASY: 1.0, MEDIUM: 1.5, HARD: 2.0 } as Record<TtDifficulty, number>,
+  /** Bonus for revealing the valuable tail; cumulative if you reveal several. */
+  tailBonus: { 8: 5, 9: 10, 10: 15 } as Record<number, number>,
+  /** Match winner bonus. No separate runner-up bonus (approved): everyone keeps
+   *  their per-round XP so all players still progress. */
+  matchWinBonus: 50,
+  /** Cosmetic level curve: XP to go from level L to L+1 = base + (L-1)*step. */
+  levelBaseCost: 100,
+  levelStep: 50,
+} as const;
+
+// ---- bot model (quick-play only) -------------------------------------------
+
+export const TT_BOTS = {
+  /** Skill band [min,max] per quick-play difficulty queue. */
+  skillByDifficulty: {
+    EASY: [0.3, 0.5],
+    MEDIUM: [0.5, 0.7],
+    HARD: [0.7, 0.9],
+  } as Record<TtDifficulty, readonly [number, number]>,
+  /** Per-turn correct probability = base + skill*slope. */
+  correctProbBase: 0.4,
+  correctProbSlope: 0.5,
+  /** Normal-turn human-like think delay (seconds), scaled shorter for higher skill. */
+  turnDelayMinSec: 2,
+  turnDelayMaxSec: 8,
+  /** Fastest-answer reaction (seconds): min + range*(1-skill) + jitter. */
+  reactMinSec: 2.5,
+  reactRangeSec: 6.5,
+  reactJitterSec: 1,
+  /** Quick-play tables are filled to a randomized seat count in this range
+   *  (never below TT_MIN_PLAYERS, capped at TT_MAX_PLAYERS) — approved §6. */
+  fillMinSeats: 2,
+  fillMaxSeats: 4,
+  /** Short window to gather more humans before filling with bots. */
+  fillWindowSec: 8,
+} as const;
+
+// ---- completeness gate (catalog build) — tunable config --------------------
+
+/** A (type, competition, season) is admitted to the catalog only if it passes ALL
+ *  of these. Field-fill is a PROXY for "we have the true top 10"; the owner also
+ *  reviews the generated catalog artifact (D5/D6). Thresholds live here so they can
+ *  be tuned without code changes elsewhere. */
+export const TT_GATE = {
+  seasonMin: 2010,
+  seasonMax: 2025,
+  /** Minimum appearances for a player to count as a "regular" in a comp/season. */
+  minAppearances: 5,
+  /** Among the top-N regulars (by appearances), the stat must be present for at
+   *  least this fraction — targets the players who could be in the top-10, not
+   *  fringe nulls (the refinement from D6). */
+  regularsTopN: 30,
+  regularsFillMin: 0.95,
+  /** At least this many players with a value > 0 (a clearly separable list). */
+  minQualifiers: 20,
+} as const;

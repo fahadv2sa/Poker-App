@@ -19,7 +19,7 @@ datasource db {
   // docs/architecture/PLATFORM_CONTRACTS.md). platform = identity/social (A),
   // football = reference data (B), link_up = Link Up's economy + session (C+D).
   // A future game takes its own schema; A+B stay shared.
-  schemas   = ["platform", "football", "link_up"]
+  schemas   = ["platform", "football", "link_up", "top_10"]
 }
 
 // ----------------------------------------------------------------------------
@@ -639,6 +639,12 @@ model Player {
   @@index([nationalityId])
   @@index([positionId])
   @@index([tier])
+  // Prefix player-search for the Top Ten filtered input (read-only consumer; Top
+  // Ten never writes football data). Additive btree indexes on the display-name
+  // columns. NOTE: case-insensitive ILIKE prefix at 8k rows is already instant; a
+  // pg_trgm GIN index would be the upgrade if the pool ever grows large.
+  @@index([name])
+  @@index([nameAr])
   @@map("players")
   @@schema("football")
 }
@@ -1047,4 +1053,278 @@ model AdminAuditLog {
   @@index([targetType, targetId])
   @@map("admin_audit_log")
   @@schema("platform")
+}
+
+// ============================================================================
+// Top Ten (توب 10) — game #2 (binding contract: docs/architecture/PLATFORM_CONTRACTS.md).
+// Lives in its OWN `top_10` schema (group C+D for this game). ISOLATION RULES honored:
+//   • References platform identity by opaque `user_id` UUID only — NO FK to platform.users.
+//   • References football reference data by `football_player_id` UUID only — NO FK to
+//     football.players (football is read through the seam; this keeps a future separate
+//     DB / network football API possible without a cross-DB foreign key).
+//   • FKs exist ONLY between top_10's own tables.
+// Top Ten NEVER writes football.* or any link_up.* table.
+// ============================================================================
+
+// The eight stat types. Active set is GOAL_SCORERS / ASSISTS / KEY_PASSES / TACKLES /
+// ACCURATE_PASSES. GK_CLEAN_SHEETS is wired but DORMANT (deferred D1 — no clean-sheets
+// data yet; becomes generatable the moment that column is imported, no schema change).
+// Club/national-team types (D3) are deferred to a later team-guessing version.
+enum TtQuestionType {
+  GOAL_SCORERS
+  ASSISTS
+  KEY_PASSES
+  TACKLES
+  ACCURATE_PASSES
+  GK_CLEAN_SHEETS
+
+  @@map("tt_question_type")
+  @@schema("top_10")
+}
+
+// Three difficulty tiers — derived from the Σ fame_score of the question's 10 players
+// (inverse: high Σ = famous = EASY). Quick-play has one queue per tier; created rooms
+// pick one freely. Own enum (not Link Up's) to keep the game schema-isolated.
+enum TtDifficulty {
+  EASY
+  MEDIUM
+  HARD
+
+  @@map("tt_difficulty")
+  @@schema("top_10")
+}
+
+enum TtMatchKind {
+  MANUAL
+  QUICK_PLAY
+
+  @@map("tt_match_kind")
+  @@schema("top_10")
+}
+
+enum TtMatchStatus {
+  LOBBY
+  IN_PROGRESS
+  ENDED
+  ABANDONED
+
+  @@map("tt_match_status")
+  @@schema("top_10")
+}
+
+enum TtMatchPlayerStatus {
+  ACTIVE
+  WITHDRAWN
+
+  @@map("tt_match_player_status")
+  @@schema("top_10")
+}
+
+enum TtRoundMode {
+  NORMAL
+  HINT
+
+  @@map("tt_round_mode")
+  @@schema("top_10")
+}
+
+enum TtRoundStatus {
+  ACTIVE
+  ENDED
+
+  @@map("tt_round_status")
+  @@schema("top_10")
+}
+
+enum TtRoundEndReason {
+  ALL_REVEALED
+  UNANIMOUS_END
+  TIMER
+  WITHDRAWAL
+
+  @@map("tt_round_end_reason")
+  @@schema("top_10")
+}
+
+// ---- Question catalog (frozen, owner-reviewable snapshot) -------------------
+// Built admin-time by the catalog script: it applies the completeness gate to every
+// (type, competition, season) candidate and persists ONLY admitted lists. Runtime
+// reads these rows — it NEVER re-ranks from football.* — so a mid-season data change
+// can't alter a live match and there is no hot-path scan.
+model TtCatalogEntry {
+  id              String         @id @default(uuid()) @db.Uuid
+  type            TtQuestionType
+  leagueId        Int            @map("league_id")
+  competitionName String         @map("competition_name")
+  season          Int
+  difficulty      TtDifficulty
+  fameSum         Float          @map("fame_sum")
+  // The build run that produced this entry (lets a rebuild supersede a prior catalog
+  // without deleting history; runtime selects active=true).
+  builtAt         DateTime       @default(now()) @map("built_at") @db.Timestamptz(6)
+  active          Boolean        @default(true)
+
+  players         TtCatalogPlayer[]
+
+  // One admitted list per (type, competition, season) per build generation.
+  @@unique([type, leagueId, season, builtAt])
+  @@index([active, difficulty])
+  @@map("tt_catalog_entry")
+  @@schema("top_10")
+}
+
+// The correct 10 answers for a catalog entry (rank 1..10). `footballPlayerId` is a
+// plain UUID into football.players — intentionally NOT a Prisma relation (isolation).
+model TtCatalogPlayer {
+  id               String  @id @default(uuid()) @db.Uuid
+  entryId          String  @map("entry_id") @db.Uuid
+  rank             Int // 1 (top) .. 10
+  footballPlayerId String  @map("football_player_id") @db.Uuid
+  value            Float // the stat value at build time
+  fameAtBuild      Float   @map("fame_at_build")
+
+  entry            TtCatalogEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([entryId, rank])
+  @@index([entryId])
+  @@map("tt_catalog_player")
+  @@schema("top_10")
+}
+
+// Singleton-ish config: the two tercile thresholds on Σ fame that map a list to a
+// difficulty tier. Latest row (by builtAt) is authoritative. Recomputed on rebuild.
+model TtDifficultyConfig {
+  id           String   @id @default(uuid()) @db.Uuid
+  // Σ fame >= easyMinSum → EASY; Σ fame < hardMaxSum → HARD; between → MEDIUM.
+  easyMinSum   Float    @map("easy_min_sum")
+  hardMaxSum   Float    @map("hard_max_sum")
+  entriesCount Int      @map("entries_count")
+  builtAt      DateTime @default(now()) @map("built_at") @db.Timestamptz(6)
+
+  @@map("tt_difficulty_config")
+  @@schema("top_10")
+}
+
+// ---- Live session (rooms temporary; results/progression persistent) --------
+
+model TtMatch {
+  id            String        @id @default(uuid()) @db.Uuid
+  kind          TtMatchKind   @default(MANUAL)
+  difficulty    TtDifficulty  @default(MEDIUM)
+  roundTimerSec Int           @default(600) @map("round_timer_sec") // 10 min default
+  roundsTotal   Int           @default(3) @map("rounds_total") // fixed at 3
+  maxPlayers    Int           @default(4) @map("max_players")
+  status        TtMatchStatus @default(LOBBY)
+  inviteCode    String?       @unique @map("invite_code")
+  createdByUserId String      @map("created_by_user_id") @db.Uuid // opaque platform id
+  config        Json          @db.JsonB
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt     DateTime?     @map("started_at") @db.Timestamptz(6)
+  endedAt       DateTime?     @map("ended_at") @db.Timestamptz(6)
+
+  players       TtMatchPlayer[]
+  rounds        TtRound[]
+
+  @@index([status, endedAt])
+  @@map("tt_matches")
+  @@schema("top_10")
+}
+
+model TtMatchPlayer {
+  id          String              @id @default(uuid()) @db.Uuid
+  matchId     String              @map("match_id") @db.Uuid
+  userId      String              @map("user_id") @db.Uuid // opaque platform id (no FK)
+  seat        Int
+  totalPoints Int                 @default(0) @map("total_points")
+  status      TtMatchPlayerStatus @default(ACTIVE)
+  // Bot seats (quick-play only) are flagged so progression/XP writes can skip them,
+  // mirroring Link Up's bot ledger/stats isolation. A bot's user_id is a reserved
+  // player-number user row (>= 900000) in platform.users.
+  isBot       Boolean             @default(false) @map("is_bot")
+  withdrawnAt DateTime?           @map("withdrawn_at") @db.Timestamptz(6)
+  joinedAt    DateTime            @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  match       TtMatch             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, seat])
+  @@unique([matchId, userId])
+  @@map("tt_match_players")
+  @@schema("top_10")
+}
+
+model TtRound {
+  id                 String            @id @default(uuid()) @db.Uuid
+  matchId            String            @map("match_id") @db.Uuid
+  roundNo            Int               @map("round_no") // 1..3
+  // The frozen catalog entry that supplies the 10 correct answers for this round.
+  catalogEntryId     String?           @map("catalog_entry_id") @db.Uuid
+  mode               TtRoundMode       @default(NORMAL)
+  status             TtRoundStatus     @default(ACTIVE)
+  // Full rotations with zero correct guesses; at 2 the round switches to HINT mode.
+  noCorrectRotations Int               @default(0) @map("no_correct_rotations")
+  endReason          TtRoundEndReason? @map("end_reason")
+  startedAt          DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt            DateTime?         @map("ended_at") @db.Timestamptz(6)
+
+  match              TtMatch           @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  reveals            TtRoundReveal[]
+
+  @@unique([matchId, roundNo])
+  @@index([matchId])
+  @@map("tt_rounds")
+  @@schema("top_10")
+}
+
+// One row per revealed card. Drives scoring AND the high-rank-first standings
+// tiebreak (poker-style). `revealedByUserId` null = auto-revealed (3-hint exhaustion),
+// nobody scored. `footballPlayerId` is the answer that was revealed.
+model TtRoundReveal {
+  id               String   @id @default(uuid()) @db.Uuid
+  roundId          String   @map("round_id") @db.Uuid
+  rank             Int // 1..10 — also the points value
+  revealedByUserId String?  @map("revealed_by_user_id") @db.Uuid
+  points           Int // = rank, or 0 for an auto-reveal
+  footballPlayerId String   @map("football_player_id") @db.Uuid
+  revealedAt       DateTime @default(now()) @map("revealed_at") @db.Timestamptz(6)
+
+  round            TtRound  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@unique([roundId, rank])
+  @@index([roundId])
+  @@map("tt_round_reveals")
+  @@schema("top_10")
+}
+
+// ---- Progression (XP + cosmetic level) — per-game, no platform-wide economy ----
+
+// Layer-2 read model (mirrors Link Up's player_metrics pattern). Keyed on opaque
+// user_id. No coins/wallet/bank — XP and a cosmetic level only.
+model TtProgression {
+  userId          String   @id @map("user_id") @db.Uuid
+  xp              BigInt   @default(0)
+  level           Int      @default(1)
+  celebratedLevel Int      @default(1) @map("celebrated_level")
+  matchesPlayed   Int      @default(0) @map("matches_played")
+  matchesWon      Int      @default(0) @map("matches_won")
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("tt_progression")
+  @@schema("top_10")
+}
+
+// Append-only XP ledger (audit + idempotent aggregation source). `reference` is a
+// server-generated idempotency key so re-applying the same award is a no-op.
+model TtXpEvent {
+  seq       BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  matchId   String?  @map("match_id") @db.Uuid
+  amount    Int
+  reason    String // ROUND_POINTS | TAIL_BONUS | MATCH_WIN
+  reference String   @unique
+  metadata  Json?    @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("tt_xp_events")
+  @@schema("top_10")
 }

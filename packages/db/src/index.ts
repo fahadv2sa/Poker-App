@@ -8,6 +8,24 @@ export type {
   BankClaim,
   HandRank,
   Position,
+  // Top Ten (game #2) — top_10 schema
+  TtCatalogEntry,
+  TtCatalogPlayer,
+  TtDifficultyConfig,
+  TtMatch,
+  TtMatchPlayer,
+  TtRound,
+  TtRoundReveal,
+  TtProgression,
+  TtXpEvent,
+  TtQuestionType,
+  TtDifficulty,
+  TtMatchKind,
+  TtMatchStatus,
+  TtMatchPlayerStatus,
+  TtRoundMode,
+  TtRoundStatus,
+  TtRoundEndReason,
 } from "./generated/client";
 export * from "./errors";
 export * from "./wallet";

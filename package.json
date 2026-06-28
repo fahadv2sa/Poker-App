@@ -26,6 +26,9 @@
     "db:transliterate-names": "pnpm --filter @fb/db transliterate:names",
     "db:calculate-scores": "pnpm --filter @fb/db calculate:scores",
     "db:reset": "pnpm --filter @fb/db migrate:reset",
+    "db:build-top10-catalog": "pnpm --filter @fb/db build:top10-catalog",
+    "dev:top10-web": "pnpm --filter @fb/top-10-web dev",
+    "dev:top10-server": "pnpm --filter @fb/top-10-server dev",
     "db:seed-bots": "pnpm --filter @fb/game-server seed:bots"
   },
   "devDependencies": {

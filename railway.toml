@@ -36,6 +36,33 @@
 #                    (PORT is injected by Railway — do not set it)
 #   Replicas       : EXACTLY 1  (authoritative in-memory room state + timers — never scale)
 # ─────────────────────────────────────────────────────────────────────────────
+#
+# ── TOP TEN (game #2 — توب 10) — TWO ADDITIONAL, INDEPENDENT services ──────────
+# Same repo, same shared Postgres (identity + football shared; Top Ten owns the
+# `top_10` schema). Fully separate from Link Up at runtime. The shared [deploy]
+# preDeployCommand below (prisma migrate deploy) is idempotent and applies to these
+# too, so the additive top_10 migration ships migrate-first like everything else.
+# NOTE: before first deploy, build the question catalog once against prod:
+#   NODE_OPTIONS=--use-system-ca DATABASE_URL=<prod> pnpm db:build-top10-catalog
+#
+# Service: top-10  (apps/top-10-web — Next.js)
+#   Root Directory : (repo root)
+#   Build Command  : pnpm --filter @fb/top-10-web build
+#   Start Command  : pnpm --filter @fb/top-10-web start    # next start -p $PORT
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET (== Link Up's), AUTH_URL,
+#                    NEXT_PUBLIC_TOP10_SERVER_URL  (baked at build — set before build)
+#   Replicas       : 1+  (stateless)
+#   Also set on the HUB (link-up web): NEXT_PUBLIC_TOP10_WEB_URL = this service's URL
+#
+# Service: game-server-top-10  (apps/top-10-server — Socket.IO)
+#   Root Directory : (repo root)
+#   Build Command  : (none — tsx runs TypeScript source)
+#   Start Command  : pnpm --filter @fb/top-10-server start  # → tsx src/index.ts
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET (== Link Up's),
+#                    WEB_ORIGIN (= the top-10 web URL), BOTS_ENABLED (optional)
+#                    (PORT injected by Railway — do not set it)
+#   Replicas       : EXACTLY 1  (authoritative in-memory match state + timers)
+# ─────────────────────────────────────────────────────────────────────────────
 
 [build]
 builder = "NIXPACKS"
