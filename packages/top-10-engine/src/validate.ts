@@ -8,9 +8,9 @@
  * metadata (this package never touches the DB).
  *
  * The list is the TOP-10 DISTINCT VALUES, dense-ranked 1..10, with every player tied
- * at a value stored at that rank. Ties are valid at ANY rank (the runtime cascade /
- * bonus logic resolves how tied players score) — the validator only ensures the data
- * is sound and complete.
+ * at a value stored at that rank. Ties are valid at ANY rank — a tie means "any one of
+ * these names is accepted for this rank": naming any tied player reveals the rank and
+ * the rest are cancelled. The validator only ensures the data is sound and complete.
  *
  * Rules enforced (any violation ⇒ the list must not ship):
  *   1. Exactly 10 distinct ranks present: {1..10}, no gaps. (≥10 distinct values.)

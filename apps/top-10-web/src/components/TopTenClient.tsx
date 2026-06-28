@@ -351,26 +351,18 @@ function MatchView({
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {state.cards.map((c) => (
           <div
-            key={c.key}
+            key={c.rank}
             className={cn(
               "flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors",
               // Lightweight styling: a gold-tinted surface when revealed, a plain
-              // dark slot when hidden. A hidden card shows NO rank — that's how the
-              // tie cascade stays invisible; the rank (and bonus "+") appear only on reveal.
+              // dark slot when hidden. Ranks are fixed (1..10) and never move.
               c.revealed
                 ? "border-[var(--gold)]/45 bg-[color-mix(in_oklch,var(--gold)_10%,black)]"
                 : "border-[var(--border)] bg-black/30",
             )}
           >
             <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-lg lu-chip font-bold text-[var(--gold)]">
-              {c.revealed ? (
-                <>
-                  {c.rank}
-                  {c.bonus ? <span className="text-[var(--lu-ember-glow)]">+</span> : null}
-                </>
-              ) : (
-                "؟"
-              )}
+              {c.rank}
             </span>
             {c.revealed && c.player ? (
               <div className="flex w-full items-center justify-between">

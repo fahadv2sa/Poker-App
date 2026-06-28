@@ -54,9 +54,10 @@ export function buildRanking(rows: readonly CandidateRow[]): RankedPlayer[] {
 /**
  * Build the ANSWER LIST as the TOP-10 DISTINCT VALUES, DENSE-ranked (1..10), with
  * EVERY player tied at a value stored at that rank. Ties may appear at ANY rank, and
- * the list may hold well more than 10 players — no tied player is ever dropped, since
- * any of them is a valid answer (the runtime cascade/bonus logic resolves how they
- * score). A value's rank = its position among the distinct values (1 = highest).
+ * the list may hold well more than 10 players — no tied player is ever dropped, because
+ * a tie means "any one of these names is accepted for this rank": naming any tied
+ * player reveals the rank and the rest are cancelled. A value's rank = its position
+ * among the distinct values (1 = highest).
  *
  * Also returns `excludedTopValue` — the highest value among the EXCLUDED players (the
  * 11th distinct value), or null if there are ≤10 distinct values. The validator uses

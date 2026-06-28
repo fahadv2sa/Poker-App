@@ -7,14 +7,15 @@ import {
   hintWindowTimeout,
   initRound,
   matchWinBonus,
-  nextHintTarget,
   normalGuess,
   normalTimeout,
   revealedRanksBySeat,
   revealHint,
   roundXp,
   scoreBySeat,
+  type Outcome,
   type RoundEvent,
+  type RoundState,
 } from "@fb/top-10-engine";
 import {
   TT_HINT,
@@ -169,8 +170,8 @@ export class Matches {
     room.usedEntryIds.add(entry.id);
     const seats = activeSeats(room).map((s) => s.seat);
     const startIndex = (roundNo - 1) % seats.length; // rotate the starting player each round
-    const state = initRound(seats, startIndex, entry.players);
-    room.round = { roundNo, entry, state, hintText: null, hintNumber: 0 };
+    const state = initRound(seats, startIndex);
+    room.round = { roundNo, entry, state, hintText: null, hintNumber: 0, revealedPlayerByRank: new Map() };
     room.endRoundReq = null;
     // overall round timer (10 min default, customizable in created rooms)
     this.clear(room, "round");
@@ -203,19 +204,27 @@ export class Matches {
 
   // ---- guesses (both modes) ----------------------------------------------
 
-  /** A player (or bot) selected `playerId`. Routes to the right mode. The engine
-   *  resolves it against the dynamic board (cascade / bonus / already / wrong). */
+  /** A player (or bot) selected `playerId`. The server resolves it to a rank: naming
+   *  ANY accepted (tied) player at a still-hidden rank reveals it; any other tied
+   *  player at that rank then resolves to "already" (cancelled). */
   guess(room: MatchRoom, seat: number, playerId: string): void {
     const r = room.round;
     if (!r || room.status !== "IN_PROGRESS") return;
-    const step = r.state.mode === "NORMAL" ? normalGuess(r.state, seat, playerId) : hintGuess(r.state, seat, playerId);
+    const outcome = resolveOutcome(r.entry, r.state, playerId);
+    const step = r.state.mode === "NORMAL" ? normalGuess(r.state, seat, outcome) : hintGuess(r.state, seat, outcome);
     r.state = step.state;
+    // Record WHICH tied player was named for the revealed rank, so the card shows them.
+    if (outcome.type === "correct" && step.events.some((e) => e.t === "reveal" && e.bySeat === seat)) {
+      r.revealedPlayerByRank.set(outcome.rank, playerId);
+    }
     this.afterRoundStep(room, step.events);
   }
 
-  /** The catalog player for a revealed card, by its playerId (carried on the event). */
-  private playerById(r: { entry: CatalogEntry }, playerId: string) {
-    return r.entry.players.find((p) => p.playerId === playerId);
+  /** The player to DISPLAY for a revealed rank: the one actually named, else a
+   *  (canonical) accepted player at that rank — used for auto-reveals (hint exhaustion). */
+  private revealedPlayer(r: { entry: CatalogEntry; revealedPlayerByRank: Map<number, string> }, rank: number) {
+    const pid = r.revealedPlayerByRank.get(rank);
+    return (pid && r.entry.players.find((p) => p.playerId === pid)) || r.entry.players.find((p) => p.rank === rank);
   }
 
   /** Interpret engine events: broadcast reveals, (re)schedule timers, advance. */
@@ -226,12 +235,11 @@ export class Matches {
     let roundEnded = false;
     for (const e of events) {
       if (e.t === "reveal") {
-        const cp = this.playerById(r, e.playerId)!;
+        const cp = this.revealedPlayer(r, e.rank)!;
         this.deps.emit(room.id, TT_SERVER_EVENTS.reveal, {
           rank: e.rank,
           bySeat: e.bySeat,
           points: e.points,
-          bonus: e.bonus,
           player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value },
         });
       } else if (e.t === "seatLocked") {
@@ -266,13 +274,13 @@ export class Matches {
   private beginNextHintCard(room: MatchRoom): void {
     const r = room.round;
     if (!r) return;
-    const targetPlayerId = nextHintTarget(r.state);
-    if (targetPlayerId == null) {
+    if (r.state.hidden.length === 0) {
       this.finishRound(room, "ALL_REVEALED");
       return;
     }
-    // target = the most valuable still-hidden card (highest rank), incl. bonus cards
-    const { state } = beginHintCard(r.state, targetPlayerId);
+    // choose a target: the most valuable hidden rank (highest rank number)
+    const targetRank = Math.max(...r.state.hidden);
+    const { state } = beginHintCard(r.state, targetRank);
     r.state = state;
     r.hintNumber = 0;
     r.hintText = null;
@@ -294,7 +302,7 @@ export class Matches {
     if (!r || !r.state.hint) return;
     const { state } = revealHint(r.state);
     r.state = state;
-    const target = r.entry.players.find((p) => p.playerId === state.hint!.targetPlayerId)!;
+    const target = r.entry.players.find((p) => p.rank === state.hint!.targetRank)!;
     r.hintNumber = state.hint!.hintsGiven;
     r.hintText = target.hints[Math.min(r.hintNumber - 1, target.hints.length - 1)] ?? "تلميح";
     this.clear(room, "hintWindow");
@@ -313,9 +321,9 @@ export class Matches {
     // auto-reveal emits a reveal event
     for (const e of events) {
       if (e.t === "reveal") {
-        const cp = this.playerById(r, e.playerId)!;
+        const cp = this.revealedPlayer(r, e.rank)!;
         this.deps.emit(room.id, TT_SERVER_EVENTS.reveal, {
-          rank: e.rank, bySeat: null, points: 0, bonus: e.bonus,
+          rank: e.rank, bySeat: null, points: 0,
           player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value },
         });
       } else if (e.t === "roundEnded") {
@@ -517,22 +525,20 @@ export class Matches {
   buildStateView(room: MatchRoom): TtStateView {
     const r = room.round;
     const roundScores = r ? scoreBySeat(r.state) : {};
-    // bySeat per revealed playerId (for the "who revealed it" badge).
-    const revealedBy = new Map<string, number | null>();
-    if (r) for (const rec of r.state.reveals) revealedBy.set(rec.playerId, rec.bySeat);
+    const revealedByRank = new Map<number, { bySeat: number | null }>();
+    if (r) for (const rec of r.state.reveals) revealedByRank.set(rec.rank, { bySeat: rec.bySeat });
 
-    // Cards in STABLE board order (never reordered, so the grid never jumps). A
-    // hidden card NEVER exposes its rank — that's how cascades stay invisible; the
-    // rank (and bonus "+") only appear once the card is revealed.
-    const cards = (r?.state.cards ?? []).map((c, i) => {
-      const cp = this.playerById(r!, c.playerId);
+    // Exactly 10 fixed rank cards (ranks never move). A revealed card shows the tied
+    // player actually named for that rank.
+    const cards = Array.from({ length: 10 }, (_, i) => {
+      const rank = i + 1;
+      const rev = revealedByRank.get(rank);
+      const cp = r ? this.revealedPlayer(r, rank) : undefined;
       return {
-        key: i,
-        revealed: c.revealed,
-        rank: c.revealed ? c.rank : null,
-        bonus: c.revealed ? c.bonus : false,
-        player: c.revealed && cp ? { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value } : null,
-        bySeat: c.revealed ? revealedBy.get(c.playerId) ?? null : null,
+        rank,
+        revealed: !!rev,
+        player: rev && cp ? { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value } : null,
+        bySeat: rev?.bySeat ?? null,
       };
     });
 
@@ -600,6 +606,16 @@ export class Matches {
 }
 
 // ---- helpers ----------------------------------------------------------------
+
+/** Map a guessed playerId to an outcome. A rank may have several accepted (tied)
+ *  players: any of them at a still-hidden rank is "correct" for that rank; once the
+ *  rank is revealed, every other tied player resolves to "already" (cancelled). */
+function resolveOutcome(entry: CatalogEntry, state: RoundState, playerId: string): Outcome {
+  const cp = entry.players.find((p) => p.playerId === playerId);
+  if (!cp) return { type: "wrong" };
+  if (state.hidden.includes(cp.rank)) return { type: "correct", rank: cp.rank };
+  return { type: "already" };
+}
 
 function activeSeats(room: MatchRoom): TtSeat[] {
   return room.seats.filter((s) => s.status === "ACTIVE");

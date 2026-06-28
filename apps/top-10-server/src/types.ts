@@ -25,6 +25,10 @@ export interface ActiveRound {
   /** Current hint target's precomputed hint strings + which we've shown. */
   hintText: string | null;
   hintNumber: number;
+  /** rank → the playerId actually named for it. A rank may have several accepted
+   *  (tied) players; this records which one a contestant named so the revealed card
+   *  shows that player. Auto-reveals (hint exhaustion) fall back to a tied player. */
+  revealedPlayerByRank: Map<number, string>;
 }
 
 export type Timers = {

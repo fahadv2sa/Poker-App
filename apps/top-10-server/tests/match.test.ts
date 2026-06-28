@@ -107,10 +107,10 @@ describe("Top Ten match orchestration", () => {
     // hint countdown (10s) → open window
     vi.advanceTimersByTime(TT_TIMING.hintCountdownSec * 1000);
     expect(room.round!.state.hint?.phase).toBe("OPEN");
-    const targetId = room.round!.state.hint!.targetPlayerId; // server picks the top hidden card
-    matches.guess(room, 0, targetId);
-    const reveals = events[TT_SERVER_EVENTS.reveal] as { player: { id: string } }[];
-    expect(reveals.some((r) => r.player.id === targetId)).toBe(true);
+    const target = room.round!.state.hint!.targetRank; // server picks max hidden = 10
+    matches.guess(room, 0, `p${target}`);
+    const reveals = events[TT_SERVER_EVENTS.reveal] as { rank: number }[];
+    expect(reveals.some((r) => r.rank === target)).toBe(true);
   });
 
   it("withdrawal below the minimum ends the match (ABANDONED) and zeroes points", () => {
@@ -147,5 +147,48 @@ describe("Top Ten match orchestration", () => {
     matches.withdraw(room, "u0"); // last (only) seat leaves the lobby
     expect(matches.get(room.id)).toBeUndefined();
     expect(matches.list().some((r) => r.id === room.id)).toBe(false);
+  });
+
+  it("tie: naming ANY one tied player reveals the rank once and cancels the rest", () => {
+    const events: Record<string, unknown[]> = {};
+    // rank 1 is a 2-way tie: p1a and p1b are both accepted answers for rank 1.
+    const tiedEntry = {
+      id: "tie1",
+      type: "GOAL_SCORERS",
+      leagueId: 39,
+      competitionName: "PL",
+      season: 2024,
+      difficulty: "EASY",
+      titleAr: "tie",
+      players: [
+        { rank: 1, playerId: "p1a", value: 10, name: "A1", nameAr: "أ", hints: [] },
+        { rank: 1, playerId: "p1b", value: 10, name: "A2", nameAr: "ب", hints: [] },
+        ...Array.from({ length: 9 }, (_, i) => ({
+          rank: i + 2, playerId: `p${i + 2}`, value: 9 - i, name: `P${i + 2}`, nameAr: `ل${i + 2}`, hints: [],
+        })),
+      ],
+    } as unknown as CatalogEntry;
+    const matches = new Matches({
+      catalog: { size: 1, pick: () => tiedEntry } as unknown as CatalogSource,
+      persist: noopPersist,
+      emit: (_id, e, p) => {
+        (events[e] ??= []).push(p);
+      },
+      rng: () => 0.5,
+    });
+    const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
+    matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 }, false);
+    matches.start(room, "u0");
+
+    matches.guess(room, currentTurnSeat(room.round!.state)!, "p1a"); // name ONE tied player
+    matches.guess(room, currentTurnSeat(room.round!.state)!, "p1b"); // name the OTHER → cancelled
+
+    const reveals = (events[TT_SERVER_EVENTS.reveal] ?? []) as { rank: number; player: { id: string } }[];
+    const rank1 = reveals.filter((r) => r.rank === 1);
+    expect(rank1).toHaveLength(1); // rank 1 revealed exactly once
+    expect(rank1[0]!.player.id).toBe("p1a"); // shows the player actually named
+    expect(room.round!.state.hidden).not.toContain(1); // rank 1 cleared
+    expect(room.round!.state.hidden).toHaveLength(9); // the other 9 ranks remain
+    expect(room.status).toBe("IN_PROGRESS"); // not over — only 1 of 10 ranks revealed
   });
 });
