@@ -37,20 +37,19 @@ import {
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
 } from "@fb/shared";
+import { isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer } from "./top10-guards";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
-/** The SQL value-expression each active type ranks on (SUM aggregates multi-row
- *  transfer lines per player per comp/season — 2,420 such groups exist). */
-const VALUE_EXPR: Record<TtQuestionType, string> = {
-  GOAL_SCORERS: "SUM(s.goals_total)",
-  ASSISTS: "SUM(s.goals_assists)",
-  KEY_PASSES: "SUM(s.passes_key)",
-  TACKLES: "SUM(s.tackles_total)",
-  ACCURATE_PASSES: "SUM(s.passes_total * s.passes_accuracy / 100.0)",
-  // dormant — never built (no clean-sheets column yet). Present for completeness.
-  GK_CLEAN_SHEETS: "NULL",
-};
+/** Every ACTIVE player, mirroring the search index, so findability is checked against
+ *  the exact same data the runtime search ranks over. */
+async function loadSearchIndex(): Promise<SearchPlayer[]> {
+  const rows = await prisma.player.findMany({
+    where: { active: true },
+    select: { id: true, name: true, nameAr: true, fameScore: true },
+  });
+  return rows.map((r) => ({ id: r.id, name: r.name, nameAr: r.nameAr, fame: r.fameScore ?? 0, active: true }));
+}
 
 interface AggRow {
   league_id: number;
@@ -122,6 +121,7 @@ async function main() {
   console.log(`Top Ten catalog build${DRY_RUN ? " [DRY RUN — no DB writes]" : ""}`);
   const admitted: Admitted[] = [];
   const rejected: Rejected[] = [];
+  const searchIndex = await loadSearchIndex(); // for the findability guard
 
   for (const type of TT_ACTIVE_QUESTION_TYPES) {
     const rows = await aggregateType(type);
@@ -149,7 +149,15 @@ async function main() {
       const meta = new Map<string, ListPlayerMeta>(
         gRows.map((r) => [r.player_id, { active: r.active, nameAr: r.name_ar }]),
       );
-      const violations = validateRankedList({ list: players, excludedTopValue, meta });
+      const violations = [
+        ...validateRankedList({ list: players, excludedTopValue, meta }),
+        // (8) value sanity — a value above the type's ceiling = wrong column / unit.
+        ...valueSanityViolations(type, players),
+        // (11) findability — every answer must be selectable in the player search.
+        ...players
+          .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
+          .map((p) => `rank ${p.rank}: player ${p.playerId} ("${p.nameAr}") is not findable by its Arabic name`),
+      ];
       if (violations.length > 0) {
         rejected.push({ type, leagueId, season, reasons: violations, metrics: gate.metrics });
         continue;
@@ -172,13 +180,17 @@ async function main() {
       ? "integrity: incomplete bottom tie group"
       : r.reasons.some((x) => x.includes("missing (need") || x.includes("distinct values"))
         ? "integrity: fewer than 10 distinct values"
-        : r.reasons.some((x) => x.includes("Arabic name"))
-          ? "integrity: missing Arabic name"
-          : r.reasons.some((x) => x.includes("inactive"))
-            ? "integrity: inactive (unsearchable) player"
-            : r.reasons.some((x) => x.includes("duplicate"))
-              ? "integrity: duplicate in list"
-              : "completeness gate";
+        : r.reasons.some((x) => x.includes("not findable"))
+          ? "integrity: unfindable answer player"
+          : r.reasons.some((x) => x.includes("outside (0"))
+            ? "integrity: value out of sane range"
+            : r.reasons.some((x) => x.includes("Arabic name"))
+              ? "integrity: missing Arabic name"
+              : r.reasons.some((x) => x.includes("inactive"))
+                ? "integrity: inactive (unsearchable) player"
+                : r.reasons.some((x) => x.includes("duplicate"))
+                  ? "integrity: duplicate in list"
+                  : "completeness gate";
     rejTally.set(key, (rejTally.get(key) ?? 0) + 1);
   }
   if (rejTally.size > 0) {
@@ -198,7 +210,13 @@ async function main() {
   // broken question must never reach the catalog. This is the build-level guarantee.
   const assertionFailures: string[] = [];
   for (const a of admitted) {
-    const violations = validateRankedList({ list: a.players, excludedTopValue: a.excludedTopValue, meta: a.meta });
+    const violations = [
+      ...validateRankedList({ list: a.players, excludedTopValue: a.excludedTopValue, meta: a.meta }),
+      ...valueSanityViolations(a.type, a.players),
+      ...a.players
+        .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
+        .map((p) => `unfindable: ${p.playerId} ("${p.nameAr}")`),
+    ];
     if (violations.length > 0) {
       assertionFailures.push(`${a.type} · ${leagueName(a.leagueId)} ${a.season}: ${violations.join("; ")}`);
     }

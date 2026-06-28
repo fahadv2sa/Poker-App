@@ -47,24 +47,79 @@ export type TtRoundEndReason = (typeof TT_ROUND_END_REASONS)[number];
 
 // ---- per-question-type metadata --------------------------------------------
 
-/** The stat column each active type ranks on, plus the position it is scoped to
- *  (null = any position). `derived` types are computed in SQL at catalog build. */
+/**
+ * Single source of truth for each question type: the Arabic label shown to
+ * contestants, its English meaning, the source metric, the position scope, and a
+ * sanity ceiling. The catalog builder + audit both read `metric`/`position`/
+ * `sanityMax` from here, and a CONTRACT TEST pins this whole table — so a silent
+ * change to a label, column, scope, or bound (the class of bug that once showed
+ * KEY_PASSES as "assists") is caught and must be deliberately reviewed.
+ *
+ * RULE when editing: `nameAr` MUST describe exactly what `metric` computes, including
+ * the `position` scope. Verify the Arabic against the metric before changing either.
+ */
 export interface TtTypeMeta {
+  /** Arabic label shown to contestants. Must match `metric` + `position` exactly. */
   readonly nameAr: string;
   readonly nameEn: string;
   /** Position code the ranking is restricted to (null = all outfield/any). */
   readonly position: "GK" | "DEF" | "MID" | "FWD" | null;
+  /** Canonical source metric (documentation + contract pin). The builder's SQL must
+   *  compute exactly this; the audit checks the catalog values against it. */
+  readonly metric: string;
+  /** Upper bound for a single (competition, season) value — a sanity ceiling that
+   *  catches a wrong source column or unit mismatch (the value can never exceed it). */
+  readonly sanityMax: number;
 }
 
 export const TT_TYPE_META: Record<TtQuestionType, TtTypeMeta> = {
-  GOAL_SCORERS: { nameAr: "أكثر اللاعبين تسجيلاً للأهداف", nameEn: "Top goal scorers", position: null },
-  ASSISTS: { nameAr: "أكثر اللاعبين صناعةً للأهداف", nameEn: "Top assist providers", position: null },
-  // "تمريرات مفتاحية" = key passes (passes that lead to a shot). NOT "تمريرات حاسمة",
-  // which reads as ASSISTS and made key-pass totals (e.g. 25) look impossible.
-  KEY_PASSES: { nameAr: "أكثر اللاعبين تمريرات مفتاحية", nameEn: "Top key-pass midfielders", position: "MID" },
-  TACKLES: { nameAr: "أكثر المدافعين تدخلات", nameEn: "Top defenders by tackles", position: "DEF" }, // "most tackles" (D4)
-  ACCURATE_PASSES: { nameAr: "أكثر اللاعبين تمريرات دقيقة", nameEn: "Top midfielders by accurate passes", position: "MID" },
-  GK_CLEAN_SHEETS: { nameAr: "أكثر الحراس نظافةً لشباكهم", nameEn: "Top goalkeepers by clean sheets", position: "GK" },
+  GOAL_SCORERS: {
+    nameAr: "أكثر اللاعبين تسجيلاً للأهداف",
+    nameEn: "Top goal scorers",
+    position: null,
+    metric: "SUM(goals_total) per competition-season",
+    sanityMax: 80,
+  },
+  ASSISTS: {
+    // "صناعة الأهداف" = assists (creating goals).
+    nameAr: "أكثر اللاعبين صناعةً للأهداف",
+    nameEn: "Top assist providers",
+    position: null,
+    metric: "SUM(goals_assists) per competition-season",
+    sanityMax: 60,
+  },
+  KEY_PASSES: {
+    // "تمريرات مفتاحية" = key passes (passes that lead to a shot). NOT "تمريرات حاسمة"
+    // (= assists), the historical bug. Scoped to midfielders → the title says so.
+    nameAr: "أكثر لاعبي الوسط تمريراتٍ مفتاحية",
+    nameEn: "Top midfielders by key passes",
+    position: "MID",
+    metric: "SUM(passes_key) per competition-season, position=MID",
+    sanityMax: 400,
+  },
+  TACKLES: {
+    // "تدخلات" = tackles; scoped to defenders → the title says "المدافعين".
+    nameAr: "أكثر المدافعين تدخلات",
+    nameEn: "Top defenders by tackles",
+    position: "DEF",
+    metric: "SUM(tackles_total) per competition-season, position=DEF",
+    sanityMax: 400,
+  },
+  ACCURATE_PASSES: {
+    // "تمريرات دقيقة" = accurate passes = passes_total × accuracy%. Scoped to midfielders.
+    nameAr: "أكثر لاعبي الوسط تمريراتٍ دقيقة",
+    nameEn: "Top midfielders by accurate passes",
+    position: "MID",
+    metric: "SUM(passes_total × clamp(passes_accuracy,0,100)/100) per competition-season, position=MID",
+    sanityMax: 5000,
+  },
+  GK_CLEAN_SHEETS: {
+    nameAr: "أكثر الحراس نظافةً لشباكهم",
+    nameEn: "Top goalkeepers by clean sheets",
+    position: "GK",
+    metric: "(dormant — no clean-sheets column yet)",
+    sanityMax: 40,
+  },
 };
 
 // ---- competition whitelist (VERIFIED league_ids) ---------------------------

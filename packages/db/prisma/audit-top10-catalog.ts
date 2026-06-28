@@ -32,14 +32,7 @@ import {
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
 } from "@fb/shared";
-
-const VALUE_EXPR: Record<string, string> = {
-  GOAL_SCORERS: "SUM(s.goals_total)",
-  ASSISTS: "SUM(s.goals_assists)",
-  KEY_PASSES: "SUM(s.passes_key)",
-  TACKLES: "SUM(s.tackles_total)",
-  ACCURATE_PASSES: "SUM(s.passes_total * s.passes_accuracy / 100.0)",
-};
+import { isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer } from "./top10-guards";
 
 interface AggRow {
   league_id: number;
@@ -119,6 +112,17 @@ async function main() {
     storedPlayers.map((p) => [p.id, { active: p.active, nameAr: p.nameAr, name: p.name }]),
   );
 
+  // search index (all active players) for the findability guard + collision report.
+  const searchIndex: SearchPlayer[] = (
+    await prisma.player.findMany({ where: { active: true }, select: { id: true, name: true, nameAr: true, fameScore: true } })
+  ).map((p) => ({ id: p.id, name: p.name, nameAr: p.nameAr, fame: p.fameScore ?? 0, active: true }));
+  const nameArCount = new Map<string, number>();
+  for (const p of searchIndex) {
+    const a = (p.nameAr ?? "").trim();
+    if (a) nameArCount.set(a, (nameArCount.get(a) ?? 0) + 1);
+  }
+  let collisionPlayers = 0; // catalog answers whose name_ar is shared by another active player
+
   let entriesWithIssues = 0;
   let totalViolations = 0;
   let driftCount = 0;
@@ -177,6 +181,34 @@ async function main() {
     );
     issues.push(...validateRankedList({ list: storedList, excludedTopValue, meta }));
 
+    // (8) value sanity + (11) findability — same guards the builder enforces.
+    issues.push(...valueSanityViolations(type, storedList));
+    issues.push(
+      ...storedList
+        .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
+        .map((p) => `rank ${p.rank}: "${p.nameAr}" not findable by its Arabic name`),
+    );
+
+    // (8) ACCURATE_PASSES value can never exceed the player's total passes.
+    if (type === "ACCURATE_PASSES") {
+      const totals = await prisma.$queryRaw<{ pid: string; pt: number | null }[]>(Prisma.sql`
+        SELECT player_id pid, SUM(passes_total) pt FROM football.player_season_stats
+        WHERE league_id = ${e.leagueId} AND season = ${e.season}
+          AND player_id IN (${Prisma.join(storedList.map((p) => Prisma.sql`${p.playerId}::uuid`))})
+        GROUP BY player_id`);
+      const ptById = new Map(totals.map((t) => [t.pid, Number(t.pt ?? 0)]));
+      for (const p of storedList) {
+        const pt = ptById.get(p.playerId) ?? 0;
+        if (p.value > pt + 0.5) issues.push(`rank ${p.rank}: accurate passes ${p.value} > total passes ${pt} (impossible)`);
+      }
+    }
+
+    // (12) name collision — reported (mitigated by search disambiguation), not fatal.
+    for (const p of storedList) {
+      const a = (metaById.get(p.playerId)?.nameAr ?? "").trim();
+      if (a && (nameArCount.get(a) ?? 0) > 1) collisionPlayers++;
+    }
+
     if (issues.length > 0) {
       entriesWithIssues++;
       totalViolations += issues.length;
@@ -188,6 +220,7 @@ async function main() {
   console.log(`Entries with ≥1 violation:     ${entriesWithIssues}`);
   console.log(`Total violations:              ${totalViolations}`);
   console.log(`Entries drifted from data:     ${driftCount}`);
+  console.log(`Answer cards sharing a name (info; mitigated by search disambiguation): ${collisionPlayers}`);
   if (sample.length > 0) {
     console.log(`\nViolations (first ${sample.length}):`);
     console.log(sample.join("\n"));

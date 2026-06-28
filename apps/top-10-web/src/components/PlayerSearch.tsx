@@ -5,6 +5,7 @@ interface Found {
   id: string;
   name: string;
   nameAr: string;
+  nationality: string | null;
 }
 
 /**
@@ -61,9 +62,12 @@ function PlayerSearchInner({ disabled, onPick }: { disabled: boolean; onPick: (p
             <li key={p.id}>
               <button
                 onClick={() => pick(p)}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-right hover:bg-white/5"
+                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-right hover:bg-white/5"
               >
-                <span className="font-semibold text-[var(--lu-cream)]">{p.nameAr}</span>
+                <span className="font-semibold text-[var(--lu-cream)]">
+                  {p.nameAr}
+                  {p.nationality ? <span className="mr-2 text-xs font-normal text-[var(--lu-tan)]">· {p.nationality}</span> : null}
+                </span>
                 <span className="num text-xs text-[var(--lu-tan)]">{p.name}</span>
               </button>
             </li>

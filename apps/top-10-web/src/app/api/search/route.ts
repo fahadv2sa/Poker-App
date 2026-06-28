@@ -19,17 +19,20 @@ export async function GET(req: Request) {
   // case-insensitive, Arabic or English. ILIKE 'q%' OR ILIKE '% q%'.
   const prefix = `${q}%`;
   const wordPrefix = `% ${q}%`;
-  const rows = await prisma.$queryRaw<{ id: string; name: string; name_ar: string | null }[]>(Prisma.sql`
-    SELECT id, name, name_ar
-    FROM football.players
-    WHERE active = true AND (
-      name ILIKE ${prefix} OR name ILIKE ${wordPrefix}
-      OR name_ar ILIKE ${prefix} OR name_ar ILIKE ${wordPrefix}
+  // Return the nationality too, so identical names (e.g. two "دياز") are
+  // distinguishable in the dropdown — the contestant can pick the right player.
+  const rows = await prisma.$queryRaw<{ id: string; name: string; name_ar: string | null; nationality: string | null }[]>(Prisma.sql`
+    SELECT p.id, p.name, p.name_ar, n.name AS nationality
+    FROM football.players p
+    LEFT JOIN football.nationalities n ON n.id = p.nationality_id
+    WHERE p.active = true AND (
+      p.name ILIKE ${prefix} OR p.name ILIKE ${wordPrefix}
+      OR p.name_ar ILIKE ${prefix} OR p.name_ar ILIKE ${wordPrefix}
     )
-    ORDER BY COALESCE(fame_score, 0) DESC
+    ORDER BY COALESCE(p.fame_score, 0) DESC
     LIMIT 12
   `);
   return NextResponse.json({
-    players: rows.map((r) => ({ id: r.id, name: r.name, nameAr: r.name_ar ?? r.name })),
+    players: rows.map((r) => ({ id: r.id, name: r.name, nameAr: r.name_ar ?? r.name, nationality: r.nationality })),
   });
 }
