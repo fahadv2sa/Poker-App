@@ -56,7 +56,11 @@ export function TopTenClient({
         if (s.status === "IN_PROGRESS" || s.status === "LOBBY") setView("match");
         if (s.status === "ENDED" || s.status === "ABANDONED") setView("match");
       },
-      onQueueState: (q) => setQueue({ waiting: q.waiting, needed: q.needed, countdownSec: q.countdownSec }),
+      onQueueState: (q) => {
+        setQueue({ waiting: q.waiting, needed: q.needed, countdownSec: q.countdownSec });
+        // defensive: if a queue update arrives while still on the lobby, show the queue
+        setView((v) => (v === "lobby" ? "queue" : v));
+      },
       onQueueMatched: () => setView("match"),
       onReveal: (r) => setReveal({ event: r, id: ++revealSeq.current }),
       onRoundEnded: (r) => {
@@ -106,7 +110,14 @@ export function TopTenClient({
         </div>
       </header>
 
-      {view === "lobby" && <Lobby conn={conn} />}
+      {view === "lobby" && (
+        <Lobby
+          onJoin={(d) => {
+            conn()?.queueJoin(d);
+            setView("queue"); // show the filling queue immediately (like Link Up)
+          }}
+        />
+      )}
       {view === "queue" && (
         <QueueView
           queue={queue}
@@ -159,14 +170,14 @@ const DIFF_SUB: Record<TtDifficulty, string> = {
 
 /** The /play lobby = QUICK PLAY (matchmaking + bots). Create/join are their own
  *  dedicated pages (/create-room, /rooms); links provided for discoverability. */
-function Lobby({ conn }: { conn: () => TtConnection | null }) {
+function Lobby({ onJoin }: { onJoin: (d: TtDifficulty) => void }) {
   return (
     <div className="flex flex-col gap-3 fade-rise">
       <p className="px-1 text-sm text-[var(--lu-tan)]">اختر المستوى وابدأ فورًا — تُملأ المقاعد بالبوتات عند الحاجة.</p>
       {TT_DIFFICULTIES.map((d) => (
         <button
           key={d}
-          onClick={() => conn()?.queueJoin(d)}
+          onClick={() => onJoin(d)}
           className="lu-btn lu-frame group flex items-center justify-between rounded-2xl px-5 py-4 text-right"
         >
           <div>
