@@ -194,6 +194,12 @@ importers:
       '@fb/table-ui':
         specifier: workspace:*
         version: link:../../packages/table-ui
+      '@fb/top-10-engine':
+        specifier: workspace:*
+        version: link:../../packages/top-10-engine
+      '@fb/top-10-ui':
+        specifier: workspace:*
+        version: link:../../packages/top-10-ui
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.0.2
