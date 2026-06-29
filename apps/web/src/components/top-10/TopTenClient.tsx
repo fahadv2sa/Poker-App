@@ -94,7 +94,7 @@ export function TopTenClient({
       <Atmosphere />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
       <header className="mb-3 flex shrink-0 items-center gap-3 pt-1">
-        <a href="/" aria-label="رجوع" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
+        <a href="/games/top-10" aria-label="رجوع" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
           <BackIcon size={20} />
         </a>
         <span className="lu-chip grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/30">
@@ -179,10 +179,10 @@ function Lobby({ conn }: { conn: () => TtConnection | null }) {
         </button>
       ))}
       <div className="mt-1 flex gap-2">
-        <a href="/create-room" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
+        <a href="/games/top-10/create-room" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
           إنشاء غرفة
         </a>
-        <a href="/rooms" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
+        <a href="/games/top-10/rooms" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
           دخول بكود
         </a>
       </div>

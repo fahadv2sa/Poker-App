@@ -22,16 +22,16 @@ import {
  */
 
 const ACTIONS = [
-  { label: "إنشاء غرفة", href: "/create-room", Icon: CreateRoomIcon },
-  { label: "دخول غرفة", href: "/rooms", Icon: JoinRoomIcon },
-  { label: "الإحصائيات", href: "/stats", Icon: StatsIcon },
-  { label: "دليل اللعب", href: "/guide", Icon: GuideIcon },
+  { label: "إنشاء غرفة", href: "/games/top-10/create-room", Icon: CreateRoomIcon },
+  { label: "دخول غرفة", href: "/games/top-10/rooms", Icon: JoinRoomIcon },
+  { label: "الإحصائيات", href: "/games/top-10/stats", Icon: StatsIcon },
+  { label: "دليل اللعب", href: "/games/top-10/guide", Icon: GuideIcon },
 ] as const;
 
 const NAV = [
-  { label: "الإحصائيات", href: "/stats", Icon: StatsIcon, active: false },
+  { label: "الإحصائيات", href: "/games/top-10/stats", Icon: StatsIcon, active: false },
   { label: "الرئيسية", href: "/", Icon: HomeIcon, active: true },
-  { label: "دليل اللعب", href: "/guide", Icon: GuideIcon, active: false },
+  { label: "دليل اللعب", href: "/games/top-10/guide", Icon: GuideIcon, active: false },
 ] as const;
 
 const EMBERS = [
@@ -79,7 +79,7 @@ export function TenHome({
 
         {/* hero — quick play */}
         <section className="flex shrink-0 flex-col items-center py-2">
-          <Link href="/play" aria-label="اللعب السريع — ابدأ مباراة فورية" className="group relative grid place-items-center outline-none">
+          <Link href="/games/top-10/play" aria-label="اللعب السريع — ابدأ مباراة فورية" className="group relative grid place-items-center outline-none">
             <span aria-hidden className="absolute inset-0">
               {EMBERS.map((e, i) => (
                 <span
@@ -131,7 +131,7 @@ export function TenHome({
         <div aria-hidden className="grow" />
 
         {/* level strip */}
-        <Link href="/stats" aria-label="الإحصائيات" className="lu-btn lu-frame flex shrink-0 items-center justify-between rounded-2xl px-5 py-3">
+        <Link href="/games/top-10/stats" aria-label="الإحصائيات" className="lu-btn lu-frame flex shrink-0 items-center justify-between rounded-2xl px-5 py-3">
           <div className="flex items-center gap-3">
             <span className="lu-chip grid size-10 place-items-center rounded-xl ring-1 ring-[var(--lu-gold-1)]/35">
               <LevelIcon size={22} />

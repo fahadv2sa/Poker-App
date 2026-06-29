@@ -38,7 +38,7 @@ function PlayerSearchInner({
     }
     timer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/games/top-10/search?q=${encodeURIComponent(q)}`);
         const data = (await res.json()) as { players: Found[] };
         setResults(data.players ?? []);
         setOpen(true);

@@ -25,9 +25,9 @@ export const GAMES: GameEntry[] = [
   {
     id: "top-10",
     nameAr: "توب 10",
-    // Top Ten runs as its OWN separate web service (cross-origin); the hub links out
-    // to it. Set NEXT_PUBLIC_TOP10_WEB_URL in the hub's env; falls back to local dev.
-    href: process.env.NEXT_PUBLIC_TOP10_WEB_URL ?? "http://localhost:3100",
+    // Top Ten's UI is served by THIS same web service at /games/top-10 (shared web
+    // service, one domain). Its realtime game-server is the only separate service.
+    href: "/games/top-10",
     status: "live",
     icon: "🔟",
   },
