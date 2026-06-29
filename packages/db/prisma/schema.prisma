@@ -1160,6 +1160,14 @@ enum TtRoundEndReason {
 model TtCatalogEntry {
   id              String         @id @default(uuid()) @db.Uuid
   type            TtQuestionType
+  // Variety SCOPE (the "where/who"): COMP = one competition; TOP5 = the five big
+  // European leagues combined; CLUB_LEAGUE / CLUB_UCL / CLUB_ALL = one club within its
+  // domestic league / the Champions League / all its competitions. `clubKey` (one of
+  // TT_CLUBS) is set only for the CLUB_* scopes. `leagueId` is the competition for COMP,
+  // the club's domestic league for CLUB_LEAGUE/CLUB_ALL, the UCL id for CLUB_UCL, and 0
+  // for TOP5 — the audit re-derives the exact league set from (scope, leagueId, clubKey).
+  scope           String         @default("COMP")
+  clubKey         String?        @map("club_key")
   leagueId        Int            @map("league_id")
   competitionName String         @map("competition_name")
   // Season WINDOW: `season` is the first season, `seasonEnd` the last. They are equal
@@ -1176,8 +1184,8 @@ model TtCatalogEntry {
 
   players         TtCatalogPlayer[]
 
-  // One admitted list per (type, competition, season window) per build generation.
-  @@unique([type, leagueId, season, seasonEnd, builtAt])
+  // One admitted list per (type, scope, club, competition, season window) per build generation.
+  @@unique([type, scope, clubKey, leagueId, season, seasonEnd, builtAt])
   @@index([active, difficulty])
   @@map("tt_catalog_entry")
   @@schema("top_10")

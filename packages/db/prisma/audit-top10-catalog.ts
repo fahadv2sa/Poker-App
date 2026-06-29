@@ -5,11 +5,13 @@
  * the standing guarantee behind "0% error in the Top-10 list or the info shown".
  *
  * For each ACTIVE catalog entry it:
- *   - re-derives the true Top-10 from current football data (same aggregation as the
- *     builder) and checks the STORED list matches it exactly (ids, order, values);
+ *   - reconstructs the entry's exact SCOPE (competition set + optional club) from the
+ *     stored (scope, leagueId, clubKey), re-derives the true Top-10 over its season
+ *     WINDOW from current football data (same aggregation as the builder), and checks
+ *     the STORED list matches it exactly (ids, ranks, values);
  *   - runs the pure integrity validator (no boundary tie, distinct active players
  *     with Arabic names, contiguous ranks, non-increasing positive values, …).
- * It also surfaces title/translation gaps (missing competition or type label).
+ * It also surfaces title/translation gaps (blank scope label, unnamed competition).
  *
  *   pnpm db:audit-top10        # prints a full report; exits 1 if ANY violation
  *
@@ -31,12 +33,24 @@ import {
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
 } from "@fb/shared";
-import { aggregateWindow, isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer, type SeasonRow } from "./top10-guards";
+import {
+  aggregateWindow,
+  clubByKey,
+  isFindable,
+  scopeLeagueIds,
+  scopeSubset,
+  valueSanityViolations,
+  VALUE_EXPR,
+  type SearchPlayer,
+  type SeasonRow,
+  type TtScopeKind,
+} from "./top10-guards";
 
 interface AggRow {
   league_id: number;
   season: number;
   player_id: string;
+  team_id: number | null;
   value: number | null;
   apps: number | null;
   fame: number;
@@ -45,14 +59,14 @@ interface AggRow {
   active: boolean;
 }
 
-/** Mirrors build-top10-catalog.ts aggregateType, plus p.active for findability. */
+/** Mirrors build-top10-catalog.ts aggregateType (team granularity), plus p.active. */
 async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   const pos = TT_TYPE_META[type].position;
   const posFilter = pos ? Prisma.sql`AND pos.code = ${pos}::"football"."position_code"` : Prisma.empty;
   const leagueList = Prisma.join([...TT_WHITELIST_LEAGUE_IDS]);
   const valueExpr = Prisma.raw(VALUE_EXPR[type]!);
   return prisma.$queryRaw<AggRow[]>(Prisma.sql`
-    SELECT s.league_id, s.season, s.player_id,
+    SELECT s.league_id, s.season, s.player_id, s.team_id,
            ${valueExpr} AS value,
            SUM(s.games_appearances) AS apps,
            COALESCE(p.fame_score, 0) AS fame,
@@ -63,7 +77,7 @@ async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
     WHERE s.league_id IN (${leagueList}) AND s.league_id IS NOT NULL
       AND s.season BETWEEN ${TT_GATE.seasonMin} AND ${TT_GATE.seasonMax}
       ${posFilter}
-    GROUP BY s.league_id, s.season, s.player_id, p.fame_score, p.name, p.name_ar, p.active
+    GROUP BY s.league_id, s.season, s.player_id, s.team_id, p.fame_score, p.name, p.name_ar, p.active
   `);
 }
 
@@ -71,6 +85,7 @@ const toSeasonRow = (r: AggRow): SeasonRow => ({
   leagueId: r.league_id,
   season: r.season,
   playerId: r.player_id,
+  teamId: r.team_id ?? 0,
   value: r.value == null ? null : Number(r.value),
   apps: r.apps == null ? 0 : Number(r.apps),
   fame: Number(r.fame),
@@ -81,17 +96,17 @@ const toSeasonRow = (r: AggRow): SeasonRow => ({
 async function main() {
   console.log("Top Ten — catalog integrity audit (read-only)\n");
 
-  // 1) Per-(type, league) season rows from current data — windows are folded in memory.
+  // 1) Per-type season rows from current data — each entry's scope subset + window are
+  //    folded in memory (matching the builder).
   type Group = { rows: SeasonRow[]; meta: Map<string, ListPlayerMeta> };
-  const groups = new Map<string, Group>(); // key `${type}:${league}`
+  const groups = new Map<TtQuestionType, Group>();
   for (const type of TT_ACTIVE_QUESTION_TYPES) {
+    const g: Group = { rows: [], meta: new Map() };
     for (const r of await aggregateType(type)) {
-      const key = `${type}:${r.league_id}`;
-      let g = groups.get(key);
-      if (!g) groups.set(key, (g = { rows: [], meta: new Map() }));
       g.rows.push(toSeasonRow(r));
       g.meta.set(r.player_id, { active: r.active, nameAr: r.name_ar });
     }
+    groups.set(type, g);
   }
 
   // 2) Load the ACTIVE stored catalog.
@@ -130,15 +145,23 @@ async function main() {
   for (const e of entries) {
     const issues: string[] = [];
     const type = e.type as TtQuestionType;
-    const win = e.seasonEnd && e.seasonEnd !== e.season ? `${e.season}–${e.seasonEnd}` : `${e.season}`;
+    const scope = e.scope as TtScopeKind;
+    const end = e.seasonEnd ?? e.season;
+    const win = end !== e.season ? `${e.season}–${end}` : `${e.season}`;
     const title = `${type} · ${e.competitionName} ${win} [${e.difficulty}]`;
+
+    // reconstruct the exact scope: which leagues + (optional) which club team.
+    const club = clubByKey(e.clubKey);
+    const leagueIds = new Set(scopeLeagueIds(scope, e.leagueId));
+    const clubTeamId = club?.teamId ?? null;
 
     // title / translation completeness
     if (!TT_TYPE_META[type]?.nameAr?.trim()) issues.push("missing Arabic type label");
-    if (!TT_COMPETITIONS.find((c) => c.leagueId === e.leagueId)?.nameAr?.trim()) {
+    if (!e.competitionName?.trim()) issues.push("stored competitionName is blank");
+    if (scope === "COMP" && !TT_COMPETITIONS.find((c) => c.leagueId === e.leagueId)?.nameAr?.trim()) {
       issues.push(`competition ${e.leagueId} has no Arabic name`);
     }
-    if (!e.competitionName?.trim()) issues.push("stored competitionName is blank");
+    if ((scope.startsWith("CLUB")) && !club) issues.push(`unknown club_key "${e.clubKey}"`);
 
     // stored list as RankedPlayer[]
     const storedList = e.players.map((p) => {
@@ -153,14 +176,14 @@ async function main() {
       };
     });
 
-    // re-derive the true list for this entry's WINDOW [season..seasonEnd] from current data
-    const end = e.seasonEnd ?? e.season;
-    const g = groups.get(`${type}:${e.leagueId}`);
+    // re-derive the true list for this entry's SCOPE + WINDOW from current data
     let excludedTopValue: number | null = null;
+    const g = groups.get(type);
     if (!g) {
-      issues.push("no current data for this (type, competition) — cannot re-derive");
+      issues.push("no current data for this type — cannot re-derive");
     } else {
-      const { list: trueList, excludedTopValue: ev } = buildAnswerList(aggregateWindow(g.rows, e.season, end));
+      const subset = scopeSubset(g.rows, leagueIds, clubTeamId);
+      const { list: trueList, excludedTopValue: ev } = buildAnswerList(aggregateWindow(subset, e.season, end));
       excludedTopValue = ev;
       // drift: stored vs current-true. Compare as SETS per rank (rank-10 tie group
       // order among equals is not significant), so a legitimate tie isn't flagged.
@@ -190,12 +213,14 @@ async function main() {
         .map((p) => `rank ${p.rank}: "${p.nameAr}" not findable by its Arabic name`),
     );
 
-    // (8) ACCURATE_PASSES value can never exceed the player's total passes (summed
-    //     over the SAME window the entry covers).
+    // (8) ACCURATE_PASSES value can never exceed the player's total passes (summed over
+    //     the SAME league set + club + window the entry covers).
     if (type === "ACCURATE_PASSES" || type === "ACCURATE_PASSES_ALL") {
+      const teamFilter = clubTeamId == null ? Prisma.empty : Prisma.sql`AND team_id = ${clubTeamId}`;
       const totals = await prisma.$queryRaw<{ pid: string; pt: number | null }[]>(Prisma.sql`
         SELECT player_id pid, SUM(passes_total) pt FROM football.player_season_stats
-        WHERE league_id = ${e.leagueId} AND season BETWEEN ${e.season} AND ${end}
+        WHERE league_id IN (${Prisma.join([...leagueIds])}) AND season BETWEEN ${e.season} AND ${end}
+          ${teamFilter}
           AND player_id IN (${Prisma.join(storedList.map((p) => Prisma.sql`${p.playerId}::uuid`))})
         GROUP BY player_id`);
       const ptById = new Map(totals.map((t) => [t.pid, Number(t.pt ?? 0)]));

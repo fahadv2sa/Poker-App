@@ -8,8 +8,16 @@
  *    card is unanswerable. This replicates apps/top-10-web/src/app/api/search exactly
  *    (prefix/word-prefix on name OR name_ar among ACTIVE players, fame DESC, LIMIT).
  */
-import { TT_TYPE_META, type TtQuestionType } from "@fb/shared";
-import type { CandidateRow } from "@fb/top-10-engine";
+import {
+  TT_CLUBS,
+  TT_GATE,
+  TT_TOP5_LEAGUE_IDS,
+  TT_TYPE_META,
+  TT_UCL_LEAGUE_ID,
+  type TtClub,
+  type TtQuestionType,
+} from "@fb/shared";
+import { evaluateGate, type CandidateRow } from "@fb/top-10-engine";
 
 /**
  * The SQL value-expression each active type ranks on (table aliased `s`). SINGLE
@@ -55,6 +63,8 @@ export interface SeasonRow {
   leagueId: number;
   season: number;
   playerId: string;
+  /** API team_id — used to filter a row to a single club for club-scoped questions. */
+  teamId: number;
   value: number | null;
   apps: number;
   fame: number;
@@ -87,6 +97,62 @@ export function aggregateWindow(leagueRows: readonly SeasonRow[], start: number,
     name: e.name,
     nameAr: e.nameAr ?? e.name,
   }));
+}
+
+// ---- variety SCOPE (competition × club) — shared by builder + audit ---------
+
+/** The scope kinds a catalog entry can have. COMP = one competition; TOP5 = the five
+ *  big leagues combined; CLUB_* = one club within its league / the UCL / all its comps. */
+export type TtScopeKind = "COMP" | "TOP5" | "CLUB_LEAGUE" | "CLUB_UCL" | "CLUB_ALL";
+
+export const isClubScope = (k: TtScopeKind): boolean =>
+  k === "CLUB_LEAGUE" || k === "CLUB_UCL" || k === "CLUB_ALL";
+
+/** A club's squad is small, so the competition-wide ≥20-qualifiers gate over-rejects
+ *  valid club lists. ≥10 positive values is still required (a clean 10-rank list needs
+ *  10 distinct values regardless) — completeness is still enforced via regulars-fill. */
+export const TT_CLUB_MIN_QUALIFIERS = 10;
+
+/** The exact set of league_ids a stored scope aggregates over. The audit re-derives the
+ *  identical set from (scope, leagueId, clubKey) so its check matches what shipped. For
+ *  a club, `leagueId` carries the club's domestic-league id. */
+export function scopeLeagueIds(kind: TtScopeKind, leagueId: number): number[] {
+  switch (kind) {
+    case "COMP":
+      return [leagueId];
+    case "TOP5":
+      return [...TT_TOP5_LEAGUE_IDS];
+    case "CLUB_LEAGUE":
+      return [leagueId];
+    case "CLUB_UCL":
+      return [TT_UCL_LEAGUE_ID];
+    case "CLUB_ALL":
+      // A club's "all competitions" in our data = its domestic league + the Champions
+      // League (national-team comps belong to national teams, not the club).
+      return [leagueId, TT_UCL_LEAGUE_ID];
+  }
+}
+
+/** Resolve a stored club_key to its registry entry (team_id + league + Arabic name). */
+export const clubByKey = (key: string | null | undefined): TtClub | undefined =>
+  key ? TT_CLUBS.find((c) => c.key === key) : undefined;
+
+/** Rows belonging to a scope: league in `leagueIds`, and (if club-scoped) team == club. */
+export function scopeSubset(
+  rows: readonly SeasonRow[],
+  leagueIds: ReadonlySet<number>,
+  clubTeamId: number | null,
+): SeasonRow[] {
+  return rows.filter((r) => leagueIds.has(r.leagueId) && (clubTeamId == null || r.teamId === clubTeamId));
+}
+
+/** A single season's DATA is complete for a (type, league) when its regulars are (almost)
+ *  fully populated — the completeness proxy, INDEPENDENT of how many qualifiers there are.
+ *  Every season inside a window must be data-complete, so a cumulative range never sums a
+ *  partial season (the window itself must still pass the full gate to admit). */
+export function isSeasonDataComplete(seasonCandidates: readonly CandidateRow[]): boolean {
+  const m = evaluateGate(seasonCandidates).metrics;
+  return m.regulars > 0 && m.regularsFillPct >= TT_GATE.regularsFillMin;
 }
 
 /** The search LIMIT in apps/top-10-web/src/app/api/search/route.ts — keep in sync. */

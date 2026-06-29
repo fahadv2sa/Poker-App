@@ -24,20 +24,24 @@ export const TT_QUESTION_TYPES = [
 ] as const;
 export type TtQuestionType = (typeof TT_QUESTION_TYPES)[number];
 
-/** The types the catalog will actually generate today (GK_CLEAN_SHEETS excluded
- *  until a clean-sheets column exists; club/national-team types deferred — D3). */
+/**
+ * The types the catalog actually generates. Each metric appears EXACTLY ONCE with its
+ * fixed theme (metric + position) — variety comes from competition × club × time, never
+ * from "all players vs a position" variants. KEY_PASSES_ALL / ACCURATE_PASSES_ALL are
+ * therefore DORMANT (kept as enum values + metadata for the contract pin, but never
+ * generated — they only duplicated KEY_PASSES / ACCURATE_PASSES at a different scope).
+ * GK_CLEAN_SHEETS stays dormant until a clean-sheets column exists.
+ */
 export const TT_ACTIVE_QUESTION_TYPES: readonly TtQuestionType[] = [
   "GOAL_SCORERS",
   "ASSISTS",
-  "KEY_PASSES",
-  "KEY_PASSES_ALL",
-  "TACKLES",
-  "ACCURATE_PASSES",
-  "ACCURATE_PASSES_ALL",
-  "SHOTS_TOTAL",
-  "SHOTS_ON",
-  "DRIBBLES_SUCCESS",
-  "GK_SAVES",
+  "KEY_PASSES", // midfielders
+  "TACKLES", // defenders
+  "ACCURATE_PASSES", // midfielders
+  "SHOTS_TOTAL", // all players
+  "SHOTS_ON", // all players
+  "DRIBBLES_SUCCESS", // all players
+  "GK_SAVES", // goalkeepers
 ];
 
 export const TT_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
@@ -203,6 +207,50 @@ export const TT_COMPETITIONS: readonly TtCompetition[] = [
 ];
 
 export const TT_WHITELIST_LEAGUE_IDS: readonly number[] = TT_COMPETITIONS.map((c) => c.leagueId);
+
+/** The UEFA Champions League league_id — used as the "club in the Champions League"
+ *  scope and as the second competition in a club's "all competitions" scope. */
+export const TT_UCL_LEAGUE_ID = 2;
+
+// ---- variety: grouped-competition scope (the five big European leagues) -----
+
+/** "Top-5 European leagues" = England, Spain, Italy, Germany, France, combined into one
+ *  ranked list. A non-club grouped-competition scope; a season ships only if ALL five
+ *  leagues are individually complete (so the combined list is never missing a league). */
+export const TT_TOP5_LEAGUE_IDS: readonly number[] = [39, 140, 135, 78, 61];
+/** Honest Arabic label for the Top-5 scope shown in the question title. */
+export const TT_TOP5_LABEL_AR = "الدوريات الأوروبية الخمس الكبرى";
+
+// ---- variety: club scope (the only 9 clubs allowed for club-scoped questions) ----
+
+export interface TtClub {
+  /** Stable key stored on the catalog entry (club_key). */
+  readonly key: string;
+  /** Arabic display name used in the question title. */
+  readonly nameAr: string;
+  /** The club's API-Football team_id in football.player_season_stats (the senior team;
+   *  reserve/youth sides are separate ids and are intentionally excluded). */
+  readonly teamId: number;
+  /** The club's domestic-league league_id (its "in the league" + "all competitions" scope). */
+  readonly leagueId: number;
+}
+
+/**
+ * Club-scoped questions are restricted to EXACTLY these 9 clubs (owner decision). Each
+ * resolves to a single canonical team_id (verified against football.player_season_stats);
+ * the title states the club, so the answer set is always that club's players only.
+ */
+export const TT_CLUBS: readonly TtClub[] = [
+  { key: "BAR", nameAr: "برشلونة", teamId: 529, leagueId: 140 },
+  { key: "RMA", nameAr: "ريال مدريد", teamId: 541, leagueId: 140 },
+  { key: "MUN", nameAr: "مان يونايتد", teamId: 33, leagueId: 39 },
+  { key: "LIV", nameAr: "ليفربول", teamId: 40, leagueId: 39 },
+  { key: "CHE", nameAr: "تشيلسي", teamId: 49, leagueId: 39 },
+  { key: "MCI", nameAr: "مان سيتي", teamId: 50, leagueId: 39 },
+  { key: "ARS", nameAr: "أرسنال", teamId: 42, leagueId: 39 },
+  { key: "BAY", nameAr: "بايرن ميونخ", teamId: 157, leagueId: 78 },
+  { key: "PSG", nameAr: "باريس سان جيرمان", teamId: 85, leagueId: 61 },
+];
 
 // ---- structural constants --------------------------------------------------
 

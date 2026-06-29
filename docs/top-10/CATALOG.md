@@ -1,82 +1,186 @@
 # Top Ten — Generated Question Catalog (reviewable artifact)
 
-Built: 2026-06-29T13:57:16.620Z
+Built: 2026-06-29T14:49:06.222Z
 
-Gate: regulars-fill ≥ 95% (top 30 by apps, ≥5 apps), ≥20 qualifiers, 10th value > 0, seasons 2010–2025.
+Gate: regulars-fill ≥ 95% (top 30 by apps, ≥5 apps), ≥20 qualifiers (≥10 for club scopes), 10th value > 0, seasons 2010–2025.
 
-Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY.
+Variety: competition (each of 9 + Top-5 combined) × club (none, or one of 9 within league / UCL / all comps) × time (1/2/3-season windows).
 
-**Admitted: 817 · Rejected: 66**
+Difficulty (Σ fame terciles, inverse): HARD < 607.1 ≤ MEDIUM < 695.7 ≤ EASY.
+
+**Admitted: 1913 · Rejected: 2479**
 
 | Question type | Admitted | Rejected |
 |---|---|---|
-| Top goal scorers (GOAL_SCORERS) | 166 | 37 |
-| Top assist providers (ASSISTS) | 15 | 12 |
-| Top midfielders by key passes (KEY_PASSES) | 172 | 4 |
-| Top players by key passes (KEY_PASSES_ALL) | 43 | 0 |
-| Top defenders by tackles (TACKLES) | 156 | 1 |
-| Top midfielders by accurate passes (ACCURATE_PASSES) | 19 | 0 |
-| Top players by accurate passes (ACCURATE_PASSES_ALL) | 19 | 0 |
-| Top players by total shots (SHOTS_TOTAL) | 19 | 1 |
-| Top players by shots on target (SHOTS_ON) | 16 | 3 |
-| Top players by successful dribbles (DRIBBLES_SUCCESS) | 31 | 0 |
-| Top goalkeepers by saves (GK_SAVES) | 161 | 8 |
+| Top goal scorers (GOAL_SCORERS) | 458 | 550 |
+| Top assist providers (ASSISTS) | 35 | 76 |
+| Top midfielders by key passes (KEY_PASSES) | 398 | 497 |
+| Top defenders by tackles (TACKLES) | 479 | 332 |
+| Top midfielders by accurate passes (ACCURATE_PASSES) | 47 | 83 |
+| Top players by total shots (SHOTS_TOTAL) | 111 | 43 |
+| Top players by shots on target (SHOTS_ON) | 56 | 85 |
+| Top players by successful dribbles (DRIBBLES_SUCCESS) | 149 | 40 |
+| Top goalkeepers by saves (GK_SAVES) | 180 | 773 |
 
-## Admitted (type · competition · window · difficulty · Σfame)
+## Admitted (type · scope · window · difficulty · Σfame)
 
-- ACCURATE_PASSES · كأس العالم · 2022 · EASY · Σ664
+- ACCURATE_PASSES · الدوري الألماني · 2025 · HARD · Σ521
+- ACCURATE_PASSES · الدوري الإسباني · 2025 · HARD · Σ560
+- ACCURATE_PASSES · الدوري الإنجليزي · 2025 · HARD · Σ545
+- ACCURATE_PASSES · الدوري الإيطالي · 2025 · HARD · Σ581
+- ACCURATE_PASSES · الدوري الفرنسي · 2025 · HARD · Σ452
+- ACCURATE_PASSES · الدوريات الأوروبية الخمس الكبرى · 2025 · MEDIUM · Σ607
+- ACCURATE_PASSES · باريس سان جيرمان في دوري أبطال أوروبا · 2017–2019 · EASY · Σ710
+- ACCURATE_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2017–2018 · EASY · Σ708
+- ACCURATE_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2017–2019 · EASY · Σ720
+- ACCURATE_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2018–2019 · EASY · Σ719
+- ACCURATE_PASSES · برشلونة في الدوري الإسباني · 2025 · HARD · Σ492
+- ACCURATE_PASSES · برشلونة في دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ681
+- ACCURATE_PASSES · برشلونة في دوري أبطال أوروبا · 2017–2018 · MEDIUM · Σ681
+- ACCURATE_PASSES · برشلونة في دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ664
+- ACCURATE_PASSES · برشلونة في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ684
+- ACCURATE_PASSES · برشلونة في كل البطولات · 2025 · HARD · Σ492
+- ACCURATE_PASSES · بطولة أمم أوروبا · 2020 · HARD · Σ577
+- ACCURATE_PASSES · تشيلسي في دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ671
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2016 · EASY · Σ701
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2016–2017 · EASY · Σ725
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2016–2018 · EASY · Σ728
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2017 · EASY · Σ723
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2017–2018 · EASY · Σ711
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2017–2019 · EASY · Σ723
-- ACCURATE_PASSES · دوري أبطال أوروبا · 2018 · EASY · Σ661
+- ACCURATE_PASSES · دوري أبطال أوروبا · 2018 · MEDIUM · Σ661
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2018–2019 · EASY · Σ732
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2019 · EASY · Σ726
 - ACCURATE_PASSES · دوري أبطال أوروبا · 2025 · HARD · Σ547
-- ACCURATE_PASSES · بطولة أمم أوروبا · 2020 · MEDIUM · Σ577
+- ACCURATE_PASSES · كأس العالم · 2022 · MEDIUM · Σ664
+- ACCURATE_PASSES · كوبا أمريكا · 2015–2016 · HARD · Σ543
 - ACCURATE_PASSES · كوبا أمريكا · 2016 · HARD · Σ543
 - ACCURATE_PASSES · كوبا أمريكا · 2019 · MEDIUM · Σ612
-- ACCURATE_PASSES · الدوري الإنجليزي · 2025 · HARD · Σ545
-- ACCURATE_PASSES · الدوري الفرنسي · 2025 · HARD · Σ452
-- ACCURATE_PASSES · الدوري الألماني · 2025 · HARD · Σ521
-- ACCURATE_PASSES · الدوري الإيطالي · 2025 · MEDIUM · Σ581
-- ACCURATE_PASSES · الدوري الإسباني · 2025 · MEDIUM · Σ560
-- ACCURATE_PASSES_ALL · كأس العالم · 2022 · EASY · Σ701
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2016 · EASY · Σ722
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2016–2017 · EASY · Σ755
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2016–2018 · EASY · Σ766
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2017 · EASY · Σ714
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2017–2018 · EASY · Σ711
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2017–2019 · EASY · Σ746
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2018 · EASY · Σ698
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2018–2019 · EASY · Σ759
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2019 · EASY · Σ746
-- ACCURATE_PASSES_ALL · دوري أبطال أوروبا · 2025 · MEDIUM · Σ574
-- ACCURATE_PASSES_ALL · بطولة أمم أوروبا · 2020 · EASY · Σ663
-- ACCURATE_PASSES_ALL · كوبا أمريكا · 2016 · MEDIUM · Σ571
-- ACCURATE_PASSES_ALL · كوبا أمريكا · 2019 · EASY · Σ706
-- ACCURATE_PASSES_ALL · الدوري الإنجليزي · 2025 · HARD · Σ527
-- ACCURATE_PASSES_ALL · الدوري الفرنسي · 2025 · HARD · Σ476
-- ACCURATE_PASSES_ALL · الدوري الألماني · 2025 · HARD · Σ546
-- ACCURATE_PASSES_ALL · الدوري الإيطالي · 2025 · MEDIUM · Σ576
-- ACCURATE_PASSES_ALL · الدوري الإسباني · 2025 · MEDIUM · Σ587
-- ASSISTS · دوري أبطال أوروبا · 2024–2025 · EASY · Σ728
-- ASSISTS · الدوري الإنجليزي · 2024 · MEDIUM · Σ636
-- ASSISTS · الدوري الإنجليزي · 2024–2025 · MEDIUM · Σ561
-- ASSISTS · الدوري الألماني · 2023 · EASY · Σ679
+- ACCURATE_PASSES · ليفربول في دوري أبطال أوروبا · 2016–2018 · EASY · Σ714
+- ACCURATE_PASSES · ليفربول في دوري أبطال أوروبا · 2017–2018 · EASY · Σ714
+- ACCURATE_PASSES · ليفربول في دوري أبطال أوروبا · 2017–2019 · EASY · Σ703
+- ACCURATE_PASSES · ليفربول في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ685
+- ACCURATE_PASSES · مان سيتي في الدوري الإنجليزي · 2025 · HARD · Σ589
+- ACCURATE_PASSES · مان سيتي في دوري أبطال أوروبا · 2016–2017 · MEDIUM · Σ686
+- ACCURATE_PASSES · مان سيتي في دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ686
+- ACCURATE_PASSES · مان سيتي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ696
+- ACCURATE_PASSES · مان سيتي في دوري أبطال أوروبا · 2025 · HARD · Σ589
+- ACCURATE_PASSES · مان سيتي في كل البطولات · 2025 · HARD · Σ589
+- ACCURATE_PASSES · مان يونايتد في دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ648
+- ACCURATE_PASSES · مان يونايتد في دوري أبطال أوروبا · 2017–2018 · MEDIUM · Σ648
+- ACCURATE_PASSES · مان يونايتد في دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ648
+- ACCURATE_PASSES · مان يونايتد في دوري أبطال أوروبا · 2018 · MEDIUM · Σ652
+- ACCURATE_PASSES · مان يونايتد في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ652
+- ASSISTS · أرسنال في الدوري الإنجليزي · 2024–2025 · MEDIUM · Σ624
+- ASSISTS · أرسنال في كل البطولات · 2024–2025 · MEDIUM · Σ623
+- ASSISTS · الدوري الألماني · 2023 · MEDIUM · Σ679
 - ASSISTS · الدوري الألماني · 2023–2024 · MEDIUM · Σ618
 - ASSISTS · الدوري الألماني · 2023–2025 · HARD · Σ555
 - ASSISTS · الدوري الألماني · 2024 · MEDIUM · Σ614
-- ASSISTS · الدوري الألماني · 2024–2025 · MEDIUM · Σ602
-- ASSISTS · الدوري الألماني · 2025 · EASY · Σ646
+- ASSISTS · الدوري الألماني · 2024–2025 · HARD · Σ602
+- ASSISTS · الدوري الألماني · 2025 · MEDIUM · Σ646
+- ASSISTS · الدوري الإسباني · 2024–2025 · MEDIUM · Σ658
+- ASSISTS · الدوري الإنجليزي · 2024 · MEDIUM · Σ636
+- ASSISTS · الدوري الإنجليزي · 2024–2025 · HARD · Σ561
 - ASSISTS · الدوري الإيطالي · 2024 · MEDIUM · Σ644
 - ASSISTS · الدوري الإيطالي · 2024–2025 · MEDIUM · Σ623
-- ASSISTS · الدوري الإسباني · 2023 · EASY · Σ709
-- ASSISTS · الدوري الإسباني · 2023–2024 · EASY · Σ688
-- ASSISTS · الدوري الإسباني · 2023–2025 · MEDIUM · Σ617
-- ASSISTS · الدوري الإسباني · 2024–2025 · EASY · Σ658
+- ASSISTS · الدوريات الأوروبية الخمس الكبرى · 2024 · HARD · Σ586
+- ASSISTS · الدوريات الأوروبية الخمس الكبرى · 2024–2025 · HARD · Σ573
+- ASSISTS · الدوريات الأوروبية الخمس الكبرى · 2025 · HARD · Σ575
+- ASSISTS · باريس سان جيرمان في الدوري الفرنسي · 2024–2025 · HARD · Σ601
+- ASSISTS · باريس سان جيرمان في كل البطولات · 2024 · HARD · Σ579
+- ASSISTS · باريس سان جيرمان في كل البطولات · 2024–2025 · HARD · Σ545
+- ASSISTS · بايرن ميونخ في الدوري الألماني · 2023–2024 · EASY · Σ713
+- ASSISTS · بايرن ميونخ في الدوري الألماني · 2023–2025 · MEDIUM · Σ681
+- ASSISTS · بايرن ميونخ في الدوري الألماني · 2024–2025 · MEDIUM · Σ675
+- ASSISTS · بايرن ميونخ في الدوري الألماني · 2025 · MEDIUM · Σ662
+- ASSISTS · بايرن ميونخ في كل البطولات · 2024–2025 · MEDIUM · Σ644
+- ASSISTS · بايرن ميونخ في كل البطولات · 2025 · MEDIUM · Σ645
+- ASSISTS · برشلونة في الدوري الإسباني · 2024–2025 · MEDIUM · Σ633
+- ASSISTS · برشلونة في كل البطولات · 2024–2025 · HARD · Σ568
+- ASSISTS · برشلونة في كل البطولات · 2025 · MEDIUM · Σ630
+- ASSISTS · دوري أبطال أوروبا · 2024–2025 · EASY · Σ728
+- ASSISTS · ريال مدريد في كل البطولات · 2024–2025 · MEDIUM · Σ642
+- ASSISTS · ريال مدريد في كل البطولات · 2025 · MEDIUM · Σ639
+- ASSISTS · ليفربول في الدوري الإنجليزي · 2024–2025 · HARD · Σ606
+- ASSISTS · ليفربول في كل البطولات · 2024–2025 · HARD · Σ598
+- ASSISTS · مان سيتي في الدوري الإنجليزي · 2024–2025 · MEDIUM · Σ669
+- ASSISTS · مان سيتي في كل البطولات · 2024–2025 · MEDIUM · Σ643
+- DRIBBLES_SUCCESS · أرسنال في الدوري الإنجليزي · 2015 · MEDIUM · Σ678
+- DRIBBLES_SUCCESS · أرسنال في الدوري الإنجليزي · 2016 · MEDIUM · Σ671
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2015 · EASY · Σ712
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2015–2016 · MEDIUM · Σ679
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2015–2017 · MEDIUM · Σ679
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2016 · MEDIUM · Σ685
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2016–2017 · MEDIUM · Σ685
+- DRIBBLES_SUCCESS · أرسنال في دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ685
+- DRIBBLES_SUCCESS · أرسنال في كل البطولات · 2015 · MEDIUM · Σ678
+- DRIBBLES_SUCCESS · أرسنال في كل البطولات · 2015–2016 · MEDIUM · Σ669
+- DRIBBLES_SUCCESS · أرسنال في كل البطولات · 2016 · MEDIUM · Σ671
+- DRIBBLES_SUCCESS · الدوري الألماني · 2015 · MEDIUM · Σ619
+- DRIBBLES_SUCCESS · الدوري الإسباني · 2017 · MEDIUM · Σ633
+- DRIBBLES_SUCCESS · الدوري الإسباني · 2017–2018 · MEDIUM · Σ619
+- DRIBBLES_SUCCESS · الدوري الإسباني · 2018 · MEDIUM · Σ643
+- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2015 · MEDIUM · Σ643
+- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ681
+- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2016 · MEDIUM · Σ691
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015 · MEDIUM · Σ629
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015–2016 · HARD · Σ597
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015–2017 · HARD · Σ602
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2016 · HARD · Σ599
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2016–2017 · MEDIUM · Σ616
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2017 · MEDIUM · Σ626
+- DRIBBLES_SUCCESS · الدوري الإيطالي · 2022 · HARD · Σ514
+- DRIBBLES_SUCCESS · الدوري الفرنسي · 2015 · HARD · Σ586
+- DRIBBLES_SUCCESS · الدوري الفرنسي · 2017 · HARD · Σ525
+- DRIBBLES_SUCCESS · الدوري الفرنسي · 2025 · HARD · Σ462
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2016–2017 · EASY · Σ750
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2016–2018 · EASY · Σ743
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2017 · EASY · Σ744
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2017–2018 · EASY · Σ751
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2017–2019 · EASY · Σ754
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2018–2019 · EASY · Σ727
+- DRIBBLES_SUCCESS · باريس سان جيرمان في دوري أبطال أوروبا · 2019 · EASY · Σ741
+- DRIBBLES_SUCCESS · باريس سان جيرمان في كل البطولات · 2017 · EASY · Σ737
+- DRIBBLES_SUCCESS · بايرن ميونخ في الدوري الألماني · 2015 · EASY · Σ752
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2015–2016 · EASY · Σ741
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2015–2017 · EASY · Σ754
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2016–2017 · EASY · Σ743
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2016–2018 · EASY · Σ753
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2017–2018 · EASY · Σ746
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2017–2019 · EASY · Σ735
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2018–2019 · EASY · Σ724
+- DRIBBLES_SUCCESS · بايرن ميونخ في دوري أبطال أوروبا · 2019 · EASY · Σ746
+- DRIBBLES_SUCCESS · بايرن ميونخ في كل البطولات · 2015 · EASY · Σ752
+- DRIBBLES_SUCCESS · برشلونة في الدوري الإسباني · 2017 · EASY · Σ732
+- DRIBBLES_SUCCESS · برشلونة في الدوري الإسباني · 2017–2018 · EASY · Σ757
+- DRIBBLES_SUCCESS · برشلونة في الدوري الإسباني · 2018 · EASY · Σ744
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2015 · EASY · Σ767
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2015–2016 · EASY · Σ744
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2015–2017 · EASY · Σ758
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2016–2017 · EASY · Σ743
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2016–2018 · EASY · Σ769
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2017 · EASY · Σ749
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2017–2018 · EASY · Σ762
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2017–2019 · EASY · Σ750
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2018 · EASY · Σ777
+- DRIBBLES_SUCCESS · برشلونة في دوري أبطال أوروبا · 2018–2019 · EASY · Σ758
+- DRIBBLES_SUCCESS · برشلونة في كل البطولات · 2017 · EASY · Σ724
+- DRIBBLES_SUCCESS · برشلونة في كل البطولات · 2017–2018 · EASY · Σ757
+- DRIBBLES_SUCCESS · برشلونة في كل البطولات · 2018 · EASY · Σ740
+- DRIBBLES_SUCCESS · بطولة أمم أوروبا · 2020 · HARD · Σ605
+- DRIBBLES_SUCCESS · تشيلسي في الدوري الإنجليزي · 2015 · MEDIUM · Σ690
+- DRIBBLES_SUCCESS · تشيلسي في الدوري الإنجليزي · 2015–2016 · EASY · Σ712
+- DRIBBLES_SUCCESS · تشيلسي في الدوري الإنجليزي · 2016 · EASY · Σ712
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2015 · EASY · Σ744
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2015–2016 · EASY · Σ744
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ753
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ732
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ686
+- DRIBBLES_SUCCESS · تشيلسي في دوري أبطال أوروبا · 2019 · MEDIUM · Σ686
+- DRIBBLES_SUCCESS · تشيلسي في كل البطولات · 2015 · MEDIUM · Σ677
+- DRIBBLES_SUCCESS · تشيلسي في كل البطولات · 2015–2016 · MEDIUM · Σ692
+- DRIBBLES_SUCCESS · تشيلسي في كل البطولات · 2016 · EASY · Σ712
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2015 · EASY · Σ786
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2015–2016 · EASY · Σ763
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2015–2017 · EASY · Σ768
@@ -86,110 +190,71 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2017 · EASY · Σ776
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2017–2018 · EASY · Σ769
 - DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2017–2019 · EASY · Σ773
-- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2018 · EASY · Σ680
-- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2018–2019 · EASY · Σ672
-- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2019 · EASY · Σ683
-- DRIBBLES_SUCCESS · بطولة أمم أوروبا · 2020 · MEDIUM · Σ605
-- DRIBBLES_SUCCESS · كوبا أمريكا · 2016 · EASY · Σ689
+- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2018 · MEDIUM · Σ680
+- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ672
+- DRIBBLES_SUCCESS · دوري أبطال أوروبا · 2019 · MEDIUM · Σ683
+- DRIBBLES_SUCCESS · ريال مدريد في الدوري الإسباني · 2017 · EASY · Σ787
+- DRIBBLES_SUCCESS · ريال مدريد في الدوري الإسباني · 2017–2018 · EASY · Σ752
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2015 · EASY · Σ760
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2015–2016 · EASY · Σ785
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2015–2017 · EASY · Σ769
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2016 · EASY · Σ803
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2016–2017 · EASY · Σ755
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2016–2018 · EASY · Σ755
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2017 · EASY · Σ797
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2017–2018 · EASY · Σ750
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2017–2019 · EASY · Σ755
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2018–2019 · EASY · Σ738
+- DRIBBLES_SUCCESS · ريال مدريد في دوري أبطال أوروبا · 2019 · EASY · Σ732
+- DRIBBLES_SUCCESS · ريال مدريد في كل البطولات · 2017 · EASY · Σ758
+- DRIBBLES_SUCCESS · ريال مدريد في كل البطولات · 2017–2018 · EASY · Σ739
+- DRIBBLES_SUCCESS · ريال مدريد في كل البطولات · 2018 · EASY · Σ715
+- DRIBBLES_SUCCESS · كوبا أمريكا · 2016 · MEDIUM · Σ689
 - DRIBBLES_SUCCESS · كوبا أمريكا · 2019 · EASY · Σ746
-- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2015 · MEDIUM · Σ643
-- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2015–2016 · EASY · Σ681
-- DRIBBLES_SUCCESS · الدوري الإنجليزي · 2016 · EASY · Σ691
-- DRIBBLES_SUCCESS · الدوري الفرنسي · 2015 · MEDIUM · Σ586
-- DRIBBLES_SUCCESS · الدوري الفرنسي · 2017 · HARD · Σ525
-- DRIBBLES_SUCCESS · الدوري الألماني · 2015 · MEDIUM · Σ619
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015 · MEDIUM · Σ629
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015–2016 · MEDIUM · Σ597
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2015–2017 · MEDIUM · Σ602
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2016 · MEDIUM · Σ599
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2016–2017 · MEDIUM · Σ616
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2017 · MEDIUM · Σ626
-- DRIBBLES_SUCCESS · الدوري الإيطالي · 2022 · HARD · Σ514
-- DRIBBLES_SUCCESS · الدوري الإسباني · 2017 · MEDIUM · Σ633
-- DRIBBLES_SUCCESS · الدوري الإسباني · 2017–2018 · MEDIUM · Σ619
-- DRIBBLES_SUCCESS · الدوري الإسباني · 2018 · MEDIUM · Σ643
-- GK_SAVES · كأس العالم · 2022 · EASY · Σ678
-- GK_SAVES · دوري أبطال أوروبا · 2015 · MEDIUM · Σ603
-- GK_SAVES · دوري أبطال أوروبا · 2015–2016 · EASY · Σ658
-- GK_SAVES · دوري أبطال أوروبا · 2015–2017 · EASY · Σ655
-- GK_SAVES · دوري أبطال أوروبا · 2016 · MEDIUM · Σ643
-- GK_SAVES · دوري أبطال أوروبا · 2016–2017 · EASY · Σ670
-- GK_SAVES · دوري أبطال أوروبا · 2016–2018 · EASY · Σ659
-- GK_SAVES · دوري أبطال أوروبا · 2017 · EASY · Σ652
-- GK_SAVES · دوري أبطال أوروبا · 2017–2018 · MEDIUM · Σ611
-- GK_SAVES · دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ629
-- GK_SAVES · دوري أبطال أوروبا · 2018 · MEDIUM · Σ569
-- GK_SAVES · دوري أبطال أوروبا · 2018–2019 · EASY · Σ663
-- GK_SAVES · دوري أبطال أوروبا · 2018–2020 · EASY · Σ658
-- GK_SAVES · دوري أبطال أوروبا · 2019 · MEDIUM · Σ616
-- GK_SAVES · دوري أبطال أوروبا · 2019–2020 · EASY · Σ644
-- GK_SAVES · دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ608
-- GK_SAVES · دوري أبطال أوروبا · 2020 · MEDIUM · Σ622
-- GK_SAVES · دوري أبطال أوروبا · 2020–2021 · EASY · Σ655
-- GK_SAVES · دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ619
-- GK_SAVES · دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ634
-- GK_SAVES · دوري أبطال أوروبا · 2022–2023 · MEDIUM · Σ623
-- GK_SAVES · دوري أبطال أوروبا · 2022–2024 · MEDIUM · Σ629
-- GK_SAVES · دوري أبطال أوروبا · 2023 · HARD · Σ527
-- GK_SAVES · دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ625
-- GK_SAVES · دوري أبطال أوروبا · 2023–2025 · MEDIUM · Σ632
-- GK_SAVES · دوري أبطال أوروبا · 2024 · EASY · Σ650
-- GK_SAVES · دوري أبطال أوروبا · 2024–2025 · EASY · Σ654
-- GK_SAVES · بطولة أمم أوروبا · 2020 · HARD · Σ529
-- GK_SAVES · بطولة أمم أوروبا · 2024 · MEDIUM · Σ620
-- GK_SAVES · الدوري الإنجليزي · 2015 · HARD · Σ545
-- GK_SAVES · الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ562
-- GK_SAVES · الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ580
-- GK_SAVES · الدوري الإنجليزي · 2016 · HARD · Σ547
-- GK_SAVES · الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ585
-- GK_SAVES · الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ594
-- GK_SAVES · الدوري الإنجليزي · 2017 · MEDIUM · Σ585
-- GK_SAVES · الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ601
-- GK_SAVES · الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ611
-- GK_SAVES · الدوري الإنجليزي · 2018 · MEDIUM · Σ582
-- GK_SAVES · الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ603
-- GK_SAVES · الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ620
-- GK_SAVES · الدوري الإنجليزي · 2019 · MEDIUM · Σ581
-- GK_SAVES · الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ589
-- GK_SAVES · الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ595
-- GK_SAVES · الدوري الإنجليزي · 2020 · MEDIUM · Σ578
-- GK_SAVES · الدوري الإنجليزي · 2020–2021 · MEDIUM · Σ595
-- GK_SAVES · الدوري الإنجليزي · 2020–2022 · MEDIUM · Σ598
-- GK_SAVES · الدوري الإنجليزي · 2021 · MEDIUM · Σ586
-- GK_SAVES · الدوري الإنجليزي · 2021–2022 · MEDIUM · Σ596
-- GK_SAVES · الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ584
-- GK_SAVES · الدوري الإنجليزي · 2022 · MEDIUM · Σ611
-- GK_SAVES · الدوري الإنجليزي · 2022–2023 · MEDIUM · Σ585
-- GK_SAVES · الدوري الإنجليزي · 2022–2024 · MEDIUM · Σ584
-- GK_SAVES · الدوري الإنجليزي · 2023 · HARD · Σ542
-- GK_SAVES · الدوري الإنجليزي · 2023–2024 · MEDIUM · Σ580
-- GK_SAVES · الدوري الإنجليزي · 2023–2025 · MEDIUM · Σ575
-- GK_SAVES · الدوري الإنجليزي · 2024 · HARD · Σ538
-- GK_SAVES · الدوري الإنجليزي · 2024–2025 · MEDIUM · Σ581
-- GK_SAVES · الدوري الإنجليزي · 2025 · HARD · Σ555
-- GK_SAVES · الدوري الفرنسي · 2016 · HARD · Σ470
-- GK_SAVES · الدوري الفرنسي · 2016–2017 · HARD · Σ478
-- GK_SAVES · الدوري الفرنسي · 2016–2018 · HARD · Σ513
-- GK_SAVES · الدوري الفرنسي · 2017 · HARD · Σ471
-- GK_SAVES · الدوري الفرنسي · 2017–2018 · HARD · Σ505
-- GK_SAVES · الدوري الفرنسي · 2017–2019 · HARD · Σ534
-- GK_SAVES · الدوري الفرنسي · 2018 · HARD · Σ546
-- GK_SAVES · الدوري الفرنسي · 2018–2019 · HARD · Σ498
-- GK_SAVES · الدوري الفرنسي · 2018–2020 · HARD · Σ527
-- GK_SAVES · الدوري الفرنسي · 2019 · HARD · Σ527
-- GK_SAVES · الدوري الفرنسي · 2019–2020 · HARD · Σ512
-- GK_SAVES · الدوري الفرنسي · 2019–2021 · HARD · Σ487
-- GK_SAVES · الدوري الفرنسي · 2020 · HARD · Σ444
-- GK_SAVES · الدوري الفرنسي · 2020–2021 · HARD · Σ488
-- GK_SAVES · الدوري الفرنسي · 2020–2022 · HARD · Σ495
-- GK_SAVES · الدوري الفرنسي · 2021 · HARD · Σ487
-- GK_SAVES · الدوري الفرنسي · 2021–2022 · HARD · Σ521
-- GK_SAVES · الدوري الفرنسي · 2021–2023 · HARD · Σ538
-- GK_SAVES · الدوري الفرنسي · 2022 · HARD · Σ529
-- GK_SAVES · الدوري الفرنسي · 2022–2023 · HARD · Σ511
-- GK_SAVES · الدوري الفرنسي · 2022–2024 · HARD · Σ538
-- GK_SAVES · الدوري الفرنسي · 2023 · HARD · Σ466
-- GK_SAVES · الدوري الفرنسي · 2023–2024 · HARD · Σ491
+- DRIBBLES_SUCCESS · ليفربول في الدوري الإنجليزي · 2015 · EASY · Σ699
+- DRIBBLES_SUCCESS · ليفربول في الدوري الإنجليزي · 2016 · EASY · Σ713
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2015–2017 · EASY · Σ696
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2016–2017 · EASY · Σ696
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ671
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2017 · EASY · Σ696
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2017–2018 · MEDIUM · Σ671
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2017–2019 · EASY · Σ710
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2018 · MEDIUM · Σ659
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2018–2019 · EASY · Σ702
+- DRIBBLES_SUCCESS · ليفربول في دوري أبطال أوروبا · 2019 · MEDIUM · Σ692
+- DRIBBLES_SUCCESS · ليفربول في كل البطولات · 2015 · EASY · Σ699
+- DRIBBLES_SUCCESS · ليفربول في كل البطولات · 2016 · EASY · Σ713
+- DRIBBLES_SUCCESS · مان سيتي في الدوري الإنجليزي · 2015 · EASY · Σ713
+- DRIBBLES_SUCCESS · مان سيتي في الدوري الإنجليزي · 2015–2016 · EASY · Σ730
+- DRIBBLES_SUCCESS · مان سيتي في الدوري الإنجليزي · 2016 · EASY · Σ739
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2015–2016 · EASY · Σ748
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ756
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2016 · EASY · Σ771
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2016–2017 · EASY · Σ782
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2016–2018 · EASY · Σ763
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2017 · EASY · Σ760
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2017–2018 · EASY · Σ761
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ772
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2018 · EASY · Σ790
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2018–2019 · EASY · Σ762
+- DRIBBLES_SUCCESS · مان سيتي في دوري أبطال أوروبا · 2019 · EASY · Σ766
+- DRIBBLES_SUCCESS · مان سيتي في كل البطولات · 2015 · EASY · Σ715
+- DRIBBLES_SUCCESS · مان سيتي في كل البطولات · 2015–2016 · EASY · Σ732
+- DRIBBLES_SUCCESS · مان سيتي في كل البطولات · 2016 · EASY · Σ756
+- DRIBBLES_SUCCESS · مان يونايتد في الدوري الإنجليزي · 2015 · MEDIUM · Σ676
+- DRIBBLES_SUCCESS · مان يونايتد في الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ692
+- DRIBBLES_SUCCESS · مان يونايتد في الدوري الإنجليزي · 2016 · MEDIUM · Σ675
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2015–2017 · EASY · Σ729
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2016–2017 · EASY · Σ727
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2016–2018 · EASY · Σ734
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2017 · EASY · Σ727
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2017–2018 · EASY · Σ734
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2017–2019 · EASY · Σ734
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2018 · EASY · Σ714
+- DRIBBLES_SUCCESS · مان يونايتد في دوري أبطال أوروبا · 2018–2019 · EASY · Σ714
+- DRIBBLES_SUCCESS · مان يونايتد في كل البطولات · 2015 · EASY · Σ716
+- DRIBBLES_SUCCESS · مان يونايتد في كل البطولات · 2015–2016 · EASY · Σ701
+- DRIBBLES_SUCCESS · مان يونايتد في كل البطولات · 2016 · MEDIUM · Σ675
 - GK_SAVES · الدوري الألماني · 2015 · HARD · Σ536
 - GK_SAVES · الدوري الألماني · 2015–2016 · HARD · Σ524
 - GK_SAVES · الدوري الألماني · 2015–2017 · HARD · Σ536
@@ -220,10 +285,59 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - GK_SAVES · الدوري الألماني · 2024 · HARD · Σ490
 - GK_SAVES · الدوري الألماني · 2024–2025 · HARD · Σ471
 - GK_SAVES · الدوري الألماني · 2025 · HARD · Σ431
-- GK_SAVES · الدوري الإيطالي · 2015 · MEDIUM · Σ560
+- GK_SAVES · الدوري الإسباني · 2016 · HARD · Σ600
+- GK_SAVES · الدوري الإسباني · 2016–2017 · HARD · Σ594
+- GK_SAVES · الدوري الإسباني · 2016–2018 · MEDIUM · Σ629
+- GK_SAVES · الدوري الإسباني · 2017 · HARD · Σ595
+- GK_SAVES · الدوري الإسباني · 2017–2018 · HARD · Σ597
+- GK_SAVES · الدوري الإسباني · 2017–2019 · HARD · Σ598
+- GK_SAVES · الدوري الإسباني · 2018 · HARD · Σ564
+- GK_SAVES · الدوري الإسباني · 2018–2019 · HARD · Σ587
+- GK_SAVES · الدوري الإسباني · 2018–2020 · HARD · Σ601
+- GK_SAVES · الدوري الإسباني · 2019 · HARD · Σ558
+- GK_SAVES · الدوري الإسباني · 2019–2020 · HARD · Σ568
+- GK_SAVES · الدوري الإسباني · 2019–2021 · HARD · Σ567
+- GK_SAVES · الدوري الإسباني · 2020 · HARD · Σ558
+- GK_SAVES · الدوري الإسباني · 2020–2021 · HARD · Σ541
+- GK_SAVES · الدوري الإسباني · 2020–2022 · HARD · Σ524
+- GK_SAVES · الدوري الإسباني · 2021 · HARD · Σ505
+- GK_SAVES · الدوري الإسباني · 2021–2022 · HARD · Σ509
+- GK_SAVES · الدوري الإسباني · 2022 · HARD · Σ475
+- GK_SAVES · الدوري الإسباني · 2025 · HARD · Σ479
+- GK_SAVES · الدوري الإنجليزي · 2015 · HARD · Σ545
+- GK_SAVES · الدوري الإنجليزي · 2015–2016 · HARD · Σ562
+- GK_SAVES · الدوري الإنجليزي · 2015–2017 · HARD · Σ580
+- GK_SAVES · الدوري الإنجليزي · 2016 · HARD · Σ547
+- GK_SAVES · الدوري الإنجليزي · 2016–2017 · HARD · Σ585
+- GK_SAVES · الدوري الإنجليزي · 2016–2018 · HARD · Σ594
+- GK_SAVES · الدوري الإنجليزي · 2017 · HARD · Σ585
+- GK_SAVES · الدوري الإنجليزي · 2017–2018 · HARD · Σ601
+- GK_SAVES · الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ611
+- GK_SAVES · الدوري الإنجليزي · 2018 · HARD · Σ582
+- GK_SAVES · الدوري الإنجليزي · 2018–2019 · HARD · Σ603
+- GK_SAVES · الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ620
+- GK_SAVES · الدوري الإنجليزي · 2019 · HARD · Σ581
+- GK_SAVES · الدوري الإنجليزي · 2019–2020 · HARD · Σ589
+- GK_SAVES · الدوري الإنجليزي · 2019–2021 · HARD · Σ595
+- GK_SAVES · الدوري الإنجليزي · 2020 · HARD · Σ578
+- GK_SAVES · الدوري الإنجليزي · 2020–2021 · HARD · Σ595
+- GK_SAVES · الدوري الإنجليزي · 2020–2022 · HARD · Σ598
+- GK_SAVES · الدوري الإنجليزي · 2021 · HARD · Σ586
+- GK_SAVES · الدوري الإنجليزي · 2021–2022 · HARD · Σ596
+- GK_SAVES · الدوري الإنجليزي · 2021–2023 · HARD · Σ584
+- GK_SAVES · الدوري الإنجليزي · 2022 · MEDIUM · Σ611
+- GK_SAVES · الدوري الإنجليزي · 2022–2023 · HARD · Σ585
+- GK_SAVES · الدوري الإنجليزي · 2022–2024 · HARD · Σ584
+- GK_SAVES · الدوري الإنجليزي · 2023 · HARD · Σ542
+- GK_SAVES · الدوري الإنجليزي · 2023–2024 · HARD · Σ580
+- GK_SAVES · الدوري الإنجليزي · 2023–2025 · HARD · Σ575
+- GK_SAVES · الدوري الإنجليزي · 2024 · HARD · Σ538
+- GK_SAVES · الدوري الإنجليزي · 2024–2025 · HARD · Σ581
+- GK_SAVES · الدوري الإنجليزي · 2025 · HARD · Σ555
+- GK_SAVES · الدوري الإيطالي · 2015 · HARD · Σ560
 - GK_SAVES · الدوري الإيطالي · 2015–2016 · HARD · Σ552
 - GK_SAVES · الدوري الإيطالي · 2015–2017 · HARD · Σ558
-- GK_SAVES · الدوري الإيطالي · 2016 · MEDIUM · Σ598
+- GK_SAVES · الدوري الإيطالي · 2016 · HARD · Σ598
 - GK_SAVES · الدوري الإيطالي · 2016–2017 · HARD · Σ531
 - GK_SAVES · الدوري الإيطالي · 2016–2018 · HARD · Σ544
 - GK_SAVES · الدوري الإيطالي · 2017 · HARD · Σ548
@@ -231,10 +345,10 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - GK_SAVES · الدوري الإيطالي · 2017–2019 · HARD · Σ556
 - GK_SAVES · الدوري الإيطالي · 2018 · HARD · Σ539
 - GK_SAVES · الدوري الإيطالي · 2018–2019 · HARD · Σ534
-- GK_SAVES · الدوري الإيطالي · 2018–2020 · MEDIUM · Σ563
+- GK_SAVES · الدوري الإيطالي · 2018–2020 · HARD · Σ563
 - GK_SAVES · الدوري الإيطالي · 2019 · HARD · Σ513
-- GK_SAVES · الدوري الإيطالي · 2019–2020 · MEDIUM · Σ563
-- GK_SAVES · الدوري الإيطالي · 2019–2021 · MEDIUM · Σ560
+- GK_SAVES · الدوري الإيطالي · 2019–2020 · HARD · Σ563
+- GK_SAVES · الدوري الإيطالي · 2019–2021 · HARD · Σ560
 - GK_SAVES · الدوري الإيطالي · 2020 · HARD · Σ525
 - GK_SAVES · الدوري الإيطالي · 2020–2021 · HARD · Σ542
 - GK_SAVES · الدوري الإيطالي · 2020–2022 · HARD · Σ505
@@ -250,162 +364,135 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - GK_SAVES · الدوري الإيطالي · 2024 · HARD · Σ489
 - GK_SAVES · الدوري الإيطالي · 2024–2025 · HARD · Σ504
 - GK_SAVES · الدوري الإيطالي · 2025 · HARD · Σ508
-- GK_SAVES · الدوري الإسباني · 2016 · MEDIUM · Σ600
-- GK_SAVES · الدوري الإسباني · 2016–2017 · MEDIUM · Σ594
-- GK_SAVES · الدوري الإسباني · 2016–2018 · MEDIUM · Σ629
-- GK_SAVES · الدوري الإسباني · 2017 · MEDIUM · Σ595
-- GK_SAVES · الدوري الإسباني · 2017–2018 · MEDIUM · Σ597
-- GK_SAVES · الدوري الإسباني · 2017–2019 · MEDIUM · Σ598
-- GK_SAVES · الدوري الإسباني · 2018 · MEDIUM · Σ564
-- GK_SAVES · الدوري الإسباني · 2018–2019 · MEDIUM · Σ587
-- GK_SAVES · الدوري الإسباني · 2018–2020 · MEDIUM · Σ601
-- GK_SAVES · الدوري الإسباني · 2019 · HARD · Σ558
-- GK_SAVES · الدوري الإسباني · 2019–2020 · MEDIUM · Σ568
-- GK_SAVES · الدوري الإسباني · 2019–2021 · MEDIUM · Σ567
-- GK_SAVES · الدوري الإسباني · 2020 · HARD · Σ558
-- GK_SAVES · الدوري الإسباني · 2020–2021 · HARD · Σ541
-- GK_SAVES · الدوري الإسباني · 2020–2022 · HARD · Σ524
-- GK_SAVES · الدوري الإسباني · 2021 · HARD · Σ505
-- GK_SAVES · الدوري الإسباني · 2021–2022 · HARD · Σ509
-- GK_SAVES · الدوري الإسباني · 2022 · HARD · Σ475
-- GK_SAVES · الدوري الإسباني · 2025 · HARD · Σ479
-- GOAL_SCORERS · دوري أبطال أوروبا · 2011 · EASY · Σ788
-- GOAL_SCORERS · دوري أبطال أوروبا · 2011–2012 · EASY · Σ745
-- GOAL_SCORERS · دوري أبطال أوروبا · 2011–2013 · EASY · Σ784
-- GOAL_SCORERS · دوري أبطال أوروبا · 2015–2016 · EASY · Σ855
-- GOAL_SCORERS · دوري أبطال أوروبا · 2015–2017 · EASY · Σ827
-- GOAL_SCORERS · دوري أبطال أوروبا · 2016 · EASY · Σ845
-- GOAL_SCORERS · دوري أبطال أوروبا · 2016–2017 · EASY · Σ818
-- GOAL_SCORERS · دوري أبطال أوروبا · 2016–2018 · EASY · Σ819
-- GOAL_SCORERS · دوري أبطال أوروبا · 2017 · EASY · Σ816
-- GOAL_SCORERS · دوري أبطال أوروبا · 2017–2018 · EASY · Σ800
-- GOAL_SCORERS · دوري أبطال أوروبا · 2017–2019 · EASY · Σ813
-- GOAL_SCORERS · دوري أبطال أوروبا · 2018–2019 · EASY · Σ851
-- GOAL_SCORERS · دوري أبطال أوروبا · 2021 · EASY · Σ788
-- GOAL_SCORERS · دوري أبطال أوروبا · 2025 · EASY · Σ726
-- GOAL_SCORERS · الدوري الإنجليزي · 2010 · EASY · Σ683
-- GOAL_SCORERS · الدوري الإنجليزي · 2010–2011 · MEDIUM · Σ640
-- GOAL_SCORERS · الدوري الإنجليزي · 2010–2012 · MEDIUM · Σ631
-- GOAL_SCORERS · الدوري الإنجليزي · 2011 · EASY · Σ668
-- GOAL_SCORERS · الدوري الإنجليزي · 2011–2012 · MEDIUM · Σ639
-- GOAL_SCORERS · الدوري الإنجليزي · 2011–2013 · EASY · Σ685
-- GOAL_SCORERS · الدوري الإنجليزي · 2012 · EASY · Σ719
-- GOAL_SCORERS · الدوري الإنجليزي · 2012–2013 · EASY · Σ712
-- GOAL_SCORERS · الدوري الإنجليزي · 2012–2014 · EASY · Σ743
-- GOAL_SCORERS · الدوري الإنجليزي · 2013 · EASY · Σ697
-- GOAL_SCORERS · الدوري الإنجليزي · 2013–2014 · EASY · Σ762
-- GOAL_SCORERS · الدوري الإنجليزي · 2013–2015 · EASY · Σ756
-- GOAL_SCORERS · الدوري الإنجليزي · 2014 · EASY · Σ717
-- GOAL_SCORERS · الدوري الإنجليزي · 2014–2015 · EASY · Σ699
-- GOAL_SCORERS · الدوري الإنجليزي · 2014–2016 · EASY · Σ729
-- GOAL_SCORERS · الدوري الإنجليزي · 2015 · EASY · Σ715
-- GOAL_SCORERS · الدوري الإنجليزي · 2015–2016 · EASY · Σ718
-- GOAL_SCORERS · الدوري الإنجليزي · 2015–2017 · EASY · Σ723
-- GOAL_SCORERS · الدوري الإنجليزي · 2016 · EASY · Σ715
-- GOAL_SCORERS · الدوري الإنجليزي · 2016–2017 · EASY · Σ730
-- GOAL_SCORERS · الدوري الإنجليزي · 2016–2018 · EASY · Σ734
-- GOAL_SCORERS · الدوري الإنجليزي · 2017 · EASY · Σ735
-- GOAL_SCORERS · الدوري الإنجليزي · 2017–2018 · EASY · Σ685
-- GOAL_SCORERS · الدوري الإنجليزي · 2017–2019 · EASY · Σ683
-- GOAL_SCORERS · الدوري الإنجليزي · 2018 · EASY · Σ714
-- GOAL_SCORERS · الدوري الإنجليزي · 2018–2019 · EASY · Σ655
-- GOAL_SCORERS · الدوري الإنجليزي · 2018–2020 · EASY · Σ690
-- GOAL_SCORERS · الدوري الإنجليزي · 2019 · EASY · Σ727
-- GOAL_SCORERS · الدوري الإنجليزي · 2019–2020 · EASY · Σ689
-- GOAL_SCORERS · الدوري الإنجليزي · 2019–2021 · EASY · Σ698
-- GOAL_SCORERS · الدوري الإنجليزي · 2020 · MEDIUM · Σ643
-- GOAL_SCORERS · الدوري الإنجليزي · 2020–2021 · EASY · Σ656
-- GOAL_SCORERS · الدوري الإنجليزي · 2021 · EASY · Σ713
-- GOAL_SCORERS · الدوري الإنجليزي · 2025 · HARD · Σ533
-- GOAL_SCORERS · الدوري الفرنسي · 2010 · MEDIUM · Σ636
-- GOAL_SCORERS · الدوري الفرنسي · 2010–2012 · MEDIUM · Σ633
-- GOAL_SCORERS · الدوري الفرنسي · 2012 · MEDIUM · Σ563
-- GOAL_SCORERS · الدوري الفرنسي · 2015–2016 · MEDIUM · Σ566
-- GOAL_SCORERS · الدوري الفرنسي · 2016 · MEDIUM · Σ616
-- GOAL_SCORERS · الدوري الفرنسي · 2016–2017 · MEDIUM · Σ596
-- GOAL_SCORERS · الدوري الفرنسي · 2019 · MEDIUM · Σ617
-- GOAL_SCORERS · الدوري الفرنسي · 2021 · MEDIUM · Σ630
-- GOAL_SCORERS · الدوري الفرنسي · 2023 · MEDIUM · Σ571
-- GOAL_SCORERS · الدوري الفرنسي · 2025 · MEDIUM · Σ586
-- GOAL_SCORERS · الدوري الألماني · 2010 · EASY · Σ689
-- GOAL_SCORERS · الدوري الألماني · 2010–2011 · MEDIUM · Σ598
+- GK_SAVES · الدوري الفرنسي · 2016 · HARD · Σ470
+- GK_SAVES · الدوري الفرنسي · 2016–2017 · HARD · Σ478
+- GK_SAVES · الدوري الفرنسي · 2016–2018 · HARD · Σ513
+- GK_SAVES · الدوري الفرنسي · 2017 · HARD · Σ471
+- GK_SAVES · الدوري الفرنسي · 2017–2018 · HARD · Σ505
+- GK_SAVES · الدوري الفرنسي · 2017–2019 · HARD · Σ534
+- GK_SAVES · الدوري الفرنسي · 2018 · HARD · Σ546
+- GK_SAVES · الدوري الفرنسي · 2018–2019 · HARD · Σ498
+- GK_SAVES · الدوري الفرنسي · 2018–2020 · HARD · Σ527
+- GK_SAVES · الدوري الفرنسي · 2019 · HARD · Σ527
+- GK_SAVES · الدوري الفرنسي · 2019–2020 · HARD · Σ512
+- GK_SAVES · الدوري الفرنسي · 2019–2021 · HARD · Σ487
+- GK_SAVES · الدوري الفرنسي · 2020 · HARD · Σ444
+- GK_SAVES · الدوري الفرنسي · 2020–2021 · HARD · Σ488
+- GK_SAVES · الدوري الفرنسي · 2020–2022 · HARD · Σ495
+- GK_SAVES · الدوري الفرنسي · 2021 · HARD · Σ487
+- GK_SAVES · الدوري الفرنسي · 2021–2022 · HARD · Σ521
+- GK_SAVES · الدوري الفرنسي · 2021–2023 · HARD · Σ538
+- GK_SAVES · الدوري الفرنسي · 2022 · HARD · Σ529
+- GK_SAVES · الدوري الفرنسي · 2022–2023 · HARD · Σ511
+- GK_SAVES · الدوري الفرنسي · 2022–2024 · HARD · Σ538
+- GK_SAVES · الدوري الفرنسي · 2023 · HARD · Σ466
+- GK_SAVES · الدوري الفرنسي · 2023–2024 · HARD · Σ491
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2016 · HARD · Σ547
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2016–2017 · HARD · Σ554
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2016–2018 · HARD · Σ573
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2017 · HARD · Σ485
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2017–2018 · HARD · Σ546
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2017–2019 · HARD · Σ591
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2018 · HARD · Σ551
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2018–2019 · HARD · Σ590
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2018–2020 · HARD · Σ512
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2019 · HARD · Σ533
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2019–2020 · HARD · Σ542
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2019–2021 · HARD · Σ536
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2020 · HARD · Σ494
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2020–2021 · HARD · Σ501
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2020–2022 · HARD · Σ514
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2021 · HARD · Σ531
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2021–2022 · HARD · Σ508
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2022 · HARD · Σ516
+- GK_SAVES · الدوريات الأوروبية الخمس الكبرى · 2025 · HARD · Σ490
+- GK_SAVES · بطولة أمم أوروبا · 2020 · HARD · Σ529
+- GK_SAVES · بطولة أمم أوروبا · 2024 · MEDIUM · Σ620
+- GK_SAVES · دوري أبطال أوروبا · 2015 · HARD · Σ603
+- GK_SAVES · دوري أبطال أوروبا · 2015–2016 · MEDIUM · Σ658
+- GK_SAVES · دوري أبطال أوروبا · 2015–2017 · MEDIUM · Σ655
+- GK_SAVES · دوري أبطال أوروبا · 2016 · MEDIUM · Σ643
+- GK_SAVES · دوري أبطال أوروبا · 2016–2017 · MEDIUM · Σ670
+- GK_SAVES · دوري أبطال أوروبا · 2016–2018 · MEDIUM · Σ659
+- GK_SAVES · دوري أبطال أوروبا · 2017 · MEDIUM · Σ652
+- GK_SAVES · دوري أبطال أوروبا · 2017–2018 · MEDIUM · Σ611
+- GK_SAVES · دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ629
+- GK_SAVES · دوري أبطال أوروبا · 2018 · HARD · Σ569
+- GK_SAVES · دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ663
+- GK_SAVES · دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ658
+- GK_SAVES · دوري أبطال أوروبا · 2019 · MEDIUM · Σ616
+- GK_SAVES · دوري أبطال أوروبا · 2019–2020 · MEDIUM · Σ644
+- GK_SAVES · دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ608
+- GK_SAVES · دوري أبطال أوروبا · 2020 · MEDIUM · Σ622
+- GK_SAVES · دوري أبطال أوروبا · 2020–2021 · MEDIUM · Σ655
+- GK_SAVES · دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ619
+- GK_SAVES · دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ634
+- GK_SAVES · دوري أبطال أوروبا · 2022–2023 · MEDIUM · Σ623
+- GK_SAVES · دوري أبطال أوروبا · 2022–2024 · MEDIUM · Σ629
+- GK_SAVES · دوري أبطال أوروبا · 2023 · HARD · Σ527
+- GK_SAVES · دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ625
+- GK_SAVES · دوري أبطال أوروبا · 2023–2025 · MEDIUM · Σ632
+- GK_SAVES · دوري أبطال أوروبا · 2024 · MEDIUM · Σ650
+- GK_SAVES · دوري أبطال أوروبا · 2024–2025 · MEDIUM · Σ654
+- GK_SAVES · كأس العالم · 2022 · MEDIUM · Σ678
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2010–2012 · MEDIUM · Σ648
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2011–2013 · MEDIUM · Σ679
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2012–2013 · MEDIUM · Σ694
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2012–2014 · MEDIUM · Σ683
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2013–2014 · EASY · Σ729
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2013–2015 · EASY · Σ712
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2014–2016 · MEDIUM · Σ685
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ691
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ678
+- GOAL_SCORERS · أرسنال في الدوري الإنجليزي · 2019–2021 · HARD · Σ586
+- GOAL_SCORERS · أرسنال في كل البطولات · 2011–2013 · MEDIUM · Σ660
+- GOAL_SCORERS · أرسنال في كل البطولات · 2012–2013 · MEDIUM · Σ671
+- GOAL_SCORERS · أرسنال في كل البطولات · 2012–2014 · MEDIUM · Σ694
+- GOAL_SCORERS · أرسنال في كل البطولات · 2013–2014 · EASY · Σ730
+- GOAL_SCORERS · أرسنال في كل البطولات · 2013–2015 · EASY · Σ705
+- GOAL_SCORERS · أرسنال في كل البطولات · 2014–2016 · EASY · Σ699
+- GOAL_SCORERS · أرسنال في كل البطولات · 2015–2017 · MEDIUM · Σ678
+- GOAL_SCORERS · أرسنال في كل البطولات · 2016–2017 · EASY · Σ706
+- GOAL_SCORERS · الدوري الألماني · 2010 · MEDIUM · Σ689
+- GOAL_SCORERS · الدوري الألماني · 2010–2011 · HARD · Σ598
 - GOAL_SCORERS · الدوري الألماني · 2010–2012 · MEDIUM · Σ622
 - GOAL_SCORERS · الدوري الألماني · 2011 · MEDIUM · Σ616
 - GOAL_SCORERS · الدوري الألماني · 2011–2012 · MEDIUM · Σ637
 - GOAL_SCORERS · الدوري الألماني · 2011–2013 · MEDIUM · Σ637
 - GOAL_SCORERS · الدوري الألماني · 2012 · MEDIUM · Σ642
 - GOAL_SCORERS · الدوري الألماني · 2012–2013 · MEDIUM · Σ623
-- GOAL_SCORERS · الدوري الألماني · 2012–2014 · EASY · Σ666
-- GOAL_SCORERS · الدوري الألماني · 2013 · EASY · Σ691
-- GOAL_SCORERS · الدوري الألماني · 2013–2014 · EASY · Σ662
-- GOAL_SCORERS · الدوري الألماني · 2013–2015 · EASY · Σ649
-- GOAL_SCORERS · الدوري الألماني · 2014 · EASY · Σ686
+- GOAL_SCORERS · الدوري الألماني · 2012–2014 · MEDIUM · Σ666
+- GOAL_SCORERS · الدوري الألماني · 2013 · MEDIUM · Σ691
+- GOAL_SCORERS · الدوري الألماني · 2013–2014 · MEDIUM · Σ662
+- GOAL_SCORERS · الدوري الألماني · 2013–2015 · MEDIUM · Σ649
+- GOAL_SCORERS · الدوري الألماني · 2014 · MEDIUM · Σ686
 - GOAL_SCORERS · الدوري الألماني · 2014–2015 · MEDIUM · Σ625
 - GOAL_SCORERS · الدوري الألماني · 2014–2016 · MEDIUM · Σ644
-- GOAL_SCORERS · الدوري الألماني · 2015 · EASY · Σ646
-- GOAL_SCORERS · الدوري الألماني · 2015–2016 · EASY · Σ651
-- GOAL_SCORERS · الدوري الألماني · 2015–2017 · EASY · Σ661
-- GOAL_SCORERS · الدوري الألماني · 2016 · EASY · Σ647
-- GOAL_SCORERS · الدوري الألماني · 2016–2017 · EASY · Σ653
+- GOAL_SCORERS · الدوري الألماني · 2015 · MEDIUM · Σ646
+- GOAL_SCORERS · الدوري الألماني · 2015–2016 · MEDIUM · Σ651
+- GOAL_SCORERS · الدوري الألماني · 2015–2017 · MEDIUM · Σ661
+- GOAL_SCORERS · الدوري الألماني · 2016 · MEDIUM · Σ647
+- GOAL_SCORERS · الدوري الألماني · 2016–2017 · MEDIUM · Σ653
 - GOAL_SCORERS · الدوري الألماني · 2016–2018 · MEDIUM · Σ618
-- GOAL_SCORERS · الدوري الألماني · 2017 · EASY · Σ667
+- GOAL_SCORERS · الدوري الألماني · 2017 · MEDIUM · Σ667
 - GOAL_SCORERS · الدوري الألماني · 2017–2018 · MEDIUM · Σ642
-- GOAL_SCORERS · الدوري الألماني · 2017–2019 · EASY · Σ677
-- GOAL_SCORERS · الدوري الألماني · 2018 · EASY · Σ658
-- GOAL_SCORERS · الدوري الألماني · 2018–2019 · EASY · Σ676
-- GOAL_SCORERS · الدوري الألماني · 2018–2020 · EASY · Σ681
-- GOAL_SCORERS · الدوري الألماني · 2019 · EASY · Σ650
-- GOAL_SCORERS · الدوري الألماني · 2019–2020 · EASY · Σ656
-- GOAL_SCORERS · الدوري الألماني · 2019–2021 · EASY · Σ664
+- GOAL_SCORERS · الدوري الألماني · 2017–2019 · MEDIUM · Σ677
+- GOAL_SCORERS · الدوري الألماني · 2018 · MEDIUM · Σ658
+- GOAL_SCORERS · الدوري الألماني · 2018–2019 · MEDIUM · Σ676
+- GOAL_SCORERS · الدوري الألماني · 2018–2020 · MEDIUM · Σ681
+- GOAL_SCORERS · الدوري الألماني · 2019 · MEDIUM · Σ650
+- GOAL_SCORERS · الدوري الألماني · 2019–2020 · MEDIUM · Σ656
+- GOAL_SCORERS · الدوري الألماني · 2019–2021 · MEDIUM · Σ664
 - GOAL_SCORERS · الدوري الألماني · 2020 · MEDIUM · Σ635
 - GOAL_SCORERS · الدوري الألماني · 2020–2021 · MEDIUM · Σ632
 - GOAL_SCORERS · الدوري الألماني · 2021 · MEDIUM · Σ621
-- GOAL_SCORERS · الدوري الألماني · 2023 · MEDIUM · Σ562
+- GOAL_SCORERS · الدوري الألماني · 2023 · HARD · Σ562
 - GOAL_SCORERS · الدوري الألماني · 2025 · HARD · Σ510
-- GOAL_SCORERS · الدوري الإيطالي · 2010 · MEDIUM · Σ600
-- GOAL_SCORERS · الدوري الإيطالي · 2010–2011 · MEDIUM · Σ572
-- GOAL_SCORERS · الدوري الإيطالي · 2010–2012 · MEDIUM · Σ591
-- GOAL_SCORERS · الدوري الإيطالي · 2011 · MEDIUM · Σ615
-- GOAL_SCORERS · الدوري الإيطالي · 2011–2012 · MEDIUM · Σ615
-- GOAL_SCORERS · الدوري الإيطالي · 2011–2013 · MEDIUM · Σ629
-- GOAL_SCORERS · الدوري الإيطالي · 2012 · EASY · Σ647
-- GOAL_SCORERS · الدوري الإيطالي · 2012–2013 · EASY · Σ648
-- GOAL_SCORERS · الدوري الإيطالي · 2012–2014 · MEDIUM · Σ609
-- GOAL_SCORERS · الدوري الإيطالي · 2013 · EASY · Σ694
-- GOAL_SCORERS · الدوري الإيطالي · 2013–2014 · MEDIUM · Σ635
-- GOAL_SCORERS · الدوري الإيطالي · 2013–2015 · MEDIUM · Σ639
-- GOAL_SCORERS · الدوري الإيطالي · 2014 · EASY · Σ645
-- GOAL_SCORERS · الدوري الإيطالي · 2014–2015 · EASY · Σ657
-- GOAL_SCORERS · الدوري الإيطالي · 2014–2016 · EASY · Σ653
-- GOAL_SCORERS · الدوري الإيطالي · 2015 · MEDIUM · Σ633
-- GOAL_SCORERS · الدوري الإيطالي · 2015–2016 · EASY · Σ655
-- GOAL_SCORERS · الدوري الإيطالي · 2015–2017 · EASY · Σ660
-- GOAL_SCORERS · الدوري الإيطالي · 2016 · EASY · Σ651
-- GOAL_SCORERS · الدوري الإيطالي · 2016–2017 · EASY · Σ680
-- GOAL_SCORERS · الدوري الإيطالي · 2016–2018 · MEDIUM · Σ642
-- GOAL_SCORERS · الدوري الإيطالي · 2017 · EASY · Σ689
-- GOAL_SCORERS · الدوري الإيطالي · 2017–2018 · EASY · Σ678
-- GOAL_SCORERS · الدوري الإيطالي · 2017–2019 · EASY · Σ675
-- GOAL_SCORERS · الدوري الإيطالي · 2018 · EASY · Σ670
-- GOAL_SCORERS · الدوري الإيطالي · 2018–2019 · EASY · Σ648
-- GOAL_SCORERS · الدوري الإيطالي · 2018–2020 · EASY · Σ653
-- GOAL_SCORERS · الدوري الإيطالي · 2019 · EASY · Σ676
-- GOAL_SCORERS · الدوري الإيطالي · 2019–2020 · EASY · Σ667
-- GOAL_SCORERS · الدوري الإيطالي · 2019–2021 · MEDIUM · Σ636
-- GOAL_SCORERS · الدوري الإيطالي · 2020 · EASY · Σ697
-- GOAL_SCORERS · الدوري الإيطالي · 2020–2021 · EASY · Σ645
-- GOAL_SCORERS · الدوري الإيطالي · 2020–2022 · MEDIUM · Σ630
-- GOAL_SCORERS · الدوري الإيطالي · 2021 · MEDIUM · Σ619
-- GOAL_SCORERS · الدوري الإيطالي · 2021–2022 · MEDIUM · Σ606
-- GOAL_SCORERS · الدوري الإيطالي · 2021–2023 · MEDIUM · Σ616
-- GOAL_SCORERS · الدوري الإيطالي · 2022 · EASY · Σ662
-- GOAL_SCORERS · الدوري الإيطالي · 2022–2023 · MEDIUM · Σ627
-- GOAL_SCORERS · الدوري الإيطالي · 2023 · MEDIUM · Σ630
 - GOAL_SCORERS · الدوري الإسباني · 2010 · EASY · Σ787
 - GOAL_SCORERS · الدوري الإسباني · 2010–2011 · EASY · Σ712
 - GOAL_SCORERS · الدوري الإسباني · 2010–2012 · EASY · Σ735
 - GOAL_SCORERS · الدوري الإسباني · 2011 · EASY · Σ712
-- GOAL_SCORERS · الدوري الإسباني · 2011–2012 · EASY · Σ669
+- GOAL_SCORERS · الدوري الإسباني · 2011–2012 · MEDIUM · Σ669
 - GOAL_SCORERS · الدوري الإسباني · 2011–2013 · EASY · Σ707
 - GOAL_SCORERS · الدوري الإسباني · 2012 · EASY · Σ696
 - GOAL_SCORERS · الدوري الإسباني · 2012–2013 · EASY · Σ735
@@ -424,78 +511,534 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - GOAL_SCORERS · الدوري الإسباني · 2016–2018 · EASY · Σ737
 - GOAL_SCORERS · الدوري الإسباني · 2017 · EASY · Σ721
 - GOAL_SCORERS · الدوري الإسباني · 2017–2018 · EASY · Σ700
-- GOAL_SCORERS · الدوري الإسباني · 2017–2019 · EASY · Σ682
-- GOAL_SCORERS · الدوري الإسباني · 2018 · EASY · Σ668
-- GOAL_SCORERS · الدوري الإسباني · 2018–2019 · EASY · Σ661
-- GOAL_SCORERS · الدوري الإسباني · 2018–2020 · EASY · Σ647
+- GOAL_SCORERS · الدوري الإسباني · 2017–2019 · MEDIUM · Σ682
+- GOAL_SCORERS · الدوري الإسباني · 2018 · MEDIUM · Σ668
+- GOAL_SCORERS · الدوري الإسباني · 2018–2019 · MEDIUM · Σ661
+- GOAL_SCORERS · الدوري الإسباني · 2018–2020 · MEDIUM · Σ647
 - GOAL_SCORERS · الدوري الإسباني · 2019 · EASY · Σ700
-- GOAL_SCORERS · الدوري الإسباني · 2019–2020 · EASY · Σ653
-- GOAL_SCORERS · الدوري الإسباني · 2019–2021 · EASY · Σ691
+- GOAL_SCORERS · الدوري الإسباني · 2019–2020 · MEDIUM · Σ653
+- GOAL_SCORERS · الدوري الإسباني · 2019–2021 · MEDIUM · Σ691
 - GOAL_SCORERS · الدوري الإسباني · 2020 · EASY · Σ729
-- GOAL_SCORERS · الدوري الإسباني · 2020–2021 · EASY · Σ663
+- GOAL_SCORERS · الدوري الإسباني · 2020–2021 · MEDIUM · Σ663
 - GOAL_SCORERS · الدوري الإسباني · 2021 · MEDIUM · Σ631
-- GOAL_SCORERS · الدوري الإسباني · 2025 · MEDIUM · Σ596
-- KEY_PASSES · دوري أبطال أوروبا · 2015 · EASY · Σ726
-- KEY_PASSES · دوري أبطال أوروبا · 2015–2016 · EASY · Σ767
-- KEY_PASSES · دوري أبطال أوروبا · 2015–2017 · EASY · Σ739
-- KEY_PASSES · دوري أبطال أوروبا · 2016 · EASY · Σ741
-- KEY_PASSES · دوري أبطال أوروبا · 2016–2017 · EASY · Σ715
-- KEY_PASSES · دوري أبطال أوروبا · 2016–2018 · EASY · Σ726
-- KEY_PASSES · دوري أبطال أوروبا · 2017 · EASY · Σ727
-- KEY_PASSES · دوري أبطال أوروبا · 2017–2018 · EASY · Σ730
-- KEY_PASSES · دوري أبطال أوروبا · 2017–2019 · EASY · Σ737
-- KEY_PASSES · دوري أبطال أوروبا · 2018 · EASY · Σ721
-- KEY_PASSES · دوري أبطال أوروبا · 2018–2019 · EASY · Σ732
-- KEY_PASSES · دوري أبطال أوروبا · 2018–2020 · EASY · Σ704
-- KEY_PASSES · دوري أبطال أوروبا · 2019 · EASY · Σ776
-- KEY_PASSES · دوري أبطال أوروبا · 2019–2020 · EASY · Σ697
-- KEY_PASSES · دوري أبطال أوروبا · 2019–2021 · EASY · Σ722
-- KEY_PASSES · دوري أبطال أوروبا · 2020 · EASY · Σ710
-- KEY_PASSES · دوري أبطال أوروبا · 2020–2021 · EASY · Σ694
-- KEY_PASSES · دوري أبطال أوروبا · 2021 · EASY · Σ693
-- KEY_PASSES · دوري أبطال أوروبا · 2023 · EASY · Σ664
-- KEY_PASSES · دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ622
-- KEY_PASSES · دوري أبطال أوروبا · 2023–2025 · MEDIUM · Σ601
-- KEY_PASSES · دوري أبطال أوروبا · 2024 · MEDIUM · Σ582
-- KEY_PASSES · دوري أبطال أوروبا · 2024–2025 · MEDIUM · Σ570
-- KEY_PASSES · دوري أبطال أوروبا · 2025 · HARD · Σ542
-- KEY_PASSES · بطولة أمم أوروبا · 2020 · HARD · Σ458
-- KEY_PASSES · بطولة أمم أوروبا · 2024 · EASY · Σ685
-- KEY_PASSES · كوبا أمريكا · 2019 · EASY · Σ670
-- KEY_PASSES · الدوري الإنجليزي · 2015 · EASY · Σ687
-- KEY_PASSES · الدوري الإنجليزي · 2015–2016 · EASY · Σ691
-- KEY_PASSES · الدوري الإنجليزي · 2015–2017 · EASY · Σ668
-- KEY_PASSES · الدوري الإنجليزي · 2016 · EASY · Σ664
-- KEY_PASSES · الدوري الإنجليزي · 2016–2017 · EASY · Σ685
+- GOAL_SCORERS · الدوري الإسباني · 2025 · HARD · Σ596
+- GOAL_SCORERS · الدوري الإنجليزي · 2010 · MEDIUM · Σ683
+- GOAL_SCORERS · الدوري الإنجليزي · 2010–2011 · MEDIUM · Σ640
+- GOAL_SCORERS · الدوري الإنجليزي · 2010–2012 · MEDIUM · Σ631
+- GOAL_SCORERS · الدوري الإنجليزي · 2011 · MEDIUM · Σ668
+- GOAL_SCORERS · الدوري الإنجليزي · 2011–2012 · MEDIUM · Σ639
+- GOAL_SCORERS · الدوري الإنجليزي · 2011–2013 · MEDIUM · Σ685
+- GOAL_SCORERS · الدوري الإنجليزي · 2012 · EASY · Σ719
+- GOAL_SCORERS · الدوري الإنجليزي · 2012–2013 · EASY · Σ712
+- GOAL_SCORERS · الدوري الإنجليزي · 2012–2014 · EASY · Σ743
+- GOAL_SCORERS · الدوري الإنجليزي · 2013 · EASY · Σ697
+- GOAL_SCORERS · الدوري الإنجليزي · 2013–2014 · EASY · Σ762
+- GOAL_SCORERS · الدوري الإنجليزي · 2013–2015 · EASY · Σ756
+- GOAL_SCORERS · الدوري الإنجليزي · 2014 · EASY · Σ717
+- GOAL_SCORERS · الدوري الإنجليزي · 2014–2015 · EASY · Σ699
+- GOAL_SCORERS · الدوري الإنجليزي · 2014–2016 · EASY · Σ729
+- GOAL_SCORERS · الدوري الإنجليزي · 2015 · EASY · Σ715
+- GOAL_SCORERS · الدوري الإنجليزي · 2015–2016 · EASY · Σ718
+- GOAL_SCORERS · الدوري الإنجليزي · 2015–2017 · EASY · Σ723
+- GOAL_SCORERS · الدوري الإنجليزي · 2016 · EASY · Σ715
+- GOAL_SCORERS · الدوري الإنجليزي · 2016–2017 · EASY · Σ730
+- GOAL_SCORERS · الدوري الإنجليزي · 2016–2018 · EASY · Σ734
+- GOAL_SCORERS · الدوري الإنجليزي · 2017 · EASY · Σ735
+- GOAL_SCORERS · الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ685
+- GOAL_SCORERS · الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ683
+- GOAL_SCORERS · الدوري الإنجليزي · 2018 · EASY · Σ714
+- GOAL_SCORERS · الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ655
+- GOAL_SCORERS · الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ690
+- GOAL_SCORERS · الدوري الإنجليزي · 2019 · EASY · Σ727
+- GOAL_SCORERS · الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ689
+- GOAL_SCORERS · الدوري الإنجليزي · 2019–2021 · EASY · Σ698
+- GOAL_SCORERS · الدوري الإنجليزي · 2020 · MEDIUM · Σ643
+- GOAL_SCORERS · الدوري الإنجليزي · 2020–2021 · MEDIUM · Σ656
+- GOAL_SCORERS · الدوري الإنجليزي · 2021 · EASY · Σ713
+- GOAL_SCORERS · الدوري الإنجليزي · 2025 · HARD · Σ533
+- GOAL_SCORERS · الدوري الإيطالي · 2010 · HARD · Σ600
+- GOAL_SCORERS · الدوري الإيطالي · 2010–2011 · HARD · Σ572
+- GOAL_SCORERS · الدوري الإيطالي · 2010–2012 · HARD · Σ591
+- GOAL_SCORERS · الدوري الإيطالي · 2011 · MEDIUM · Σ615
+- GOAL_SCORERS · الدوري الإيطالي · 2011–2012 · MEDIUM · Σ615
+- GOAL_SCORERS · الدوري الإيطالي · 2011–2013 · MEDIUM · Σ629
+- GOAL_SCORERS · الدوري الإيطالي · 2012 · MEDIUM · Σ647
+- GOAL_SCORERS · الدوري الإيطالي · 2012–2013 · MEDIUM · Σ648
+- GOAL_SCORERS · الدوري الإيطالي · 2012–2014 · MEDIUM · Σ609
+- GOAL_SCORERS · الدوري الإيطالي · 2013 · MEDIUM · Σ694
+- GOAL_SCORERS · الدوري الإيطالي · 2013–2014 · MEDIUM · Σ635
+- GOAL_SCORERS · الدوري الإيطالي · 2013–2015 · MEDIUM · Σ639
+- GOAL_SCORERS · الدوري الإيطالي · 2014 · MEDIUM · Σ645
+- GOAL_SCORERS · الدوري الإيطالي · 2014–2015 · MEDIUM · Σ657
+- GOAL_SCORERS · الدوري الإيطالي · 2014–2016 · MEDIUM · Σ653
+- GOAL_SCORERS · الدوري الإيطالي · 2015 · MEDIUM · Σ633
+- GOAL_SCORERS · الدوري الإيطالي · 2015–2016 · MEDIUM · Σ655
+- GOAL_SCORERS · الدوري الإيطالي · 2015–2017 · MEDIUM · Σ660
+- GOAL_SCORERS · الدوري الإيطالي · 2016 · MEDIUM · Σ651
+- GOAL_SCORERS · الدوري الإيطالي · 2016–2017 · MEDIUM · Σ680
+- GOAL_SCORERS · الدوري الإيطالي · 2016–2018 · MEDIUM · Σ642
+- GOAL_SCORERS · الدوري الإيطالي · 2017 · MEDIUM · Σ689
+- GOAL_SCORERS · الدوري الإيطالي · 2017–2018 · MEDIUM · Σ678
+- GOAL_SCORERS · الدوري الإيطالي · 2017–2019 · MEDIUM · Σ675
+- GOAL_SCORERS · الدوري الإيطالي · 2018 · MEDIUM · Σ670
+- GOAL_SCORERS · الدوري الإيطالي · 2018–2019 · MEDIUM · Σ648
+- GOAL_SCORERS · الدوري الإيطالي · 2018–2020 · MEDIUM · Σ653
+- GOAL_SCORERS · الدوري الإيطالي · 2019 · MEDIUM · Σ676
+- GOAL_SCORERS · الدوري الإيطالي · 2019–2020 · MEDIUM · Σ667
+- GOAL_SCORERS · الدوري الإيطالي · 2019–2021 · MEDIUM · Σ636
+- GOAL_SCORERS · الدوري الإيطالي · 2020 · EASY · Σ697
+- GOAL_SCORERS · الدوري الإيطالي · 2020–2021 · MEDIUM · Σ645
+- GOAL_SCORERS · الدوري الإيطالي · 2020–2022 · MEDIUM · Σ630
+- GOAL_SCORERS · الدوري الإيطالي · 2021 · MEDIUM · Σ619
+- GOAL_SCORERS · الدوري الإيطالي · 2021–2022 · HARD · Σ606
+- GOAL_SCORERS · الدوري الإيطالي · 2021–2023 · MEDIUM · Σ616
+- GOAL_SCORERS · الدوري الإيطالي · 2022 · MEDIUM · Σ662
+- GOAL_SCORERS · الدوري الإيطالي · 2022–2023 · MEDIUM · Σ627
+- GOAL_SCORERS · الدوري الإيطالي · 2023 · MEDIUM · Σ630
+- GOAL_SCORERS · الدوري الفرنسي · 2010 · MEDIUM · Σ636
+- GOAL_SCORERS · الدوري الفرنسي · 2010–2012 · MEDIUM · Σ633
+- GOAL_SCORERS · الدوري الفرنسي · 2012 · HARD · Σ563
+- GOAL_SCORERS · الدوري الفرنسي · 2015–2016 · HARD · Σ566
+- GOAL_SCORERS · الدوري الفرنسي · 2016 · MEDIUM · Σ616
+- GOAL_SCORERS · الدوري الفرنسي · 2016–2017 · HARD · Σ596
+- GOAL_SCORERS · الدوري الفرنسي · 2019 · MEDIUM · Σ617
+- GOAL_SCORERS · الدوري الفرنسي · 2021 · MEDIUM · Σ630
+- GOAL_SCORERS · الدوري الفرنسي · 2021–2022 · HARD · Σ562
+- GOAL_SCORERS · الدوري الفرنسي · 2021–2023 · HARD · Σ537
+- GOAL_SCORERS · الدوري الفرنسي · 2022 · HARD · Σ573
+- GOAL_SCORERS · الدوري الفرنسي · 2022–2023 · HARD · Σ519
+- GOAL_SCORERS · الدوري الفرنسي · 2023 · HARD · Σ571
+- GOAL_SCORERS · الدوري الفرنسي · 2025 · HARD · Σ586
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2010 · EASY · Σ768
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2010–2011 · EASY · Σ700
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2010–2012 · EASY · Σ704
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2011 · EASY · Σ774
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2011–2012 · EASY · Σ768
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2011–2013 · EASY · Σ732
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2012 · EASY · Σ730
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2012–2013 · EASY · Σ734
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2012–2014 · EASY · Σ761
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2013 · EASY · Σ777
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2013–2014 · EASY · Σ799
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2013–2015 · EASY · Σ788
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2014 · EASY · Σ798
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2014–2015 · EASY · Σ797
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2014–2016 · EASY · Σ791
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2015 · EASY · Σ796
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2015–2016 · EASY · Σ772
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2015–2017 · EASY · Σ793
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2016 · EASY · Σ769
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2016–2017 · EASY · Σ772
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2017 · EASY · Σ791
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2019 · EASY · Σ792
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2021 · EASY · Σ696
+- GOAL_SCORERS · الدوريات الأوروبية الخمس الكبرى · 2025 · HARD · Σ568
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2011–2013 · MEDIUM · Σ685
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2012–2013 · EASY · Σ702
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2012–2014 · EASY · Σ698
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2013–2014 · MEDIUM · Σ693
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2013–2015 · EASY · Σ716
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2014–2015 · EASY · Σ742
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2014–2016 · EASY · Σ729
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2015–2016 · EASY · Σ727
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2015–2017 · EASY · Σ739
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2016–2017 · EASY · Σ775
+- GOAL_SCORERS · باريس سان جيرمان في الدوري الفرنسي · 2025 · HARD · Σ567
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2011–2013 · MEDIUM · Σ695
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2012–2013 · EASY · Σ699
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2012–2014 · EASY · Σ698
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2013–2014 · EASY · Σ712
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2013–2015 · EASY · Σ729
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2014–2015 · MEDIUM · Σ695
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2014–2016 · EASY · Σ724
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2015–2016 · EASY · Σ747
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2015–2017 · EASY · Σ776
+- GOAL_SCORERS · باريس سان جيرمان في كل البطولات · 2016–2017 · EASY · Σ767
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2010–2012 · EASY · Σ702
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2011–2012 · MEDIUM · Σ696
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2011–2013 · EASY · Σ703
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2012 · EASY · Σ719
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2012–2013 · EASY · Σ735
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2012–2014 · EASY · Σ740
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2013–2014 · EASY · Σ709
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2013–2015 · EASY · Σ709
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2014–2015 · EASY · Σ750
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2014–2016 · EASY · Σ737
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2015–2016 · EASY · Σ767
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2015–2017 · EASY · Σ732
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2016–2017 · EASY · Σ733
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2016–2018 · EASY · Σ739
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2017–2018 · EASY · Σ745
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2017–2019 · EASY · Σ759
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2018–2019 · EASY · Σ761
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2018–2020 · EASY · Σ768
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2019–2020 · EASY · Σ775
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2019–2021 · EASY · Σ762
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2020–2021 · EASY · Σ767
+- GOAL_SCORERS · بايرن ميونخ في الدوري الألماني · 2021 · EASY · Σ740
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2011–2012 · MEDIUM · Σ691
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2011–2013 · EASY · Σ732
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2012 · EASY · Σ703
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2012–2013 · EASY · Σ729
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2012–2014 · EASY · Σ725
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2013 · EASY · Σ726
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2013–2014 · EASY · Σ725
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2013–2015 · EASY · Σ719
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2014 · EASY · Σ748
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2014–2015 · EASY · Σ765
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2014–2016 · EASY · Σ750
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2015–2016 · EASY · Σ732
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2015–2017 · EASY · Σ733
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2016 · EASY · Σ725
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2016–2017 · EASY · Σ734
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2016–2018 · EASY · Σ743
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2017–2018 · EASY · Σ742
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2017–2019 · EASY · Σ752
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2018–2019 · EASY · Σ766
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2021 · EASY · Σ740
+- GOAL_SCORERS · بايرن ميونخ في كل البطولات · 2025 · MEDIUM · Σ654
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2010–2011 · EASY · Σ755
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2010–2012 · EASY · Σ770
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2011–2012 · EASY · Σ713
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2011–2013 · EASY · Σ771
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2012–2013 · EASY · Σ770
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2012–2014 · EASY · Σ761
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2013–2014 · EASY · Σ774
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2013–2015 · EASY · Σ764
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2014–2015 · EASY · Σ765
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2014–2016 · EASY · Σ737
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2015–2016 · EASY · Σ736
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2015–2017 · EASY · Σ723
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2016–2017 · EASY · Σ770
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2016–2018 · EASY · Σ752
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2017–2018 · EASY · Σ759
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2017–2019 · EASY · Σ785
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2018–2019 · EASY · Σ762
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2018–2020 · EASY · Σ777
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2019–2020 · EASY · Σ773
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2019–2021 · EASY · Σ731
+- GOAL_SCORERS · برشلونة في الدوري الإسباني · 2020–2021 · EASY · Σ743
+- GOAL_SCORERS · برشلونة في كل البطولات · 2011–2012 · EASY · Σ738
+- GOAL_SCORERS · برشلونة في كل البطولات · 2011–2013 · EASY · Σ746
+- GOAL_SCORERS · برشلونة في كل البطولات · 2012–2013 · EASY · Σ746
+- GOAL_SCORERS · برشلونة في كل البطولات · 2012–2014 · EASY · Σ752
+- GOAL_SCORERS · برشلونة في كل البطولات · 2013–2014 · EASY · Σ785
+- GOAL_SCORERS · برشلونة في كل البطولات · 2013–2015 · EASY · Σ785
+- GOAL_SCORERS · برشلونة في كل البطولات · 2014–2015 · EASY · Σ765
+- GOAL_SCORERS · برشلونة في كل البطولات · 2014–2016 · EASY · Σ737
+- GOAL_SCORERS · برشلونة في كل البطولات · 2015–2017 · EASY · Σ777
+- GOAL_SCORERS · برشلونة في كل البطولات · 2016–2017 · EASY · Σ735
+- GOAL_SCORERS · برشلونة في كل البطولات · 2016–2018 · EASY · Σ752
+- GOAL_SCORERS · برشلونة في كل البطولات · 2017–2018 · EASY · Σ777
+- GOAL_SCORERS · برشلونة في كل البطولات · 2017–2019 · EASY · Σ749
+- GOAL_SCORERS · برشلونة في كل البطولات · 2018–2019 · EASY · Σ786
+- GOAL_SCORERS · برشلونة في كل البطولات · 2025 · MEDIUM · Σ653
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2010–2012 · MEDIUM · Σ649
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2011–2013 · MEDIUM · Σ672
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2012–2013 · MEDIUM · Σ687
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2012–2014 · MEDIUM · Σ691
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2013–2014 · MEDIUM · Σ684
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2013–2015 · EASY · Σ708
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2014–2015 · EASY · Σ702
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2014–2016 · EASY · Σ717
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2015–2016 · EASY · Σ736
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2015–2017 · EASY · Σ745
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2016–2017 · EASY · Σ771
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2016–2018 · EASY · Σ778
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2017–2018 · EASY · Σ769
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2017–2019 · EASY · Σ747
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2018–2019 · EASY · Σ759
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2018–2020 · EASY · Σ754
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2019–2020 · EASY · Σ752
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2019–2021 · EASY · Σ757
+- GOAL_SCORERS · تشيلسي في الدوري الإنجليزي · 2020–2021 · EASY · Σ749
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2011–2012 · MEDIUM · Σ649
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2011–2013 · MEDIUM · Σ654
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2012–2013 · MEDIUM · Σ666
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2012–2014 · MEDIUM · Σ682
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2013–2014 · MEDIUM · Σ674
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2013–2015 · MEDIUM · Σ688
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2014 · MEDIUM · Σ662
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2014–2015 · EASY · Σ725
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2014–2016 · EASY · Σ714
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2015–2016 · EASY · Σ746
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2015–2017 · EASY · Σ747
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2016–2017 · EASY · Σ761
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2016–2018 · EASY · Σ777
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2017–2018 · EASY · Σ786
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2017–2019 · EASY · Σ759
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2018–2019 · EASY · Σ751
+- GOAL_SCORERS · تشيلسي في كل البطولات · 2021 · EASY · Σ722
+- GOAL_SCORERS · دوري أبطال أوروبا · 2011 · EASY · Σ788
+- GOAL_SCORERS · دوري أبطال أوروبا · 2011–2012 · EASY · Σ745
+- GOAL_SCORERS · دوري أبطال أوروبا · 2011–2013 · EASY · Σ784
+- GOAL_SCORERS · دوري أبطال أوروبا · 2015–2016 · EASY · Σ855
+- GOAL_SCORERS · دوري أبطال أوروبا · 2015–2017 · EASY · Σ827
+- GOAL_SCORERS · دوري أبطال أوروبا · 2016 · EASY · Σ845
+- GOAL_SCORERS · دوري أبطال أوروبا · 2016–2017 · EASY · Σ818
+- GOAL_SCORERS · دوري أبطال أوروبا · 2016–2018 · EASY · Σ819
+- GOAL_SCORERS · دوري أبطال أوروبا · 2017 · EASY · Σ816
+- GOAL_SCORERS · دوري أبطال أوروبا · 2017–2018 · EASY · Σ800
+- GOAL_SCORERS · دوري أبطال أوروبا · 2017–2019 · EASY · Σ813
+- GOAL_SCORERS · دوري أبطال أوروبا · 2018–2019 · EASY · Σ851
+- GOAL_SCORERS · دوري أبطال أوروبا · 2021 · EASY · Σ788
+- GOAL_SCORERS · دوري أبطال أوروبا · 2025 · EASY · Σ726
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2010–2011 · EASY · Σ783
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2010–2012 · EASY · Σ790
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2011–2012 · EASY · Σ804
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2011–2013 · EASY · Σ780
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2012–2013 · EASY · Σ785
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2012–2014 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2013–2014 · EASY · Σ750
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2013–2015 · EASY · Σ765
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2014–2015 · EASY · Σ771
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2014–2016 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2015–2016 · EASY · Σ787
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2015–2017 · EASY · Σ775
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2016 · EASY · Σ803
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2016–2017 · EASY · Σ775
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2016–2018 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2017–2019 · EASY · Σ795
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2018–2019 · EASY · Σ755
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2018–2020 · EASY · Σ760
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2019–2020 · EASY · Σ743
+- GOAL_SCORERS · ريال مدريد في الدوري الإسباني · 2019–2021 · EASY · Σ757
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2011–2012 · EASY · Σ791
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2011–2013 · EASY · Σ804
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2012 · EASY · Σ807
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2012–2013 · EASY · Σ783
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2012–2014 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2013–2014 · EASY · Σ764
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2013–2015 · EASY · Σ776
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2014–2015 · EASY · Σ767
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2014–2016 · EASY · Σ773
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2015–2016 · EASY · Σ788
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2015–2017 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2016 · EASY · Σ797
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2016–2017 · EASY · Σ774
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2016–2018 · EASY · Σ788
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2017–2018 · EASY · Σ772
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2017–2019 · EASY · Σ770
+- GOAL_SCORERS · ريال مدريد في كل البطولات · 2018–2019 · EASY · Σ743
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2012–2014 · MEDIUM · Σ685
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2013–2015 · EASY · Σ704
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2014–2015 · EASY · Σ735
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2014–2016 · EASY · Σ717
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2015–2017 · EASY · Σ728
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2016–2017 · EASY · Σ727
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2016–2018 · EASY · Σ722
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2017–2018 · EASY · Σ733
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2017–2019 · EASY · Σ709
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2018–2019 · EASY · Σ715
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2018–2020 · EASY · Σ698
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2019–2020 · EASY · Σ696
+- GOAL_SCORERS · ليفربول في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ662
+- GOAL_SCORERS · ليفربول في كل البطولات · 2012–2014 · MEDIUM · Σ692
+- GOAL_SCORERS · ليفربول في كل البطولات · 2013–2014 · MEDIUM · Σ692
+- GOAL_SCORERS · ليفربول في كل البطولات · 2013–2015 · EASY · Σ704
+- GOAL_SCORERS · ليفربول في كل البطولات · 2014–2016 · EASY · Σ718
+- GOAL_SCORERS · ليفربول في كل البطولات · 2015–2017 · EASY · Σ719
+- GOAL_SCORERS · ليفربول في كل البطولات · 2016–2017 · EASY · Σ720
+- GOAL_SCORERS · ليفربول في كل البطولات · 2016–2018 · EASY · Σ720
+- GOAL_SCORERS · ليفربول في كل البطولات · 2017–2018 · EASY · Σ729
+- GOAL_SCORERS · ليفربول في كل البطولات · 2017–2019 · EASY · Σ716
+- GOAL_SCORERS · ليفربول في كل البطولات · 2018–2019 · EASY · Σ703
+- GOAL_SCORERS · ليفربول في كل البطولات · 2019 · EASY · Σ702
+- GOAL_SCORERS · ليفربول في كل البطولات · 2025 · HARD · Σ587
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2010–2012 · MEDIUM · Σ679
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2011–2012 · MEDIUM · Σ687
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2011–2013 · MEDIUM · Σ693
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2012–2013 · EASY · Σ702
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2012–2014 · EASY · Σ696
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2013–2014 · EASY · Σ697
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2013–2015 · EASY · Σ708
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2014–2015 · EASY · Σ709
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2014–2016 · EASY · Σ725
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2015–2016 · EASY · Σ728
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2015–2017 · EASY · Σ735
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2016–2018 · EASY · Σ752
+- GOAL_SCORERS · مان سيتي في الدوري الإنجليزي · 2020–2021 · EASY · Σ734
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2011 · MEDIUM · Σ677
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2011–2012 · MEDIUM · Σ687
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2011–2013 · MEDIUM · Σ692
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2012–2013 · EASY · Σ696
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2012–2014 · EASY · Σ697
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2013 · MEDIUM · Σ683
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2013–2014 · MEDIUM · Σ692
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2013–2015 · EASY · Σ730
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2014–2015 · EASY · Σ708
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2014–2016 · EASY · Σ701
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2015 · MEDIUM · Σ682
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2015–2016 · EASY · Σ733
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2015–2017 · EASY · Σ750
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2016–2018 · EASY · Σ752
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2017–2018 · EASY · Σ754
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2018 · EASY · Σ766
+- GOAL_SCORERS · مان سيتي في كل البطولات · 2021 · EASY · Σ751
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2011–2013 · MEDIUM · Σ674
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2014–2016 · EASY · Σ736
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2015–2017 · EASY · Σ728
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2016–2017 · EASY · Σ713
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2016–2018 · EASY · Σ716
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2017–2018 · EASY · Σ735
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2017–2019 · EASY · Σ715
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2018–2019 · EASY · Σ699
+- GOAL_SCORERS · مان يونايتد في الدوري الإنجليزي · 2018–2020 · EASY · Σ704
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2011–2013 · MEDIUM · Σ645
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2013–2015 · EASY · Σ730
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2014–2016 · EASY · Σ743
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2015–2017 · EASY · Σ712
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2016–2017 · EASY · Σ703
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2016–2018 · EASY · Σ723
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2017–2018 · EASY · Σ732
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2017–2019 · EASY · Σ701
+- GOAL_SCORERS · مان يونايتد في كل البطولات · 2018–2019 · MEDIUM · Σ660
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ643
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ638
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2017 · MEDIUM · Σ638
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ650
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ625
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ616
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ619
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2019 · MEDIUM · Σ611
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2019–2020 · HARD · Σ607
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2019–2021 · HARD · Σ590
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2020–2021 · HARD · Σ579
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2020–2022 · HARD · Σ579
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2021–2022 · HARD · Σ581
+- KEY_PASSES · أرسنال في الدوري الإنجليزي · 2021–2023 · HARD · Σ592
+- KEY_PASSES · أرسنال في كل البطولات · 2016–2017 · MEDIUM · Σ643
+- KEY_PASSES · أرسنال في كل البطولات · 2016–2018 · MEDIUM · Σ652
+- KEY_PASSES · أرسنال في كل البطولات · 2017 · MEDIUM · Σ638
+- KEY_PASSES · أرسنال في كل البطولات · 2017–2018 · MEDIUM · Σ650
+- KEY_PASSES · أرسنال في كل البطولات · 2017–2019 · MEDIUM · Σ625
+- KEY_PASSES · أرسنال في كل البطولات · 2018–2019 · MEDIUM · Σ616
+- KEY_PASSES · أرسنال في كل البطولات · 2018–2020 · MEDIUM · Σ619
+- KEY_PASSES · أرسنال في كل البطولات · 2019 · MEDIUM · Σ611
+- KEY_PASSES · أرسنال في كل البطولات · 2019–2020 · HARD · Σ607
+- KEY_PASSES · أرسنال في كل البطولات · 2019–2021 · HARD · Σ590
+- KEY_PASSES · أرسنال في كل البطولات · 2020–2021 · HARD · Σ579
+- KEY_PASSES · الدوري الألماني · 2015 · HARD · Σ516
+- KEY_PASSES · الدوري الألماني · 2015–2016 · HARD · Σ564
+- KEY_PASSES · الدوري الألماني · 2015–2017 · HARD · Σ532
+- KEY_PASSES · الدوري الألماني · 2016 · HARD · Σ562
+- KEY_PASSES · الدوري الألماني · 2016–2017 · HARD · Σ553
+- KEY_PASSES · الدوري الألماني · 2016–2018 · MEDIUM · Σ613
+- KEY_PASSES · الدوري الألماني · 2017 · HARD · Σ606
+- KEY_PASSES · الدوري الألماني · 2017–2018 · HARD · Σ559
+- KEY_PASSES · الدوري الألماني · 2017–2019 · HARD · Σ604
+- KEY_PASSES · الدوري الألماني · 2018 · HARD · Σ594
+- KEY_PASSES · الدوري الألماني · 2018–2019 · HARD · Σ604
+- KEY_PASSES · الدوري الألماني · 2018–2020 · HARD · Σ593
+- KEY_PASSES · الدوري الألماني · 2019 · HARD · Σ600
+- KEY_PASSES · الدوري الألماني · 2019–2020 · HARD · Σ600
+- KEY_PASSES · الدوري الألماني · 2019–2021 · MEDIUM · Σ618
+- KEY_PASSES · الدوري الألماني · 2020 · MEDIUM · Σ616
+- KEY_PASSES · الدوري الألماني · 2020–2021 · MEDIUM · Σ613
+- KEY_PASSES · الدوري الألماني · 2020–2022 · HARD · Σ597
+- KEY_PASSES · الدوري الألماني · 2021 · HARD · Σ568
+- KEY_PASSES · الدوري الألماني · 2021–2022 · HARD · Σ565
+- KEY_PASSES · الدوري الألماني · 2021–2023 · HARD · Σ551
+- KEY_PASSES · الدوري الألماني · 2022 · HARD · Σ544
+- KEY_PASSES · الدوري الألماني · 2022–2023 · HARD · Σ556
+- KEY_PASSES · الدوري الألماني · 2022–2024 · HARD · Σ556
+- KEY_PASSES · الدوري الألماني · 2023 · HARD · Σ548
+- KEY_PASSES · الدوري الألماني · 2023–2024 · HARD · Σ541
+- KEY_PASSES · الدوري الألماني · 2023–2025 · HARD · Σ541
+- KEY_PASSES · الدوري الألماني · 2024 · HARD · Σ548
+- KEY_PASSES · الدوري الألماني · 2024–2025 · HARD · Σ537
+- KEY_PASSES · الدوري الألماني · 2025 · HARD · Σ555
+- KEY_PASSES · الدوري الإسباني · 2016 · MEDIUM · Σ624
+- KEY_PASSES · الدوري الإسباني · 2016–2017 · MEDIUM · Σ611
+- KEY_PASSES · الدوري الإسباني · 2016–2018 · MEDIUM · Σ620
+- KEY_PASSES · الدوري الإسباني · 2017 · MEDIUM · Σ608
+- KEY_PASSES · الدوري الإسباني · 2017–2018 · MEDIUM · Σ650
+- KEY_PASSES · الدوري الإسباني · 2017–2019 · MEDIUM · Σ673
+- KEY_PASSES · الدوري الإسباني · 2018 · MEDIUM · Σ673
+- KEY_PASSES · الدوري الإسباني · 2018–2019 · MEDIUM · Σ673
+- KEY_PASSES · الدوري الإسباني · 2018–2020 · MEDIUM · Σ660
+- KEY_PASSES · الدوري الإسباني · 2019 · MEDIUM · Σ683
+- KEY_PASSES · الدوري الإسباني · 2019–2020 · MEDIUM · Σ655
+- KEY_PASSES · الدوري الإسباني · 2019–2021 · MEDIUM · Σ689
+- KEY_PASSES · الدوري الإسباني · 2020 · MEDIUM · Σ679
+- KEY_PASSES · الدوري الإسباني · 2020–2021 · MEDIUM · Σ681
+- KEY_PASSES · الدوري الإسباني · 2020–2022 · MEDIUM · Σ658
+- KEY_PASSES · الدوري الإسباني · 2021 · MEDIUM · Σ619
+- KEY_PASSES · الدوري الإسباني · 2021–2022 · HARD · Σ599
+- KEY_PASSES · الدوري الإسباني · 2021–2023 · HARD · Σ603
+- KEY_PASSES · الدوري الإسباني · 2022 · HARD · Σ554
+- KEY_PASSES · الدوري الإسباني · 2022–2023 · HARD · Σ607
+- KEY_PASSES · الدوري الإسباني · 2022–2024 · HARD · Σ574
+- KEY_PASSES · الدوري الإسباني · 2023 · MEDIUM · Σ629
+- KEY_PASSES · الدوري الإسباني · 2023–2024 · HARD · Σ599
+- KEY_PASSES · الدوري الإسباني · 2023–2025 · HARD · Σ548
+- KEY_PASSES · الدوري الإسباني · 2024 · HARD · Σ569
+- KEY_PASSES · الدوري الإسباني · 2024–2025 · HARD · Σ493
+- KEY_PASSES · الدوري الإسباني · 2025 · HARD · Σ493
+- KEY_PASSES · الدوري الإنجليزي · 2015 · MEDIUM · Σ687
+- KEY_PASSES · الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ691
+- KEY_PASSES · الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ668
+- KEY_PASSES · الدوري الإنجليزي · 2016 · MEDIUM · Σ664
+- KEY_PASSES · الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ685
 - KEY_PASSES · الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ633
-- KEY_PASSES · الدوري الإنجليزي · 2017 · EASY · Σ657
+- KEY_PASSES · الدوري الإنجليزي · 2017 · MEDIUM · Σ657
 - KEY_PASSES · الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ634
 - KEY_PASSES · الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ631
-- KEY_PASSES · الدوري الإنجليزي · 2018 · MEDIUM · Σ571
+- KEY_PASSES · الدوري الإنجليزي · 2018 · HARD · Σ571
 - KEY_PASSES · الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ639
-- KEY_PASSES · الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ594
+- KEY_PASSES · الدوري الإنجليزي · 2018–2020 · HARD · Σ594
 - KEY_PASSES · الدوري الإنجليزي · 2019 · MEDIUM · Σ620
 - KEY_PASSES · الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ616
 - KEY_PASSES · الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ616
 - KEY_PASSES · الدوري الإنجليزي · 2020 · MEDIUM · Σ626
-- KEY_PASSES · الدوري الإنجليزي · 2020–2021 · MEDIUM · Σ602
+- KEY_PASSES · الدوري الإنجليزي · 2020–2021 · HARD · Σ602
 - KEY_PASSES · الدوري الإنجليزي · 2020–2022 · MEDIUM · Σ612
 - KEY_PASSES · الدوري الإنجليزي · 2021 · MEDIUM · Σ611
-- KEY_PASSES · الدوري الإنجليزي · 2021–2022 · MEDIUM · Σ588
+- KEY_PASSES · الدوري الإنجليزي · 2021–2022 · HARD · Σ588
 - KEY_PASSES · الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ636
-- KEY_PASSES · الدوري الإنجليزي · 2022 · MEDIUM · Σ579
+- KEY_PASSES · الدوري الإنجليزي · 2022 · HARD · Σ579
 - KEY_PASSES · الدوري الإنجليزي · 2022–2023 · MEDIUM · Σ609
 - KEY_PASSES · الدوري الإنجليزي · 2022–2024 · MEDIUM · Σ618
-- KEY_PASSES · الدوري الإنجليزي · 2023 · MEDIUM · Σ566
+- KEY_PASSES · الدوري الإنجليزي · 2023 · HARD · Σ566
 - KEY_PASSES · الدوري الإنجليزي · 2023–2024 · MEDIUM · Σ623
-- KEY_PASSES · الدوري الإنجليزي · 2023–2025 · MEDIUM · Σ566
-- KEY_PASSES · الدوري الإنجليزي · 2024 · MEDIUM · Σ578
+- KEY_PASSES · الدوري الإنجليزي · 2023–2025 · HARD · Σ566
+- KEY_PASSES · الدوري الإنجليزي · 2024 · HARD · Σ578
 - KEY_PASSES · الدوري الإنجليزي · 2024–2025 · HARD · Σ546
 - KEY_PASSES · الدوري الإنجليزي · 2025 · HARD · Σ558
+- KEY_PASSES · الدوري الإيطالي · 2015 · MEDIUM · Σ633
+- KEY_PASSES · الدوري الإيطالي · 2015–2016 · MEDIUM · Σ650
+- KEY_PASSES · الدوري الإيطالي · 2015–2017 · MEDIUM · Σ622
+- KEY_PASSES · الدوري الإيطالي · 2016 · HARD · Σ591
+- KEY_PASSES · الدوري الإيطالي · 2016–2017 · HARD · Σ589
+- KEY_PASSES · الدوري الإيطالي · 2016–2018 · MEDIUM · Σ641
+- KEY_PASSES · الدوري الإيطالي · 2017 · MEDIUM · Σ650
+- KEY_PASSES · الدوري الإيطالي · 2017–2018 · MEDIUM · Σ630
+- KEY_PASSES · الدوري الإيطالي · 2017–2019 · MEDIUM · Σ615
+- KEY_PASSES · الدوري الإيطالي · 2018 · MEDIUM · Σ629
+- KEY_PASSES · الدوري الإيطالي · 2018–2019 · HARD · Σ592
+- KEY_PASSES · الدوري الإيطالي · 2018–2020 · HARD · Σ584
+- KEY_PASSES · الدوري الإيطالي · 2019 · HARD · Σ568
+- KEY_PASSES · الدوري الإيطالي · 2019–2020 · HARD · Σ560
+- KEY_PASSES · الدوري الإيطالي · 2019–2021 · HARD · Σ604
+- KEY_PASSES · الدوري الإيطالي · 2020 · MEDIUM · Σ615
+- KEY_PASSES · الدوري الإيطالي · 2020–2021 · HARD · Σ599
+- KEY_PASSES · الدوري الإيطالي · 2020–2022 · HARD · Σ599
+- KEY_PASSES · الدوري الإيطالي · 2021 · HARD · Σ567
+- KEY_PASSES · الدوري الإيطالي · 2021–2022 · HARD · Σ572
+- KEY_PASSES · الدوري الإيطالي · 2021–2023 · HARD · Σ572
+- KEY_PASSES · الدوري الإيطالي · 2022 · HARD · Σ563
+- KEY_PASSES · الدوري الإيطالي · 2022–2023 · HARD · Σ569
+- KEY_PASSES · الدوري الإيطالي · 2022–2024 · HARD · Σ574
+- KEY_PASSES · الدوري الإيطالي · 2023 · HARD · Σ576
+- KEY_PASSES · الدوري الإيطالي · 2023–2024 · HARD · Σ563
+- KEY_PASSES · الدوري الإيطالي · 2023–2025 · HARD · Σ577
+- KEY_PASSES · الدوري الإيطالي · 2024 · HARD · Σ553
+- KEY_PASSES · الدوري الإيطالي · 2024–2025 · HARD · Σ545
+- KEY_PASSES · الدوري الإيطالي · 2025 · HARD · Σ580
 - KEY_PASSES · الدوري الفرنسي · 2015 · HARD · Σ498
-- KEY_PASSES · الدوري الفرنسي · 2015–2016 · MEDIUM · Σ570
-- KEY_PASSES · الدوري الفرنسي · 2015–2017 · MEDIUM · Σ568
-- KEY_PASSES · الدوري الفرنسي · 2016 · MEDIUM · Σ570
+- KEY_PASSES · الدوري الفرنسي · 2015–2016 · HARD · Σ570
+- KEY_PASSES · الدوري الفرنسي · 2015–2017 · HARD · Σ568
+- KEY_PASSES · الدوري الفرنسي · 2016 · HARD · Σ570
 - KEY_PASSES · الدوري الفرنسي · 2016–2017 · HARD · Σ539
 - KEY_PASSES · الدوري الفرنسي · 2016–2018 · HARD · Σ545
 - KEY_PASSES · الدوري الفرنسي · 2017 · HARD · Σ491
@@ -520,136 +1063,258 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - KEY_PASSES · الدوري الفرنسي · 2024 · HARD · Σ469
 - KEY_PASSES · الدوري الفرنسي · 2024–2025 · HARD · Σ431
 - KEY_PASSES · الدوري الفرنسي · 2025 · HARD · Σ419
-- KEY_PASSES · الدوري الألماني · 2015 · HARD · Σ516
-- KEY_PASSES · الدوري الألماني · 2015–2016 · MEDIUM · Σ564
-- KEY_PASSES · الدوري الألماني · 2015–2017 · HARD · Σ532
-- KEY_PASSES · الدوري الألماني · 2016 · MEDIUM · Σ562
-- KEY_PASSES · الدوري الألماني · 2016–2017 · HARD · Σ553
-- KEY_PASSES · الدوري الألماني · 2016–2018 · MEDIUM · Σ613
-- KEY_PASSES · الدوري الألماني · 2017 · MEDIUM · Σ606
-- KEY_PASSES · الدوري الألماني · 2017–2018 · HARD · Σ559
-- KEY_PASSES · الدوري الألماني · 2017–2019 · MEDIUM · Σ604
-- KEY_PASSES · الدوري الألماني · 2018 · MEDIUM · Σ594
-- KEY_PASSES · الدوري الألماني · 2018–2019 · MEDIUM · Σ604
-- KEY_PASSES · الدوري الألماني · 2018–2020 · MEDIUM · Σ593
-- KEY_PASSES · الدوري الألماني · 2019 · MEDIUM · Σ600
-- KEY_PASSES · الدوري الألماني · 2019–2020 · MEDIUM · Σ600
-- KEY_PASSES · الدوري الألماني · 2019–2021 · MEDIUM · Σ618
-- KEY_PASSES · الدوري الألماني · 2020 · MEDIUM · Σ616
-- KEY_PASSES · الدوري الألماني · 2020–2021 · MEDIUM · Σ613
-- KEY_PASSES · الدوري الألماني · 2020–2022 · MEDIUM · Σ597
-- KEY_PASSES · الدوري الألماني · 2021 · MEDIUM · Σ568
-- KEY_PASSES · الدوري الألماني · 2021–2022 · MEDIUM · Σ565
-- KEY_PASSES · الدوري الألماني · 2021–2023 · HARD · Σ551
-- KEY_PASSES · الدوري الألماني · 2022 · HARD · Σ544
-- KEY_PASSES · الدوري الألماني · 2022–2023 · HARD · Σ556
-- KEY_PASSES · الدوري الألماني · 2022–2024 · HARD · Σ556
-- KEY_PASSES · الدوري الألماني · 2023 · HARD · Σ548
-- KEY_PASSES · الدوري الألماني · 2023–2024 · HARD · Σ541
-- KEY_PASSES · الدوري الألماني · 2023–2025 · HARD · Σ541
-- KEY_PASSES · الدوري الألماني · 2024 · HARD · Σ548
-- KEY_PASSES · الدوري الألماني · 2024–2025 · HARD · Σ537
-- KEY_PASSES · الدوري الألماني · 2025 · HARD · Σ555
-- KEY_PASSES · الدوري الإيطالي · 2015 · MEDIUM · Σ633
-- KEY_PASSES · الدوري الإيطالي · 2015–2016 · EASY · Σ650
-- KEY_PASSES · الدوري الإيطالي · 2015–2017 · MEDIUM · Σ622
-- KEY_PASSES · الدوري الإيطالي · 2016 · MEDIUM · Σ591
-- KEY_PASSES · الدوري الإيطالي · 2016–2017 · MEDIUM · Σ589
-- KEY_PASSES · الدوري الإيطالي · 2016–2018 · MEDIUM · Σ641
-- KEY_PASSES · الدوري الإيطالي · 2017 · EASY · Σ650
-- KEY_PASSES · الدوري الإيطالي · 2017–2018 · MEDIUM · Σ630
-- KEY_PASSES · الدوري الإيطالي · 2017–2019 · MEDIUM · Σ615
-- KEY_PASSES · الدوري الإيطالي · 2018 · MEDIUM · Σ629
-- KEY_PASSES · الدوري الإيطالي · 2018–2019 · MEDIUM · Σ592
-- KEY_PASSES · الدوري الإيطالي · 2018–2020 · MEDIUM · Σ584
-- KEY_PASSES · الدوري الإيطالي · 2019 · MEDIUM · Σ568
-- KEY_PASSES · الدوري الإيطالي · 2019–2020 · MEDIUM · Σ560
-- KEY_PASSES · الدوري الإيطالي · 2019–2021 · MEDIUM · Σ604
-- KEY_PASSES · الدوري الإيطالي · 2020 · MEDIUM · Σ615
-- KEY_PASSES · الدوري الإيطالي · 2020–2021 · MEDIUM · Σ599
-- KEY_PASSES · الدوري الإيطالي · 2020–2022 · MEDIUM · Σ599
-- KEY_PASSES · الدوري الإيطالي · 2021 · MEDIUM · Σ567
-- KEY_PASSES · الدوري الإيطالي · 2021–2022 · MEDIUM · Σ572
-- KEY_PASSES · الدوري الإيطالي · 2021–2023 · MEDIUM · Σ572
-- KEY_PASSES · الدوري الإيطالي · 2022 · MEDIUM · Σ563
-- KEY_PASSES · الدوري الإيطالي · 2022–2023 · MEDIUM · Σ569
-- KEY_PASSES · الدوري الإيطالي · 2022–2024 · MEDIUM · Σ574
-- KEY_PASSES · الدوري الإيطالي · 2023 · MEDIUM · Σ576
-- KEY_PASSES · الدوري الإيطالي · 2023–2024 · MEDIUM · Σ563
-- KEY_PASSES · الدوري الإيطالي · 2023–2025 · MEDIUM · Σ577
-- KEY_PASSES · الدوري الإيطالي · 2024 · HARD · Σ553
-- KEY_PASSES · الدوري الإيطالي · 2024–2025 · HARD · Σ545
-- KEY_PASSES · الدوري الإيطالي · 2025 · MEDIUM · Σ580
-- KEY_PASSES · الدوري الإسباني · 2016 · MEDIUM · Σ624
-- KEY_PASSES · الدوري الإسباني · 2016–2017 · MEDIUM · Σ611
-- KEY_PASSES · الدوري الإسباني · 2016–2018 · MEDIUM · Σ620
-- KEY_PASSES · الدوري الإسباني · 2017 · MEDIUM · Σ608
-- KEY_PASSES · الدوري الإسباني · 2017–2018 · EASY · Σ650
-- KEY_PASSES · الدوري الإسباني · 2017–2019 · EASY · Σ673
-- KEY_PASSES · الدوري الإسباني · 2018 · EASY · Σ673
-- KEY_PASSES · الدوري الإسباني · 2018–2019 · EASY · Σ673
-- KEY_PASSES · الدوري الإسباني · 2018–2020 · EASY · Σ660
-- KEY_PASSES · الدوري الإسباني · 2019 · EASY · Σ683
-- KEY_PASSES · الدوري الإسباني · 2019–2020 · EASY · Σ655
-- KEY_PASSES · الدوري الإسباني · 2019–2021 · EASY · Σ689
-- KEY_PASSES · الدوري الإسباني · 2020 · EASY · Σ679
-- KEY_PASSES · الدوري الإسباني · 2020–2021 · EASY · Σ681
-- KEY_PASSES · الدوري الإسباني · 2020–2022 · EASY · Σ658
-- KEY_PASSES · الدوري الإسباني · 2021 · MEDIUM · Σ619
-- KEY_PASSES · الدوري الإسباني · 2021–2022 · MEDIUM · Σ599
-- KEY_PASSES · الدوري الإسباني · 2021–2023 · MEDIUM · Σ603
-- KEY_PASSES · الدوري الإسباني · 2022 · HARD · Σ554
-- KEY_PASSES · الدوري الإسباني · 2022–2023 · MEDIUM · Σ607
-- KEY_PASSES · الدوري الإسباني · 2022–2024 · MEDIUM · Σ574
-- KEY_PASSES · الدوري الإسباني · 2023 · MEDIUM · Σ629
-- KEY_PASSES · الدوري الإسباني · 2023–2024 · MEDIUM · Σ599
-- KEY_PASSES · الدوري الإسباني · 2023–2025 · HARD · Σ548
-- KEY_PASSES · الدوري الإسباني · 2024 · MEDIUM · Σ569
-- KEY_PASSES · الدوري الإسباني · 2024–2025 · HARD · Σ493
-- KEY_PASSES · الدوري الإسباني · 2025 · HARD · Σ493
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2015 · EASY · Σ739
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2015–2016 · EASY · Σ770
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2015–2017 · EASY · Σ770
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2016 · EASY · Σ790
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2016–2017 · EASY · Σ802
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2016–2018 · EASY · Σ799
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2017 · EASY · Σ738
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2017–2018 · EASY · Σ750
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2017–2019 · EASY · Σ755
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2018 · EASY · Σ783
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2018–2019 · EASY · Σ782
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2019 · EASY · Σ806
-- KEY_PASSES_ALL · دوري أبطال أوروبا · 2025 · MEDIUM · Σ590
-- KEY_PASSES_ALL · بطولة أمم أوروبا · 2020 · MEDIUM · Σ568
-- KEY_PASSES_ALL · كوبا أمريكا · 2016 · EASY · Σ739
-- KEY_PASSES_ALL · كوبا أمريكا · 2019 · EASY · Σ746
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2015 · EASY · Σ731
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2015–2016 · EASY · Σ712
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2015–2017 · EASY · Σ718
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2016 · EASY · Σ676
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2016–2017 · EASY · Σ727
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2017 · EASY · Σ686
-- KEY_PASSES_ALL · الدوري الإنجليزي · 2024 · MEDIUM · Σ563
-- KEY_PASSES_ALL · الدوري الفرنسي · 2015 · HARD · Σ512
-- KEY_PASSES_ALL · الدوري الفرنسي · 2015–2016 · MEDIUM · Σ575
-- KEY_PASSES_ALL · الدوري الفرنسي · 2015–2017 · MEDIUM · Σ571
-- KEY_PASSES_ALL · الدوري الفرنسي · 2016 · MEDIUM · Σ597
-- KEY_PASSES_ALL · الدوري الفرنسي · 2016–2017 · MEDIUM · Σ589
-- KEY_PASSES_ALL · الدوري الفرنسي · 2017 · HARD · Σ548
-- KEY_PASSES_ALL · الدوري الفرنسي · 2025 · HARD · Σ471
-- KEY_PASSES_ALL · الدوري الألماني · 2015 · HARD · Σ539
-- KEY_PASSES_ALL · الدوري الإيطالي · 2015 · MEDIUM · Σ630
-- KEY_PASSES_ALL · الدوري الإيطالي · 2015–2016 · MEDIUM · Σ629
-- KEY_PASSES_ALL · الدوري الإيطالي · 2015–2017 · MEDIUM · Σ618
-- KEY_PASSES_ALL · الدوري الإيطالي · 2016 · MEDIUM · Σ600
-- KEY_PASSES_ALL · الدوري الإيطالي · 2016–2017 · MEDIUM · Σ633
-- KEY_PASSES_ALL · الدوري الإيطالي · 2016–2018 · EASY · Σ669
-- KEY_PASSES_ALL · الدوري الإيطالي · 2017 · EASY · Σ670
-- KEY_PASSES_ALL · الدوري الإيطالي · 2017–2018 · EASY · Σ663
-- KEY_PASSES_ALL · الدوري الإيطالي · 2018 · MEDIUM · Σ644
-- KEY_PASSES_ALL · الدوري الإيطالي · 2023 · MEDIUM · Σ567
-- KEY_PASSES_ALL · الدوري الإسباني · 2018 · EASY · Σ700
-- KEY_PASSES_ALL · الدوري الإسباني · 2022 · MEDIUM · Σ561
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2016 · MEDIUM · Σ638
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2016–2017 · MEDIUM · Σ673
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2016–2018 · MEDIUM · Σ681
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2017 · MEDIUM · Σ668
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2017–2018 · MEDIUM · Σ654
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2017–2019 · MEDIUM · Σ688
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2018 · HARD · Σ591
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2018–2019 · MEDIUM · Σ639
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2018–2020 · MEDIUM · Σ670
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2019 · HARD · Σ607
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2019–2020 · MEDIUM · Σ682
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2019–2021 · MEDIUM · Σ649
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2020 · MEDIUM · Σ651
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2020–2021 · MEDIUM · Σ644
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2020–2022 · MEDIUM · Σ658
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2021 · MEDIUM · Σ625
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2021–2022 · MEDIUM · Σ669
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2021–2023 · HARD · Σ605
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2022 · MEDIUM · Σ634
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2022–2023 · HARD · Σ562
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2022–2024 · HARD · Σ569
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2023 · HARD · Σ587
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2023–2024 · HARD · Σ605
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2023–2025 · HARD · Σ585
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2024 · HARD · Σ564
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2024–2025 · HARD · Σ546
+- KEY_PASSES · الدوريات الأوروبية الخمس الكبرى · 2025 · HARD · Σ519
+- KEY_PASSES · باريس سان جيرمان في الدوري الفرنسي · 2021–2022 · MEDIUM · Σ691
+- KEY_PASSES · باريس سان جيرمان في الدوري الفرنسي · 2021–2023 · MEDIUM · Σ674
+- KEY_PASSES · باريس سان جيرمان في الدوري الفرنسي · 2022–2023 · HARD · Σ603
+- KEY_PASSES · باريس سان جيرمان في كل البطولات · 2021 · MEDIUM · Σ695
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2017–2018 · EASY · Σ708
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2017–2019 · EASY · Σ720
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2018–2019 · EASY · Σ709
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2018–2020 · EASY · Σ712
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2019–2020 · MEDIUM · Σ692
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2019–2021 · MEDIUM · Σ682
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2020–2021 · MEDIUM · Σ626
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2020–2022 · MEDIUM · Σ620
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2021–2022 · MEDIUM · Σ612
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2021–2023 · MEDIUM · Σ611
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2022–2024 · HARD · Σ602
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2023–2025 · HARD · Σ587
+- KEY_PASSES · بايرن ميونخ في الدوري الألماني · 2024–2025 · HARD · Σ587
+- KEY_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2017–2018 · EASY · Σ708
+- KEY_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2017–2019 · EASY · Σ720
+- KEY_PASSES · بايرن ميونخ في دوري أبطال أوروبا · 2023–2025 · HARD · Σ601
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2017–2018 · EASY · Σ708
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2017–2019 · EASY · Σ719
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2018–2019 · EASY · Σ719
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2018–2020 · EASY · Σ718
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2019–2020 · MEDIUM · Σ684
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2019–2021 · MEDIUM · Σ687
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2020–2021 · MEDIUM · Σ656
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2021 · MEDIUM · Σ609
+- KEY_PASSES · بايرن ميونخ في كل البطولات · 2023–2025 · HARD · Σ596
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2016–2018 · MEDIUM · Σ679
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2017–2018 · MEDIUM · Σ672
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2017–2019 · MEDIUM · Σ647
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2018–2019 · MEDIUM · Σ663
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2018–2020 · MEDIUM · Σ655
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2020–2021 · HARD · Σ603
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2020–2022 · HARD · Σ599
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2021 · HARD · Σ602
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2021–2022 · HARD · Σ571
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2022 · HARD · Σ588
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2022–2024 · HARD · Σ599
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2023–2024 · HARD · Σ593
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2023–2025 · HARD · Σ565
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2024 · HARD · Σ545
+- KEY_PASSES · برشلونة في الدوري الإسباني · 2024–2025 · HARD · Σ550
+- KEY_PASSES · برشلونة في دوري أبطال أوروبا · 2017–2019 · MEDIUM · Σ686
+- KEY_PASSES · برشلونة في دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ675
+- KEY_PASSES · برشلونة في دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ667
+- KEY_PASSES · برشلونة في دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ612
+- KEY_PASSES · برشلونة في كل البطولات · 2016–2017 · MEDIUM · Σ667
+- KEY_PASSES · برشلونة في كل البطولات · 2016–2018 · MEDIUM · Σ679
+- KEY_PASSES · برشلونة في كل البطولات · 2017–2018 · MEDIUM · Σ677
+- KEY_PASSES · برشلونة في كل البطولات · 2017–2019 · MEDIUM · Σ675
+- KEY_PASSES · برشلونة في كل البطولات · 2018–2019 · MEDIUM · Σ663
+- KEY_PASSES · برشلونة في كل البطولات · 2018–2020 · MEDIUM · Σ655
+- KEY_PASSES · برشلونة في كل البطولات · 2019–2020 · MEDIUM · Σ651
+- KEY_PASSES · برشلونة في كل البطولات · 2019–2021 · MEDIUM · Σ616
+- KEY_PASSES · برشلونة في كل البطولات · 2020 · HARD · Σ604
+- KEY_PASSES · برشلونة في كل البطولات · 2020–2021 · MEDIUM · Σ615
+- KEY_PASSES · برشلونة في كل البطولات · 2021 · HARD · Σ602
+- KEY_PASSES · برشلونة في كل البطولات · 2023–2024 · HARD · Σ565
+- KEY_PASSES · برشلونة في كل البطولات · 2023–2025 · HARD · Σ575
+- KEY_PASSES · برشلونة في كل البطولات · 2024 · HARD · Σ553
+- KEY_PASSES · برشلونة في كل البطولات · 2024–2025 · HARD · Σ553
+- KEY_PASSES · بطولة أمم أوروبا · 2020 · HARD · Σ458
+- KEY_PASSES · بطولة أمم أوروبا · 2024 · MEDIUM · Σ685
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ648
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ688
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ685
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ682
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ651
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ648
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2020–2022 · MEDIUM · Σ647
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2021 · MEDIUM · Σ669
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2021–2022 · MEDIUM · Σ622
+- KEY_PASSES · تشيلسي في الدوري الإنجليزي · 2022 · HARD · Σ601
+- KEY_PASSES · تشيلسي في دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ625
+- KEY_PASSES · تشيلسي في دوري أبطال أوروبا · 2020–2021 · MEDIUM · Σ650
+- KEY_PASSES · تشيلسي في كل البطولات · 2015–2017 · MEDIUM · Σ623
+- KEY_PASSES · تشيلسي في كل البطولات · 2016–2018 · EASY · Σ698
+- KEY_PASSES · تشيلسي في كل البطولات · 2017–2018 · MEDIUM · Σ686
+- KEY_PASSES · تشيلسي في كل البطولات · 2017–2019 · MEDIUM · Σ693
+- KEY_PASSES · تشيلسي في كل البطولات · 2018–2020 · MEDIUM · Σ651
+- KEY_PASSES · تشيلسي في كل البطولات · 2019–2021 · MEDIUM · Σ652
+- KEY_PASSES · تشيلسي في كل البطولات · 2020–2021 · MEDIUM · Σ652
+- KEY_PASSES · دوري أبطال أوروبا · 2015 · EASY · Σ726
+- KEY_PASSES · دوري أبطال أوروبا · 2015–2016 · EASY · Σ767
+- KEY_PASSES · دوري أبطال أوروبا · 2015–2017 · EASY · Σ739
+- KEY_PASSES · دوري أبطال أوروبا · 2016 · EASY · Σ741
+- KEY_PASSES · دوري أبطال أوروبا · 2016–2017 · EASY · Σ715
+- KEY_PASSES · دوري أبطال أوروبا · 2016–2018 · EASY · Σ726
+- KEY_PASSES · دوري أبطال أوروبا · 2017 · EASY · Σ727
+- KEY_PASSES · دوري أبطال أوروبا · 2017–2018 · EASY · Σ730
+- KEY_PASSES · دوري أبطال أوروبا · 2017–2019 · EASY · Σ737
+- KEY_PASSES · دوري أبطال أوروبا · 2018 · EASY · Σ721
+- KEY_PASSES · دوري أبطال أوروبا · 2018–2019 · EASY · Σ732
+- KEY_PASSES · دوري أبطال أوروبا · 2018–2020 · EASY · Σ704
+- KEY_PASSES · دوري أبطال أوروبا · 2019 · EASY · Σ776
+- KEY_PASSES · دوري أبطال أوروبا · 2019–2020 · EASY · Σ697
+- KEY_PASSES · دوري أبطال أوروبا · 2019–2021 · EASY · Σ722
+- KEY_PASSES · دوري أبطال أوروبا · 2020 · EASY · Σ710
+- KEY_PASSES · دوري أبطال أوروبا · 2020–2021 · MEDIUM · Σ694
+- KEY_PASSES · دوري أبطال أوروبا · 2021 · MEDIUM · Σ693
+- KEY_PASSES · دوري أبطال أوروبا · 2023 · MEDIUM · Σ664
+- KEY_PASSES · دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ622
+- KEY_PASSES · دوري أبطال أوروبا · 2023–2025 · HARD · Σ601
+- KEY_PASSES · دوري أبطال أوروبا · 2024 · HARD · Σ582
+- KEY_PASSES · دوري أبطال أوروبا · 2024–2025 · HARD · Σ570
+- KEY_PASSES · دوري أبطال أوروبا · 2025 · HARD · Σ542
+- KEY_PASSES · ريال مدريد في الدوري الإسباني · 2018–2020 · EASY · Σ702
+- KEY_PASSES · ريال مدريد في الدوري الإسباني · 2019–2021 · MEDIUM · Σ688
+- KEY_PASSES · ريال مدريد في الدوري الإسباني · 2020–2021 · MEDIUM · Σ691
+- KEY_PASSES · ريال مدريد في الدوري الإسباني · 2020–2022 · EASY · Σ700
+- KEY_PASSES · ريال مدريد في الدوري الإسباني · 2021–2022 · EASY · Σ697
+- KEY_PASSES · ريال مدريد في كل البطولات · 2018–2020 · EASY · Σ702
+- KEY_PASSES · ريال مدريد في كل البطولات · 2019–2020 · MEDIUM · Σ675
+- KEY_PASSES · ريال مدريد في كل البطولات · 2019–2021 · EASY · Σ701
+- KEY_PASSES · ريال مدريد في كل البطولات · 2020–2021 · MEDIUM · Σ691
+- KEY_PASSES · كوبا أمريكا · 2019 · MEDIUM · Σ670
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2017–2018 · EASY · Σ710
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2018–2020 · EASY · Σ710
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ681
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ681
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2020–2021 · EASY · Σ696
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2021 · MEDIUM · Σ663
+- KEY_PASSES · ليفربول في الدوري الإنجليزي · 2024–2025 · HARD · Σ544
+- KEY_PASSES · ليفربول في دوري أبطال أوروبا · 2017–2019 · EASY · Σ703
+- KEY_PASSES · ليفربول في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ685
+- KEY_PASSES · ليفربول في دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ669
+- KEY_PASSES · ليفربول في دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ677
+- KEY_PASSES · ليفربول في كل البطولات · 2017–2018 · EASY · Σ710
+- KEY_PASSES · ليفربول في كل البطولات · 2018–2020 · MEDIUM · Σ691
+- KEY_PASSES · ليفربول في كل البطولات · 2019–2020 · MEDIUM · Σ673
+- KEY_PASSES · ليفربول في كل البطولات · 2019–2021 · MEDIUM · Σ691
+- KEY_PASSES · ليفربول في كل البطولات · 2020 · MEDIUM · Σ691
+- KEY_PASSES · ليفربول في كل البطولات · 2020–2021 · EASY · Σ701
+- KEY_PASSES · ليفربول في كل البطولات · 2021 · MEDIUM · Σ658
+- KEY_PASSES · ليفربول في كل البطولات · 2024 · HARD · Σ544
+- KEY_PASSES · ليفربول في كل البطولات · 2024–2025 · HARD · Σ544
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ684
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ686
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ686
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2017–2019 · EASY · Σ696
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ691
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ691
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2022–2024 · MEDIUM · Σ678
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2023–2024 · MEDIUM · Σ631
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2023–2025 · MEDIUM · Σ679
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2024 · MEDIUM · Σ654
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2024–2025 · MEDIUM · Σ681
+- KEY_PASSES · مان سيتي في الدوري الإنجليزي · 2025 · HARD · Σ589
+- KEY_PASSES · مان سيتي في دوري أبطال أوروبا · 2019–2021 · EASY · Σ697
+- KEY_PASSES · مان سيتي في دوري أبطال أوروبا · 2023–2025 · MEDIUM · Σ678
+- KEY_PASSES · مان سيتي في دوري أبطال أوروبا · 2024–2025 · MEDIUM · Σ669
+- KEY_PASSES · مان سيتي في كل البطولات · 2015–2017 · MEDIUM · Σ686
+- KEY_PASSES · مان سيتي في كل البطولات · 2016–2017 · MEDIUM · Σ686
+- KEY_PASSES · مان سيتي في كل البطولات · 2016–2018 · MEDIUM · Σ686
+- KEY_PASSES · مان سيتي في كل البطولات · 2017–2019 · EASY · Σ696
+- KEY_PASSES · مان سيتي في كل البطولات · 2018–2020 · EASY · Σ700
+- KEY_PASSES · مان سيتي في كل البطولات · 2019–2021 · MEDIUM · Σ691
+- KEY_PASSES · مان سيتي في كل البطولات · 2020–2021 · MEDIUM · Σ668
+- KEY_PASSES · مان سيتي في كل البطولات · 2023 · MEDIUM · Σ678
+- KEY_PASSES · مان سيتي في كل البطولات · 2023–2024 · MEDIUM · Σ678
+- KEY_PASSES · مان سيتي في كل البطولات · 2023–2025 · MEDIUM · Σ663
+- KEY_PASSES · مان سيتي في كل البطولات · 2024 · MEDIUM · Σ671
+- KEY_PASSES · مان سيتي في كل البطولات · 2024–2025 · MEDIUM · Σ661
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ663
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ669
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2016 · MEDIUM · Σ643
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ665
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ674
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ669
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2018 · MEDIUM · Σ652
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ643
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ647
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2020–2021 · MEDIUM · Σ649
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ630
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2022–2023 · MEDIUM · Σ613
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2022–2024 · HARD · Σ581
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2023 · HARD · Σ587
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2023–2024 · HARD · Σ579
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2023–2025 · HARD · Σ579
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2024 · HARD · Σ575
+- KEY_PASSES · مان يونايتد في الدوري الإنجليزي · 2024–2025 · HARD · Σ575
+- KEY_PASSES · مان يونايتد في كل البطولات · 2015–2016 · MEDIUM · Σ663
+- KEY_PASSES · مان يونايتد في كل البطولات · 2015–2017 · MEDIUM · Σ670
+- KEY_PASSES · مان يونايتد في كل البطولات · 2016 · MEDIUM · Σ643
+- KEY_PASSES · مان يونايتد في كل البطولات · 2016–2017 · MEDIUM · Σ669
+- KEY_PASSES · مان يونايتد في كل البطولات · 2016–2018 · MEDIUM · Σ681
+- KEY_PASSES · مان يونايتد في كل البطولات · 2017–2018 · MEDIUM · Σ669
+- KEY_PASSES · مان يونايتد في كل البطولات · 2017–2019 · MEDIUM · Σ664
+- KEY_PASSES · مان يونايتد في كل البطولات · 2018–2019 · MEDIUM · Σ673
+- KEY_PASSES · مان يونايتد في كل البطولات · 2018–2020 · MEDIUM · Σ654
+- KEY_PASSES · مان يونايتد في كل البطولات · 2019–2020 · MEDIUM · Σ644
+- KEY_PASSES · مان يونايتد في كل البطولات · 2019–2021 · MEDIUM · Σ654
+- KEY_PASSES · مان يونايتد في كل البطولات · 2020–2021 · MEDIUM · Σ654
+- KEY_PASSES · مان يونايتد في كل البطولات · 2021 · MEDIUM · Σ649
+- KEY_PASSES · مان يونايتد في كل البطولات · 2023 · MEDIUM · Σ611
+- KEY_PASSES · مان يونايتد في كل البطولات · 2023–2024 · HARD · Σ579
+- KEY_PASSES · مان يونايتد في كل البطولات · 2023–2025 · HARD · Σ579
+- KEY_PASSES · مان يونايتد في كل البطولات · 2024 · HARD · Σ575
+- KEY_PASSES · مان يونايتد في كل البطولات · 2024–2025 · HARD · Σ575
+- SHOTS_ON · أرسنال في الدوري الإنجليزي · 2015 · EASY · Σ705
+- SHOTS_ON · أرسنال في كل البطولات · 2015 · EASY · Σ702
+- SHOTS_ON · الدوري الألماني · 2015 · MEDIUM · Σ629
+- SHOTS_ON · الدوري الإنجليزي · 2015 · MEDIUM · Σ692
+- SHOTS_ON · الدوري الإيطالي · 2015 · MEDIUM · Σ638
+- SHOTS_ON · باريس سان جيرمان في دوري أبطال أوروبا · 2016–2018 · EASY · Σ774
+- SHOTS_ON · بايرن ميونخ في الدوري الألماني · 2015 · EASY · Σ718
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2015–2016 · EASY · Σ746
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2015–2017 · EASY · Σ746
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2016–2017 · EASY · Σ753
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2016–2018 · EASY · Σ747
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2017–2018 · EASY · Σ766
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2017–2019 · EASY · Σ766
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2018–2019 · EASY · Σ744
+- SHOTS_ON · بايرن ميونخ في دوري أبطال أوروبا · 2019 · EASY · Σ762
+- SHOTS_ON · بايرن ميونخ في كل البطولات · 2015 · EASY · Σ731
+- SHOTS_ON · برشلونة في دوري أبطال أوروبا · 2015–2017 · EASY · Σ750
+- SHOTS_ON · برشلونة في دوري أبطال أوروبا · 2016–2018 · EASY · Σ759
+- SHOTS_ON · برشلونة في دوري أبطال أوروبا · 2017–2019 · EASY · Σ780
+- SHOTS_ON · برشلونة في دوري أبطال أوروبا · 2018–2019 · EASY · Σ792
+- SHOTS_ON · بطولة أمم أوروبا · 2020 · MEDIUM · Σ621
+- SHOTS_ON · تشيلسي في الدوري الإنجليزي · 2015 · EASY · Σ713
+- SHOTS_ON · تشيلسي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ747
+- SHOTS_ON · تشيلسي في كل البطولات · 2015 · EASY · Σ730
 - SHOTS_ON · دوري أبطال أوروبا · 2015 · EASY · Σ830
 - SHOTS_ON · دوري أبطال أوروبا · 2015–2016 · EASY · Σ828
 - SHOTS_ON · دوري أبطال أوروبا · 2015–2017 · EASY · Σ829
@@ -662,10 +1327,75 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - SHOTS_ON · دوري أبطال أوروبا · 2018 · EASY · Σ808
 - SHOTS_ON · دوري أبطال أوروبا · 2018–2019 · EASY · Σ793
 - SHOTS_ON · دوري أبطال أوروبا · 2019 · EASY · Σ810
-- SHOTS_ON · بطولة أمم أوروبا · 2020 · MEDIUM · Σ621
-- SHOTS_ON · الدوري الإنجليزي · 2015 · EASY · Σ692
-- SHOTS_ON · الدوري الألماني · 2015 · MEDIUM · Σ629
-- SHOTS_ON · الدوري الإيطالي · 2015 · MEDIUM · Σ638
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2015–2016 · EASY · Σ800
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2015–2017 · EASY · Σ779
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2016–2017 · EASY · Σ797
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2016–2018 · EASY · Σ775
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2017 · EASY · Σ791
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2017–2018 · EASY · Σ765
+- SHOTS_ON · ريال مدريد في دوري أبطال أوروبا · 2017–2019 · EASY · Σ813
+- SHOTS_ON · ليفربول في دوري أبطال أوروبا · 2016–2018 · EASY · Σ736
+- SHOTS_ON · ليفربول في دوري أبطال أوروبا · 2017–2018 · EASY · Σ736
+- SHOTS_ON · ليفربول في دوري أبطال أوروبا · 2017–2019 · EASY · Σ729
+- SHOTS_ON · ليفربول في دوري أبطال أوروبا · 2018–2019 · EASY · Σ702
+- SHOTS_ON · مان سيتي في الدوري الإنجليزي · 2015 · MEDIUM · Σ677
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ776
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2016–2017 · EASY · Σ755
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2016–2018 · EASY · Σ760
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2017–2018 · EASY · Σ781
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ744
+- SHOTS_ON · مان سيتي في دوري أبطال أوروبا · 2018–2019 · EASY · Σ770
+- SHOTS_ON · مان سيتي في كل البطولات · 2015 · MEDIUM · Σ673
+- SHOTS_ON · مان يونايتد في كل البطولات · 2015 · EASY · Σ699
+- SHOTS_TOTAL · أرسنال في الدوري الإنجليزي · 2015 · MEDIUM · Σ685
+- SHOTS_TOTAL · أرسنال في دوري أبطال أوروبا · 2015–2016 · EASY · Σ712
+- SHOTS_TOTAL · أرسنال في دوري أبطال أوروبا · 2015–2017 · EASY · Σ712
+- SHOTS_TOTAL · أرسنال في دوري أبطال أوروبا · 2016 · EASY · Σ709
+- SHOTS_TOTAL · أرسنال في دوري أبطال أوروبا · 2016–2017 · EASY · Σ709
+- SHOTS_TOTAL · أرسنال في دوري أبطال أوروبا · 2016–2018 · EASY · Σ709
+- SHOTS_TOTAL · أرسنال في كل البطولات · 2015 · EASY · Σ703
+- SHOTS_TOTAL · الدوري الألماني · 2015 · HARD · Σ596
+- SHOTS_TOTAL · الدوري الإنجليزي · 2015 · MEDIUM · Σ659
+- SHOTS_TOTAL · الدوري الإيطالي · 2015 · MEDIUM · Σ643
+- SHOTS_TOTAL · الدوري الفرنسي · 2025 · HARD · Σ498
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2016–2017 · EASY · Σ768
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2016–2018 · EASY · Σ762
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2017–2018 · EASY · Σ774
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2017–2019 · EASY · Σ783
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2018 · EASY · Σ786
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2018–2019 · EASY · Σ776
+- SHOTS_TOTAL · باريس سان جيرمان في دوري أبطال أوروبا · 2019 · EASY · Σ769
+- SHOTS_TOTAL · بايرن ميونخ في الدوري الألماني · 2015 · EASY · Σ746
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2015–2016 · EASY · Σ739
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2015–2017 · EASY · Σ734
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2016–2017 · EASY · Σ737
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2016–2018 · EASY · Σ747
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2017 · EASY · Σ745
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2017–2018 · EASY · Σ757
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2017–2019 · EASY · Σ759
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2018–2019 · EASY · Σ765
+- SHOTS_TOTAL · بايرن ميونخ في دوري أبطال أوروبا · 2019 · EASY · Σ744
+- SHOTS_TOTAL · بايرن ميونخ في كل البطولات · 2015 · EASY · Σ746
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2015–2016 · EASY · Σ741
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2015–2017 · EASY · Σ742
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2016 · EASY · Σ724
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2016–2017 · EASY · Σ741
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2016–2018 · EASY · Σ761
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2017–2018 · EASY · Σ754
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2017–2019 · EASY · Σ760
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2018 · EASY · Σ779
+- SHOTS_TOTAL · برشلونة في دوري أبطال أوروبا · 2018–2019 · EASY · Σ794
+- SHOTS_TOTAL · بطولة أمم أوروبا · 2020 · MEDIUM · Σ633
+- SHOTS_TOTAL · تشيلسي في الدوري الإنجليزي · 2015 · EASY · Σ699
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2015 · EASY · Σ710
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2015–2016 · EASY · Σ710
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ726
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2016–2017 · EASY · Σ749
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2016–2018 · EASY · Σ749
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2017 · EASY · Σ749
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2017–2018 · EASY · Σ749
+- SHOTS_TOTAL · تشيلسي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ748
+- SHOTS_TOTAL · تشيلسي في كل البطولات · 2015 · EASY · Σ696
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2015 · EASY · Σ808
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2015–2016 · EASY · Σ806
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2015–2017 · EASY · Σ825
@@ -678,52 +1408,150 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2018 · EASY · Σ776
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2018–2019 · EASY · Σ746
 - SHOTS_TOTAL · دوري أبطال أوروبا · 2019 · EASY · Σ783
-- SHOTS_TOTAL · دوري أبطال أوروبا · 2025 · MEDIUM · Σ596
-- SHOTS_TOTAL · بطولة أمم أوروبا · 2020 · MEDIUM · Σ633
+- SHOTS_TOTAL · دوري أبطال أوروبا · 2025 · HARD · Σ596
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2015 · EASY · Σ782
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2015–2016 · EASY · Σ774
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2015–2017 · EASY · Σ773
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2016 · EASY · Σ786
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2016–2017 · EASY · Σ800
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2016–2018 · EASY · Σ787
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2017 · EASY · Σ774
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2017–2018 · EASY · Σ787
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2017–2019 · EASY · Σ800
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2018 · EASY · Σ763
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2018–2019 · EASY · Σ750
+- SHOTS_TOTAL · ريال مدريد في دوري أبطال أوروبا · 2019 · EASY · Σ762
 - SHOTS_TOTAL · كوبا أمريكا · 2016 · EASY · Σ730
 - SHOTS_TOTAL · كوبا أمريكا · 2019 · EASY · Σ759
-- SHOTS_TOTAL · الدوري الإنجليزي · 2015 · EASY · Σ659
-- SHOTS_TOTAL · الدوري الألماني · 2015 · MEDIUM · Σ596
-- SHOTS_TOTAL · الدوري الإيطالي · 2015 · MEDIUM · Σ643
-- TACKLES · كأس العالم · 2022 · EASY · Σ664
-- TACKLES · دوري أبطال أوروبا · 2018 · MEDIUM · Σ620
-- TACKLES · دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ641
-- TACKLES · دوري أبطال أوروبا · 2018–2020 · EASY · Σ655
-- TACKLES · دوري أبطال أوروبا · 2019 · EASY · Σ645
-- TACKLES · دوري أبطال أوروبا · 2019–2020 · EASY · Σ654
-- TACKLES · دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ624
-- TACKLES · دوري أبطال أوروبا · 2020 · EASY · Σ682
-- TACKLES · دوري أبطال أوروبا · 2020–2021 · EASY · Σ654
-- TACKLES · دوري أبطال أوروبا · 2020–2022 · EASY · Σ660
-- TACKLES · دوري أبطال أوروبا · 2021 · MEDIUM · Σ572
-- TACKLES · دوري أبطال أوروبا · 2021–2022 · MEDIUM · Σ609
-- TACKLES · دوري أبطال أوروبا · 2021–2023 · EASY · Σ668
-- TACKLES · دوري أبطال أوروبا · 2022 · MEDIUM · Σ636
-- TACKLES · دوري أبطال أوروبا · 2022–2023 · EASY · Σ652
-- TACKLES · دوري أبطال أوروبا · 2022–2024 · MEDIUM · Σ603
-- TACKLES · دوري أبطال أوروبا · 2023 · MEDIUM · Σ628
-- TACKLES · دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ593
-- TACKLES · دوري أبطال أوروبا · 2023–2025 · MEDIUM · Σ577
-- TACKLES · دوري أبطال أوروبا · 2024 · HARD · Σ529
-- TACKLES · دوري أبطال أوروبا · 2024–2025 · MEDIUM · Σ560
-- TACKLES · دوري أبطال أوروبا · 2025 · HARD · Σ511
-- TACKLES · بطولة أمم أوروبا · 2020 · HARD · Σ484
-- TACKLES · بطولة أمم أوروبا · 2024 · EASY · Σ655
-- TACKLES · كوبا أمريكا · 2019 · MEDIUM · Σ619
-- TACKLES · كوبا أمريكا · 2024 · HARD · Σ519
+- SHOTS_TOTAL · ليفربول في الدوري الإنجليزي · 2015 · EASY · Σ714
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2015–2017 · EASY · Σ720
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2016–2017 · EASY · Σ720
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2016–2018 · EASY · Σ735
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2017 · EASY · Σ720
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2017–2018 · EASY · Σ735
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2017–2019 · EASY · Σ721
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2018 · MEDIUM · Σ683
+- SHOTS_TOTAL · ليفربول في دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ682
+- SHOTS_TOTAL · ليفربول في كل البطولات · 2015 · EASY · Σ714
+- SHOTS_TOTAL · مان سيتي في الدوري الإنجليزي · 2015 · MEDIUM · Σ683
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2015–2016 · EASY · Σ736
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2015–2017 · EASY · Σ721
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2016 · EASY · Σ764
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2016–2017 · EASY · Σ768
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2016–2018 · EASY · Σ734
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2017 · EASY · Σ780
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2017–2018 · EASY · Σ752
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2017–2019 · EASY · Σ751
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2018 · EASY · Σ781
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2018–2019 · EASY · Σ743
+- SHOTS_TOTAL · مان سيتي في دوري أبطال أوروبا · 2019 · EASY · Σ746
+- SHOTS_TOTAL · مان سيتي في كل البطولات · 2015 · MEDIUM · Σ683
+- SHOTS_TOTAL · مان يونايتد في الدوري الإنجليزي · 2015 · MEDIUM · Σ684
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2015 · EASY · Σ697
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2015–2016 · EASY · Σ697
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2015–2017 · EASY · Σ705
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2016–2017 · EASY · Σ733
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2016–2018 · EASY · Σ721
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2017 · EASY · Σ733
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2017–2018 · EASY · Σ721
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2017–2019 · EASY · Σ721
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2018 · EASY · Σ711
+- SHOTS_TOTAL · مان يونايتد في دوري أبطال أوروبا · 2018–2019 · EASY · Σ711
+- SHOTS_TOTAL · مان يونايتد في كل البطولات · 2015 · MEDIUM · Σ683
+- TACKLES · أرسنال في الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ628
+- TACKLES · أرسنال في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ625
+- TACKLES · أرسنال في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ623
+- TACKLES · أرسنال في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ639
+- TACKLES · أرسنال في الدوري الإنجليزي · 2017 · HARD · Σ597
+- TACKLES · أرسنال في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ626
+- TACKLES · أرسنال في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ631
+- TACKLES · أرسنال في الدوري الإنجليزي · 2018 · HARD · Σ601
+- TACKLES · أرسنال في الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ628
+- TACKLES · أرسنال في الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ615
+- TACKLES · أرسنال في الدوري الإنجليزي · 2019 · MEDIUM · Σ634
+- TACKLES · أرسنال في الدوري الإنجليزي · 2019–2020 · MEDIUM · Σ637
+- TACKLES · أرسنال في الدوري الإنجليزي · 2019–2021 · HARD · Σ600
+- TACKLES · أرسنال في الدوري الإنجليزي · 2020–2021 · HARD · Σ593
+- TACKLES · أرسنال في الدوري الإنجليزي · 2020–2022 · HARD · Σ578
+- TACKLES · أرسنال في الدوري الإنجليزي · 2021–2023 · HARD · Σ554
+- TACKLES · أرسنال في الدوري الإنجليزي · 2023–2024 · HARD · Σ522
+- TACKLES · أرسنال في الدوري الإنجليزي · 2023–2025 · HARD · Σ528
+- TACKLES · أرسنال في الدوري الإنجليزي · 2024–2025 · HARD · Σ508
+- TACKLES · أرسنال في دوري أبطال أوروبا · 2023–2025 · HARD · Σ523
+- TACKLES · أرسنال في كل البطولات · 2018 · HARD · Σ601
+- TACKLES · أرسنال في كل البطولات · 2018–2019 · MEDIUM · Σ628
+- TACKLES · أرسنال في كل البطولات · 2018–2020 · MEDIUM · Σ615
+- TACKLES · أرسنال في كل البطولات · 2019 · MEDIUM · Σ634
+- TACKLES · أرسنال في كل البطولات · 2019–2020 · MEDIUM · Σ637
+- TACKLES · أرسنال في كل البطولات · 2019–2021 · HARD · Σ600
+- TACKLES · أرسنال في كل البطولات · 2020–2021 · HARD · Σ593
+- TACKLES · أرسنال في كل البطولات · 2020–2022 · HARD · Σ578
+- TACKLES · أرسنال في كل البطولات · 2021–2023 · HARD · Σ554
+- TACKLES · أرسنال في كل البطولات · 2023–2024 · HARD · Σ522
+- TACKLES · أرسنال في كل البطولات · 2023–2025 · HARD · Σ528
+- TACKLES · أرسنال في كل البطولات · 2024–2025 · HARD · Σ530
+- TACKLES · الدوري الألماني · 2015 · HARD · Σ530
+- TACKLES · الدوري الألماني · 2017 · HARD · Σ495
+- TACKLES · الدوري الألماني · 2017–2018 · HARD · Σ523
+- TACKLES · الدوري الألماني · 2017–2019 · HARD · Σ534
+- TACKLES · الدوري الألماني · 2018–2019 · HARD · Σ497
+- TACKLES · الدوري الألماني · 2018–2020 · HARD · Σ537
+- TACKLES · الدوري الألماني · 2019 · HARD · Σ455
+- TACKLES · الدوري الألماني · 2019–2020 · HARD · Σ466
+- TACKLES · الدوري الألماني · 2019–2021 · HARD · Σ492
+- TACKLES · الدوري الألماني · 2020 · HARD · Σ463
+- TACKLES · الدوري الألماني · 2020–2021 · HARD · Σ481
+- TACKLES · الدوري الألماني · 2020–2022 · HARD · Σ550
+- TACKLES · الدوري الألماني · 2021 · HARD · Σ499
+- TACKLES · الدوري الألماني · 2021–2022 · HARD · Σ509
+- TACKLES · الدوري الألماني · 2021–2023 · HARD · Σ529
+- TACKLES · الدوري الألماني · 2022 · HARD · Σ517
+- TACKLES · الدوري الألماني · 2022–2023 · HARD · Σ534
+- TACKLES · الدوري الألماني · 2022–2024 · HARD · Σ521
+- TACKLES · الدوري الألماني · 2023 · HARD · Σ504
+- TACKLES · الدوري الألماني · 2023–2024 · HARD · Σ485
+- TACKLES · الدوري الألماني · 2023–2025 · HARD · Σ488
+- TACKLES · الدوري الألماني · 2024 · HARD · Σ445
+- TACKLES · الدوري الألماني · 2024–2025 · HARD · Σ473
+- TACKLES · الدوري الألماني · 2025 · HARD · Σ462
+- TACKLES · الدوري الإسباني · 2015 · HARD · Σ562
+- TACKLES · الدوري الإسباني · 2017 · HARD · Σ528
+- TACKLES · الدوري الإسباني · 2017–2018 · HARD · Σ514
+- TACKLES · الدوري الإسباني · 2017–2019 · HARD · Σ511
+- TACKLES · الدوري الإسباني · 2018 · HARD · Σ528
+- TACKLES · الدوري الإسباني · 2018–2019 · HARD · Σ532
+- TACKLES · الدوري الإسباني · 2018–2020 · HARD · Σ541
+- TACKLES · الدوري الإسباني · 2019 · HARD · Σ582
+- TACKLES · الدوري الإسباني · 2019–2020 · HARD · Σ546
+- TACKLES · الدوري الإسباني · 2019–2021 · HARD · Σ508
+- TACKLES · الدوري الإسباني · 2020 · HARD · Σ568
+- TACKLES · الدوري الإسباني · 2020–2021 · HARD · Σ520
+- TACKLES · الدوري الإسباني · 2020–2022 · HARD · Σ501
+- TACKLES · الدوري الإسباني · 2021 · HARD · Σ506
+- TACKLES · الدوري الإسباني · 2021–2022 · HARD · Σ506
+- TACKLES · الدوري الإسباني · 2021–2023 · HARD · Σ510
+- TACKLES · الدوري الإسباني · 2022 · HARD · Σ523
+- TACKLES · الدوري الإسباني · 2022–2023 · HARD · Σ501
+- TACKLES · الدوري الإسباني · 2022–2024 · HARD · Σ542
+- TACKLES · الدوري الإسباني · 2023 · HARD · Σ517
+- TACKLES · الدوري الإسباني · 2023–2024 · HARD · Σ451
+- TACKLES · الدوري الإسباني · 2023–2025 · HARD · Σ438
+- TACKLES · الدوري الإسباني · 2024 · HARD · Σ397
+- TACKLES · الدوري الإسباني · 2024–2025 · HARD · Σ385
+- TACKLES · الدوري الإسباني · 2025 · HARD · Σ434
 - TACKLES · الدوري الإنجليزي · 2015 · MEDIUM · Σ608
-- TACKLES · الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ582
-- TACKLES · الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ598
+- TACKLES · الدوري الإنجليزي · 2015–2016 · HARD · Σ582
+- TACKLES · الدوري الإنجليزي · 2015–2017 · HARD · Σ598
 - TACKLES · الدوري الإنجليزي · 2016 · HARD · Σ553
 - TACKLES · الدوري الإنجليزي · 2016–2017 · HARD · Σ556
-- TACKLES · الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ576
-- TACKLES · الدوري الإنجليزي · 2017 · MEDIUM · Σ561
-- TACKLES · الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ571
-- TACKLES · الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ594
-- TACKLES · الدوري الإنجليزي · 2018 · MEDIUM · Σ582
-- TACKLES · الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ562
-- TACKLES · الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ601
-- TACKLES · الدوري الإنجليزي · 2019 · MEDIUM · Σ565
+- TACKLES · الدوري الإنجليزي · 2016–2018 · HARD · Σ576
+- TACKLES · الدوري الإنجليزي · 2017 · HARD · Σ561
+- TACKLES · الدوري الإنجليزي · 2017–2018 · HARD · Σ571
+- TACKLES · الدوري الإنجليزي · 2017–2019 · HARD · Σ594
+- TACKLES · الدوري الإنجليزي · 2018 · HARD · Σ582
+- TACKLES · الدوري الإنجليزي · 2018–2019 · HARD · Σ562
+- TACKLES · الدوري الإنجليزي · 2018–2020 · HARD · Σ601
+- TACKLES · الدوري الإنجليزي · 2019 · HARD · Σ565
 - TACKLES · الدوري الإنجليزي · 2019–2020 · HARD · Σ550
 - TACKLES · الدوري الإنجليزي · 2019–2021 · HARD · Σ556
 - TACKLES · الدوري الإنجليزي · 2020 · HARD · Σ482
@@ -733,7 +1561,7 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - TACKLES · الدوري الإنجليزي · 2021–2022 · HARD · Σ501
 - TACKLES · الدوري الإنجليزي · 2021–2023 · HARD · Σ514
 - TACKLES · الدوري الإنجليزي · 2022 · HARD · Σ529
-- TACKLES · الدوري الإنجليزي · 2022–2023 · MEDIUM · Σ561
+- TACKLES · الدوري الإنجليزي · 2022–2023 · HARD · Σ561
 - TACKLES · الدوري الإنجليزي · 2022–2024 · HARD · Σ505
 - TACKLES · الدوري الإنجليزي · 2023 · HARD · Σ539
 - TACKLES · الدوري الإنجليزي · 2023–2024 · HARD · Σ484
@@ -741,6 +1569,30 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - TACKLES · الدوري الإنجليزي · 2024 · HARD · Σ487
 - TACKLES · الدوري الإنجليزي · 2024–2025 · HARD · Σ476
 - TACKLES · الدوري الإنجليزي · 2025 · HARD · Σ479
+- TACKLES · الدوري الإيطالي · 2017 · HARD · Σ569
+- TACKLES · الدوري الإيطالي · 2017–2018 · HARD · Σ591
+- TACKLES · الدوري الإيطالي · 2017–2019 · HARD · Σ555
+- TACKLES · الدوري الإيطالي · 2018 · HARD · Σ528
+- TACKLES · الدوري الإيطالي · 2018–2019 · HARD · Σ501
+- TACKLES · الدوري الإيطالي · 2018–2020 · HARD · Σ533
+- TACKLES · الدوري الإيطالي · 2019 · HARD · Σ585
+- TACKLES · الدوري الإيطالي · 2019–2020 · HARD · Σ592
+- TACKLES · الدوري الإيطالي · 2019–2021 · HARD · Σ563
+- TACKLES · الدوري الإيطالي · 2020 · HARD · Σ574
+- TACKLES · الدوري الإيطالي · 2020–2021 · HARD · Σ528
+- TACKLES · الدوري الإيطالي · 2020–2022 · HARD · Σ526
+- TACKLES · الدوري الإيطالي · 2021 · HARD · Σ503
+- TACKLES · الدوري الإيطالي · 2021–2022 · HARD · Σ494
+- TACKLES · الدوري الإيطالي · 2021–2023 · HARD · Σ525
+- TACKLES · الدوري الإيطالي · 2022 · HARD · Σ472
+- TACKLES · الدوري الإيطالي · 2022–2023 · HARD · Σ481
+- TACKLES · الدوري الإيطالي · 2022–2024 · HARD · Σ463
+- TACKLES · الدوري الإيطالي · 2023 · HARD · Σ512
+- TACKLES · الدوري الإيطالي · 2023–2024 · HARD · Σ445
+- TACKLES · الدوري الإيطالي · 2023–2025 · HARD · Σ481
+- TACKLES · الدوري الإيطالي · 2024 · HARD · Σ440
+- TACKLES · الدوري الإيطالي · 2024–2025 · HARD · Σ437
+- TACKLES · الدوري الإيطالي · 2025 · HARD · Σ376
 - TACKLES · الدوري الفرنسي · 2016 · HARD · Σ540
 - TACKLES · الدوري الفرنسي · 2016–2017 · HARD · Σ524
 - TACKLES · الدوري الفرنسي · 2016–2018 · HARD · Σ529
@@ -768,76 +1620,320 @@ Difficulty (Σ fame terciles, inverse): HARD < 559.7 ≤ MEDIUM < 644.3 ≤ EASY
 - TACKLES · الدوري الفرنسي · 2024 · HARD · Σ428
 - TACKLES · الدوري الفرنسي · 2024–2025 · HARD · Σ446
 - TACKLES · الدوري الفرنسي · 2025 · HARD · Σ386
-- TACKLES · الدوري الألماني · 2015 · HARD · Σ530
-- TACKLES · الدوري الألماني · 2017 · HARD · Σ495
-- TACKLES · الدوري الألماني · 2017–2018 · HARD · Σ523
-- TACKLES · الدوري الألماني · 2017–2019 · HARD · Σ534
-- TACKLES · الدوري الألماني · 2018–2019 · HARD · Σ497
-- TACKLES · الدوري الألماني · 2018–2020 · HARD · Σ537
-- TACKLES · الدوري الألماني · 2019 · HARD · Σ455
-- TACKLES · الدوري الألماني · 2019–2020 · HARD · Σ466
-- TACKLES · الدوري الألماني · 2019–2021 · HARD · Σ492
-- TACKLES · الدوري الألماني · 2020 · HARD · Σ463
-- TACKLES · الدوري الألماني · 2020–2021 · HARD · Σ481
-- TACKLES · الدوري الألماني · 2020–2022 · HARD · Σ550
-- TACKLES · الدوري الألماني · 2021 · HARD · Σ499
-- TACKLES · الدوري الألماني · 2021–2022 · HARD · Σ509
-- TACKLES · الدوري الألماني · 2021–2023 · HARD · Σ529
-- TACKLES · الدوري الألماني · 2022 · HARD · Σ517
-- TACKLES · الدوري الألماني · 2022–2023 · HARD · Σ534
-- TACKLES · الدوري الألماني · 2022–2024 · HARD · Σ521
-- TACKLES · الدوري الألماني · 2023 · HARD · Σ504
-- TACKLES · الدوري الألماني · 2023–2024 · HARD · Σ485
-- TACKLES · الدوري الألماني · 2023–2025 · HARD · Σ488
-- TACKLES · الدوري الألماني · 2024 · HARD · Σ445
-- TACKLES · الدوري الألماني · 2024–2025 · HARD · Σ473
-- TACKLES · الدوري الألماني · 2025 · HARD · Σ462
-- TACKLES · الدوري الإيطالي · 2017 · MEDIUM · Σ569
-- TACKLES · الدوري الإيطالي · 2017–2018 · MEDIUM · Σ591
-- TACKLES · الدوري الإيطالي · 2017–2019 · HARD · Σ555
-- TACKLES · الدوري الإيطالي · 2018 · HARD · Σ528
-- TACKLES · الدوري الإيطالي · 2018–2019 · HARD · Σ501
-- TACKLES · الدوري الإيطالي · 2018–2020 · HARD · Σ533
-- TACKLES · الدوري الإيطالي · 2019 · MEDIUM · Σ585
-- TACKLES · الدوري الإيطالي · 2019–2020 · MEDIUM · Σ592
-- TACKLES · الدوري الإيطالي · 2019–2021 · MEDIUM · Σ563
-- TACKLES · الدوري الإيطالي · 2020 · MEDIUM · Σ574
-- TACKLES · الدوري الإيطالي · 2020–2021 · HARD · Σ528
-- TACKLES · الدوري الإيطالي · 2020–2022 · HARD · Σ526
-- TACKLES · الدوري الإيطالي · 2021 · HARD · Σ503
-- TACKLES · الدوري الإيطالي · 2021–2022 · HARD · Σ494
-- TACKLES · الدوري الإيطالي · 2021–2023 · HARD · Σ525
-- TACKLES · الدوري الإيطالي · 2022 · HARD · Σ472
-- TACKLES · الدوري الإيطالي · 2022–2023 · HARD · Σ481
-- TACKLES · الدوري الإيطالي · 2022–2024 · HARD · Σ463
-- TACKLES · الدوري الإيطالي · 2023 · HARD · Σ512
-- TACKLES · الدوري الإيطالي · 2023–2024 · HARD · Σ445
-- TACKLES · الدوري الإيطالي · 2023–2025 · HARD · Σ481
-- TACKLES · الدوري الإيطالي · 2024 · HARD · Σ440
-- TACKLES · الدوري الإيطالي · 2024–2025 · HARD · Σ437
-- TACKLES · الدوري الإيطالي · 2025 · HARD · Σ376
-- TACKLES · الدوري الإسباني · 2015 · MEDIUM · Σ562
-- TACKLES · الدوري الإسباني · 2017 · HARD · Σ528
-- TACKLES · الدوري الإسباني · 2017–2018 · HARD · Σ514
-- TACKLES · الدوري الإسباني · 2017–2019 · HARD · Σ511
-- TACKLES · الدوري الإسباني · 2018 · HARD · Σ528
-- TACKLES · الدوري الإسباني · 2018–2019 · HARD · Σ532
-- TACKLES · الدوري الإسباني · 2018–2020 · HARD · Σ541
-- TACKLES · الدوري الإسباني · 2019 · MEDIUM · Σ582
-- TACKLES · الدوري الإسباني · 2019–2020 · HARD · Σ546
-- TACKLES · الدوري الإسباني · 2019–2021 · HARD · Σ508
-- TACKLES · الدوري الإسباني · 2020 · MEDIUM · Σ568
-- TACKLES · الدوري الإسباني · 2020–2021 · HARD · Σ520
-- TACKLES · الدوري الإسباني · 2020–2022 · HARD · Σ501
-- TACKLES · الدوري الإسباني · 2021 · HARD · Σ506
-- TACKLES · الدوري الإسباني · 2021–2022 · HARD · Σ506
-- TACKLES · الدوري الإسباني · 2021–2023 · HARD · Σ510
-- TACKLES · الدوري الإسباني · 2022 · HARD · Σ523
-- TACKLES · الدوري الإسباني · 2022–2023 · HARD · Σ501
-- TACKLES · الدوري الإسباني · 2022–2024 · HARD · Σ542
-- TACKLES · الدوري الإسباني · 2023 · HARD · Σ517
-- TACKLES · الدوري الإسباني · 2023–2024 · HARD · Σ451
-- TACKLES · الدوري الإسباني · 2023–2025 · HARD · Σ438
-- TACKLES · الدوري الإسباني · 2024 · HARD · Σ397
-- TACKLES · الدوري الإسباني · 2024–2025 · HARD · Σ385
-- TACKLES · الدوري الإسباني · 2025 · HARD · Σ434
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2017 · HARD · Σ550
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2017–2018 · HARD · Σ526
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2017–2019 · HARD · Σ517
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2018 · HARD · Σ548
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2018–2019 · HARD · Σ540
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2018–2020 · HARD · Σ539
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2019 · HARD · Σ555
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2019–2020 · HARD · Σ560
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2019–2021 · HARD · Σ527
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2020 · HARD · Σ531
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2020–2021 · HARD · Σ535
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2020–2022 · HARD · Σ503
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2021 · HARD · Σ472
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2021–2022 · HARD · Σ471
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2021–2023 · HARD · Σ487
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2022 · HARD · Σ454
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2022–2023 · HARD · Σ459
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2022–2024 · HARD · Σ459
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2023 · HARD · Σ493
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2023–2024 · HARD · Σ508
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2023–2025 · HARD · Σ473
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2024 · HARD · Σ386
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2024–2025 · HARD · Σ393
+- TACKLES · الدوريات الأوروبية الخمس الكبرى · 2025 · HARD · Σ391
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2017–2018 · MEDIUM · Σ684
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2017–2019 · EASY · Σ702
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2018 · MEDIUM · Σ694
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2018–2019 · EASY · Σ699
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2018–2020 · MEDIUM · Σ679
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2019–2020 · MEDIUM · Σ679
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2019–2021 · MEDIUM · Σ637
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2020 · MEDIUM · Σ645
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2020–2021 · MEDIUM · Σ658
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2020–2022 · MEDIUM · Σ667
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2021–2022 · MEDIUM · Σ654
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2021–2023 · MEDIUM · Σ647
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2022 · MEDIUM · Σ627
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2022–2023 · MEDIUM · Σ610
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2022–2024 · MEDIUM · Σ622
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2023–2024 · HARD · Σ568
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2023–2025 · HARD · Σ543
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2024 · HARD · Σ556
+- TACKLES · باريس سان جيرمان في الدوري الفرنسي · 2024–2025 · HARD · Σ543
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2018–2019 · EASY · Σ698
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ691
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ691
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ645
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ662
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2022–2023 · MEDIUM · Σ675
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2022–2024 · MEDIUM · Σ619
+- TACKLES · باريس سان جيرمان في دوري أبطال أوروبا · 2023–2025 · HARD · Σ562
+- TACKLES · باريس سان جيرمان في كل البطولات · 2018–2019 · EASY · Σ699
+- TACKLES · باريس سان جيرمان في كل البطولات · 2018–2020 · MEDIUM · Σ679
+- TACKLES · باريس سان جيرمان في كل البطولات · 2019 · MEDIUM · Σ686
+- TACKLES · باريس سان جيرمان في كل البطولات · 2019–2020 · MEDIUM · Σ675
+- TACKLES · باريس سان جيرمان في كل البطولات · 2019–2021 · MEDIUM · Σ637
+- TACKLES · باريس سان جيرمان في كل البطولات · 2020–2021 · MEDIUM · Σ639
+- TACKLES · باريس سان جيرمان في كل البطولات · 2020–2022 · MEDIUM · Σ668
+- TACKLES · باريس سان جيرمان في كل البطولات · 2021–2022 · MEDIUM · Σ634
+- TACKLES · باريس سان جيرمان في كل البطولات · 2021–2023 · MEDIUM · Σ634
+- TACKLES · باريس سان جيرمان في كل البطولات · 2022 · MEDIUM · Σ613
+- TACKLES · باريس سان جيرمان في كل البطولات · 2022–2023 · MEDIUM · Σ613
+- TACKLES · باريس سان جيرمان في كل البطولات · 2022–2024 · HARD · Σ590
+- TACKLES · باريس سان جيرمان في كل البطولات · 2023–2024 · HARD · Σ568
+- TACKLES · باريس سان جيرمان في كل البطولات · 2023–2025 · HARD · Σ543
+- TACKLES · باريس سان جيرمان في كل البطولات · 2024 · HARD · Σ544
+- TACKLES · باريس سان جيرمان في كل البطولات · 2024–2025 · HARD · Σ543
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2018–2020 · EASY · Σ697
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2020–2021 · MEDIUM · Σ659
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2020–2022 · MEDIUM · Σ650
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2021–2022 · MEDIUM · Σ624
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2021–2023 · MEDIUM · Σ624
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2022 · MEDIUM · Σ621
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2022–2023 · HARD · Σ598
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2022–2024 · MEDIUM · Σ618
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2023 · HARD · Σ600
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2023–2024 · HARD · Σ598
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2023–2025 · HARD · Σ601
+- TACKLES · بايرن ميونخ في الدوري الألماني · 2024–2025 · HARD · Σ593
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ676
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2021–2022 · MEDIUM · Σ656
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ667
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2022 · MEDIUM · Σ673
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2022–2023 · MEDIUM · Σ673
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2022–2024 · MEDIUM · Σ636
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2023 · MEDIUM · Σ648
+- TACKLES · بايرن ميونخ في دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ648
+- TACKLES · بايرن ميونخ في كل البطولات · 2018–2020 · MEDIUM · Σ686
+- TACKLES · بايرن ميونخ في كل البطولات · 2019–2020 · MEDIUM · Σ668
+- TACKLES · بايرن ميونخ في كل البطولات · 2019–2021 · MEDIUM · Σ659
+- TACKLES · بايرن ميونخ في كل البطولات · 2020 · MEDIUM · Σ652
+- TACKLES · بايرن ميونخ في كل البطولات · 2020–2021 · MEDIUM · Σ659
+- TACKLES · بايرن ميونخ في كل البطولات · 2020–2022 · MEDIUM · Σ683
+- TACKLES · بايرن ميونخ في كل البطولات · 2021–2022 · MEDIUM · Σ647
+- TACKLES · بايرن ميونخ في كل البطولات · 2021–2023 · MEDIUM · Σ633
+- TACKLES · بايرن ميونخ في كل البطولات · 2022 · MEDIUM · Σ638
+- TACKLES · بايرن ميونخ في كل البطولات · 2022–2023 · MEDIUM · Σ622
+- TACKLES · بايرن ميونخ في كل البطولات · 2022–2024 · MEDIUM · Σ637
+- TACKLES · بايرن ميونخ في كل البطولات · 2023 · MEDIUM · Σ613
+- TACKLES · بايرن ميونخ في كل البطولات · 2023–2024 · MEDIUM · Σ637
+- TACKLES · بايرن ميونخ في كل البطولات · 2023–2025 · HARD · Σ601
+- TACKLES · بايرن ميونخ في كل البطولات · 2024–2025 · HARD · Σ593
+- TACKLES · برشلونة في الدوري الإسباني · 2018–2019 · MEDIUM · Σ660
+- TACKLES · برشلونة في الدوري الإسباني · 2018–2020 · MEDIUM · Σ661
+- TACKLES · برشلونة في الدوري الإسباني · 2019–2020 · MEDIUM · Σ627
+- TACKLES · برشلونة في الدوري الإسباني · 2019–2021 · MEDIUM · Σ664
+- TACKLES · برشلونة في الدوري الإسباني · 2020–2021 · MEDIUM · Σ660
+- TACKLES · برشلونة في الدوري الإسباني · 2020–2022 · MEDIUM · Σ662
+- TACKLES · برشلونة في الدوري الإسباني · 2021–2022 · MEDIUM · Σ664
+- TACKLES · برشلونة في الدوري الإسباني · 2021–2023 · MEDIUM · Σ666
+- TACKLES · برشلونة في الدوري الإسباني · 2022–2023 · MEDIUM · Σ637
+- TACKLES · برشلونة في الدوري الإسباني · 2022–2024 · MEDIUM · Σ630
+- TACKLES · برشلونة في الدوري الإسباني · 2023–2024 · HARD · Σ603
+- TACKLES · برشلونة في الدوري الإسباني · 2023–2025 · HARD · Σ603
+- TACKLES · برشلونة في الدوري الإسباني · 2024 · HARD · Σ575
+- TACKLES · برشلونة في الدوري الإسباني · 2024–2025 · HARD · Σ577
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ627
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ684
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2022–2024 · HARD · Σ596
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2023–2024 · HARD · Σ587
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2023–2025 · HARD · Σ592
+- TACKLES · برشلونة في دوري أبطال أوروبا · 2024–2025 · HARD · Σ578
+- TACKLES · برشلونة في كل البطولات · 2018–2019 · MEDIUM · Σ644
+- TACKLES · برشلونة في كل البطولات · 2018–2020 · MEDIUM · Σ627
+- TACKLES · برشلونة في كل البطولات · 2019–2020 · MEDIUM · Σ627
+- TACKLES · برشلونة في كل البطولات · 2019–2021 · MEDIUM · Σ664
+- TACKLES · برشلونة في كل البطولات · 2020–2021 · MEDIUM · Σ657
+- TACKLES · برشلونة في كل البطولات · 2020–2022 · MEDIUM · Σ686
+- TACKLES · برشلونة في كل البطولات · 2021–2022 · MEDIUM · Σ686
+- TACKLES · برشلونة في كل البطولات · 2021–2023 · MEDIUM · Σ666
+- TACKLES · برشلونة في كل البطولات · 2022–2023 · MEDIUM · Σ647
+- TACKLES · برشلونة في كل البطولات · 2022–2024 · HARD · Σ603
+- TACKLES · برشلونة في كل البطولات · 2023–2024 · HARD · Σ603
+- TACKLES · برشلونة في كل البطولات · 2023–2025 · HARD · Σ603
+- TACKLES · برشلونة في كل البطولات · 2024 · HARD · Σ569
+- TACKLES · برشلونة في كل البطولات · 2024–2025 · HARD · Σ577
+- TACKLES · بطولة أمم أوروبا · 2020 · HARD · Σ484
+- TACKLES · بطولة أمم أوروبا · 2024 · MEDIUM · Σ655
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ644
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ672
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2016–2017 · EASY · Σ717
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2016–2018 · EASY · Σ717
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ677
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ675
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2018–2020 · EASY · Σ718
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2019–2020 · EASY · Σ717
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2019–2021 · EASY · Σ705
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2020–2021 · MEDIUM · Σ692
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2020–2022 · MEDIUM · Σ672
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2021–2022 · MEDIUM · Σ672
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ648
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2022–2023 · HARD · Σ604
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2022–2024 · HARD · Σ596
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2023 · HARD · Σ558
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2023–2024 · HARD · Σ575
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2023–2025 · HARD · Σ522
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2024–2025 · HARD · Σ499
+- TACKLES · تشيلسي في الدوري الإنجليزي · 2025 · HARD · Σ499
+- TACKLES · تشيلسي في دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ671
+- TACKLES · تشيلسي في كل البطولات · 2018–2019 · MEDIUM · Σ675
+- TACKLES · تشيلسي في كل البطولات · 2018–2020 · EASY · Σ718
+- TACKLES · تشيلسي في كل البطولات · 2019–2020 · EASY · Σ717
+- TACKLES · تشيلسي في كل البطولات · 2019–2021 · EASY · Σ698
+- TACKLES · تشيلسي في كل البطولات · 2020–2021 · MEDIUM · Σ684
+- TACKLES · تشيلسي في كل البطولات · 2020–2022 · MEDIUM · Σ678
+- TACKLES · تشيلسي في كل البطولات · 2021–2022 · MEDIUM · Σ672
+- TACKLES · تشيلسي في كل البطولات · 2021–2023 · MEDIUM · Σ651
+- TACKLES · تشيلسي في كل البطولات · 2022–2023 · HARD · Σ597
+- TACKLES · تشيلسي في كل البطولات · 2022–2024 · HARD · Σ595
+- TACKLES · تشيلسي في كل البطولات · 2023 · HARD · Σ558
+- TACKLES · تشيلسي في كل البطولات · 2023–2024 · HARD · Σ575
+- TACKLES · تشيلسي في كل البطولات · 2023–2025 · HARD · Σ584
+- TACKLES · تشيلسي في كل البطولات · 2024–2025 · HARD · Σ499
+- TACKLES · تشيلسي في كل البطولات · 2025 · HARD · Σ499
+- TACKLES · دوري أبطال أوروبا · 2018 · MEDIUM · Σ620
+- TACKLES · دوري أبطال أوروبا · 2018–2019 · MEDIUM · Σ641
+- TACKLES · دوري أبطال أوروبا · 2018–2020 · MEDIUM · Σ655
+- TACKLES · دوري أبطال أوروبا · 2019 · MEDIUM · Σ645
+- TACKLES · دوري أبطال أوروبا · 2019–2020 · MEDIUM · Σ654
+- TACKLES · دوري أبطال أوروبا · 2019–2021 · MEDIUM · Σ624
+- TACKLES · دوري أبطال أوروبا · 2020 · MEDIUM · Σ682
+- TACKLES · دوري أبطال أوروبا · 2020–2021 · MEDIUM · Σ654
+- TACKLES · دوري أبطال أوروبا · 2020–2022 · MEDIUM · Σ660
+- TACKLES · دوري أبطال أوروبا · 2021 · HARD · Σ572
+- TACKLES · دوري أبطال أوروبا · 2021–2022 · MEDIUM · Σ609
+- TACKLES · دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ668
+- TACKLES · دوري أبطال أوروبا · 2022 · MEDIUM · Σ636
+- TACKLES · دوري أبطال أوروبا · 2022–2023 · MEDIUM · Σ652
+- TACKLES · دوري أبطال أوروبا · 2022–2024 · HARD · Σ603
+- TACKLES · دوري أبطال أوروبا · 2023 · MEDIUM · Σ628
+- TACKLES · دوري أبطال أوروبا · 2023–2024 · HARD · Σ593
+- TACKLES · دوري أبطال أوروبا · 2023–2025 · HARD · Σ577
+- TACKLES · دوري أبطال أوروبا · 2024 · HARD · Σ529
+- TACKLES · دوري أبطال أوروبا · 2024–2025 · HARD · Σ560
+- TACKLES · دوري أبطال أوروبا · 2025 · HARD · Σ511
+- TACKLES · ريال مدريد في الدوري الإسباني · 2017–2018 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في الدوري الإسباني · 2017–2019 · EASY · Σ713
+- TACKLES · ريال مدريد في الدوري الإسباني · 2018 · MEDIUM · Σ694
+- TACKLES · ريال مدريد في الدوري الإسباني · 2018–2019 · EASY · Σ705
+- TACKLES · ريال مدريد في الدوري الإسباني · 2018–2020 · EASY · Σ706
+- TACKLES · ريال مدريد في الدوري الإسباني · 2019–2020 · MEDIUM · Σ668
+- TACKLES · ريال مدريد في الدوري الإسباني · 2019–2021 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في الدوري الإسباني · 2020 · MEDIUM · Σ647
+- TACKLES · ريال مدريد في الدوري الإسباني · 2020–2021 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في الدوري الإسباني · 2020–2022 · EASY · Σ706
+- TACKLES · ريال مدريد في الدوري الإسباني · 2021–2022 · MEDIUM · Σ648
+- TACKLES · ريال مدريد في الدوري الإسباني · 2021–2023 · MEDIUM · Σ637
+- TACKLES · ريال مدريد في الدوري الإسباني · 2023–2025 · MEDIUM · Σ621
+- TACKLES · ريال مدريد في الدوري الإسباني · 2024–2025 · HARD · Σ596
+- TACKLES · ريال مدريد في دوري أبطال أوروبا · 2018–2020 · EASY · Σ706
+- TACKLES · ريال مدريد في دوري أبطال أوروبا · 2020–2021 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في دوري أبطال أوروبا · 2020–2022 · EASY · Σ703
+- TACKLES · ريال مدريد في كل البطولات · 2018–2019 · MEDIUM · Σ694
+- TACKLES · ريال مدريد في كل البطولات · 2018–2020 · EASY · Σ706
+- TACKLES · ريال مدريد في كل البطولات · 2019–2020 · MEDIUM · Σ668
+- TACKLES · ريال مدريد في كل البطولات · 2019–2021 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في كل البطولات · 2020 · MEDIUM · Σ648
+- TACKLES · ريال مدريد في كل البطولات · 2020–2021 · MEDIUM · Σ692
+- TACKLES · ريال مدريد في كل البطولات · 2020–2022 · MEDIUM · Σ688
+- TACKLES · ريال مدريد في كل البطولات · 2021–2022 · MEDIUM · Σ648
+- TACKLES · ريال مدريد في كل البطولات · 2021–2023 · MEDIUM · Σ649
+- TACKLES · ريال مدريد في كل البطولات · 2023–2025 · MEDIUM · Σ645
+- TACKLES · ريال مدريد في كل البطولات · 2024–2025 · MEDIUM · Σ620
+- TACKLES · ريال مدريد في كل البطولات · 2025 · MEDIUM · Σ620
+- TACKLES · كأس العالم · 2022 · MEDIUM · Σ664
+- TACKLES · كوبا أمريكا · 2019 · MEDIUM · Σ619
+- TACKLES · كوبا أمريكا · 2024 · HARD · Σ519
+- TACKLES · ليفربول في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ613
+- TACKLES · ليفربول في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ627
+- TACKLES · ليفربول في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ627
+- TACKLES · ليفربول في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ627
+- TACKLES · ليفربول في الدوري الإنجليزي · 2018–2020 · HARD · Σ578
+- TACKLES · ليفربول في الدوري الإنجليزي · 2019–2021 · HARD · Σ576
+- TACKLES · ليفربول في الدوري الإنجليزي · 2022–2024 · HARD · Σ544
+- TACKLES · ليفربول في الدوري الإنجليزي · 2023–2024 · HARD · Σ544
+- TACKLES · ليفربول في الدوري الإنجليزي · 2023–2025 · HARD · Σ530
+- TACKLES · ليفربول في الدوري الإنجليزي · 2024–2025 · HARD · Σ530
+- TACKLES · ليفربول في دوري أبطال أوروبا · 2018–2020 · HARD · Σ561
+- TACKLES · ليفربول في دوري أبطال أوروبا · 2019–2021 · HARD · Σ578
+- TACKLES · ليفربول في دوري أبطال أوروبا · 2020–2021 · HARD · Σ554
+- TACKLES · ليفربول في دوري أبطال أوروبا · 2020–2022 · HARD · Σ554
+- TACKLES · ليفربول في كل البطولات · 2018–2020 · HARD · Σ568
+- TACKLES · ليفربول في كل البطولات · 2019–2020 · HARD · Σ562
+- TACKLES · ليفربول في كل البطولات · 2019–2021 · HARD · Σ552
+- TACKLES · ليفربول في كل البطولات · 2020 · HARD · Σ538
+- TACKLES · ليفربول في كل البطولات · 2020–2021 · HARD · Σ552
+- TACKLES · ليفربول في كل البطولات · 2020–2022 · HARD · Σ555
+- TACKLES · ليفربول في كل البطولات · 2021–2023 · HARD · Σ535
+- TACKLES · ليفربول في كل البطولات · 2022–2024 · HARD · Σ544
+- TACKLES · ليفربول في كل البطولات · 2023–2024 · HARD · Σ544
+- TACKLES · ليفربول في كل البطولات · 2023–2025 · HARD · Σ530
+- TACKLES · ليفربول في كل البطولات · 2024–2025 · HARD · Σ537
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2015–2017 · EASY · Σ702
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2016–2017 · EASY · Σ711
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2016–2018 · EASY · Σ704
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2018–2020 · EASY · Σ702
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2019–2020 · EASY · Σ702
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2019–2021 · EASY · Σ702
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2020–2022 · MEDIUM · Σ668
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2021–2022 · MEDIUM · Σ649
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2021–2023 · MEDIUM · Σ645
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2022–2023 · MEDIUM · Σ645
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2022–2024 · MEDIUM · Σ645
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2023–2024 · HARD · Σ581
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2023–2025 · HARD · Σ597
+- TACKLES · مان سيتي في الدوري الإنجليزي · 2024–2025 · HARD · Σ563
+- TACKLES · مان سيتي في دوري أبطال أوروبا · 2018–2020 · EASY · Σ702
+- TACKLES · مان سيتي في دوري أبطال أوروبا · 2019–2020 · MEDIUM · Σ689
+- TACKLES · مان سيتي في دوري أبطال أوروبا · 2021–2023 · MEDIUM · Σ653
+- TACKLES · مان سيتي في دوري أبطال أوروبا · 2023–2024 · MEDIUM · Σ615
+- TACKLES · مان سيتي في دوري أبطال أوروبا · 2023–2025 · HARD · Σ595
+- TACKLES · مان سيتي في كل البطولات · 2018–2019 · MEDIUM · Σ688
+- TACKLES · مان سيتي في كل البطولات · 2018–2020 · EASY · Σ715
+- TACKLES · مان سيتي في كل البطولات · 2019–2020 · EASY · Σ702
+- TACKLES · مان سيتي في كل البطولات · 2019–2021 · EASY · Σ702
+- TACKLES · مان سيتي في كل البطولات · 2020–2021 · MEDIUM · Σ677
+- TACKLES · مان سيتي في كل البطولات · 2020–2022 · MEDIUM · Σ668
+- TACKLES · مان سيتي في كل البطولات · 2021–2022 · MEDIUM · Σ663
+- TACKLES · مان سيتي في كل البطولات · 2021–2023 · MEDIUM · Σ645
+- TACKLES · مان سيتي في كل البطولات · 2022–2023 · MEDIUM · Σ645
+- TACKLES · مان سيتي في كل البطولات · 2022–2024 · MEDIUM · Σ645
+- TACKLES · مان سيتي في كل البطولات · 2023–2024 · MEDIUM · Σ611
+- TACKLES · مان سيتي في كل البطولات · 2023–2025 · MEDIUM · Σ611
+- TACKLES · مان سيتي في كل البطولات · 2024 · HARD · Σ577
+- TACKLES · مان سيتي في كل البطولات · 2024–2025 · HARD · Σ569
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2015 · MEDIUM · Σ628
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2015–2016 · MEDIUM · Σ628
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2015–2017 · MEDIUM · Σ645
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2016–2017 · MEDIUM · Σ644
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2016–2018 · MEDIUM · Σ644
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2017–2018 · MEDIUM · Σ644
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2017–2019 · MEDIUM · Σ624
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2018–2019 · MEDIUM · Σ638
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2018–2020 · MEDIUM · Σ628
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2019–2021 · MEDIUM · Σ625
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2020–2022 · HARD · Σ596
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2021–2023 · HARD · Σ588
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2022–2023 · HARD · Σ571
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2022–2024 · HARD · Σ598
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2023–2024 · HARD · Σ599
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2023–2025 · HARD · Σ573
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2024 · HARD · Σ527
+- TACKLES · مان يونايتد في الدوري الإنجليزي · 2024–2025 · HARD · Σ559
+- TACKLES · مان يونايتد في كل البطولات · 2018–2019 · MEDIUM · Σ628
+- TACKLES · مان يونايتد في كل البطولات · 2018–2020 · MEDIUM · Σ632
+- TACKLES · مان يونايتد في كل البطولات · 2019–2020 · HARD · Σ603
+- TACKLES · مان يونايتد في كل البطولات · 2019–2021 · MEDIUM · Σ625
+- TACKLES · مان يونايتد في كل البطولات · 2020–2021 · HARD · Σ605
+- TACKLES · مان يونايتد في كل البطولات · 2020–2022 · HARD · Σ596
+- TACKLES · مان يونايتد في كل البطولات · 2021–2022 · HARD · Σ598
+- TACKLES · مان يونايتد في كل البطولات · 2021–2023 · HARD · Σ592
+- TACKLES · مان يونايتد في كل البطولات · 2022–2023 · HARD · Σ579
+- TACKLES · مان يونايتد في كل البطولات · 2022–2024 · HARD · Σ586
+- TACKLES · مان يونايتد في كل البطولات · 2023–2024 · HARD · Σ601
+- TACKLES · مان يونايتد في كل البطولات · 2023–2025 · HARD · Σ601
+- TACKLES · مان يونايتد في كل البطولات · 2024 · HARD · Σ527
+- TACKLES · مان يونايتد في كل البطولات · 2024–2025 · HARD · Σ559
