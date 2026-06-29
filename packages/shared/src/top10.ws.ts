@@ -11,6 +11,7 @@ export const TT_CLIENT_EVENTS = {
   create: "tt:create",
   join: "tt:join",
   leave: "tt:leave",
+  close: "tt:close",
   start: "tt:start",
   guess: "tt:guess",
   endRoundRequest: "tt:endRoundRequest",
@@ -101,8 +102,9 @@ export type TtStateView = {
   /** Whose turn (NORMAL mode), seat number, with the absolute deadline. */
   turnSeat: number | null;
   deadlineTs: number | null;
-  /** Hint mode public view: the active hint text + phase (never the target identity). */
-  hint: { phase: "COUNTDOWN" | "OPEN"; text: string | null; hintNumber: number } | null;
+  /** Hint mode public view: the active hint text + phase + which RANK it's for (never
+   *  the target player's identity until that card is revealed). */
+  hint: { phase: "COUNTDOWN" | "OPEN"; text: string | null; hintNumber: number; rank: number } | null;
   /** Pending end-round request: who asked + who still needs to approve. */
   endRoundRequest: { bySeat: number; approvals: number[]; needed: number } | null;
 };

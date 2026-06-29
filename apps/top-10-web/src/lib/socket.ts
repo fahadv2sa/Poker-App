@@ -38,6 +38,7 @@ export interface TtConnection {
   queueJoin: (difficulty: TtDifficulty) => void;
   queueLeave: () => void;
   leave: () => void;
+  close: () => void;
   disconnect: () => void;
 }
 
@@ -76,6 +77,7 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
     queueJoin: (difficulty) => socket.emit(TT_CLIENT_EVENTS.queueJoin, { difficulty }),
     queueLeave: () => socket.emit(TT_CLIENT_EVENTS.queueLeave, {}),
     leave: () => socket.emit(TT_CLIENT_EVENTS.leave, {}),
+    close: () => socket.emit(TT_CLIENT_EVENTS.close, {}),
     disconnect: () => socket.disconnect(),
   };
 }

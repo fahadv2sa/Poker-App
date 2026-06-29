@@ -202,6 +202,14 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
 
     socket.on(TT_CLIENT_EVENTS.queueLeave, () => leaveAllQueues(socket.id));
 
+    socket.on(TT_CLIENT_EVENTS.close, () => {
+      const room = findRoomOf(u.userId);
+      if (room) {
+        matches.closeRoom(room, u.userId);
+        socket.leave(room.id);
+      }
+    });
+
     socket.on(TT_CLIENT_EVENTS.leave, () => {
       leaveAllQueues(socket.id);
       const room = findRoomOf(u.userId);

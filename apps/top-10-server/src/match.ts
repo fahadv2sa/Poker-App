@@ -376,6 +376,21 @@ export class Matches {
     if (room.round && room.status === "IN_PROGRESS") this.finishRound(room, "TIMER");
   }
 
+  /** The room creator closes the table for EVERYONE (mirrors Link Up's host close):
+   *  ends the match, notifies all seats, and tears the room down. Only the creator may. */
+  closeRoom(room: MatchRoom, byUserId: string): void {
+    if (room.createdByUserId !== byUserId) return;
+    if (room.status === "ENDED" || room.status === "ABANDONED") return;
+    this.deps.emit(room.id, TT_SERVER_EVENTS.toast, { text: "أُغلقت الطاولة" });
+    if (room.status === "LOBBY") {
+      // nothing played yet → just evict + drop the room
+      this.deps.emit(room.id, TT_SERVER_EVENTS.matchEnded, { standings: this.standings(room) });
+      this.removeRoom(room.id);
+      return;
+    }
+    this.finishMatch(room, true);
+  }
+
   // ---- withdrawal ---------------------------------------------------------
 
   /** A player leaves (explicit) or their grace expires. During a match this is a
@@ -574,7 +589,7 @@ export class Matches {
       deadlineTs: room.deadlineTs,
       hint:
         r && r.state.mode === "HINT" && r.state.hint
-          ? { phase: r.state.hint.phase, text: r.state.hint.phase === "OPEN" ? r.hintText : null, hintNumber: r.hintNumber }
+          ? { phase: r.state.hint.phase, text: r.state.hint.phase === "OPEN" ? r.hintText : null, hintNumber: r.hintNumber, rank: r.state.hint.targetRank }
           : null,
       endRoundRequest: room.endRoundReq
         ? {
