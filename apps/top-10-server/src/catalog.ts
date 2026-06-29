@@ -56,15 +56,38 @@ export class CatalogSource {
 
     const buckets = new Map<TtDifficulty, CatalogEntry[]>();
     for (const e of entries) {
+      const type = e.type as TtQuestionType;
+      const meta = TT_TYPE_META[type];
+      // A hint must never restate what the question title already says.
+      // CLUB-scoped: every answer is already that club's player, so identify the scoped
+      // club data-drivenly (the club shared by the answers) and never offer it as a hint.
+      let scopedClubName: string | null = null;
+      if (e.clubKey) {
+        const freq = new Map<string, number>();
+        for (const cp of e.players) {
+          const pl = pById.get(cp.footballPlayerId);
+          for (const c of new Set((pl?.playerClubs ?? []).map((pc) => pc.club?.name).filter((n): n is string => !!n))) {
+            freq.set(c, (freq.get(c) ?? 0) + 1);
+          }
+        }
+        scopedClubName = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+      }
+
       const list: CatalogPlayer[] = e.players.map((cp) => {
         const p = pById.get(cp.footballPlayerId);
         const name = p?.name ?? "?";
         const nameAr = p?.nameAr ?? name;
         const hints: string[] = [];
         if (p?.nationality?.name) hints.push(`الجنسية: ${p.nationality.name}`);
-        const club = p?.playerClubs?.[0]?.club?.name;
-        if (club) hints.push(`أحد أنديته: ${club}`);
-        if (p?.position?.nameAr) hints.push(`المركز: ${p.position.nameAr}`);
+        // Offer a DIFFERENT club from the player's career — never the scoped club
+        // (omitted entirely if they have no other club).
+        const clubName = (p?.playerClubs ?? [])
+          .map((pc) => pc.club?.name)
+          .find((n): n is string => !!n && n !== scopedClubName);
+        if (clubName) hints.push(`أحد أنديته: ${clubName}`);
+        // Skip the position hint when the question is already position-scoped (the title
+        // says المدافعين / لاعبي الوسط / الحراس), otherwise it just restates the title.
+        if (p?.position?.nameAr && !meta.position) hints.push(`المركز: ${p.position.nameAr}`);
         return { rank: cp.rank, playerId: cp.footballPlayerId, value: cp.value, name, nameAr, photoUrl: p?.photoUrl ?? null, hints };
       });
       const seasonEnd = e.seasonEnd ?? e.season;
@@ -73,13 +96,13 @@ export class CatalogSource {
       const seasonLabel = e.season === seasonEnd ? `${e.season}` : `${e.season}–${seasonEnd}`;
       const entry: CatalogEntry = {
         id: e.id,
-        type: e.type as TtQuestionType,
+        type,
         leagueId: e.leagueId,
         competitionName: e.competitionName,
         season: e.season,
         seasonEnd,
         difficulty: e.difficulty as TtDifficulty,
-        titleAr: `${TT_TYPE_META[e.type as TtQuestionType].nameAr} — ${e.competitionName} ${seasonLabel}`,
+        titleAr: `${meta.nameAr} — ${e.competitionName} ${seasonLabel}`,
         players: list,
       };
       (buckets.get(entry.difficulty) ?? buckets.set(entry.difficulty, []).get(entry.difficulty)!).push(entry);
