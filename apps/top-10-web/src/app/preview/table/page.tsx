@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { notFound } from "next/navigation";
 import type { TtCardView, TtRevealEvent, TtSeatView, TtStateView } from "@fb/shared";
 import { TenTable } from "@/components/table/TenTable";
 
@@ -93,6 +94,9 @@ export default function PreviewTable() {
   };
 
   const btn = (active: boolean) => `rounded px-2 py-0.5 ${active ? "bg-[var(--gold)] text-black" : "bg-white/10"}`;
+
+  // Dev-only visual harness — never reachable in production builds (404 there).
+  if (process.env.NODE_ENV === "production") notFound();
 
   return (
     <div className="relative">

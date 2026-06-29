@@ -20,6 +20,7 @@ function fakeEntry(id: string): CatalogEntry {
       value: 10 - i,
       name: `P${i + 1}`,
       nameAr: `لاعب${i + 1}`,
+      photoUrl: null,
       hints: ["الجنسية: مصر", "أحد أنديته: ليفربول", "المركز: مهاجم"],
     })),
   };
@@ -147,6 +148,83 @@ describe("Top Ten match orchestration", () => {
     matches.withdraw(room, "u0"); // last (only) seat leaves the lobby
     expect(matches.get(room.id)).toBeUndefined();
     expect(matches.list().some((r) => r.id === room.id)).toBe(false);
+  });
+
+  it("awards round XP each round and a match-win bonus at the end (full lifecycle)", () => {
+    const persist = {
+      createMatch: vi.fn(async () => {}),
+      saveRound: vi.fn(async () => {}),
+      awardRoundXp: vi.fn(async () => {}),
+      markWithdrawn: vi.fn(async () => {}),
+      finishMatch: vi.fn(async () => {}),
+    };
+    const events: Events = {};
+    const matches = new Matches({
+      catalog: fakeCatalog(),
+      persist,
+      emit: (_id, e, p) => { (events[e] ??= []).push(p); },
+      rng: () => 0.5,
+    });
+    const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
+    matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 }, false);
+    matches.start(room, "u0");
+    // play 3 full rounds (alternating guesses → the first guesser nets 30 > 25 = clear winner)
+    for (let round = 1; round <= 3; round++) {
+      for (let rank = 10; rank >= 1; rank--) {
+        const seat = currentTurnSeat(room.round!.state)!;
+        matches.guess(room, seat, `p${rank}`);
+      }
+      vi.advanceTimersByTime(5000);
+    }
+    expect(room.status).toBe("ENDED");
+    // round XP + saveRound persisted once per round
+    expect(persist.awardRoundXp).toHaveBeenCalledTimes(3);
+    expect(persist.saveRound).toHaveBeenCalledTimes(3);
+    // round XP map carried a positive award for the scoring seats
+    const firstRoundXp = persist.awardRoundXp.mock.calls[0]![1] as Map<number, number>;
+    expect([...firstRoundXp.values()].some((v) => v > 0)).toBe(true);
+    // match-end persisted exactly once, with a clear winner + a positive win-bonus map
+    expect(persist.finishMatch).toHaveBeenCalledTimes(1);
+    const finishArgs = persist.finishMatch.mock.calls[0]!;
+    expect(finishArgs[2]).toBeTruthy(); // winnerUserId
+    expect([...(finishArgs[3] as Map<number, number>).values()].some((v) => v > 0)).toBe(true); // win bonus
+    // and the match-ended broadcast carried standings
+    const ended = events[TT_SERVER_EVENTS.matchEnded] as { standings: unknown[] }[];
+    expect(ended).toHaveLength(1);
+    expect(ended[0]!.standings.length).toBe(2);
+  });
+
+  it("the public hint view exposes its TARGET RANK (never the identity)", () => {
+    const { matches, events } = makeMatches();
+    const room = twoPlayerMatch(matches);
+    for (let i = 0; i < 4; i++) vi.advanceTimersByTime(TT_TIMING.turnSec * 1000);
+    expect(room.round!.state.mode).toBe("HINT");
+    const target = room.round!.state.hint!.targetRank;
+    const states = (events[TT_SERVER_EVENTS.state] ?? []) as { hint: { rank: number } | null }[];
+    const withHint = states.filter((s) => s.hint);
+    expect(withHint.length).toBeGreaterThan(0);
+    expect(withHint.at(-1)!.hint!.rank).toBe(target); // rank shown, set from targetRank
+  });
+
+  it("closeRoom: only the CREATOR can close, and it ends the match for everyone", () => {
+    const { matches, events } = makeMatches();
+    const room = twoPlayerMatch(matches); // creator = u0
+    matches.closeRoom(room, "u1"); // a non-creator → no-op
+    expect(room.status).toBe("IN_PROGRESS");
+    matches.closeRoom(room, "u0"); // creator → ends for all
+    expect(room.status).toBe("ABANDONED");
+    expect((events[TT_SERVER_EVENTS.matchEnded] as unknown[]).length).toBe(1);
+    const toasts = (events[TT_SERVER_EVENTS.toast] ?? []) as { text: string }[];
+    expect(toasts.some((t) => t.text.includes("أُغلقت"))).toBe(true);
+  });
+
+  it("closeRoom on a LOBBY room (creator) evicts everyone and drops the room", () => {
+    const { matches } = makeMatches();
+    const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
+    matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 }, false);
+    expect(room.status).toBe("LOBBY");
+    matches.closeRoom(room, "u0");
+    expect(matches.get(room.id)).toBeUndefined();
   });
 
   it("tie: naming ANY one tied player reveals the rank once and cancels the rest", () => {

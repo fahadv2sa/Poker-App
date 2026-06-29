@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Shared live-table surfaces (felt + pitch lines + glow + confetti) — the single
+   canonical source, shared with Top Ten (replaces the former inline copies below). */
+@import "../../../../packages/table-ui/src/table.css";
 
 /* Let Tailwind v4 scan the shared table-ui package (extracted seat/timer/fly
    primitives) so their utility classes are generated for this app. */
@@ -523,17 +526,10 @@
 @keyframes fade-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .fade-rise { animation: fade-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* Winner-screen confetti (CSS-only, decorative). */
-@keyframes confetti-fall {
-  0% { transform: translateY(-12vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  100% { transform: translateY(108vh) rotate(540deg); opacity: 0.9; }
-}
-.confetti-pc { position: absolute; top: 0; width: 8px; height: 12px; border-radius: 2px; animation: confetti-fall linear infinite; will-change: transform; }
+/* Winner-screen confetti (keyframes + .confetti-pc) now live in the shared table.css. */
 
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
-  .confetti-pc { display: none; }
 }
 
 /*
@@ -755,34 +751,6 @@
   50% { box-shadow: inset 0 1px 0 rgba(255, 234, 180, 0.22), 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 138, 40, 0.34); }
 }
 
-/* ──────────────────────────────────────────────────────────────────────────
- * Link Up — LIVE TABLE surfaces (gold-on-black). Additive; used ONLY by the
- * table reskin. Assets: /table-felt.png (molten pitch) + /table-ball.png
- * (fire-gold football centerpiece), both cropped from the approved references.
- * ────────────────────────────────────────────────────────────────────────── */
-.lu-felt {
-  /* Signature molten gold-on-black stone surface, EVENLY LIT (table-felt-even.png
-     — the original felt mirror-balanced 4 ways so the lighting is symmetric on
-     all sides; no lopsided bright/dark side). A faint, symmetric gold football
-     pitch-LINE overlay (table-pitch.svg, stretched to all four sides) frames it.
-     The pitch lines are a thin overlay on the molten surface, never a replacement. */
-  background-color: #08060a;
-  background-image:
-    url("/table-pitch.svg"),
-    linear-gradient(rgba(8, 6, 10, 0.35), rgba(8, 6, 10, 0.35)),
-    url("/table-felt-even.png");
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-position: center, center, center;
-  background-size: 100% 100%, cover, cover;
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.55), 0 18px 50px rgba(0, 0, 0, 0.5);
-}
-/* Gold turn-pulse for the active seat (replaces the mint .animate-turn). */
-@keyframes lu-turn-pulse {
-  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 179, 71, 0.4), 0 0 14px rgba(255, 106, 26, 0.22); }
-  50% { box-shadow: 0 0 0 1px rgba(255, 179, 71, 0.75), 0 0 26px rgba(255, 106, 26, 0.5); }
-}
-.lu-turn { animation: lu-turn-pulse 1.8s ease-in-out infinite; }
-/* Gold glow rings (gold-world replacements for .glow-primary on the table). */
-.lu-glow-ember {
-  box-shadow: 0 0 0 1px rgba(255, 106, 26, 0.45), 0 0 22px rgba(255, 106, 26, 0.3);
-}
+/* Link Up — LIVE TABLE surfaces (.lu-felt / .lu-turn / .lu-glow-ember) now live in the
+ * shared @fb/table-ui table.css (imported at the top of this file), the single source
+ * shared with Top Ten. Assets (/table-pitch.svg, /table-felt-even.png) stay in /public. */
