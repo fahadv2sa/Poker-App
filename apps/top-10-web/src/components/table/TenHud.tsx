@@ -15,14 +15,20 @@ export function TenHud({
   isMyTurn,
   deadlineTs,
   turnTotalMs = 30_000,
+  hint = false,
+  maxAttempts = 3,
 }: {
   me: TtSeatView;
   nickname: string;
   isMyTurn: boolean;
   deadlineTs: number | null;
   turnTotalMs?: number;
+  /** Hint mode: show this player's remaining attempts / lockout. */
+  hint?: boolean;
+  maxAttempts?: number;
 }) {
   const remainingMs = useRemainingMs(isMyTurn ? deadlineTs : null);
+  const locked = hint && me.locked;
   return (
     <div className="mx-auto flex w-full max-w-md shrink-0 items-stretch justify-center gap-1.5">
       <div
@@ -39,9 +45,15 @@ export function TenHud({
           sizeClass="size-9 sm:size-10"
           className={cn("ring-1", isMyTurn ? "ring-2 ring-[var(--lu-ember-glow)]" : "ring-white/15")}
         />
-        <div className="flex min-w-0 flex-col leading-tight">
+        <div className={cn("flex min-w-0 flex-col leading-tight", locked && "opacity-50")}>
           <span className="truncate text-sm font-bold text-[var(--lu-cream)]">{nickname}</span>
-          {isMyTurn ? (
+          {locked ? (
+            <span className="text-[0.62rem] font-bold text-[#d9694f]">نَفِدت محاولاتك</span>
+          ) : hint ? (
+            <span className="text-[0.62rem] font-bold text-[var(--lu-ember-glow)]">
+              الأسرع يفوز · محاولات {me.wrongAttempts}/{maxAttempts}
+            </span>
+          ) : isMyTurn ? (
             <span className="text-[0.66rem] font-bold text-[var(--lu-ember-glow)]">دورك — اكتب اسم لاعب</span>
           ) : (
             <span className="text-[0.62rem] text-[var(--lu-tan)]/80">بانتظار دورك…</span>

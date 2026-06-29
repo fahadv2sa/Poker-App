@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@fb/top-10-ui";
-import type { TtCardView, TtStateView } from "@fb/shared";
+import { TT_HINT, type TtCardView, type TtRevealEvent, type TtStateView } from "@fb/shared";
 import { PlayerSearch } from "../PlayerSearch";
 import { TenCard } from "./TenCard";
 import { TenSeat } from "./TenSeat";
 import { TenHud } from "./TenHud";
+import { TenRevealNotice, type RevealDisplay } from "./TenRevealNotice";
+import { TenHintOverlay } from "./TenHintOverlay";
 
 const DIFF_AR: Record<string, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
 
@@ -23,12 +26,16 @@ export function TenTable({
   nickname,
   onPick,
   onLeave,
+  reveal = null,
 }: {
   state: TtStateView;
   meId: string;
   nickname: string;
   onPick: (playerId: string) => void;
   onLeave?: () => void;
+  /** Latest correct-guess event (with a monotonic id) → drives the big reveal notice.
+   *  The live client bumps `id` per tt:reveal; the preview simulates it. */
+  reveal?: { event: TtRevealEvent; id: number } | null;
 }) {
   const me = useMemo(() => state.seats.find((s) => s.userId === meId), [state.seats, meId]);
   const opponents = useMemo(() => state.seats.filter((s) => s.userId !== meId), [state.seats, meId]);
@@ -58,6 +65,31 @@ export function TenTable({
   }, [state.cards]);
 
   const hint = state.mode === "HINT";
+
+  // resolve the raw reveal event → a display-ready notice payload (contestant name).
+  const revealDisplay: RevealDisplay | null = useMemo(() => {
+    if (!reveal) return null;
+    const ev = reveal.event;
+    const by = ev.bySeat != null ? state.seats.find((s) => s.seat === ev.bySeat) : undefined;
+    return {
+      id: reveal.id,
+      byName: by?.username ?? null,
+      isMe: by?.userId === meId,
+      playerNameAr: ev.player.nameAr,
+      rank: ev.rank,
+      points: ev.points,
+      photoUrl: ev.player.photoUrl,
+    };
+  }, [reveal, state.seats, meId]);
+
+  // shake the search bar when MY wrong-attempt count rises (hint mode feedback).
+  const [shakeKey, setShakeKey] = useState(0);
+  const prevWrong = useRef(me?.wrongAttempts ?? 0);
+  useEffect(() => {
+    const w = me?.wrongAttempts ?? 0;
+    if (w > prevWrong.current) setShakeKey((k) => k + 1);
+    prevWrong.current = w;
+  }, [me?.wrongAttempts]);
 
   return (
     <main
@@ -130,10 +162,18 @@ export function TenTable({
             <TenCard key={c.rank} card={c} metricType={state.question?.type} hintMode={hint} />
           ))}
         </div>
+
+        {/* hint-mode theatre (start flash · circular countdown · hint text) */}
+        <TenHintOverlay mode={state.mode} hint={state.hint} deadlineTs={state.deadlineTs} />
       </section>
 
       {/* search dock — the action bar (results float UP over the felt) */}
-      <div className="mt-1.5 shrink-0">
+      <motion.div
+        key={shakeKey}
+        animate={shakeKey > 0 ? { x: [0, -8, 8, -5, 5, 0] } : undefined}
+        transition={{ duration: 0.4 }}
+        className="mt-1.5 shrink-0"
+      >
         <PlayerSearch
           disabled={!canGuess}
           onPick={onPick}
@@ -143,19 +183,32 @@ export function TenTable({
               ? hintOpen
                 ? "الأسرع يفوز — اكتب الآن!"
                 : "دورك — اكتب اسم لاعب من القائمة…"
-              : hint
-                ? "وضع التلميح…"
-                : "ليس دورك الآن…"
+              : me?.locked
+                ? "نَفِدت محاولاتك هذه الجولة"
+                : hint
+                  ? "وضع التلميح…"
+                  : "ليس دورك الآن…"
           }
         />
-      </div>
+      </motion.div>
 
       {/* my account HUD */}
       <div className="mt-1.5 shrink-0">
         {me ? (
-          <TenHud me={me} nickname={nickname} isMyTurn={isMyTurn} deadlineTs={state.deadlineTs} turnTotalMs={turnTotalMs} />
+          <TenHud
+            me={me}
+            nickname={nickname}
+            isMyTurn={isMyTurn}
+            deadlineTs={state.deadlineTs}
+            turnTotalMs={turnTotalMs}
+            hint={hint}
+            maxAttempts={TT_HINT.wrongAttemptsPerPlayer}
+          />
         ) : null}
       </div>
+
+      {/* big correct-guess notice (center stage) */}
+      <TenRevealNotice latest={revealDisplay} />
     </main>
   );
 }

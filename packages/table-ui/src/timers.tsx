@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "./cn.js";
 
 /** Live remaining time (ms) until `deadlineTs`, re-rendered ~4×/sec. */
@@ -179,4 +179,56 @@ export function CountUp({
   }, [value]);
 
   return <span className={className}>{shown}</span>;
+}
+
+/**
+ * A large CINEMATIC circular countdown: a depleting ember ring with a big number that
+ * pops each second. For a center-stage moment (Top Ten's pre-hint countdown). Driven
+ * by server-authoritative `remainingMs`/`totalMs`; pure stroke + a per-second scale pop.
+ */
+export function CircularCountdown({
+  remainingMs,
+  totalMs,
+  size = 132,
+  stroke = 9,
+}: {
+  remainingMs: number | null;
+  totalMs: number;
+  size?: number;
+  stroke?: number;
+}) {
+  const reduced = useReducedMotion();
+  if (remainingMs == null) return null;
+  const secs = Math.max(0, Math.ceil(remainingMs / 1000));
+  const pct = Math.max(0, Math.min(1, remainingMs / totalMs));
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="absolute inset-0 -rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--lu-ember)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - pct)}
+          style={{ transition: reduced ? "none" : "stroke-dashoffset 0.25s linear", filter: "drop-shadow(0 0 6px rgba(255,106,26,0.6))" }}
+        />
+      </svg>
+      <motion.span
+        key={secs}
+        initial={reduced ? false : { scale: 0.6, opacity: 0.5 }}
+        animate={reduced ? undefined : { scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 320, damping: 18 }}
+        className="num text-5xl font-black text-[var(--lu-ember-glow)]"
+      >
+        {secs}
+      </motion.span>
+    </div>
+  );
 }
