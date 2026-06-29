@@ -25,7 +25,6 @@ import {
   computeThresholds,
   evaluateGate,
   validateRankedList,
-  type CandidateRow,
   type ListPlayerMeta,
   type RankedPlayer,
 } from "@fb/top-10-engine";
@@ -37,9 +36,21 @@ import {
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
 } from "@fb/shared";
-import { isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer } from "./top10-guards";
+import {
+  aggregateWindow,
+  isFindable,
+  valueSanityViolations,
+  VALUE_EXPR,
+  WINDOW_SIZES,
+  type SearchPlayer,
+  type SeasonRow,
+} from "./top10-guards";
 
 const DRY_RUN = process.argv.includes("--dry-run");
+
+/** "2022" for a single season, "2020–2022" for a cumulative range. */
+const seasonLabel = (season: number, seasonEnd: number) =>
+  season === seasonEnd ? `${season}` : `${season}–${seasonEnd}`;
 
 /** Every ACTIVE player, mirroring the search index, so findability is checked against
  *  the exact same data the runtime search ranks over. */
@@ -69,7 +80,8 @@ const leagueName = (id: number) =>
 interface Admitted {
   type: TtQuestionType;
   leagueId: number;
-  season: number;
+  season: number; // window start
+  seasonEnd: number; // window end (== season for a single season)
   fameSum: number;
   players: RankedPlayer[];
   /** Retained so the pre-write assertion can RE-validate the exact shipped list. */
@@ -80,6 +92,7 @@ interface Rejected {
   type: TtQuestionType;
   leagueId: number;
   season: number;
+  seasonEnd: number;
   reasons: string[];
   metrics: ReturnType<typeof evaluateGate>["metrics"];
 }
@@ -106,71 +119,88 @@ async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   `);
 }
 
-function toCandidate(r: AggRow): CandidateRow {
-  return {
-    playerId: r.player_id,
-    value: r.value == null ? null : Number(r.value),
-    appearances: r.apps == null ? 0 : Number(r.apps),
-    fame: Number(r.fame),
-    name: r.name,
-    nameAr: r.name_ar ?? r.name,
-  };
-}
-
 async function main() {
   console.log(`Top Ten catalog build${DRY_RUN ? " [DRY RUN — no DB writes]" : ""}`);
   const admitted: Admitted[] = [];
   const rejected: Rejected[] = [];
   const searchIndex = await loadSearchIndex(); // for the findability guard
+  // A player's findability is constant per build → memoize (windows reuse players).
+  const findCache = new Map<string, boolean>();
+  const findable = (id: string, nameAr: string | null): boolean => {
+    let c = findCache.get(id);
+    if (c === undefined) findCache.set(id, (c = isFindable(searchIndex, { id, nameAr })));
+    return c;
+  };
 
   for (const type of TT_ACTIVE_QUESTION_TYPES) {
     const rows = await aggregateType(type);
-    // group by (league, season)
-    const groups = new Map<string, AggRow[]>();
+    const metaById = new Map<string, ListPlayerMeta>();
+    const byLeague = new Map<number, SeasonRow[]>();
     for (const r of rows) {
-      const k = `${r.league_id}:${r.season}`;
-      (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
+      metaById.set(r.player_id, { active: r.active, nameAr: r.name_ar });
+      const sr: SeasonRow = {
+        leagueId: r.league_id,
+        season: r.season,
+        playerId: r.player_id,
+        value: r.value == null ? null : Number(r.value),
+        apps: r.apps == null ? 0 : Number(r.apps),
+        fame: Number(r.fame),
+        name: r.name,
+        nameAr: r.name_ar,
+      };
+      (byLeague.get(r.league_id) ?? byLeague.set(r.league_id, []).get(r.league_id)!).push(sr);
     }
+
     let admittedForType = 0;
-    for (const [k, gRows] of groups) {
-      const [leagueId, season] = k.split(":").map(Number) as [number, number];
-      const candidates = gRows.map(toCandidate);
-      const gate = evaluateGate(candidates);
-      if (!gate.admit) {
-        rejected.push({ type, leagueId, season, reasons: gate.reasons, metrics: gate.metrics });
-        continue;
+    for (const [leagueId, leagueRows] of byLeague) {
+      // 1) which single seasons are individually COMPLETE (pass the gate)?
+      const complete = new Set<number>();
+      for (let s = TT_GATE.seasonMin; s <= TT_GATE.seasonMax; s++) {
+        const cands = aggregateWindow(leagueRows, s, s);
+        if (cands.length > 0 && evaluateGate(cands).admit) complete.add(s);
       }
-      // INTEGRITY GATE (the lasting fix): a list that passes completeness can still
-      // be unsafe. A cutoff TIE is NOT an error — `buildAnswerList` keeps every tied
-      // player at rank 10 (each a valid answer). The validator instead enforces that
-      // the tie group is COMPLETE (no tied player excluded), names/ids are clean, and
-      // players are findable. Reject only genuinely unsafe lists.
-      const { list: players, excludedTopValue } = buildAnswerList(candidates);
-      const meta = new Map<string, ListPlayerMeta>(
-        gRows.map((r) => [r.player_id, { active: r.active, nameAr: r.name_ar }]),
-      );
-      const violations = [
-        ...validateRankedList({ list: players, excludedTopValue, meta }),
-        // (8) value sanity — a value above the type's ceiling = wrong column / unit.
-        ...valueSanityViolations(type, players),
-        // (11) findability — every answer must be selectable in the player search.
-        ...players
-          .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
-          .map((p) => `rank ${p.rank}: player ${p.playerId} ("${p.nameAr}") is not findable by its Arabic name`),
-      ];
-      if (violations.length > 0) {
-        rejected.push({ type, leagueId, season, reasons: violations, metrics: gate.metrics });
-        continue;
+      // 2) windows of size 1/2/3 — only over a run of CONSECUTIVE complete seasons, so
+      //    a cumulative range is guaranteed complete in EVERY one of its seasons (no
+      //    partial-season cumulative totals → 0%-safe). Variety emerges naturally:
+      //    different competitions × window sizes × time periods, wherever data supports.
+      for (const k of WINDOW_SIZES) {
+        for (let s = TT_GATE.seasonMin; s + k - 1 <= TT_GATE.seasonMax; s++) {
+          const end = s + k - 1;
+          let allComplete = true;
+          for (let y = s; y <= end; y++) if (!complete.has(y)) { allComplete = false; break; }
+          if (!allComplete) continue;
+
+          const candidates = aggregateWindow(leagueRows, s, end);
+          const gate = evaluateGate(candidates);
+          if (!gate.admit) {
+            rejected.push({ type, leagueId, season: s, seasonEnd: end, reasons: gate.reasons, metrics: gate.metrics });
+            continue;
+          }
+          const { list: players, excludedTopValue } = buildAnswerList(candidates);
+          const meta = new Map<string, ListPlayerMeta>(
+            players.map((p) => [p.playerId, metaById.get(p.playerId) ?? { active: false, nameAr: p.nameAr }]),
+          );
+          const violations = [
+            ...validateRankedList({ list: players, excludedTopValue, meta }),
+            ...valueSanityViolations(type, players, k),
+            ...players
+              .filter((p) => !findable(p.playerId, p.nameAr))
+              .map((p) => `rank ${p.rank}: player ${p.playerId} ("${p.nameAr}") is not findable by its Arabic name`),
+          ];
+          if (violations.length > 0) {
+            rejected.push({ type, leagueId, season: s, seasonEnd: end, reasons: violations, metrics: gate.metrics });
+            continue;
+          }
+          // Difficulty Σfame stays comparable: one representative (strongest) per rank.
+          const fameByRank = new Map<number, number>();
+          for (const p of players) fameByRank.set(p.rank, Math.max(fameByRank.get(p.rank) ?? 0, p.fame));
+          const fameSum = [...fameByRank.values()].reduce((a, b) => a + b, 0);
+          admitted.push({ type, leagueId, season: s, seasonEnd: end, fameSum, players, excludedTopValue, meta });
+          admittedForType++;
+        }
       }
-      // Difficulty Σfame stays comparable across questions: one representative
-      // (the strongest player) per rank → exactly 10 fame values, regardless of ties.
-      const fameByRank = new Map<number, number>();
-      for (const p of players) fameByRank.set(p.rank, Math.max(fameByRank.get(p.rank) ?? 0, p.fame));
-      const fameSum = [...fameByRank.values()].reduce((a, b) => a + b, 0);
-      admitted.push({ type, leagueId, season, fameSum, players, excludedTopValue, meta });
-      admittedForType++;
     }
-    console.log(`  ${type}: ${admittedForType} admitted / ${groups.size} candidate (comp,season)`);
+    console.log(`  ${type}: ${admittedForType} admitted (single + multi-season windows)`);
   }
 
   // Rejection-reason tally (so a build clearly reports WHY lists were dropped).
@@ -204,6 +234,19 @@ async function main() {
     `  difficulty thresholds — HARD < ${thresholds.hardMaxSum.toFixed(1)} ≤ MEDIUM < ${thresholds.easyMinSum.toFixed(1)} ≤ EASY`,
   );
 
+  // ---- VARIETY summary (window sizes × competitions) -------------------------
+  const bySize = { 1: 0, 2: 0, 3: 0 } as Record<number, number>;
+  const byComp = new Map<number, number>();
+  for (const a of admitted) {
+    bySize[a.seasonEnd - a.season + 1] = (bySize[a.seasonEnd - a.season + 1] ?? 0) + 1;
+    byComp.set(a.leagueId, (byComp.get(a.leagueId) ?? 0) + 1);
+  }
+  console.log(`  variety — window sizes: 1-season ${bySize[1]} / 2-season ${bySize[2]} / 3-season ${bySize[3]}`);
+  console.log(
+    "  variety — by competition: " +
+      [...byComp].sort((a, b) => b[1] - a[1]).map(([id, c]) => `${leagueName(id)} ${c}`).join(" · "),
+  );
+
   // ---- FINAL SAFETY ASSERTION (no room for error) ----------------------------
   // Re-validate every admitted list right before it could be written. If anything
   // unsafe slipped through (e.g. a future code change), ABORT the whole build — a
@@ -212,13 +255,13 @@ async function main() {
   for (const a of admitted) {
     const violations = [
       ...validateRankedList({ list: a.players, excludedTopValue: a.excludedTopValue, meta: a.meta }),
-      ...valueSanityViolations(a.type, a.players),
+      ...valueSanityViolations(a.type, a.players, a.seasonEnd - a.season + 1),
       ...a.players
         .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
         .map((p) => `unfindable: ${p.playerId} ("${p.nameAr}")`),
     ];
     if (violations.length > 0) {
-      assertionFailures.push(`${a.type} · ${leagueName(a.leagueId)} ${a.season}: ${violations.join("; ")}`);
+      assertionFailures.push(`${a.type} · ${leagueName(a.leagueId)} ${seasonLabel(a.season, a.seasonEnd)}: ${violations.join("; ")}`);
     }
   }
   if (assertionFailures.length > 0) {
@@ -256,6 +299,7 @@ async function main() {
           leagueId: a.leagueId,
           competitionName: leagueName(a.leagueId),
           season: a.season,
+          seasonEnd: a.seasonEnd,
           difficulty,
           fameSum: a.fameSum,
           active: true,
@@ -300,18 +344,19 @@ function writeArtifact(
       leagueId: a.leagueId,
       competition: leagueName(a.leagueId),
       season: a.season,
+      seasonEnd: a.seasonEnd,
+      window: seasonLabel(a.season, a.seasonEnd),
       difficulty: classifyDifficulty(a.fameSum, thresholds),
       fameSum: Number(a.fameSum.toFixed(1)),
       top: a.players.map((p) => ({ rank: p.rank, name: p.nameAr, value: p.value })),
     })),
-    rejected: rejected.map((r) => ({
+    // Rejections can number in the thousands (every incomplete window) — keep a
+    // representative sample in the artifact; the full count is `rejectedCount`.
+    rejectedSample: rejected.slice(0, 200).map((r) => ({
       type: r.type,
-      leagueId: r.leagueId,
       competition: leagueName(r.leagueId),
-      season: r.season,
+      window: seasonLabel(r.season, r.seasonEnd),
       reasons: r.reasons,
-      fillPct: Number((r.metrics.regularsFillPct * 100).toFixed(0)),
-      qualifiers: r.metrics.qualifiers,
     })),
   };
   writeFileSync(resolve(dir, "CATALOG.json"), JSON.stringify(json, null, 2));
@@ -349,13 +394,13 @@ function writeArtifact(
     lines.push(`| ${TT_TYPE_META[type as TtQuestionType].nameEn} (${type}) | ${e.admit} | ${e.reject} |`);
   }
   lines.push("");
-  lines.push("## Admitted (type · competition · season · difficulty · Σfame)");
+  lines.push("## Admitted (type · competition · window · difficulty · Σfame)");
   lines.push("");
   for (const a of [...admitted].sort(
-    (x, y) => x.type.localeCompare(y.type) || x.leagueId - y.leagueId || x.season - y.season,
+    (x, y) => x.type.localeCompare(y.type) || x.leagueId - y.leagueId || x.season - y.season || x.seasonEnd - y.seasonEnd,
   )) {
     lines.push(
-      `- ${a.type} · ${leagueName(a.leagueId)} · ${a.season} · ${classifyDifficulty(a.fameSum, thresholds)} · Σ${a.fameSum.toFixed(0)}`,
+      `- ${a.type} · ${leagueName(a.leagueId)} · ${seasonLabel(a.season, a.seasonEnd)} · ${classifyDifficulty(a.fameSum, thresholds)} · Σ${a.fameSum.toFixed(0)}`,
     );
   }
   writeFileSync(resolve(dir, "CATALOG.md"), lines.join("\n"));

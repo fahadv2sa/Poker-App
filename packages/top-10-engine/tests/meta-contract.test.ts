@@ -66,6 +66,34 @@ const PIN = {
     metric: "SUM(passes_total × clamp(passes_accuracy,0,100)/100) per competition-season",
     sanityMax: 5000,
   },
+  SHOTS_TOTAL: {
+    nameAr: "أكثر اللاعبين تسديدًا",
+    nameEn: "Top players by total shots",
+    position: null,
+    metric: "SUM(shots_total) per competition-season",
+    sanityMax: 350,
+  },
+  SHOTS_ON: {
+    nameAr: "أكثر اللاعبين تسديدًا على المرمى",
+    nameEn: "Top players by shots on target",
+    position: null,
+    metric: "SUM(shots_on) per competition-season",
+    sanityMax: 200,
+  },
+  DRIBBLES_SUCCESS: {
+    nameAr: "أكثر اللاعبين مراوغةً ناجحة",
+    nameEn: "Top players by successful dribbles",
+    position: null,
+    metric: "SUM(dribbles_success) per competition-season",
+    sanityMax: 350,
+  },
+  GK_SAVES: {
+    nameAr: "أكثر الحراس تصديًا",
+    nameEn: "Top goalkeepers by saves",
+    position: "GK",
+    metric: "SUM(goals_saves) per competition-season, position=GK",
+    sanityMax: 400,
+  },
 } as const;
 
 /** Competition labels are also shown in every title — pin them too so a change (e.g.

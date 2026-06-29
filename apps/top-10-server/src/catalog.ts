@@ -24,7 +24,8 @@ export interface CatalogEntry {
   type: TtQuestionType;
   leagueId: number;
   competitionName: string;
-  season: number;
+  season: number; // window start
+  seasonEnd: number; // window end (== season for a single season)
   difficulty: TtDifficulty;
   titleAr: string;
   players: CatalogPlayer[]; // ranked 1..10
@@ -63,14 +64,19 @@ export class CatalogSource {
         if (p?.position?.nameAr) hints.push(`المركز: ${p.position.nameAr}`);
         return { rank: cp.rank, playerId: cp.footballPlayerId, value: cp.value, name, nameAr, hints };
       });
+      const seasonEnd = e.seasonEnd ?? e.season;
+      // "2022" for a single season; "2020–2022" for a cumulative range — the title
+      // ALWAYS states the exact window so it's never misleading.
+      const seasonLabel = e.season === seasonEnd ? `${e.season}` : `${e.season}–${seasonEnd}`;
       const entry: CatalogEntry = {
         id: e.id,
         type: e.type as TtQuestionType,
         leagueId: e.leagueId,
         competitionName: e.competitionName,
         season: e.season,
+        seasonEnd,
         difficulty: e.difficulty as TtDifficulty,
-        titleAr: `${TT_TYPE_META[e.type as TtQuestionType].nameAr} — ${e.competitionName} ${e.season}`,
+        titleAr: `${TT_TYPE_META[e.type as TtQuestionType].nameAr} — ${e.competitionName} ${seasonLabel}`,
         players: list,
       };
       (buckets.get(entry.difficulty) ?? buckets.set(entry.difficulty, []).get(entry.difficulty)!).push(entry);

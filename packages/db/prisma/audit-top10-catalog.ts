@@ -21,7 +21,6 @@ import { prisma, Prisma } from "../src/index";
 import {
   buildAnswerList,
   validateRankedList,
-  type CandidateRow,
   type ListPlayerMeta,
 } from "@fb/top-10-engine";
 import {
@@ -32,7 +31,7 @@ import {
   TT_WHITELIST_LEAGUE_IDS,
   type TtQuestionType,
 } from "@fb/shared";
-import { isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer } from "./top10-guards";
+import { aggregateWindow, isFindable, valueSanityViolations, VALUE_EXPR, type SearchPlayer, type SeasonRow } from "./top10-guards";
 
 interface AggRow {
   league_id: number;
@@ -68,29 +67,29 @@ async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   `);
 }
 
-function toCandidate(r: AggRow): CandidateRow {
-  return {
-    playerId: r.player_id,
-    value: r.value == null ? null : Number(r.value),
-    appearances: r.apps == null ? 0 : Number(r.apps),
-    fame: Number(r.fame),
-    name: r.name,
-    nameAr: r.name_ar ?? r.name,
-  };
-}
+const toSeasonRow = (r: AggRow): SeasonRow => ({
+  leagueId: r.league_id,
+  season: r.season,
+  playerId: r.player_id,
+  value: r.value == null ? null : Number(r.value),
+  apps: r.apps == null ? 0 : Number(r.apps),
+  fame: Number(r.fame),
+  name: r.name,
+  nameAr: r.name_ar,
+});
 
 async function main() {
   console.log("Top Ten — catalog integrity audit (read-only)\n");
 
-  // 1) Re-derive every (type, league, season) group from current data.
-  type Group = { rows: AggRow[]; meta: Map<string, ListPlayerMeta> };
-  const groups = new Map<string, Group>(); // key `${type}:${league}:${season}`
+  // 1) Per-(type, league) season rows from current data — windows are folded in memory.
+  type Group = { rows: SeasonRow[]; meta: Map<string, ListPlayerMeta> };
+  const groups = new Map<string, Group>(); // key `${type}:${league}`
   for (const type of TT_ACTIVE_QUESTION_TYPES) {
     for (const r of await aggregateType(type)) {
-      const key = `${type}:${r.league_id}:${r.season}`;
+      const key = `${type}:${r.league_id}`;
       let g = groups.get(key);
       if (!g) groups.set(key, (g = { rows: [], meta: new Map() }));
-      g.rows.push(r);
+      g.rows.push(toSeasonRow(r));
       g.meta.set(r.player_id, { active: r.active, nameAr: r.name_ar });
     }
   }
@@ -131,7 +130,8 @@ async function main() {
   for (const e of entries) {
     const issues: string[] = [];
     const type = e.type as TtQuestionType;
-    const title = `${type} · ${e.competitionName} ${e.season} [${e.difficulty}]`;
+    const win = e.seasonEnd && e.seasonEnd !== e.season ? `${e.season}–${e.seasonEnd}` : `${e.season}`;
+    const title = `${type} · ${e.competitionName} ${win} [${e.difficulty}]`;
 
     // title / translation completeness
     if (!TT_TYPE_META[type]?.nameAr?.trim()) issues.push("missing Arabic type label");
@@ -153,13 +153,14 @@ async function main() {
       };
     });
 
-    // re-derive the true list for this group from current data
-    const g = groups.get(`${type}:${e.leagueId}:${e.season}`);
+    // re-derive the true list for this entry's WINDOW [season..seasonEnd] from current data
+    const end = e.seasonEnd ?? e.season;
+    const g = groups.get(`${type}:${e.leagueId}`);
     let excludedTopValue: number | null = null;
     if (!g) {
-      issues.push("no current data for this (type, competition, season) — cannot re-derive");
+      issues.push("no current data for this (type, competition) — cannot re-derive");
     } else {
-      const { list: trueList, excludedTopValue: ev } = buildAnswerList(g.rows.map(toCandidate));
+      const { list: trueList, excludedTopValue: ev } = buildAnswerList(aggregateWindow(g.rows, e.season, end));
       excludedTopValue = ev;
       // drift: stored vs current-true. Compare as SETS per rank (rank-10 tie group
       // order among equals is not significant), so a legitimate tie isn't flagged.
@@ -182,18 +183,19 @@ async function main() {
     issues.push(...validateRankedList({ list: storedList, excludedTopValue, meta }));
 
     // (8) value sanity + (11) findability — same guards the builder enforces.
-    issues.push(...valueSanityViolations(type, storedList));
+    issues.push(...valueSanityViolations(type, storedList, end - e.season + 1));
     issues.push(
       ...storedList
         .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
         .map((p) => `rank ${p.rank}: "${p.nameAr}" not findable by its Arabic name`),
     );
 
-    // (8) ACCURATE_PASSES value can never exceed the player's total passes.
-    if (type === "ACCURATE_PASSES") {
+    // (8) ACCURATE_PASSES value can never exceed the player's total passes (summed
+    //     over the SAME window the entry covers).
+    if (type === "ACCURATE_PASSES" || type === "ACCURATE_PASSES_ALL") {
       const totals = await prisma.$queryRaw<{ pid: string; pt: number | null }[]>(Prisma.sql`
         SELECT player_id pid, SUM(passes_total) pt FROM football.player_season_stats
-        WHERE league_id = ${e.leagueId} AND season = ${e.season}
+        WHERE league_id = ${e.leagueId} AND season BETWEEN ${e.season} AND ${end}
           AND player_id IN (${Prisma.join(storedList.map((p) => Prisma.sql`${p.playerId}::uuid`))})
         GROUP BY player_id`);
       const ptById = new Map(totals.map((t) => [t.pid, Number(t.pt ?? 0)]));

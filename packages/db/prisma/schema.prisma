@@ -1079,6 +1079,10 @@ enum TtQuestionType {
   GK_CLEAN_SHEETS
   KEY_PASSES_ALL // all players (no position filter)
   ACCURATE_PASSES_ALL // all players (no position filter)
+  SHOTS_TOTAL // all players
+  SHOTS_ON // all players
+  DRIBBLES_SUCCESS // all players
+  GK_SAVES // goalkeepers only
 
   @@map("tt_question_type")
   @@schema("top_10")
@@ -1158,7 +1162,11 @@ model TtCatalogEntry {
   type            TtQuestionType
   leagueId        Int            @map("league_id")
   competitionName String         @map("competition_name")
+  // Season WINDOW: `season` is the first season, `seasonEnd` the last. They are equal
+  // for a single-season question; seasonEnd > season for a cumulative range (e.g.
+  // 2020–2022). Always populated by the builder.
   season          Int
+  seasonEnd       Int?           @map("season_end")
   difficulty      TtDifficulty
   fameSum         Float          @map("fame_sum")
   // The build run that produced this entry (lets a rebuild supersede a prior catalog
@@ -1168,8 +1176,8 @@ model TtCatalogEntry {
 
   players         TtCatalogPlayer[]
 
-  // One admitted list per (type, competition, season) per build generation.
-  @@unique([type, leagueId, season, builtAt])
+  // One admitted list per (type, competition, season window) per build generation.
+  @@unique([type, leagueId, season, seasonEnd, builtAt])
   @@index([active, difficulty])
   @@map("tt_catalog_entry")
   @@schema("top_10")

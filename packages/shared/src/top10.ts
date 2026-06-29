@@ -17,6 +17,10 @@ export const TT_QUESTION_TYPES = [
   "GK_CLEAN_SHEETS", // dormant (deferred D1) — no data yet; never admitted by the gate
   "KEY_PASSES_ALL", // all players (no position filter)
   "ACCURATE_PASSES_ALL", // all players (no position filter)
+  "SHOTS_TOTAL", // all players
+  "SHOTS_ON", // all players
+  "DRIBBLES_SUCCESS", // all players
+  "GK_SAVES", // goalkeepers only
 ] as const;
 export type TtQuestionType = (typeof TT_QUESTION_TYPES)[number];
 
@@ -30,6 +34,10 @@ export const TT_ACTIVE_QUESTION_TYPES: readonly TtQuestionType[] = [
   "TACKLES",
   "ACCURATE_PASSES",
   "ACCURATE_PASSES_ALL",
+  "SHOTS_TOTAL",
+  "SHOTS_ON",
+  "DRIBBLES_SUCCESS",
+  "GK_SAVES",
 ];
 
 export const TT_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
@@ -139,6 +147,35 @@ export const TT_TYPE_META: Record<TtQuestionType, TtTypeMeta> = {
     position: null,
     metric: "SUM(passes_total × clamp(passes_accuracy,0,100)/100) per competition-season",
     sanityMax: 5000,
+  },
+  SHOTS_TOTAL: {
+    nameAr: "أكثر اللاعبين تسديدًا",
+    nameEn: "Top players by total shots",
+    position: null,
+    metric: "SUM(shots_total) per competition-season",
+    sanityMax: 350,
+  },
+  SHOTS_ON: {
+    nameAr: "أكثر اللاعبين تسديدًا على المرمى",
+    nameEn: "Top players by shots on target",
+    position: null,
+    metric: "SUM(shots_on) per competition-season",
+    sanityMax: 200,
+  },
+  DRIBBLES_SUCCESS: {
+    nameAr: "أكثر اللاعبين مراوغةً ناجحة",
+    nameEn: "Top players by successful dribbles",
+    position: null,
+    metric: "SUM(dribbles_success) per competition-season",
+    sanityMax: 350,
+  },
+  GK_SAVES: {
+    // "تصديات" = saves; scoped to goalkeepers → the title says "الحراس".
+    nameAr: "أكثر الحراس تصديًا",
+    nameEn: "Top goalkeepers by saves",
+    position: "GK",
+    metric: "SUM(goals_saves) per competition-season, position=GK",
+    sanityMax: 400,
   },
 };
 
