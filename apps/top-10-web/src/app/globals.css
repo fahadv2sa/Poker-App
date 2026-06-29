@@ -1,6 +1,9 @@
 @import "tailwindcss";
 /* Top Ten design tokens — copied from Link Up's gold-on-black identity (packages/top-10-ui). */
 @import "../../../../packages/top-10-ui/src/tokens.css";
+/* Shared live-table surfaces (felt + pitch lines + confetti) — same as Link Up. */
+@import "../../../../packages/table-ui/src/table.css";
 
-/* Let Tailwind v4 scan the shared UI package for class names. */
+/* Let Tailwind v4 scan the shared UI packages for class names. */
 @source "../../../../packages/top-10-ui/src";
+@source "../../../../packages/table-ui/src";

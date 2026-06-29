@@ -240,7 +240,7 @@ export class Matches {
           rank: e.rank,
           bySeat: e.bySeat,
           points: e.points,
-          player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value },
+          player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value, photoUrl: cp.photoUrl },
         });
       } else if (e.t === "seatLocked") {
         // surfaced via state sync
@@ -324,7 +324,7 @@ export class Matches {
         const cp = this.revealedPlayer(r, e.rank)!;
         this.deps.emit(room.id, TT_SERVER_EVENTS.reveal, {
           rank: e.rank, bySeat: null, points: 0,
-          player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value },
+          player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value, photoUrl: cp.photoUrl },
         });
       } else if (e.t === "roundEnded") {
         this.finishRound(room, state.endReason ?? "ALL_REVEALED");
@@ -537,7 +537,7 @@ export class Matches {
       return {
         rank,
         revealed: !!rev,
-        player: rev && cp ? { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value } : null,
+        player: rev && cp ? { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value, photoUrl: cp.photoUrl } : null,
         bySeat: rev?.bySeat ?? null,
       };
     });

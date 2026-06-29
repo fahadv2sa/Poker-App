@@ -3,11 +3,15 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { DEFAULT_GAME_CONFIG, type CardView, type PlayerView } from "@fb/shared";
+import { type CardView, type PlayerView } from "@fb/shared";
 import { cn } from "@/lib/utils";
 import { anim } from "@/lib/anim";
 import { fxBus } from "@/lib/fx-bus";
-import { TurnFrame } from "./fx";
+// Generic table primitives now live in @fb/table-ui (shared with Top Ten). They are
+// re-exported below so existing importers of "./parts" are unchanged.
+import { SeatAvatar, Countdown, TurnFrame, useRemainingMs } from "@fb/table-ui";
+
+export { SeatAvatar, Countdown, useRemainingMs };
 
 // Rank display names are NOT hardcoded — they arrive in the game:result payload
 // as `nameAr`, sourced from the DB (hand_ranks.name_ar). See FIX #5.
@@ -420,65 +424,6 @@ export function FootballCard({
   );
 }
 
-/** Compact opponent seat placed around the table rim. When it's this seat's
- *  turn, shows a strong "now playing" highlight + live countdown ON the seat
- *  (A2); shows a "claimed" badge at showdown (A3). */
-/** Deterministic gradient hue for a generated avatar fallback. */
-function hueFromSeed(seed: string): number {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
-  return h;
-}
-
-/** Player avatar for the table: loads the uploaded image by public number, and
- *  falls back to a generated gradient if there's none (the 404 sets `failed`,
- *  which persists for the mounted seat — no repeated requests). */
-export function SeatAvatar({
-  playerNumber,
-  seed,
-  size = 44,
-  sizeClass,
-  className,
-}: {
-  playerNumber: number;
-  seed: string;
-  size?: number;
-  /** Responsive box dimensions via Tailwind (e.g. "size-9 sm:size-11"). When set
-   *  it drives the size and `size` is used only for the fallback glyph font. */
-  sizeClass?: string;
-  className?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  const hue = hueFromSeed(seed);
-  return (
-    <div
-      className={cn("overflow-hidden rounded-full bg-[#0b1120]", sizeClass, className)}
-      style={sizeClass ? undefined : { width: size, height: size }}
-    >
-      {!failed ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/profile/avatar/by-number/${playerNumber}`}
-          alt=""
-          onError={() => setFailed(true)}
-          className="size-full object-cover"
-        />
-      ) : (
-        <div
-          className="grid size-full place-items-center font-black text-white"
-          style={{
-            fontSize: size * 0.4,
-            background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))`,
-          }}
-          aria-hidden
-        >
-          {seed.charAt(0).toUpperCase()}
-        </div>
-      )}
-    </div>
-  );
-}
-
 /** The cinematic per-seat action labels + tone. FOLD is intentionally absent —
  *  it keeps its persistent greyed-out + «انسحب» seat state instead of a flash. */
 const SEAT_ACTION_FX: Record<string, { label: string; cls: string }> = {
@@ -625,76 +570,5 @@ export function OpponentSeat({
         ) : null}
       </AnimatePresence>
     </motion.div>
-  );
-}
-
-/** Live remaining time (ms) until `deadlineTs`, re-rendered ~4×/sec. */
-export function useRemainingMs(deadlineTs: number | null): number | null {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (deadlineTs == null) return;
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, [deadlineTs]);
-  if (deadlineTs == null) return null;
-  return Math.max(0, deadlineTs - now);
-}
-
-/**
- * A live, numeric countdown for the current turn / claim window. `compact` is the
- * small seat badge; otherwise a labelled number + draining bar. The server sends
- * the authoritative `deadlineTs`; this just renders it ticking.
- */
-export function Countdown({
-  deadlineTs,
-  // Default to the turn timer so the draining bar is scaled correctly (the shown
-  // seconds come from the server's deadlineTs regardless). Callers with a
-  // different window (e.g. the claim timer / ready grace) pass their own totalMs.
-  totalMs = DEFAULT_GAME_CONFIG.turnTimerSec * 1000,
-  compact = false,
-}: {
-  deadlineTs: number | null;
-  totalMs?: number;
-  compact?: boolean;
-}) {
-  const remMs = useRemainingMs(deadlineTs);
-  if (remMs == null) return null;
-  const secs = Math.ceil(remMs / 1000);
-  const pct = Math.max(0, Math.min(100, (remMs / totalMs) * 100));
-  const danger = secs <= 10;
-
-  if (compact) {
-    return (
-      <span
-        className={cn(
-          "num rounded-full px-1.5 py-0.5 text-[0.62rem] font-bold tabular-nums",
-          danger ? "bg-[var(--lu-ember)]/20 text-[var(--lu-ember-glow)]" : "bg-[var(--lu-gold-2)]/15 text-[var(--lu-gold-1)]",
-        )}
-      >
-        {secs}
-      </span>
-    );
-  }
-  return (
-    <div className="flex w-full max-w-[260px] flex-col items-center gap-1">
-      <span
-        className={cn(
-          "num text-sm font-bold tabular-nums",
-          danger ? "text-[var(--lu-ember-glow)]" : "text-[var(--lu-gold-1)]",
-        )}
-      >
-        ⏱ {secs} ث
-      </span>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div
-          className={cn(
-            "h-full rounded-full transition-[width] duration-200 ease-linear",
-            danger ? "bg-[var(--lu-ember)]" : "bg-linear-to-l from-[var(--lu-gold-1)] to-[var(--lu-ember)]",
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
   );
 }

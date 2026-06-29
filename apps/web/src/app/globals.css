@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Let Tailwind v4 scan the shared table-ui package (extracted seat/timer/fly
+   primitives) so their utility classes are generated for this app. */
+@source "../../../../packages/table-ui/src";
+
 /*
  * Football B — premium dark RTL theme on Tailwind v4 + shadcn tokens
  * (Section 15). The app is always dark; tokens are tuned for a modern poker

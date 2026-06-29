@@ -63,8 +63,9 @@ export type TtCardView = {
   /** Fixed rank slot 1..10 (ranks never move; a tie is just several accepted names). */
   rank: number;
   revealed: boolean;
-  /** Present only once revealed — the player actually named for this rank. */
-  player: { id: string; name: string; nameAr: string; value: number } | null;
+  /** Present only once revealed — the player actually named for this rank. `photoUrl`
+   *  lets the revealed card become the player's photo (null → initials fallback). */
+  player: { id: string; name: string; nameAr: string; value: number; photoUrl: string | null } | null;
   bySeat: number | null;
 };
 
@@ -110,7 +111,7 @@ export type TtRevealEvent = {
   rank: number;
   bySeat: number | null;
   points: number;
-  player: { id: string; name: string; nameAr: string; value: number };
+  player: { id: string; name: string; nameAr: string; value: number; photoUrl: string | null };
 };
 
 export type TtStandingRow = {

@@ -15,6 +15,9 @@ export interface CatalogPlayer {
   value: number;
   name: string;
   nameAr: string;
+  /** Player photo (football.players.photo_url) so a revealed card shows the face;
+   *  null → the client falls back to an initials tile. */
+  photoUrl: string | null;
   /** Up to 3 Arabic hint strings (nationality, club, position) for hint mode. */
   hints: string[];
 }
@@ -62,7 +65,7 @@ export class CatalogSource {
         const club = p?.playerClubs?.[0]?.club?.name;
         if (club) hints.push(`أحد أنديته: ${club}`);
         if (p?.position?.nameAr) hints.push(`المركز: ${p.position.nameAr}`);
-        return { rank: cp.rank, playerId: cp.footballPlayerId, value: cp.value, name, nameAr, hints };
+        return { rank: cp.rank, playerId: cp.footballPlayerId, value: cp.value, name, nameAr, photoUrl: p?.photoUrl ?? null, hints };
       });
       const seasonEnd = e.seasonEnd ?? e.season;
       // "2022" for a single season; "2020–2022" for a cumulative range — the title
