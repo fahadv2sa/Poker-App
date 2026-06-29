@@ -1,5 +1,12 @@
 # Top Ten — production go-live runbook (migrate-first)
 
+> **STATUS (executed against prod this session):** ✅ Step 1 — all 6 `top_10` migrations
+> applied (the schema was previously absent in prod). ✅ Step 2 — catalog built against prod:
+> **1919 entries** (EASY 640 / MED 639 / HARD 640). ✅ Step 3 — prod audit **0 violations,
+> 0 drift**. **Remaining: step 4 (deploy the server/web code) + step 5 (health check).** The
+> DB side is done; nothing reads the catalog yet because the Top Ten services aren't deployed.
+> Re-running steps 1–3 is safe/idempotent. **Rotate the exposed DB credential.**
+
 Top Ten shares the platform Postgres (schemas `football`, `link_up`, `platform`, `top_10`).
 Everything below touches **only the `top_10` schema** (additive) and **reads** `football.*`
 read-only. Follow the order exactly — **migrate the DB first, deploy code second** (the
@@ -28,9 +35,10 @@ flips the prior one `active=false`; it never deletes football data). To snapshot
 ```bash
 DATABASE_URL="$TT_PROD_URL" DIRECT_URL="$TT_PROD_URL" npx prisma migrate deploy
 ```
-This applies any pending Top Ten migrations, in order:
-`20260629130000_tt_new_stat_types` → `20260629130001_tt_season_window` →
-`20260629160000_tt_scope_club` (plus the catalog tables if not present). Verify:
+This applies all pending Top Ten migrations, in order. Prod had the whole `top_10` schema
+pending (6 migrations): `20260627190925_add_top_10_game` (creates the schema + tables +
+enums) → `…_tt_catalog_allow_cutoff_ties` → `…_tt_add_all_player_pass_types` →
+`…_tt_new_stat_types` → `…_tt_season_window` → `…_tt_scope_club`. Verify:
 ```bash
 DATABASE_URL="$TT_PROD_URL" DIRECT_URL="$TT_PROD_URL" npx prisma migrate status   # → "up to date"
 ```
