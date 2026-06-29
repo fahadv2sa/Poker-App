@@ -26,6 +26,7 @@ import "./_ensure-system-ca";
 import "dotenv/config";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import { prisma, Prisma } from "../src/index";
 import {
   buildAnswerList,
@@ -431,7 +432,35 @@ async function main() {
   }
 
   // ---- write the frozen catalog (one new generation, deactivate the previous) ----
+  // Bulk-insert via createMany in chunks (a handful of round-trips) rather than one nested
+  // create per entry (~21k sequential round-trips) — the latter overruns the transaction
+  // timeout over a remote/prod link. Client-side UUIDs let us batch entries + their players.
   const builtAt = new Date();
+  const CHUNK = 2000;
+  const entryRows = admitted.map((a) => ({
+    id: randomUUID(),
+    type: a.type,
+    scope: a.scope,
+    clubKey: a.clubKey,
+    leagueId: a.leagueId,
+    competitionName: a.competitionName,
+    season: a.season,
+    seasonEnd: a.seasonEnd,
+    difficulty: classifyDifficulty(a.fameSum, thresholds),
+    fameSum: a.fameSum,
+    active: true,
+    builtAt,
+  }));
+  const playerRows = admitted.flatMap((a, i) =>
+    a.players.map((p) => ({
+      id: randomUUID(),
+      entryId: entryRows[i]!.id,
+      rank: p.rank,
+      footballPlayerId: p.playerId,
+      value: p.value,
+      fameAtBuild: p.fame,
+    })),
+  );
   await prisma.$transaction(
     async (tx) => {
       await tx.ttCatalogEntry.updateMany({ data: { active: false }, where: { active: true } });
@@ -443,32 +472,8 @@ async function main() {
           builtAt,
         },
       });
-      for (const a of admitted) {
-        const difficulty = classifyDifficulty(a.fameSum, thresholds);
-        await tx.ttCatalogEntry.create({
-          data: {
-            type: a.type,
-            scope: a.scope,
-            clubKey: a.clubKey,
-            leagueId: a.leagueId,
-            competitionName: a.competitionName,
-            season: a.season,
-            seasonEnd: a.seasonEnd,
-            difficulty,
-            fameSum: a.fameSum,
-            active: true,
-            builtAt,
-            players: {
-              create: a.players.map((p) => ({
-                rank: p.rank,
-                footballPlayerId: p.playerId,
-                value: p.value,
-                fameAtBuild: p.fame,
-              })),
-            },
-          },
-        });
-      }
+      for (let i = 0; i < entryRows.length; i += CHUNK) await tx.ttCatalogEntry.createMany({ data: entryRows.slice(i, i + CHUNK) });
+      for (let i = 0; i < playerRows.length; i += CHUNK) await tx.ttCatalogPlayer.createMany({ data: playerRows.slice(i, i + CHUNK) });
     },
     { timeout: 120_000 },
   );
