@@ -1,0 +1,6 @@
+# Playwright visual-regression artifacts (generated locally; not committed)
+/test-results
+/playwright-report
+/e2e/__screenshots__
+/blob-report
+/.playwright
