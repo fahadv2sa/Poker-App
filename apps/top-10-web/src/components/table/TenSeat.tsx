@@ -14,13 +14,11 @@ export function TenSeat({
   seat,
   isActive,
   deadlineTs,
-  claimed,
   turnTotalMs = 30_000,
 }: {
   seat: TtSeatView;
   isActive: boolean;
   deadlineTs: number | null;
-  claimed: number;
   turnTotalMs?: number;
 }) {
   const remainingMs = useRemainingMs(isActive ? deadlineTs : null);
@@ -43,16 +41,13 @@ export function TenSeat({
             <Countdown deadlineTs={deadlineTs} totalMs={turnTotalMs} compact />
           </span>
         ) : null}
-        {claimed > 0 ? (
-          <span className="num absolute -bottom-1 -left-1 z-10 grid size-4 place-items-center rounded-full bg-[var(--gold)] text-[0.55rem] font-black text-black shadow" title="بطاقات كشفها هذه الجولة">
-            {claimed}
-          </span>
-        ) : null}
       </div>
+      {/* name */}
       <span className="max-w-full truncate text-[clamp(0.56rem,2.4vw,0.7rem)] font-bold leading-tight text-[var(--lu-cream)]">
         {seat.username}
         {seat.isBot ? " 🤖" : ""}
       </span>
+      {/* cumulative TOTAL points (across all rounds) — single figure, no breakdown, no level */}
       <span className="num inline-flex items-center gap-0.5 rounded-full bg-[var(--gold)]/10 px-1.5 text-[clamp(0.54rem,2.3vw,0.66rem)] font-bold text-[var(--gold)]">
         {seat.totalPoints}
         <span className="text-[0.8em] font-normal opacity-70">نقطة</span>

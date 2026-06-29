@@ -70,7 +70,7 @@ export default function PreviewTable() {
   }
 
   const seats: TtSeatView[] = [
-    seat(0, "أنا", "me", 31, 12, { wrongAttempts: myWrong, locked: myWrong >= 3 }),
+    seat(0, "فهد العتيبي", "me", 31, 12, { wrongAttempts: myWrong, locked: myWrong >= 3 }),
     seat(1, "خالد", "u1", 27, 9),
     seat(2, "نوّاف", "u2", 22, 5),
     seat(3, "بوت", "u3", 18, 7, { isBot: true }),
@@ -88,7 +88,7 @@ export default function PreviewTable() {
     seats,
     turnSeat: turnIsMe ? 0 : 1,
     deadlineTs,
-    hint: hintPhase === "off" ? null : { phase: hintPhase === "countdown" ? "COUNTDOWN" : "OPEN", text: "لاعب فاز بالكرة الذهبية", hintNumber: 1 },
+    hint: hintPhase === "off" ? null : { phase: hintPhase === "countdown" ? "COUNTDOWN" : "OPEN", text: "لاعب فاز بالكرة الذهبية", hintNumber: 1, rank: 7 },
     endRoundRequest: null,
   };
 
@@ -111,7 +111,15 @@ export default function PreviewTable() {
         <button onClick={() => setMyWrong((w) => (w + 1) % 4)} className="rounded bg-white/10 px-2 py-0.5">محاولة خاطئة ({myWrong}/3)</button>
       </div>
 
-      <TenTable state={state} meId="me" nickname="أنا" reveal={reveal} onPick={(id) => console.log("pick", id)} onLeave={() => console.log("leave")} />
+      <TenTable
+        state={state}
+        meId="me"
+        nickname="فهد العتيبي"
+        reveal={reveal}
+        onPick={(id) => console.log("pick", id)}
+        onLeave={() => console.log("leave")}
+        onClose={() => console.log("close")}
+      />
     </div>
   );
 }

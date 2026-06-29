@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { cn } from "@fb/top-10-ui";
 
 export type RevealDisplay = {
   /** Monotonic id — a new id (re)triggers the notice even for a repeated rank. */
@@ -15,11 +14,6 @@ export type RevealDisplay = {
   points: number;
   photoUrl: string | null;
 };
-
-function initials(name: string): string {
-  const p = name.replace(/\./g, " ").split(/\s+/).filter(Boolean);
-  return p.length ? (p[0]![0]! + (p[p.length - 1]?.[0] ?? "")).toUpperCase() : "؟";
-}
 
 /**
  * The big "someone guessed correctly" notice — center stage, fades out. Two lines as
@@ -57,38 +51,35 @@ export function TenRevealNotice({ latest }: { latest: RevealDisplay | null }) {
     <div className="pointer-events-none fixed inset-x-0 top-[28%] z-[80] flex justify-center px-4">
       <AnimatePresence mode="wait">
         {current ? (
-          <motion.div
-            key={current.id}
-            initial={{ opacity: 0, scale: 0.7, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.08, y: -8 }}
-            transition={{ type: "spring", stiffness: 280, damping: 20 }}
-            className={cn(
-              "flex max-w-[92vw] items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-2xl backdrop-blur",
-              current.rank === 10
-                ? "border-[var(--lu-gold-1)]/80 bg-[#0b0908]/90 shadow-[0_0_30px_rgba(255,179,71,0.45)]"
-                : "border-[var(--lu-gold-1)]/40 bg-[#0b0908]/88",
-            )}
-          >
-            <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--lu-gold-1)]/40 bg-[#16120c]">
-              {current.photoUrl ? (
-                <img src={current.photoUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover object-top" />
-              ) : (
-                <span className="text-sm font-black text-white/50">{initials(current.playerNameAr)}</span>
-              )}
-            </div>
-            <div className="min-w-0 text-right">
-              <div className="truncate text-[0.78rem] font-bold text-[var(--lu-ember-glow)]">
-                {current.rank === 10 ? "🏆 " : "✓ "}
-                {current.byName ? `${current.isMe ? "أنت" : current.byName} خمّن` : "كُشِف تلقائيًا"}
-              </div>
-              <div className="truncate text-lg font-black text-[var(--lu-cream)]">{current.playerNameAr}</div>
-            </div>
-            <div className="num shrink-0 rounded-xl border border-[var(--lu-gold-1)]/40 bg-[var(--gold)]/10 px-2.5 py-1 text-center">
-              <div className="text-[0.55rem] font-bold text-[var(--lu-tan)]">المركز {current.rank}</div>
-              <div className="text-base font-black leading-none text-[var(--gold)]">+{current.points}</div>
-            </div>
-          </motion.div>
+          current.rank === 10 ? (
+            // ── RANK-10 JACKPOT — a distinct, celebratory notice (confetti fires too) ──
+            <motion.div
+              key={current.id}
+              initial={{ opacity: 0, scale: 0.5, rotate: -4 }}
+              animate={{ opacity: 1, scale: [0.5, 1.12, 1], rotate: 0 }}
+              exit={{ opacity: 0, scale: 1.15 }}
+              transition={{ type: "spring", stiffness: 240, damping: 14 }}
+              className="max-w-[64vw] overflow-hidden rounded-2xl border-2 border-[var(--lu-gold-1)] bg-gradient-to-b from-[var(--lu-gold-2)]/40 to-[#0b0908]/95 px-5 py-3 text-center shadow-[0_0_40px_rgba(255,179,71,0.6)] backdrop-blur"
+            >
+              <div className="text-2xl">🏆</div>
+              <div className="lu-gold-text lu-gold-title text-lg font-black leading-tight">المركز العاشر!</div>
+              {current.byName ? <div className="mt-0.5 truncate text-sm font-bold text-[var(--lu-ember-glow)]">{current.byName}</div> : null}
+              <div className="truncate text-xl font-black text-[var(--lu-cream)]">{current.playerNameAr}</div>
+            </motion.div>
+          ) : (
+            // ── normal reveal — compact, kept narrow so it never touches the cards ──
+            <motion.div
+              key={current.id}
+              initial={{ opacity: 0, scale: 0.7, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.08, y: -8 }}
+              transition={{ type: "spring", stiffness: 280, damping: 20 }}
+              className="max-w-[52vw] rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/92 px-4 py-2.5 text-center shadow-2xl backdrop-blur"
+            >
+              {current.byName ? <div className="truncate text-sm font-bold text-[var(--lu-ember-glow)]">{current.byName}</div> : null}
+              <div className="truncate text-xl font-black text-[var(--lu-cream)]">{current.playerNameAr}</div>
+            </motion.div>
+          )
         ) : null}
       </AnimatePresence>
     </div>

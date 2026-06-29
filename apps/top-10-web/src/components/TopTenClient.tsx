@@ -10,7 +10,9 @@ import {
   type TtStateView,
 } from "@fb/shared";
 import { connectTopTen, type TtConnection } from "@/lib/socket";
-import { PlayerSearch } from "./PlayerSearch";
+import { TenTable } from "./table/TenTable";
+import { ttSound } from "@/lib/sound";
+import type { TtRevealEvent } from "@fb/shared";
 
 const DIFF_AR: Record<TtDifficulty, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
 
@@ -38,6 +40,8 @@ export function TopTenClient({
   const [endStandings, setEndStandings] = useState<TtStandingRow[] | null>(null);
   const [roundBanner, setRoundBanner] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<{ event: TtRevealEvent; id: number } | null>(null);
+  const revealSeq = useRef(0);
 
   useEffect(() => {
     const conn = connectTopTen(token, {
@@ -54,6 +58,7 @@ export function TopTenClient({
       },
       onQueueState: (q) => setQueue({ waiting: q.waiting, needed: q.needed, countdownSec: q.countdownSec }),
       onQueueMatched: () => setView("match"),
+      onReveal: (r) => setReveal({ event: r, id: ++revealSeq.current }),
       onRoundEnded: (r) => {
         setRoundBanner(`انتهت الجولة ${r.roundNo} — ${reasonAr(r.reason)}`);
         setTimeout(() => setRoundBanner(null), 4000);
@@ -118,6 +123,7 @@ export function TopTenClient({
           me={me}
           endStandings={endStandings}
           roundBanner={roundBanner}
+          reveal={reveal}
           conn={conn}
           onLeave={backToLobby}
         />
@@ -249,35 +255,20 @@ function QueueView({
 
 // ---------------------------------------------------------------- Match
 
-/**
- * Self-contained countdown. Ticks ONLY this <span> every 500ms, so the per-second
- * timer never re-renders the whole match view (cards / search / seats / buttons) —
- * that was the input-lag source. The rest of the tree re-renders only on real
- * socket state changes.
- */
-function Countdown({ deadlineTs, className }: { deadlineTs: number | null; className?: string }) {
-  const [, tick] = useState(0);
-  useEffect(() => {
-    if (deadlineTs == null) return;
-    const id = setInterval(() => tick((n) => n + 1), 500);
-    return () => clearInterval(id);
-  }, [deadlineTs]);
-  const s = deadlineTs == null ? 0 : Math.max(0, Math.ceil((deadlineTs - Date.now()) / 1000));
-  return <span className={className}>{s}</span>;
-}
-
 function MatchView({
   state,
   me,
   endStandings,
   roundBanner,
+  reveal,
   conn,
   onLeave,
 }: {
   state: TtStateView;
-  me: { userId: string };
+  me: { userId: string; username: string };
   endStandings: TtStandingRow[] | null;
   roundBanner: string | null;
+  reveal: { event: TtRevealEvent; id: number } | null;
   conn: () => TtConnection | null;
   onLeave: () => void;
 }) {
@@ -314,96 +305,27 @@ function MatchView({
     );
   }
 
-  // IN_PROGRESS
-  const myTurn = state.mode === "NORMAL" && state.turnSeat === mySeat?.seat;
-  const hintOpen = state.mode === "HINT" && state.hint?.phase === "OPEN";
-  const canGuess = (myTurn || (hintOpen && !mySeat?.locked)) && mySeat?.status === "ACTIVE";
-
+  // IN_PROGRESS — the immersive felt table (full-screen overlay). Reuses <TenTable>
+  // verbatim with live socket state; the roundBanner toast rides above it.
   return (
-    <div className="flex flex-col gap-4 fade-rise">
-      <Panel className="panel-accent">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-[var(--lu-tan)]">
-            الجولة <span className="num">{state.roundNo}</span>/<span className="num">{state.roundsTotal}</span> · {DIFF_AR[state.difficulty]}
-          </span>
-          <span className="num rounded-full bg-black/50 px-3 py-1 text-lg font-bold text-[var(--gold)]">
-            <Countdown deadlineTs={state.deadlineTs} />s
-          </span>
-        </div>
-        <h2 className="mt-2 text-lg font-extrabold lu-gold-text">{state.question?.titleAr}</h2>
-      </Panel>
-
-      {state.mode === "HINT" && (
-        <Panel className="border border-[var(--gold)]/40 text-center">
-          <p className="text-sm text-[var(--lu-tan)]">وضع التلميح — الأسرع يفوز</p>
-          <p className="mt-1 text-lg font-bold text-[var(--lu-cream)]">
-            {state.hint?.phase === "COUNTDOWN" ? (
-              <>
-                يبدأ بعد <Countdown deadlineTs={state.deadlineTs} />…
-              </>
-            ) : (
-              state.hint?.text ?? "—"
-            )}
-          </p>
-        </Panel>
-      )}
-
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {state.cards.map((c) => (
-          <div
-            key={c.rank}
-            className={cn(
-              "flex items-center gap-3 rounded-xl border px-3 py-2 transition-colors",
-              // Lightweight styling: a gold-tinted surface when revealed, a plain
-              // dark slot when hidden. Ranks are fixed (1..10) and never move.
-              c.revealed
-                ? "border-[var(--gold)]/45 bg-[color-mix(in_oklch,var(--gold)_10%,black)]"
-                : "border-[var(--border)] bg-black/30",
-            )}
-          >
-            <span className="num grid h-9 w-9 shrink-0 place-items-center rounded-lg lu-chip font-bold text-[var(--gold)]">
-              {c.rank}
-            </span>
-            {c.revealed && c.player ? (
-              <div className="flex w-full items-center justify-between">
-                <span className="font-semibold text-[var(--lu-cream)]">{c.player.nameAr}</span>
-                <span className="num text-sm text-[var(--lu-tan)]">{c.player.value}</span>
-              </div>
-            ) : (
-              <span className="text-[var(--lu-tan)]">— مخفي —</span>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <PlayerSearch disabled={!canGuess} onPick={onPick} />
-
-      <SeatList seats={state.seats} turnSeat={state.turnSeat} meId={me.userId} />
-
-      <div className="flex gap-2">
-        {state.endRoundRequest ? (
-          <>
-            <GoldButton onClick={() => conn()?.voteEndRound(true)}>موافقة على إنهاء الجولة</GoldButton>
-            <GoldButton variant="ghost" onClick={() => conn()?.voteEndRound(false)}>
-              رفض
-            </GoldButton>
-          </>
-        ) : (
-          <GoldButton variant="ghost" onClick={() => conn()?.requestEndRound()}>
-            طلب إنهاء الجولة
-          </GoldButton>
-        )}
-        <GoldButton variant="danger" onClick={onLeave}>
-          انسحاب
-        </GoldButton>
-      </div>
-
-      {roundBanner && (
-        <div className="fixed inset-x-0 top-6 z-40 mx-auto w-fit rounded-full bg-black/85 px-6 py-2 font-bold text-[var(--gold)] shadow-lg">
+    <>
+      <TenTable
+        state={state}
+        meId={me.userId}
+        nickname={mySeat?.username ?? me.username}
+        reveal={reveal}
+        onPick={onPick}
+        onLeave={onLeave}
+        onClose={state.createdByUserId === me.userId ? () => conn()?.close() : undefined}
+        onRequestEndRound={() => conn()?.requestEndRound()}
+        onVoteEndRound={(a) => conn()?.voteEndRound(a)}
+      />
+      {roundBanner ? (
+        <div className="fixed inset-x-0 top-12 z-[90] mx-auto w-fit rounded-full bg-black/85 px-6 py-2 font-bold text-[var(--gold)] shadow-lg">
           {roundBanner}
         </div>
-      )}
-    </div>
+      ) : null}
+    </>
   );
 }
 
@@ -437,6 +359,9 @@ function SeatList({ seats, turnSeat, meId }: { seats: TtStateView["seats"]; turn
 }
 
 function MatchOver({ standings, abandoned, onLeave }: { standings: TtStandingRow[]; abandoned: boolean; onLeave: () => void }) {
+  useEffect(() => {
+    if (!abandoned) ttSound.play("win");
+  }, [abandoned]);
   return (
     <Panel className="flex flex-col items-center gap-4 py-8 text-center fade-rise">
       <GoldTitle className="text-3xl">{abandoned ? "انتهت المباراة" : "النتيجة النهائية"}</GoldTitle>
