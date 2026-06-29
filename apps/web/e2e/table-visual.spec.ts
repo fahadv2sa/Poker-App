@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Mobile-sizing + visual regression for the Top Ten live table. For each phone size it
- * asserts the page neither scrolls nor overflows (the height-driven grid must always fit),
- * confirms the felt actually rendered (not an unstyled/error page), and saves a screenshot
- * for visual review/diffing. Addresses the "verify across the phone matrix, not HTTP status"
- * gap from the pre-launch audit.
+ * Mobile-sizing + visual regression for the Top Ten live table (served at
+ * /games/top-10 inside the shared web service). For each phone size it asserts the
+ * page neither scrolls nor overflows (the height-driven grid must always fit),
+ * confirms the felt rendered (not an unstyled/error page), and saves a screenshot.
  */
 const SIZES = [
   { w: 320, h: 568, n: "320x568-se1" },
@@ -16,15 +15,13 @@ const SIZES = [
 ];
 
 for (const s of SIZES) {
-  test(`/preview/table fits ${s.n} with no scroll/overflow`, async ({ page }) => {
+  test(`/games/top-10/preview/table fits ${s.n} with no scroll/overflow`, async ({ page }) => {
     await page.setViewportSize({ width: s.w, height: s.h });
     // NOTE: not "networkidle" — Next's dev HMR socket stays open so it never settles.
-    await page.goto("/preview/table", { waitUntil: "domcontentloaded" });
+    await page.goto("/games/top-10/preview/table", { waitUntil: "domcontentloaded" });
 
-    // the felt rendered (styling applied, not an error/unstyled page)
     await expect(page.locator(".lu-felt")).toBeVisible({ timeout: 20000 });
 
-    // no vertical or horizontal overflow (≤ viewport, 1px tolerance)
     const m = await page.evaluate(() => ({
       sh: document.documentElement.scrollHeight,
       ih: window.innerHeight,

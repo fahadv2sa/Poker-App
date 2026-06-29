@@ -1,9 +1,15 @@
-# Railway deployment — Link Up monorepo (pnpm workspaces + Turborepo).
+# Railway deployment — Football-B platform monorepo (pnpm workspaces + Turborepo).
 #
-# Architecture — all from this one GitHub repo:
-#   Service "link-up"             → apps/web         (Next.js)    →  poker.fmgtech.dev
-#   Service "game-server-link-up" → apps/game-server (Socket.IO)  →  poker-rt.fmgtech.dev
-#   Plugin  "Postgres"            → Railway PostgreSQL
+# ARCHITECTURE (one GitHub repo) — ONE shared web service serves ALL game UIs on ONE
+# domain; each game's realtime backend is its OWN service:
+#   Service "link-up"             → apps/web          (Next.js)   →  game1.fmgtech.dev
+#       Hosts the platform hub + Link Up (/games/link-up) + Top Ten (/games/top-10).
+#   Service "game-server-link-up" → apps/game-server  (Socket.IO) →  Link Up realtime
+#   Service "game-server-top-10"  → apps/top-10-server(Socket.IO) →  Top Ten realtime
+#   Plugin  "Postgres"            → Railway PostgreSQL (shared; Top Ten owns `top_10`)
+#
+# NOTE: Top Ten's WEB UI is NOT a separate service — it lives inside apps/web at
+# /games/top-10 (shared web service, one domain). Only its game-server is separate.
 #
 # SERVICE NAMES (renamed 2026-06-24): the Railway service LABELS are now "link-up"
 # (= apps/web) and "game-server-link-up" (= apps/game-server); project "Football-B";
@@ -19,49 +25,57 @@
 # service whose "Config File Path" points at this file.
 #
 # ─────────────────────────────────────────────────────────────────────────────
-# Service: link-up  (apps/web)
+# Service: link-up  (apps/web)  →  game1.fmgtech.dev  — the ONE shared web service
+#   Serves the hub + Link Up (/games/link-up) + Top Ten (/games/top-10).
 #   Root Directory : (repo root)
 #   Build Command  : pnpm --filter @fb/web build
 #   Start Command  : pnpm --filter @fb/web start
 #   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, AUTH_URL,
-#                    NEXT_PUBLIC_GAME_SERVER_URL
-#                    (NEXT_PUBLIC_* is baked in at BUILD time — set it before building)
+#                    NEXT_PUBLIC_GAME_SERVER_URL   (Link Up realtime),
+#                    NEXT_PUBLIC_TOP10_SERVER_URL  (Top Ten realtime)
+#                    (NEXT_PUBLIC_* are baked at BUILD time — set them before building)
 #   Replicas       : 1+  (stateless — safe to scale horizontally)
 #
-# Service: game-server-link-up  (apps/game-server)
+# Service: game-server-link-up  (apps/game-server)  —  Link Up realtime
 #   Root Directory : (repo root)
 #   Build Command  : (none — tsx runs TypeScript source; install + postinstall suffices)
 #   Start Command  : pnpm --filter @fb/game-server start      # → tsx src/index.ts
-#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET, WEB_ORIGIN (= game1 web URL)
 #                    (PORT is injected by Railway — do not set it)
 #   Replicas       : EXACTLY 1  (authoritative in-memory room state + timers — never scale)
-# ─────────────────────────────────────────────────────────────────────────────
 #
-# ── TOP TEN (game #2 — توب 10) — TWO ADDITIONAL, INDEPENDENT services ──────────
-# Same repo, same shared Postgres (identity + football shared; Top Ten owns the
-# `top_10` schema). Fully separate from Link Up at runtime. The shared [deploy]
-# preDeployCommand below (prisma migrate deploy) is idempotent and applies to these
-# too, so the additive top_10 migration ships migrate-first like everything else.
-# NOTE: before first deploy, build the question catalog once against prod:
-#   NODE_OPTIONS=--use-system-ca DATABASE_URL=<prod> pnpm db:build-top10-catalog
-#
-# Service: top-10  (apps/top-10-web — Next.js)
-#   Root Directory : (repo root)
-#   Build Command  : pnpm --filter @fb/top-10-web build
-#   Start Command  : pnpm --filter @fb/top-10-web start    # next start -p $PORT
-#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET (== Link Up's), AUTH_URL,
-#                    NEXT_PUBLIC_TOP10_SERVER_URL  (baked at build — set before build)
-#   Replicas       : 1+  (stateless)
-#   Also set on the HUB (link-up web): NEXT_PUBLIC_TOP10_WEB_URL = this service's URL
-#
-# Service: game-server-top-10  (apps/top-10-server — Socket.IO)
+# Service: game-server-top-10  (apps/top-10-server)  —  Top Ten realtime
+#   Same repo, same shared Postgres (Top Ten owns the `top_10` schema). Build the
+#   question catalog once against prod before first deploy (done; see docs/top-10/DEPLOY.md).
 #   Root Directory : (repo root)
 #   Build Command  : (none — tsx runs TypeScript source)
 #   Start Command  : pnpm --filter @fb/top-10-server start  # → tsx src/index.ts
 #   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET (== Link Up's),
-#                    WEB_ORIGIN (= the top-10 web URL), BOTS_ENABLED (optional)
+#                    WEB_ORIGIN (= game1 web URL, for CORS), BOTS_ENABLED (optional)
 #                    (PORT injected by Railway — do not set it)
 #   Replicas       : EXACTLY 1  (authoritative in-memory match state + timers)
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# ── PER-SERVICE DEPLOYS (no project-wide redeploy) ─────────────────────────────
+# All services share Root Directory = repo root + one deploy branch, so WITHOUT a
+# path filter every push rebuilds every service. Set per-service **Watch Paths**
+# (Dashboard → service → Settings → Build → Watch Paths) so each rebuilds only on its
+# own code (+ the shared packages it depends on). Repo-root-relative globs:
+#
+#   link-up (apps/web — both game UIs):
+#     apps/web/**, packages/admin-core/**, packages/db/**, packages/shared/**,
+#     packages/table-ui/**, packages/top-10-engine/**, packages/top-10-ui/**,
+#     package.json, pnpm-lock.yaml, pnpm-workspace.yaml, turbo.json, tsconfig.base.json, railway.toml
+#   game-server-link-up (apps/game-server):
+#     apps/game-server/**, packages/engine/**, packages/db/**, packages/shared/**, + the root files above
+#   game-server-top-10 (apps/top-10-server):
+#     apps/top-10-server/**, packages/top-10-engine/**, packages/db/**, packages/shared/**, + the root files above
+#
+# Result: a Top-Ten realtime change (apps/top-10-server/**, packages/top-10-engine/**)
+# never redeploys Link Up. A Top-Ten WEB change (apps/web/games/top-10) DOES redeploy
+# the shared web service (so Link Up's web redeploys too — same service, stateless;
+# Link Up gameplay = the separate game-server, untouched). Genuinely shared changes
+# (packages/shared, packages/db) correctly redeploy their dependents.
 # ─────────────────────────────────────────────────────────────────────────────
 
 [build]
