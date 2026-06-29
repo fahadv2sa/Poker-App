@@ -1,74 +1,118 @@
 "use client";
 
-import { Countdown, FlyProvider, SeatAvatar, CONFETTI } from "@fb/table-ui";
+import { useState } from "react";
+import type { TtCardView, TtSeatView, TtStateView } from "@fb/shared";
+import { TenTable } from "@/components/table/TenTable";
 
 /**
- * PREVIEW ONLY — Phase-0 scaffold for the Top Ten live table. It validates the shared
- * pipeline end-to-end: the felt + pitch-line surface (`.lu-felt` from @fb/table-ui,
- * assets in /public), the extracted primitives (SeatAvatar, Countdown), confetti, and
- * the FlyProvider mount. Mock data, no auth, no socket. P1 replaces this body with the
- * real playable skeleton (10-card grid, opponent arc, search dock, your HUD).
- * NOT linked anywhere; throwaway visual harness.
+ * PREVIEW ONLY — P1 playable skeleton of the Top Ten live table (visual; mock state,
+ * no socket/auth). Use the control strip to vary how many cards are revealed and whose
+ * turn it is, and to sanity-check the layout on different phone sizes (DevTools device
+ * toolbar). The real table reuses <TenTable> verbatim with live socket state in P3.
+ * Throwaway harness; not linked anywhere.
  */
+
+const NAMES: { name: string; nameAr: string }[] = [
+  { name: "L. Messi", nameAr: "ليونيل ميسي" },
+  { name: "K. Benzema", nameAr: "كريم بنزيما" },
+  { name: "L. Suárez", nameAr: "لويس سواريز" },
+  { name: "Gerard Moreno", nameAr: "جيرارد مورينو" },
+  { name: "A. Griezmann", nameAr: "أنطوان جريزمان" },
+  { name: "Iago Aspas", nameAr: "ياغو أسباس" },
+  { name: "C. Stuani", nameAr: "كريستيان ستواني" },
+  { name: "Y. En-Nesyri", nameAr: "يوسف النصيري" },
+  { name: "G. Moreno", nameAr: "خيرارد مورينو" },
+  { name: "R. de Tomás", nameAr: "راؤول دي توماس" },
+];
+const VALUES = [24, 22, 19, 18, 16, 14, 13, 11, 10, 8];
+
+function seat(i: number, username: string, userId: string, totalPoints: number, roundPoints: number, isBot = false): TtSeatView {
+  return {
+    seat: i,
+    userId,
+    username,
+    playerNumber: 9000 + i,
+    isBot,
+    connected: true,
+    totalPoints,
+    roundPoints,
+    status: "ACTIVE",
+    wrongAttempts: 0,
+    locked: false,
+  };
+}
+
+function makeCards(revealedCount: number, seatsForReveal: number[]): TtCardView[] {
+  return Array.from({ length: 10 }, (_, idx) => {
+    const rank = idx + 1;
+    const revealed = idx < revealedCount;
+    return {
+      rank,
+      revealed,
+      player: revealed
+        ? { id: `p${rank}`, name: NAMES[idx]!.name, nameAr: NAMES[idx]!.nameAr, value: VALUES[idx]!, photoUrl: null }
+        : null,
+      bySeat: revealed ? seatsForReveal[idx % seatsForReveal.length]! : null,
+    };
+  });
+}
+
 export default function PreviewTable() {
-  const deadline = Date.now() + 22_000;
+  const [revealedCount, setRevealedCount] = useState(4);
+  const [turnIsMe, setTurnIsMe] = useState(true);
+  const [hint, setHint] = useState(false);
+
+  const seats: TtSeatView[] = [
+    seat(0, "أنا", "me", 31, 12),
+    seat(1, "خالد", "u1", 27, 9),
+    seat(2, "نوّاف", "u2", 22, 5),
+    seat(3, "بوت", "u3", 18, 7, true),
+  ];
+
+  const state: TtStateView = {
+    matchId: "preview",
+    kind: "QUICK_PLAY",
+    inviteCode: null,
+    status: "IN_PROGRESS",
+    difficulty: "MEDIUM",
+    createdByUserId: "me",
+    roundTimerSec: 600,
+    roundNo: 2,
+    roundsTotal: 3,
+    mode: hint ? "HINT" : "NORMAL",
+    question: {
+      type: "GOAL_SCORERS",
+      titleAr: "أكثر اللاعبين تسجيلاً للأهداف — الدوري الإسباني 2020",
+      competitionAr: "الدوري الإسباني",
+      season: 2020,
+    },
+    cards: makeCards(revealedCount, [0, 1, 2, 3]),
+    seats,
+    turnSeat: turnIsMe ? 0 : 1,
+    deadlineTs: Date.now() + 22_000,
+    hint: hint ? { phase: "OPEN", text: "لاعب فاز بالكرة الذهبية", hintNumber: 1 } : null,
+    endRoundRequest: null,
+  };
+
   return (
-    <FlyProvider>
-      <main
-        className="mx-auto flex h-[100dvh] max-w-md flex-col gap-3 overflow-hidden bg-[var(--lu-abyss)] px-3 py-3"
-        style={{ paddingTop: "max(0.6rem, env(safe-area-inset-top))", paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
-      >
-        <div className="text-center text-xs tracking-[0.2em] text-[var(--lu-tan)]">
-          PREVIEW · Phase 0 — shared table pipeline
-        </div>
+    <div className="relative">
+      {/* dev control strip */}
+      <div className="fixed inset-x-0 top-0 z-[200] flex flex-wrap items-center justify-center gap-1.5 bg-black/70 px-2 py-1 text-[0.7rem] text-white/80 backdrop-blur">
+        <span className="opacity-70">PREVIEW P1:</span>
+        {[0, 4, 7, 10].map((n) => (
+          <button key={n} onClick={() => setRevealedCount(n)} className={`rounded px-2 py-0.5 ${revealedCount === n ? "bg-[var(--gold)] text-black" : "bg-white/10"}`}>
+            كشف {n}
+          </button>
+        ))}
+        <button onClick={() => setTurnIsMe((v) => !v)} className="rounded bg-white/10 px-2 py-0.5">
+          {turnIsMe ? "دوري" : "دور الخصم"}
+        </button>
+        <button onClick={() => setHint((v) => !v)} className={`rounded px-2 py-0.5 ${hint ? "bg-[var(--lu-ember)] text-black" : "bg-white/10"}`}>
+          تلميح (حدود حمراء)
+        </button>
+      </div>
 
-        {/* opponent arc placeholder (shared SeatAvatar + Countdown) */}
-        <div className="-mb-4 flex justify-center gap-3">
-          {[
-            { n: 9001, s: "لاعب ١" },
-            { n: 9002, s: "لاعب ٢" },
-            { n: 9003, s: "لاعب ٣" },
-          ].map((p) => (
-            <div key={p.n} className="flex flex-col items-center gap-1">
-              <SeatAvatar playerNumber={p.n} seed={p.s} sizeClass="size-10" className="ring-1 ring-[var(--lu-gold-1)]/30" />
-              <span className="text-[0.6rem] text-[var(--lu-cream)]/80">{p.s}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* the felt: stone surface + gold pitch lines + breathing ball glow */}
-        <section
-          className="lu-felt relative flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden rounded-[32px] border border-[var(--lu-gold-1)]/20 px-4 py-6"
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 size-48 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full opacity-80"
-          >
-            <img src="/table-ball.png" alt="" className="size-full object-cover" />
-          </span>
-          <div className="relative z-10 text-center">
-            <div className="lu-gold-text lu-gold-title text-lg font-black">أكثر اللاعبين تسجيلاً للأهداف</div>
-            <div className="text-xs text-[var(--lu-tan)]">برشلونة في الدوري الإسباني · 2020</div>
-          </div>
-          <div className="relative z-10">
-            <Countdown deadlineTs={deadline} totalMs={30_000} />
-          </div>
-          <p className="relative z-10 text-center text-xs text-[var(--lu-cream)]/60">
-            (felt + pitch lines + shared timer render → pipeline OK. P1 builds the 10-card grid here.)
-          </p>
-        </section>
-
-        {/* confetti sanity (decorative; hidden under reduced-motion via table.css) */}
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-0 overflow-hidden">
-          {CONFETTI.slice(0, 8).map((c, i) => (
-            <span
-              key={i}
-              className="confetti-pc"
-              style={{ left: `${c.left}%`, background: c.color, animationDelay: `${c.delay}s`, animationDuration: `${c.duration}s` }}
-            />
-          ))}
-        </div>
-      </main>
-    </FlyProvider>
+      <TenTable state={state} meId="me" nickname="أنا" onPick={(id) => console.log("pick", id)} onLeave={() => console.log("leave")} />
+    </div>
   );
 }

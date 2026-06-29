@@ -13,7 +13,18 @@ interface Found {
  * last name) → a live-filtered list of REAL players → select one. No free-text
  * submission, so typos can't happen. The selected id is sent to the server.
  */
-function PlayerSearchInner({ disabled, onPick }: { disabled: boolean; onPick: (playerId: string) => void }) {
+function PlayerSearchInner({
+  disabled,
+  onPick,
+  openUp = false,
+  placeholder,
+}: {
+  disabled: boolean;
+  onPick: (playerId: string) => void;
+  /** Float the results list ABOVE the input (for a bottom-docked search bar). */
+  openUp?: boolean;
+  placeholder?: string;
+}) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Found[]>([]);
   const [open, setOpen] = useState(false);
@@ -53,11 +64,11 @@ function PlayerSearchInner({ disabled, onPick }: { disabled: boolean; onPick: (p
         value={q}
         disabled={disabled}
         onChange={(e) => setQ(e.target.value)}
-        placeholder={disabled ? "ليس دورك الآن…" : "اكتب اسم اللاعب…"}
+        placeholder={placeholder ?? (disabled ? "ليس دورك الآن…" : "اكتب اسم اللاعب…")}
         className="w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-lg text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
       />
       {open && results.length > 0 && !disabled && (
-        <ul className="lu-frame absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl p-1">
+        <ul className={`lu-frame absolute z-20 max-h-72 w-full overflow-auto rounded-xl p-1 ${openUp ? "bottom-full mb-1" : "mt-1"}`}>
           {results.map((p) => (
             <li key={p.id}>
               <button
