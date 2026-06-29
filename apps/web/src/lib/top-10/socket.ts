@@ -27,9 +27,17 @@ export interface TtHandlers {
   onAuthExpired?: () => void;
 }
 
+export interface TtCreateOptions {
+  difficulty: TtDifficulty;
+  roundTimerSec?: number;
+  isPrivate?: boolean;
+  roomName?: string;
+  maxPlayers?: number;
+}
+
 export interface TtConnection {
   socket: Socket;
-  create: (difficulty: TtDifficulty, roundTimerSec?: number, isPrivate?: boolean) => void;
+  create: (opts: TtCreateOptions) => void;
   join: (inviteCode: string) => void;
   start: () => void;
   guess: (playerId: string) => void;
@@ -67,8 +75,7 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
 
   return {
     socket,
-    create: (difficulty, roundTimerSec, isPrivate) =>
-      socket.emit(TT_CLIENT_EVENTS.create, { difficulty, roundTimerSec, isPrivate }),
+    create: (opts) => socket.emit(TT_CLIENT_EVENTS.create, opts),
     join: (inviteCode) => socket.emit(TT_CLIENT_EVENTS.join, { inviteCode }),
     start: () => socket.emit(TT_CLIENT_EVENTS.start, {}),
     guess: (playerId) => socket.emit(TT_CLIENT_EVENTS.guess, { playerId }),

@@ -81,7 +81,7 @@ export default function PreviewTable() {
   const deadlineTs = hintPhase === "countdown" ? Date.now() + 10_000 : Date.now() + 22_000;
 
   const state: TtStateView = {
-    matchId: "preview", kind: "QUICK_PLAY", inviteCode: null, status: "IN_PROGRESS",
+    matchId: "preview", kind: "QUICK_PLAY", inviteCode: null, roomName: null, maxPlayers: 4, status: "IN_PROGRESS",
     difficulty: "MEDIUM", createdByUserId: "me", roundTimerSec: 600, roundNo: 2, roundsTotal: 3,
     mode,
     question: { type: "GOAL_SCORERS", titleAr: "أكثر اللاعبين تسجيلاً للأهداف — الدوري الإسباني 2020", competitionAr: "الدوري الإسباني", season: 2020 },

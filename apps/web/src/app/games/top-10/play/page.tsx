@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { TT_DIFFICULTIES, type TtDifficulty } from "@fb/shared";
+import { TT_DIFFICULTIES, TT_MAX_PLAYERS, TT_MIN_PLAYERS, type TtDifficulty } from "@fb/shared";
 import { auth } from "@/auth";
 import { signRealtimeToken } from "@/lib/top-10/realtime-token";
 import { TopTenClient } from "@/components/top-10/TopTenClient";
@@ -14,7 +14,15 @@ export const dynamic = "force-dynamic";
 export default async function PlayPage({
   searchParams,
 }: {
-  searchParams: Promise<{ join?: string; create?: string; difficulty?: string; minutes?: string; private?: string }>;
+  searchParams: Promise<{
+    join?: string;
+    create?: string;
+    difficulty?: string;
+    minutes?: string;
+    private?: string;
+    name?: string;
+    max?: string;
+  }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -32,7 +40,9 @@ export default async function PlayPage({
     : "MEDIUM";
   const minutes = Math.min(30, Math.max(1, Number(sp.minutes) || 10));
   const isPrivate = sp.private === "1";
-  const autoCreate = sp.create === "1" ? { difficulty, minutes, isPrivate } : null;
+  const roomName = sp.name?.trim().slice(0, 40) || undefined;
+  const maxPlayers = Math.min(TT_MAX_PLAYERS, Math.max(TT_MIN_PLAYERS, Number(sp.max) || TT_MAX_PLAYERS));
+  const autoCreate = sp.create === "1" ? { difficulty, minutes, isPrivate, roomName, maxPlayers } : null;
 
   return (
     <TopTenClient

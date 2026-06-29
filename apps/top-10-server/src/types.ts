@@ -46,6 +46,10 @@ export interface MatchRoom {
   roundTimerSec: number;
   roundsTotal: number;
   inviteCode: string | null;
+  /** Optional display name (manual rooms); null for quick play. */
+  roomName: string | null;
+  /** Seat cap for this room (manual rooms set it; quick play uses the max). */
+  maxPlayers: number;
   /** Private manual rooms are never listed — joinable only by invite link/code. */
   isPrivate: boolean;
   createdByUserId: string;

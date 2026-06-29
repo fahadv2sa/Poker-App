@@ -1,17 +1,22 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { cn } from "@fb/top-10-ui";
 import { type TtDifficulty } from "@fb/shared";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-// Mirrors Link Up's create-form option styling (optionCls) + btn-gold-cta button.
+// Mirrors Link Up's create-form (look + inputs): room name, difficulty, room type,
+// max players — plus Top Ten's own round-duration knob. Instead of a REST POST it
+// deep-links into /play?create=1, where the socket creates the room and opens its lobby.
 const DIFFICULTY_OPTIONS: ReadonlyArray<{ value: TtDifficulty; label: string; desc: string }> = [
   { value: "EASY", label: "سهل", desc: "لاعبون مشهورون" },
   { value: "MEDIUM", label: "متوسط", desc: "تحدٍّ متوازن" },
   { value: "HARD", label: "صعب", desc: "أسماء نادرة" },
 ];
 
-// Mirrors Link Up's room-type toggle (نوع الغرفة) verbatim — same copy + styling.
 const ROOM_TYPE_OPTIONS: ReadonlyArray<{ value: boolean; label: string; desc: string }> = [
   { value: false, label: "غرفة عامة", desc: "تظهر في قائمة الغرف ويمكن لأي لاعب الدخول" },
   { value: true, label: "غرفة خاصة", desc: "لا تظهر في القائمة — تُدخَل عبر رابط الدعوة أو الكود فقط" },
@@ -25,26 +30,41 @@ const optionCls = (active: boolean) =>
       : "border-white/10 bg-black/20 hover:border-white/25",
   );
 
-const labelCls = "flex items-center gap-2 text-sm leading-none font-medium text-[var(--lu-cream)]";
-const inputCls =
-  "h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none num text-[var(--lu-cream)] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm";
-
+/** Create-room form. Deep-links into the play surface, which creates the room
+ *  over the socket and opens its lobby (invite card + share). */
 export function CreateRoomForm() {
   const router = useRouter();
-  const [difficulty, setDifficulty] = useState<TtDifficulty>("MEDIUM");
+  const [pending, setPending] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [minutes, setMinutes] = useState(10);
+  const [difficulty, setDifficulty] = useState<TtDifficulty>("MEDIUM");
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    const form = new FormData(e.currentTarget);
+    const roomName = String(form.get("roomName") ?? "").trim();
+    const maxPlayers = Number(form.get("maxPlayers") ?? 4);
+    const minutes = Number(form.get("minutes") ?? 10);
+    const qs = new URLSearchParams({
+      create: "1",
+      difficulty,
+      minutes: String(minutes),
+      private: isPrivate ? "1" : "0",
+      max: String(maxPlayers),
+    });
+    if (roomName) qs.set("name", roomName);
+    router.push(`/games/top-10/play?${qs.toString()}`);
+  }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        router.push(`/games/top-10/play?create=1&difficulty=${difficulty}&minutes=${minutes}&private=${isPrivate ? 1 : 0}`);
-      }}
-      className="flex flex-col gap-4"
-    >
+    <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <span className={labelCls}>مستوى الصعوبة</span>
+        <Label htmlFor="roomName" className="text-[var(--lu-cream)]">اسم الغرفة</Label>
+        <Input id="roomName" name="roomName" placeholder="طاولة الأبطال" maxLength={40} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label className="text-[var(--lu-cream)]">مستوى الصعوبة</Label>
         <div className="grid grid-cols-3 gap-2">
           {DIFFICULTY_OPTIONS.map((o) => {
             const active = difficulty === o.value;
@@ -59,7 +79,7 @@ export function CreateRoomForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className={labelCls}>نوع الغرفة</span>
+        <Label className="text-[var(--lu-cream)]">نوع الغرفة</Label>
         <div className="grid grid-cols-2 gap-2">
           {ROOM_TYPE_OPTIONS.map((o) => {
             const active = isPrivate === o.value;
@@ -74,24 +94,20 @@ export function CreateRoomForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="minutes" className={labelCls}>
-          مدة الجولة (دقائق)
-        </label>
-        <input
-          id="minutes"
-          type="number"
-          min={1}
-          max={30}
-          value={minutes}
-          onChange={(e) => setMinutes(Number(e.target.value))}
-          className={inputCls}
-        />
-        <span className="text-[0.7rem] text-[var(--lu-tan)]">٣ جولات لكل مباراة · حتى ٤ لاعبين · بدون بوتات.</span>
+        <Label htmlFor="maxPlayers" className="text-[var(--lu-cream)]">أقصى عدد لاعبين</Label>
+        <Input id="maxPlayers" name="maxPlayers" type="number" min={2} max={4} defaultValue={4} className="num" />
+        <span className="text-[0.7rem] text-[var(--lu-tan)]">من ٢ إلى ٤ لاعبين · بدون بوتات.</span>
       </div>
 
-      <button type="submit" className="btn-gold-cta inline-flex h-10 w-full items-center justify-center rounded-md px-6 text-sm font-bold text-black">
-        إنشاء وفتح الغرفة
-      </button>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="minutes" className="text-[var(--lu-cream)]">مدة الجولة (دقائق)</Label>
+        <Input id="minutes" name="minutes" type="number" min={1} max={30} defaultValue={10} className="num" />
+        <span className="text-[0.7rem] text-[var(--lu-tan)]">٣ جولات لكل مباراة.</span>
+      </div>
+
+      <Button type="submit" size="lg" disabled={pending} className="btn-gold-cta w-full text-black">
+        {pending ? "جارٍ الإنشاء…" : "إنشاء وفتح الطاولة"}
+      </Button>
     </form>
   );
 }

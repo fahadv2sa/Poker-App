@@ -142,6 +142,8 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
         parsed.data.difficulty,
         parsed.data.roundTimerSec ?? TT_TIMING.defaultRoundSec,
         parsed.data.isPrivate ?? false,
+        parsed.data.roomName ?? null,
+        parsed.data.maxPlayers,
       );
       const seat = room.seats[0]!;
       seat.socketId = socket.id;
@@ -226,11 +228,11 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
       const seat = room.seats.find((s) => s.userId === u.userId);
       if (!seat) return;
       seat.connected = false;
-      if (room.status === "LOBBY") {
-        matches.withdraw(room, u.userId);
-        return;
-      }
-      // hold the seat for the reconnect grace, then treat as a withdrawal
+      // Hold the seat for the reconnect grace in the LOBBY as well as a live match —
+      // a creator who backgrounds the tab (or leaves to a share sheet / messaging app)
+      // to share the invite link must NOT be dropped, which would tear down the room
+      // before anyone can join. Only an explicit leave/close removes them immediately;
+      // an actual abandonment is handled when the grace expires.
       seat.graceTimer = setTimeout(() => {
         const r = matches.get(room.id);
         if (r) matches.withdraw(r, u.userId);

@@ -33,7 +33,7 @@ export class PrismaTtPersistence implements TtPersistence {
         difficulty: room.difficulty,
         roundTimerSec: room.roundTimerSec,
         roundsTotal: room.roundsTotal,
-        maxPlayers: 4,
+        maxPlayers: room.maxPlayers,
         status: "IN_PROGRESS",
         inviteCode: room.inviteCode,
         createdByUserId: room.createdByUserId || room.seats[0]?.userId || room.id,

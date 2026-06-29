@@ -7,6 +7,8 @@ import { cn } from "@fb/top-10-ui";
 export interface RoomCardData {
   id: string;
   code: string | null;
+  /** Optional room display name (friends rooms only). */
+  name: string | null;
   creator: string;
   difficulty: string;
   maxPlayers: number;
@@ -44,7 +46,7 @@ function RoomCard({ r }: { r: RoomCardData }) {
           </span>
           <div className="min-w-0">
             <strong className="block truncate text-base leading-tight text-[var(--lu-cream)]">
-              {isPublic ? "طاولة سريعة" : `غرفة ${r.creator}`}
+              {isPublic ? "طاولة سريعة" : r.name?.trim() || `غرفة ${r.creator}`}
             </strong>
             <span className="text-xs text-[var(--lu-tan)]">المنشئ: {r.creator}</span>
           </div>

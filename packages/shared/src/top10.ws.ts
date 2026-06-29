@@ -5,7 +5,14 @@
  * never sent until its card is revealed. Mirrors Link Up's ws.ts pattern.
  */
 import { z } from "zod";
-import { TT_DIFFICULTIES, TT_QUESTION_TYPES, TT_ROUND_END_REASONS, TT_ROUND_MODES } from "./top10.js";
+import {
+  TT_DIFFICULTIES,
+  TT_MAX_PLAYERS,
+  TT_MIN_PLAYERS,
+  TT_QUESTION_TYPES,
+  TT_ROUND_END_REASONS,
+  TT_ROUND_MODES,
+} from "./top10.js";
 
 export const TT_CLIENT_EVENTS = {
   create: "tt:create",
@@ -39,6 +46,10 @@ export const ttDifficultySchema = z.enum(TT_DIFFICULTIES);
 
 export const ttCreateSchema = z.object({
   difficulty: ttDifficultySchema,
+  /** Optional display name for the room (shown in the lobby + the rooms list). */
+  roomName: z.string().trim().min(2, "اسم الغرفة قصير جدًا").max(40).optional(),
+  /** Seat cap for the room (manual rooms only); defaults to TT_MAX_PLAYERS. */
+  maxPlayers: z.number().int().min(TT_MIN_PLAYERS).max(TT_MAX_PLAYERS).optional(),
   /** Round timer in seconds — customizable in CREATED rooms only. */
   roundTimerSec: z.number().int().min(60).max(1800).optional(),
   /** Private rooms are NEVER listed — reachable only via invite link / room code. */
@@ -89,6 +100,10 @@ export type TtStateView = {
   matchId: string;
   kind: "MANUAL" | "QUICK_PLAY";
   inviteCode: string | null;
+  /** Optional display name (manual rooms); null for quick play. */
+  roomName: string | null;
+  /** Seat cap for this room. */
+  maxPlayers: number;
   status: "LOBBY" | "IN_PROGRESS" | "ENDED" | "ABANDONED";
   difficulty: (typeof TT_DIFFICULTIES)[number];
   createdByUserId: string;

@@ -68,11 +68,12 @@ async function main(): Promise<void> {
           return {
             id: r.id,
             code: r.inviteCode,
+            name: r.roomName,
             difficulty: r.difficulty,
             kind: r.kind,
             status: r.status,
             filled: connected.length,
-            max: 4,
+            max: r.maxPlayers,
             creator: creatorSeat?.username ?? "—",
           };
         });

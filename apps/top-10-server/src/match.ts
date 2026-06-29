@@ -19,6 +19,7 @@ import {
 } from "@fb/top-10-engine";
 import {
   TT_HINT,
+  TT_MAX_PLAYERS,
   TT_MIN_PLAYERS,
   TT_ROUNDS_PER_MATCH,
   TT_SERVER_EVENTS,
@@ -71,6 +72,8 @@ export class Matches {
     difficulty: TtDifficulty,
     roundTimerSec: number,
     isPrivate = false,
+    roomName: string | null = null,
+    maxPlayers: number = TT_MAX_PLAYERS,
   ): MatchRoom {
     const id = cryptoRandomId();
     const room: MatchRoom = {
@@ -80,6 +83,8 @@ export class Matches {
       roundTimerSec,
       roundsTotal: TT_ROUNDS_PER_MATCH,
       inviteCode: nextInvite(),
+      roomName: roomName?.trim() || null,
+      maxPlayers: clampSeats(maxPlayers),
       isPrivate,
       createdByUserId: creator.userId,
       status: "LOBBY",
@@ -105,6 +110,8 @@ export class Matches {
       roundTimerSec: TT_TIMING.defaultRoundSec,
       roundsTotal: TT_ROUNDS_PER_MATCH,
       inviteCode: null,
+      roomName: null,
+      maxPlayers: TT_MAX_PLAYERS,
       isPrivate: false,
       createdByUserId: "",
       status: "LOBBY",
@@ -126,7 +133,7 @@ export class Matches {
     isBot: boolean,
     botSkill?: number,
   ): TtSeat | null {
-    if (room.seats.length >= 4) return null;
+    if (room.seats.length >= room.maxPlayers) return null;
     const existing = room.seats.find((s) => s.userId === user.userId);
     if (existing) {
       existing.connected = true;
@@ -561,6 +568,8 @@ export class Matches {
       matchId: room.id,
       kind: room.kind,
       inviteCode: room.inviteCode,
+      roomName: room.roomName,
+      maxPlayers: room.maxPlayers,
       status: room.status,
       difficulty: room.difficulty,
       createdByUserId: room.createdByUserId,
@@ -646,8 +655,14 @@ function hasConnectedHuman(room: MatchRoom): boolean {
 
 function nextFreeSeat(room: MatchRoom): number {
   const taken = new Set(room.seats.map((s) => s.seat));
-  for (let i = 0; i < 4; i++) if (!taken.has(i)) return i;
+  for (let i = 0; i < TT_MAX_PLAYERS; i++) if (!taken.has(i)) return i;
   return room.seats.length;
+}
+
+/** Keep a requested seat cap within [TT_MIN_PLAYERS, TT_MAX_PLAYERS]. */
+function clampSeats(n: number): number {
+  if (!Number.isFinite(n)) return TT_MAX_PLAYERS;
+  return Math.max(TT_MIN_PLAYERS, Math.min(TT_MAX_PLAYERS, Math.round(n)));
 }
 
 /** All ranks a seat revealed across the whole match (for the standings tiebreak).

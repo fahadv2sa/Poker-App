@@ -30,7 +30,13 @@ export function TopTenClient({
   /** Deep-link from /rooms: join this invite code on connect. */
   autoJoinCode?: string;
   /** Deep-link from /create-room: create a room with these settings on connect. */
-  autoCreate?: { difficulty: TtDifficulty; minutes: number; isPrivate: boolean } | null;
+  autoCreate?: {
+    difficulty: TtDifficulty;
+    minutes: number;
+    isPrivate: boolean;
+    roomName?: string;
+    maxPlayers?: number;
+  } | null;
 }) {
   const connRef = useRef<TtConnection | null>(null);
   const autoFiredRef = useRef(false);
@@ -49,7 +55,14 @@ export function TopTenClient({
         if (autoFiredRef.current) return;
         autoFiredRef.current = true;
         if (autoJoinCode) conn.join(autoJoinCode);
-        else if (autoCreate) conn.create(autoCreate.difficulty, autoCreate.minutes * 60, autoCreate.isPrivate);
+        else if (autoCreate)
+          conn.create({
+            difficulty: autoCreate.difficulty,
+            roundTimerSec: autoCreate.minutes * 60,
+            isPrivate: autoCreate.isPrivate,
+            roomName: autoCreate.roomName,
+            maxPlayers: autoCreate.maxPlayers,
+          });
       },
       onState: (s) => {
         setState(s);
@@ -292,26 +305,9 @@ function MatchView({
   }
 
   if (state.status === "LOBBY") {
-    const isCreator = state.createdByUserId === me.userId;
     return (
-      <Panel className="flex flex-col gap-4 fade-rise">
-        <h2 className="text-lg font-bold lu-gold-text">غرفة — {DIFF_AR[state.difficulty]}</h2>
-        {state.inviteCode && (
-          <p className="text-[var(--lu-tan)]">
-            رمز الدعوة: <span className="num font-bold text-[var(--lu-cream)]">{state.inviteCode}</span>
-          </p>
-        )}
-        <SeatList seats={state.seats} turnSeat={null} meId={me.userId} />
-        <div className="flex gap-2">
-          {isCreator && (
-            <GoldButton onClick={() => conn()?.start()} disabled={state.seats.length < 2}>
-              ابدأ المباراة
-            </GoldButton>
-          )}
-          <GoldButton variant="ghost" onClick={onLeave}>
-            خروج
-          </GoldButton>
-        </div>
+      <Panel className="fade-rise">
+        <LobbyRoom state={state} me={me} conn={conn} onLeave={onLeave} />
       </Panel>
     );
   }
@@ -344,27 +340,146 @@ function seatToStanding(s: TtStateView["seats"][number], i: number): TtStandingR
   return { userId: s.userId, username: s.username, seat: s.seat, points: s.totalPoints, place: i + 1, tiedWithPrev: false };
 }
 
-function SeatList({ seats, turnSeat, meId }: { seats: TtStateView["seats"]; turnSeat: number | null; meId: string }) {
+/** Private-room lobby — mirrors Link Up's create-room lobby (LobbyPanel): a premium
+ *  gold INVITE CARD (code + native share / clipboard) shown until the room fills,
+ *  the seat list (filled + waiting placeholders up to the cap), and the host's
+ *  start button. Sharing leaves the page mounted; even if the OS backgrounds the
+ *  tab, the server now holds the seat for the reconnect grace (no drop). */
+function LobbyRoom({
+  state,
+  me,
+  conn,
+  onLeave,
+}: {
+  state: TtStateView;
+  me: { userId: string; username: string };
+  conn: () => TtConnection | null;
+  onLeave: () => void;
+}) {
+  const isCreator = state.createdByUserId === me.userId;
+  const filled = state.seats.length;
+  const canStart = filled >= TT_MIN_PLAYERS;
+  const code = state.inviteCode ?? "";
+  const [copied, setCopied] = useState(false);
+
+  // Share the invite via the native share sheet (Web Share API), falling back to the
+  // clipboard. The URL deep-links into /play?join=CODE (auto-joins the room). Each item
+  // on its OWN line — the URL alone on its line renders cleanly in RTL chats (mirrors
+  // Link Up's share text verbatim).
+  const onShare = async () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/games/top-10/play?join=${encodeURIComponent(code)}`;
+    const text = ["انضم لطاولتي بالضغط على الرابط أو إدخال الكود", code, "رابط الانضمام", url].join("\n");
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ text });
+      } catch {
+        // dismissed / failed — nothing to do
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard unavailable — nothing to do
+    }
+  };
+
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {seats.map((s) => (
-        <div
-          key={s.seat}
-          className={cn(
-            "rounded-xl border px-3 py-2 text-center",
-            turnSeat === s.seat ? "lu-turn border-[var(--gold)]" : "border-[var(--border)] bg-black/30",
-            s.status === "WITHDRAWN" && "opacity-40",
-          )}
-        >
-          <div className="truncate text-sm font-semibold text-[var(--lu-cream)]">
-            {s.username}
-            {s.userId === meId ? " (أنت)" : ""}
-            {s.isBot ? " 🤖" : ""}
+    <div className="flex flex-col gap-4">
+      {/* room title + difficulty chip */}
+      <div className="flex items-center justify-between gap-2 px-0.5">
+        <h2 className="truncate text-lg font-black lu-gold-text">{state.roomName?.trim() || "غرفة خاصة"}</h2>
+        <span className="lu-chip shrink-0 rounded-full px-3 py-1 text-xs font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/30">
+          {DIFF_AR[state.difficulty]}
+        </span>
+      </div>
+
+      {/* ── Invite card: premium gold panel with the code + share ───────────── */}
+      {code ? (
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--lu-gold-1)]/30 bg-gradient-to-b from-[var(--lu-gold-2)]/[0.12] to-transparent px-4 py-5 text-center">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-12 h-28"
+            style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.28), transparent)" }}
+          />
+          <div className="relative flex flex-col items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lu-gold-1)]/25 bg-[var(--lu-gold-2)]/10 px-3 py-1 text-[0.68rem] font-bold tracking-[0.18em] text-[var(--lu-gold-1)]">
+              <span aria-hidden>🎟️</span> كود الدعوة
+            </span>
+            <div className="num inline-flex rounded-xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-[var(--lu-gold-1)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
+              {code}
+            </div>
+            <p className="text-xs text-[var(--lu-tan)]">ادعُ أصدقاءك بالكود أو شارك الرابط مباشرة</p>
+            <button
+              type="button"
+              onClick={onShare}
+              className="lu-btn mt-1 inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-md border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/15 py-2.5 font-bold text-[var(--lu-gold-1)]"
+            >
+              <span aria-hidden className="text-base">🔗</span>
+              {copied ? "تم نسخ الدعوة ✓" : "مشاركة الدعوة"}
+            </button>
           </div>
-          <div className="num text-lg font-bold text-[var(--gold)]">{s.totalPoints}</div>
-          {s.status === "WITHDRAWN" && <div className="text-xs text-red-400">منسحب</div>}
         </div>
-      ))}
+      ) : null}
+
+      {/* seats: filled + waiting placeholders up to the cap */}
+      <div>
+        <div className="mb-2 flex items-center justify-between px-0.5 text-xs">
+          <span className="text-[var(--lu-tan)]">اللاعبون</span>
+          <span className="num font-bold text-[var(--lu-cream)]">
+            {filled} / {state.maxPlayers}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {Array.from({ length: state.maxPlayers }).map((_, i) => {
+            const s = state.seats[i];
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "rounded-xl border px-3 py-3 text-center",
+                  s ? "border-[var(--lu-gold-1)]/30 bg-black/30" : "border-dashed border-white/12 bg-black/15",
+                )}
+              >
+                {s ? (
+                  <>
+                    <div className="truncate text-sm font-semibold text-[var(--lu-cream)]">
+                      {s.username}
+                      {s.userId === me.userId ? " (أنت)" : ""}
+                    </div>
+                    {s.userId === state.createdByUserId ? (
+                      <div className="text-[0.66rem] font-bold text-[var(--lu-gold-1)]">المضيف</div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center gap-1.5 text-xs text-[var(--lu-tan)]">
+                    <span className="size-1.5 animate-pulse rounded-full bg-[var(--lu-ember)]" />
+                    بانتظار لاعب…
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* start (creator) / waiting state */}
+      {isCreator ? (
+        <GoldButton onClick={() => conn()?.start()} disabled={!canStart} className={cn(!canStart && "opacity-60")}>
+          {canStart ? "ابدأ المباراة" : "بانتظار انضمام لاعب…"}
+        </GoldButton>
+      ) : (
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/30 py-3 text-sm text-[var(--lu-tan)]">
+          <span aria-hidden className="size-2 animate-pulse rounded-full bg-[var(--lu-ember)]" />
+          بانتظار أن يبدأ المضيف المباراة…
+        </div>
+      )}
+      <GoldButton variant="ghost" onClick={onLeave}>
+        خروج
+      </GoldButton>
     </div>
   );
 }

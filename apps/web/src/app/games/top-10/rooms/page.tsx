@@ -11,6 +11,7 @@ export const metadata = { title: "دخول غرفة — توب 10" };
 type LiveRoom = {
   id: string;
   code: string | null;
+  name?: string | null;
   difficulty: string;
   kind: "MANUAL" | "QUICK_PLAY";
   status: string;
@@ -48,6 +49,7 @@ export default async function RoomsPage() {
     .map((r) => ({
       id: r.id,
       code: null,
+      name: null,
       creator: r.creator,
       difficulty: r.difficulty,
       maxPlayers: r.max,
@@ -59,6 +61,7 @@ export default async function RoomsPage() {
     .map((r) => ({
       id: r.id,
       code: r.code,
+      name: r.name ?? null,
       creator: r.creator,
       difficulty: r.difficulty,
       maxPlayers: r.max,
