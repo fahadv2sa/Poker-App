@@ -38,6 +38,26 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
   const findActiveOrEnded = (userId: string): MatchRoom | undefined =>
     matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ABANDONED");
 
+  /** Re-attach a (re)connecting socket to a room the user already holds a seat in:
+   *  cancel any leave-grace, mark connected, re-join the socket room, and push a fresh
+   *  snapshot. Used by the connection handler AND by create/join/queueJoin so that
+   *  returning by ANY path resyncs the ongoing game instead of duplicating it or
+   *  stranding the player (the core reconnection fix). */
+  const resyncTo = (socket: Socket, room: MatchRoom): void => {
+    const uid = user(socket).userId;
+    const seat = room.seats.find((s) => s.userId === uid);
+    if (seat) {
+      if (seat.graceTimer) {
+        clearTimeout(seat.graceTimer);
+        seat.graceTimer = undefined;
+      }
+      seat.connected = true;
+      seat.socketId = socket.id;
+    }
+    socket.join(room.id);
+    matches.sync(room);
+  };
+
   function broadcastQueue(difficulty: TtDifficulty): void {
     const q = queues.get(difficulty);
     if (!q) return;
@@ -125,23 +145,18 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     // reconnect: if the player has a held seat, cancel its grace and resync (also
     // re-attaches to a just-ENDED room so they see the winner screen + new-round vote)
     const existing = findActiveOrEnded(u.userId);
-    if (existing) {
-      const seat = existing.seats.find((s) => s.userId === u.userId);
-      if (seat) {
-        if (seat.graceTimer) {
-          clearTimeout(seat.graceTimer);
-          seat.graceTimer = undefined;
-        }
-        seat.connected = true;
-        seat.socketId = socket.id;
-        socket.join(existing.id);
-        matches.sync(existing);
-      }
-    }
+    if (existing) resyncTo(socket, existing);
 
     socket.on(TT_CLIENT_EVENTS.create, (raw, ack?: (r: unknown) => void) => {
       const parsed = ttCreateSchema.safeParse(raw);
       if (!parsed.success) return ack?.({ error: "INVALID" });
+      // Reconnect-safe: returning to a /play?create=1 URL must NOT spawn a duplicate —
+      // if the player is already in a live room, just resync it.
+      const current = findActiveOrEnded(u.userId);
+      if (current) {
+        resyncTo(socket, current);
+        return ack?.({ matchId: current.id, inviteCode: current.inviteCode });
+      }
       const room = matches.createManual(
         u,
         parsed.data.difficulty,
@@ -160,6 +175,13 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     socket.on(TT_CLIENT_EVENTS.join, (raw, ack?: (r: unknown) => void) => {
       const parsed = ttJoinSchema.safeParse(raw);
       if (!parsed.success) return ack?.({ error: "INVALID" });
+      // Reconnect-safe: if already seated somewhere (e.g. returning to a /play?join=CODE
+      // URL after the room started), resync that room — works in ANY non-abandoned state.
+      const current = findActiveOrEnded(u.userId);
+      if (current) {
+        resyncTo(socket, current);
+        return ack?.({ matchId: current.id });
+      }
       const room = matches.list().find((r) => r.inviteCode === parsed.data.inviteCode && r.status === "LOBBY");
       if (!room) return ack?.({ error: "NOT_FOUND" });
       const seat = matches.addSeat(room, u, false);
@@ -207,6 +229,14 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     socket.on(TT_CLIENT_EVENTS.queueJoin, (raw) => {
       const parsed = ttQueueJoinSchema.safeParse(raw);
       if (!parsed.success) return;
+      // Reconnect-safe: if the player is already in a live room (e.g. they were matched
+      // while away and the client re-asserts the queue on reconnect), resync that room
+      // instead of putting them back in a queue.
+      const current = findActiveOrEnded(u.userId);
+      if (current) {
+        resyncTo(socket, current);
+        return;
+      }
       leaveAllQueues(socket.id);
       ensureQueue(parsed.data.difficulty).set(socket.id, { ...u, socketId: socket.id });
       startFillTimer(parsed.data.difficulty);

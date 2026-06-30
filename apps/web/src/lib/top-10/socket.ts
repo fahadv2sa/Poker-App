@@ -57,6 +57,17 @@ const url = () => process.env.NEXT_PUBLIC_TOP10_SERVER_URL ?? "http://localhost:
 export function connectTopTen(token: string, handlers: TtHandlers): TtConnection {
   const socket: Socket = io(url(), { auth: { token }, withCredentials: true });
 
+  // Backgrounding a tab (especially on mobile — peeking a notification) suspends the
+  // socket; on foreground, nudge an immediate reconnect so the player rejoins their
+  // ongoing game promptly. The server holds the seat for a grace window and resyncs on
+  // connect, so this restores the table seamlessly. Mirrors Link Up's connectGame.
+  const onVisible = () => {
+    if (typeof document !== "undefined" && document.visibilityState === "visible" && !socket.connected) {
+      socket.connect();
+    }
+  };
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
+
   socket.on("connect", () => handlers.onConnect?.());
   socket.on("connect_error", (err: Error) => {
     if (err.message === "SESSION_EXPIRED" || err.message === "UNAUTHENTICATED") {
@@ -88,6 +99,9 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
     queueLeave: () => socket.emit(TT_CLIENT_EVENTS.queueLeave, {}),
     leave: () => socket.emit(TT_CLIENT_EVENTS.leave, {}),
     close: () => socket.emit(TT_CLIENT_EVENTS.close, {}),
-    disconnect: () => socket.disconnect(),
+    disconnect: () => {
+      if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
+      socket.disconnect();
+    },
   };
 }

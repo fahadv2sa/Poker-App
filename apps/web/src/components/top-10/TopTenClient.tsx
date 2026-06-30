@@ -50,6 +50,9 @@ export function TopTenClient({
 }) {
   const connRef = useRef<TtConnection | null>(null);
   const autoFiredRef = useRef(false);
+  // The quick-play difficulty the player is queued for — re-asserted on every (re)connect
+  // so a dropped socket doesn't strand them out of the matchmaking queue.
+  const queueDiffRef = useRef<TtDifficulty | null>(null);
   const [view, setView] = useState<View>("lobby");
   const [state, setState] = useState<TtStateView | null>(null);
   const [queue, setQueue] = useState<{ waiting: number; needed: number; countdownSec: number | null } | null>(null);
@@ -65,6 +68,9 @@ export function TopTenClient({
   useEffect(() => {
     const conn = connectTopTen(token, {
       onConnect: () => {
+        // Re-assert queue membership on EVERY (re)connect — the queue is socket-scoped
+        // and lost on a drop. The server resyncs the room instead if we're already in one.
+        if (queueDiffRef.current) conn.queueJoin(queueDiffRef.current);
         if (autoFiredRef.current) return;
         autoFiredRef.current = true;
         if (autoJoinCode) conn.join(autoJoinCode);
@@ -78,6 +84,8 @@ export function TopTenClient({
           });
       },
       onState: (s) => {
+        // A room snapshot means we're seated (lobby or match), not queueing.
+        queueDiffRef.current = null;
         stateRef.current = s;
         setState(s);
         // a (re)started round clears the previous winner overlay
@@ -89,7 +97,10 @@ export function TopTenClient({
         // defensive: if a queue update arrives while still on the lobby, show the queue
         setView((v) => (v === "lobby" ? "queue" : v));
       },
-      onQueueMatched: () => setView("match"),
+      onQueueMatched: () => {
+        queueDiffRef.current = null;
+        setView("match");
+      },
       onReveal: (r) => setReveal({ event: r, id: ++revealSeq.current }),
       onMatchEnded: (m) => {
         const seats = stateRef.current?.seats ?? [];
@@ -117,6 +128,7 @@ export function TopTenClient({
     conn()?.leave();
     setState(null);
     stateRef.current = null;
+    queueDiffRef.current = null;
     setResult(null);
     setRounds([]);
     setShowSummary(false);
@@ -153,6 +165,7 @@ export function TopTenClient({
       {view === "lobby" && (
         <Lobby
           onJoin={(d) => {
+            queueDiffRef.current = d; // remember so a reconnect re-queues automatically
             conn()?.queueJoin(d);
             setView("queue"); // show the filling queue immediately (like Link Up)
           }}
@@ -162,6 +175,7 @@ export function TopTenClient({
         <QueueView
           queue={queue}
           onCancel={() => {
+            queueDiffRef.current = null;
             conn()?.queueLeave();
             setQueue(null);
             setView("lobby");
