@@ -23,6 +23,8 @@ export const TT_CLIENT_EVENTS = {
   guess: "tt:guess",
   endRoundRequest: "tt:endRoundRequest",
   endRoundVote: "tt:endRoundVote",
+  /** Ready up for a new round at the same table after a round ends. */
+  newRound: "tt:newRound",
   queueJoin: "tt:queueJoin",
   queueLeave: "tt:queueLeave",
 } as const;
@@ -122,6 +124,10 @@ export type TtStateView = {
   hint: { phase: "COUNTDOWN" | "OPEN"; text: string | null; hintNumber: number; rank: number } | null;
   /** Pending end-round request: who asked + who still needs to approve. */
   endRoundRequest: { bySeat: number; approvals: number[]; needed: number } | null;
+  /** After a round ends (status ENDED): the New-Round ready vote — which seats are
+   *  ready, how many connected humans are needed, and the auto-start countdown
+   *  deadline. Null while a round is live or in the lobby. */
+  newRoundRequest: { readySeats: number[]; needed: number; deadlineTs: number | null } | null;
 };
 
 export type TtRevealEvent = {
@@ -149,6 +155,9 @@ export type TtRoundEndedEvent = {
 
 export type TtMatchEndedEvent = {
   standings: TtStandingRow[];
+  /** The final revealed board (rank + who revealed each), for the winner-announcement
+   *  per-player breakdown. Empty when a match ends before any reveal. */
+  cards?: TtCardView[];
 };
 
 export type TtQueueStateEvent = {

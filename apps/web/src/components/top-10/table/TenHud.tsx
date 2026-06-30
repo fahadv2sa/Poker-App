@@ -32,6 +32,7 @@ export function TenHud({
   const locked = hint && me.locked;
   return (
     <div className="mx-auto flex w-full max-w-md shrink-0 items-stretch justify-center gap-1.5">
+      {/* profile */}
       <div
         className={cn(
           "relative flex flex-1 items-center gap-2 rounded-2xl border bg-[#0b0908]/80 px-2.5 py-1.5 backdrop-blur transition",
@@ -46,37 +47,56 @@ export function TenHud({
           sizeClass="size-9 sm:size-10"
           className={cn("ring-1", isMyTurn ? "ring-2 ring-[var(--lu-ember-glow)]" : "ring-white/15")}
         />
-        <div className={cn("flex min-w-0 flex-col leading-tight", locked && "opacity-50")}>
+        <div className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-sm font-bold text-[var(--lu-cream)]">{nickname}</span>
           {locked ? (
             <span className="text-[0.66rem] font-black text-[#d9694f]">✕ نَفِدت محاولاتك</span>
-          ) : hint ? (
-            <span className="flex items-center gap-1.5 text-[0.62rem] font-bold text-[var(--lu-cream)]">
-              <span className="text-[var(--lu-tan)]">محاولات خاطئة</span>
-              <span className="flex gap-0.5">
-                {Array.from({ length: maxAttempts }).map((_, i) => (
-                  <span key={i} className={cn("size-2 rounded-full border", i < me.wrongAttempts ? "border-[#d9694f] bg-[#d9694f]" : "border-white/30 bg-transparent")} />
-                ))}
-              </span>
-              <span className="num font-black text-[#d9694f]">{me.wrongAttempts}/{maxAttempts}</span>
-            </span>
           ) : isMyTurn ? (
             <span className="text-[0.66rem] font-bold text-[var(--lu-ember-glow)]">دورك — اكتب اسم لاعب</span>
+          ) : hint ? (
+            <span className="text-[0.62rem] font-bold text-[var(--lu-ember-glow)]">وضع التلميح — الأسرع يفوز</span>
           ) : (
             <span className="text-[0.62rem] text-[var(--lu-tan)]/80">بانتظار دورك…</span>
           )}
         </div>
       </div>
 
-      {/* total points */}
-      <Stat label="نقاطي" value={me.totalPoints} tone="gold" />
-      {/* this-round delta — the fly-target for reveal stars; pops when it rises */}
-      <Stat label="هذه الجولة" value={me.roundPoints} tone="round" signed anchor="ten-mine" pop />
+      {/* current points (also the fly-target for reveal stars; pops when it rises) */}
+      <Stat label="نقاطي" value={me.totalPoints} tone="gold" anchor="ten-mine" pop />
+
+      {/* wrong-attempts counter — appears only in hint mode */}
+      {hint ? <WrongAttempts used={me.wrongAttempts} max={maxAttempts} /> : null}
+
       {isMyTurn ? (
         <div className="flex min-w-[3.4rem] items-center justify-center rounded-2xl border border-[var(--lu-ember-glow)]/40 bg-[var(--lu-ember)]/10 px-1">
           <Countdown deadlineTs={deadlineTs} totalMs={turnTotalMs} />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/** Hint-mode wrong-attempts indicator (icon + dots + count). Turns solid red on lockout. */
+function WrongAttempts({ used, max }: { used: number; max: number }) {
+  const exhausted = used >= max;
+  return (
+    <div
+      className={cn(
+        "flex min-w-[3.6rem] flex-col items-center justify-center gap-0.5 rounded-2xl border px-1.5 py-1",
+        exhausted ? "border-[#d9694f]/70 bg-[#d9694f]/20" : "border-[#d9694f]/40 bg-[#d9694f]/10",
+      )}
+    >
+      <span className="flex items-center gap-1 text-[0.55rem] font-bold tracking-wide text-[#d9694f]/90">
+        <span aria-hidden>✕</span> محاولات
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="flex gap-0.5">
+          {Array.from({ length: max }).map((_, i) => (
+            <span key={i} className={cn("size-1.5 rounded-full border", i < used ? "border-[#d9694f] bg-[#d9694f]" : "border-white/30 bg-transparent")} />
+          ))}
+        </span>
+        <span className="num text-xs font-black text-[#d9694f]">{used}/{max}</span>
+      </span>
     </div>
   );
 }

@@ -14,10 +14,7 @@ import { TenHud } from "./TenHud";
 import { TenRevealNotice, type RevealDisplay } from "./TenRevealNotice";
 import { TenHintOverlay } from "./TenHintOverlay";
 import { TenEffects } from "./TenEffects";
-import { TenStandings } from "./TenStandings";
 import { TenCoachmark } from "./TenCoachmark";
-
-const DIFF_AR: Record<string, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
 
 /** Header sound toggle — matches Link Up's SoundControl button (round, gold border,
  *  speaker glyph). Clicking also unlocks the audio context (a user gesture). */
@@ -51,6 +48,17 @@ function IconMuted() {
   );
 }
 
+/** Exit-from-table glyph — an arrow leaving a doorway. */
+function ExitIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" />
+      <path d="M16 8l4 4-4 4" />
+      <path d="M20 12H9" />
+    </svg>
+  );
+}
+
 /**
  * Top Ten LIVE TABLE (presentational). Consumes a TtStateView-shaped model so the live
  * client can pass real socket state later (P3) with zero rework; the preview passes mock
@@ -64,24 +72,16 @@ export function TenTable({
   nickname,
   onPick,
   onLeave,
-  onClose,
   reveal = null,
-  onRequestEndRound,
-  onVoteEndRound,
 }: {
   state: TtStateView;
   meId: string;
   nickname: string;
   onPick: (playerId: string) => void;
   onLeave?: () => void;
-  /** Creator-only: close the table for everyone (mirrors Link Up's host close). */
-  onClose?: () => void;
   /** Latest correct-guess event (with a monotonic id) → drives the big reveal notice.
    *  The live client bumps `id` per tt:reveal; the preview simulates it. */
   reveal?: { event: TtRevealEvent; id: number } | null;
-  /** Optional end-round vote feature (preserved from the functional view). */
-  onRequestEndRound?: () => void;
-  onVoteEndRound?: (accept: boolean) => void;
 }) {
   const me = useMemo(() => state.seats.find((s) => s.userId === meId), [state.seats, meId]);
   const opponents = useMemo(() => state.seats.filter((s) => s.userId !== meId), [state.seats, meId]);
@@ -122,7 +122,6 @@ export function TenTable({
   }, [reveal, state.seats, meId]);
 
   const [confirmLeave, setConfirmLeave] = useState(false);
-  const [confirmClose, setConfirmClose] = useState(false);
   // shake the search bar when MY wrong-attempt count rises (hint mode feedback).
   const [shakeKey, setShakeKey] = useState(0);
   const prevWrong = useRef(me?.wrongAttempts ?? 0);
@@ -151,52 +150,31 @@ export function TenTable({
       className="fixed inset-0 z-40 mx-auto flex h-[100dvh] max-w-md flex-col overflow-hidden bg-[var(--lu-abyss)] px-2"
       style={{ paddingTop: "max(0.45rem, env(safe-area-inset-top))", paddingBottom: "max(0.4rem, env(safe-area-inset-bottom))" }}
     >
-      {/* top bar — mirrors Link Up's table header (right-aligned action cluster):
-          standings + end-round, then the sound toggle, then Withdraw (two-step confirm).
-          Round/difficulty sits subtly on the left. */}
+      {/* top bar — exactly two controls, one in each corner: exit-from-table (leading,
+          right in RTL) and mute-sound (trailing, left). Nothing else. */}
       <header className="flex shrink-0 items-center justify-between gap-2 pb-1">
-        <span className="num rounded-full border border-[var(--lu-gold-1)]/25 bg-black/40 px-2.5 py-0.5 text-[0.7rem] font-bold text-[var(--lu-tan)]">
-          الجولة {state.roundNo}/{state.roundsTotal} · {DIFF_AR[state.difficulty] ?? state.difficulty}
-        </span>
-        <div className="flex items-center gap-1.5">
-          <TenStandings seats={state.seats} meId={meId} />
-          {onRequestEndRound && !state.endRoundRequest ? (
-            <button onClick={onRequestEndRound} title="طلب إنهاء الجولة" aria-label="طلب إنهاء الجولة" className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[#0b0908]/70 text-[0.85rem] text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45">
-              ⏭
-            </button>
-          ) : null}
-          <SoundButton />
-          {/* creator-only Close Table (ends the table for everyone) — two-step confirm */}
-          {onClose ? (
-            confirmClose ? (
-              <span className="flex items-center gap-1">
-                <button onClick={onClose} className="rounded-lg bg-[#a33] px-2.5 py-1 text-xs font-bold text-white">تأكيد الإغلاق</button>
-                <button onClick={() => setConfirmClose(false)} className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-[var(--lu-cream)]">إلغاء</button>
-              </span>
-            ) : (
-              <button onClick={() => setConfirmClose(true)} className="rounded-lg border border-[#d9694f]/40 bg-[#d9694f]/10 px-2.5 py-1 text-xs font-bold text-[#d9694f]">
-                إغلاق الطاولة
-              </button>
-            )
-          ) : null}
-          {onLeave ? (
-            confirmLeave ? (
-              <span className="flex items-center gap-1">
-                <button onClick={onLeave} className="rounded-lg bg-[#a33] px-2.5 py-1 text-xs font-bold text-white">تأكيد الخروج</button>
-                <button onClick={() => setConfirmLeave(false)} className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-bold text-[var(--lu-cream)]">إلغاء</button>
-              </span>
-            ) : (
-              <button onClick={() => setConfirmLeave(true)} className="rounded-lg border border-[#d9694f]/40 bg-[#d9694f]/10 px-2.5 py-1 text-xs font-bold text-[#d9694f]">
-                خروج
-              </button>
-            )
-          ) : null}
-        </div>
+        {onLeave ? (
+          <button
+            onClick={() => setConfirmLeave(true)}
+            aria-label="الخروج من الطاولة"
+            title="الخروج من الطاولة"
+            className="grid size-9 place-items-center rounded-full border border-[#d9694f]/40 bg-[#d9694f]/10 text-[#d9694f] transition hover:border-[#d9694f]/70"
+          >
+            <ExitIcon />
+          </button>
+        ) : (
+          <span />
+        )}
+        <SoundButton />
       </header>
       {confirmLeave ? (
-        <p className="mb-1 shrink-0 rounded-lg border border-[#d9694f]/30 bg-[#d9694f]/10 px-3 py-1.5 text-center text-[0.72rem] text-[var(--lu-cream)]">
-          إذا خرجت الآن تنسحب من المباراة وتخسر نقاطك المتجمّعة.
-        </p>
+        <div className="mb-1 flex shrink-0 flex-col items-center gap-1.5 rounded-lg border border-[#d9694f]/30 bg-[#d9694f]/10 px-3 py-2 text-center">
+          <p className="text-[0.72rem] text-[var(--lu-cream)]">إذا خرجت الآن تنسحب من الجولة وتخسر نقاطك. متأكد؟</p>
+          <div className="flex gap-1.5">
+            <button onClick={onLeave} className="rounded-lg bg-[#a33] px-3 py-1 text-xs font-bold text-white">تأكيد الخروج</button>
+            <button onClick={() => setConfirmLeave(false)} className="rounded-lg bg-white/10 px-3 py-1 text-xs font-bold text-[var(--lu-cream)]">إلغاء</button>
+          </div>
+        </div>
       ) : null}
 
       {/* opponent arc — overlaps the felt rim */}
@@ -262,21 +240,6 @@ export function TenTable({
         {/* hint-mode theatre (start flash · circular countdown · hint text) */}
         <TenHintOverlay mode={state.mode} hint={state.hint} deadlineTs={state.deadlineTs} />
       </section>
-
-      {/* pending end-round vote */}
-      {state.endRoundRequest && onVoteEndRound ? (
-        <div className="mt-1.5 flex shrink-0 items-center justify-between gap-2 rounded-xl border border-[var(--lu-ember)]/40 bg-[var(--lu-ember)]/10 px-3 py-1.5 text-[0.74rem] text-[var(--lu-cream)]">
-          <span className="num">طلب إنهاء الجولة · {state.endRoundRequest.approvals.length}/{state.endRoundRequest.needed}</span>
-          {me && !state.endRoundRequest.approvals.includes(me.seat) ? (
-            <span className="flex gap-1.5">
-              <button onClick={() => onVoteEndRound(true)} className="rounded-lg bg-[var(--gold)] px-2.5 py-0.5 text-xs font-bold text-black">موافقة</button>
-              <button onClick={() => onVoteEndRound(false)} className="rounded-lg bg-white/10 px-2.5 py-0.5 text-xs font-bold">رفض</button>
-            </span>
-          ) : (
-            <span className="text-[var(--lu-tan)]">بانتظار البقية…</span>
-          )}
-        </div>
-      ) : null}
 
       {/* one-time onboarding nudge (first round only) */}
       <div className="mt-1.5 shrink-0">

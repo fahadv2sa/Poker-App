@@ -30,31 +30,83 @@ function ac(): AudioContext | null {
   return ctx;
 }
 
-/** A single enveloped tone. */
-function tone(freq: number, start: number, dur: number, gain = 0.18, type: OscillatorType = "sine", glideTo?: number) {
+/** A single enveloped voice with an optional pitch glide and vibrato. The richer
+ *  envelope (fast attack, smooth exponential release) + layering below give the cues
+ *  body instead of the old dry single tones. */
+function voice(
+  freq: number,
+  start: number,
+  dur: number,
+  { gain = 0.18, type = "sine", glideTo, vibrato = 0 }: { gain?: number; type?: OscillatorType; glideTo?: number; vibrato?: number } = {},
+) {
   const a = ac();
   if (!a) return;
+  const t0 = a.currentTime + start;
   const o = a.createOscillator();
   const g = a.createGain();
   o.type = type;
-  o.frequency.setValueAtTime(freq, a.currentTime + start);
-  if (glideTo) o.frequency.exponentialRampToValueAtTime(Math.max(40, glideTo), a.currentTime + start + dur);
-  g.gain.setValueAtTime(0.0001, a.currentTime + start);
-  g.gain.exponentialRampToValueAtTime(gain, a.currentTime + start + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + start + dur);
+  o.frequency.setValueAtTime(freq, t0);
+  if (glideTo) o.frequency.exponentialRampToValueAtTime(Math.max(40, glideTo), t0 + dur);
+  if (vibrato > 0) {
+    const lfo = a.createOscillator();
+    const lfoGain = a.createGain();
+    lfo.frequency.setValueAtTime(6, t0);
+    lfoGain.gain.setValueAtTime(vibrato, t0);
+    lfo.connect(lfoGain).connect(o.frequency);
+    lfo.start(t0);
+    lfo.stop(t0 + dur + 0.05);
+  }
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(gain, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   o.connect(g).connect(a.destination);
-  o.start(a.currentTime + start);
-  o.stop(a.currentTime + start + dur + 0.02);
+  o.start(t0);
+  o.stop(t0 + dur + 0.03);
+}
+
+/** A bell-like ding — fundamental + softer inharmonic partials for a warm, ringing
+ *  timbre (the signature "reveal" sound), far less dry than a lone sine. */
+function bell(freq: number, start: number, dur = 0.5, gain = 0.16) {
+  voice(freq, start, dur, { gain, type: "sine" });
+  voice(freq * 2, start, dur * 0.7, { gain: gain * 0.4, type: "sine" });
+  voice(freq * 3.01, start, dur * 0.5, { gain: gain * 0.18, type: "sine" });
+}
+
+/** A quick high shimmer layered onto celebratory cues. */
+function sparkle(start: number, gain = 0.06) {
+  [1568, 2093, 2637].forEach((f, i) => voice(f, start + i * 0.05, 0.18, { gain, type: "triangle" }));
 }
 
 const CUES: Record<TtSound, () => void> = {
-  reveal: () => tone(880, 0, 0.16, 0.16, "sine"),
-  // ascending C5-E5-G5-C6 fanfare for the rank-10 jackpot
-  jackpot: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.1, 0.28, 0.2, "triangle")),
-  hint: () => tone(1200, 0, 0.32, 0.14, "sawtooth", 240), // downward whoosh
-  turn: () => { tone(660, 0, 0.14, 0.14); tone(990, 0.08, 0.16, 0.12); },
-  lock: () => tone(150, 0, 0.22, 0.2, "square", 80), // low thud
-  win: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.09, 0.3, 0.2, "triangle")),
+  // a warm bell ding when a card is revealed
+  reveal: () => bell(932, 0, 0.45, 0.16),
+  // rank-10 jackpot: ascending bell arpeggio capped with a sparkle
+  jackpot: () => {
+    [523, 659, 784, 1047].forEach((f, i) => bell(f, i * 0.1, 0.5, 0.18));
+    sparkle(0.42, 0.07);
+  },
+  // hint reveal: a textured downward whoosh (two detuned saws) over a soft low pad
+  hint: () => {
+    voice(1200, 0, 0.42, { gain: 0.12, type: "sawtooth", glideTo: 240 });
+    voice(1180, 0, 0.42, { gain: 0.08, type: "sawtooth", glideTo: 250 });
+    voice(160, 0, 0.46, { gain: 0.08, type: "sine" });
+  },
+  // your turn: a warm two-note blip with a touch of vibrato
+  turn: () => {
+    voice(660, 0, 0.16, { gain: 0.14, type: "triangle" });
+    voice(990, 0.08, 0.2, { gain: 0.1, type: "sine", vibrato: 8 });
+  },
+  // attempts exhausted: a low thud with body
+  lock: () => {
+    voice(160, 0, 0.26, { gain: 0.2, type: "square", glideTo: 70 });
+    voice(90, 0, 0.32, { gain: 0.12, type: "sine" });
+  },
+  // match win: a rising run resolving into a held major chord + sparkle
+  win: () => {
+    [523, 659, 784, 1047, 1319].forEach((f, i) => voice(f, i * 0.09, 0.34, { gain: 0.18, type: "triangle" }));
+    [523, 659, 784].forEach((f) => voice(f, 0.5, 0.75, { gain: 0.11, type: "sine" }));
+    sparkle(0.52, 0.07);
+  },
 };
 
 export const ttSound = {

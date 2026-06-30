@@ -24,6 +24,7 @@ import {
   TT_ROUNDS_PER_MATCH,
   TT_SERVER_EVENTS,
   TT_TIMING,
+  type TtCardView,
   type TtMatchKind,
   type TtDifficulty,
   type TtStandingRow,
@@ -78,6 +79,7 @@ export class Matches {
     const id = cryptoRandomId();
     const room: MatchRoom = {
       id,
+      persistId: id,
       kind: "MANUAL",
       difficulty,
       roundTimerSec,
@@ -92,6 +94,7 @@ export class Matches {
       usedEntryIds: new Set(),
       round: null,
       endRoundReq: null,
+      newRound: null,
       deadlineTs: null,
       timers: {},
       persisted: false,
@@ -105,6 +108,7 @@ export class Matches {
     const id = cryptoRandomId();
     const room: MatchRoom = {
       id,
+      persistId: id,
       kind: "QUICK_PLAY" as TtMatchKind,
       difficulty,
       roundTimerSec: TT_TIMING.defaultRoundSec,
@@ -119,6 +123,7 @@ export class Matches {
       usedEntryIds: new Set(),
       round: null,
       endRoundReq: null,
+      newRound: null,
       deadlineTs: null,
       timers: {},
       persisted: false,
@@ -416,11 +421,25 @@ export class Matches {
       this.sync(room);
       return;
     }
+    if (room.status === "ENDED") {
+      // Leaving during the new-round window: drop the seat so the replay excludes
+      // them; tear the table down once no connected human remains.
+      room.seats = room.seats.filter((s) => s.userId !== userId);
+      room.newRound?.readySeats.delete(seat.seat);
+      if (!room.seats.some((s) => s.connected && !s.isBot && s.status === "ACTIVE")) {
+        this.clear(room, "newRound");
+        room.newRound = null;
+        this.removeRoom(room.id);
+        return;
+      }
+      this.resolveNewRound(room, false);
+      return;
+    }
     if (room.status !== "IN_PROGRESS") return;
     seat.status = "WITHDRAWN";
     seat.totalPoints = 0;
     seat.connected = false;
-    void this.deps.persist.markWithdrawn(room.id, userId).catch(() => {});
+    void this.deps.persist.markWithdrawn(room.persistId, userId).catch(() => {});
 
     // remove from the live round's rotation
     const r = room.round;
@@ -483,8 +502,10 @@ export class Matches {
     // fold this round's reveals into the match-level accumulator (tiebreak spans all 3)
     accumulateRoundReveals(room);
     if (r.roundNo >= room.roundsTotal) {
+      // capture the fully-revealed board for the winner breakdown BEFORE nulling
+      const finalCards = this.buildStateView(room).cards;
       room.round = null;
-      this.finishMatch(room);
+      this.finishMatch(room, false, finalCards);
     } else {
       const next = r.roundNo + 1;
       room.round = null;
@@ -496,10 +517,12 @@ export class Matches {
     }
   }
 
-  private finishMatch(room: MatchRoom, abandoned = false): void {
+  private finishMatch(room: MatchRoom, abandoned = false, finalCards?: TtCardView[]): void {
     this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot");
     this.deps.bots?.cancel(room);
-    // fold an in-progress round (direct finish: withdrawal/no-question) before tally
+    // fold an in-progress round (direct finish: withdrawal/no-question) before tally,
+    // capturing its revealed board for the winner breakdown unless one was passed in
+    const cards = finalCards ?? (room.round ? this.buildStateView(room).cards : []);
     if (room.round) {
       accumulateRoundReveals(room);
       room.round = null;
@@ -512,10 +535,76 @@ export class Matches {
     void this.deps.persist
       .finishMatch(room, standings, winner?.userId ?? null, xpForWinner)
       .catch((e) => console.error("[top-10] finishMatch failed", e));
-    this.deps.emit(room.id, TT_SERVER_EVENTS.matchEnded, { standings });
+    this.deps.emit(room.id, TT_SERVER_EVENTS.matchEnded, { standings, cards });
+
+    if (abandoned) {
+      this.sync(room);
+      setTimeout(() => this.rooms.delete(room.id), 60_000);
+      return;
+    }
+    // Clean end → keep the table alive and open the NEW-ROUND ready vote (bots
+    // auto-ready). When every connected human is ready, or the grace elapses, a fresh
+    // round starts at the same table (mirrors Link Up's next-hand flow).
+    this.openNewRoundWindow(room);
+  }
+
+  // ---- new round (play again at the same table) ---------------------------
+
+  private openNewRoundWindow(room: MatchRoom): void {
+    const ready = new Set<number>(
+      room.seats.filter((s) => s.isBot && s.status === "ACTIVE").map((s) => s.seat),
+    );
+    room.newRound = { readySeats: ready, deadlineTs: Date.now() + TT_TIMING.newRoundGraceSec * 1000 };
+    this.clear(room, "newRound");
+    room.timers.newRound = setTimeout(() => this.resolveNewRound(room, true), TT_TIMING.newRoundGraceSec * 1000);
     this.sync(room);
-    // free memory shortly after
-    setTimeout(() => this.rooms.delete(room.id), 60_000);
+  }
+
+  /** A player tapped "جولة جديدة". Marks them ready; starts immediately once every
+   *  connected human is ready (the grace timer is the fallback auto-start). */
+  requestNewRound(room: MatchRoom, seat: number): void {
+    if (room.status !== "ENDED" || !room.newRound) return;
+    room.newRound.readySeats.add(seat);
+    this.resolveNewRound(room, false);
+  }
+
+  private resolveNewRound(room: MatchRoom, byTimer: boolean): void {
+    if (room.status !== "ENDED" || !room.newRound) return;
+    const connectedHumans = room.seats.filter((s) => s.connected && !s.isBot && s.status === "ACTIVE");
+    const allReady = connectedHumans.every((s) => room.newRound!.readySeats.has(s.seat));
+    if (!byTimer && !allReady) {
+      this.sync(room); // everyone sees the updated ready count
+      return;
+    }
+    // grace fired or everyone is ready — restart only if a real table remains
+    const playable = room.seats.filter((s) => s.status === "ACTIVE" && (s.isBot || s.connected));
+    if (connectedHumans.length === 0 || playable.length < TT_MIN_PLAYERS) {
+      this.clear(room, "newRound");
+      room.newRound = null;
+      this.removeRoom(room.id);
+      return;
+    }
+    this.restartRound(room);
+  }
+
+  private restartRound(room: MatchRoom): void {
+    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound");
+    this.deps.bots?.cancel(room);
+    room.newRound = null;
+    // keep only seats that will actually play; reset their scores
+    room.seats = room.seats.filter((s) => s.status === "ACTIVE" && (s.isBot || s.connected));
+    for (const s of room.seats) s.totalPoints = 0;
+    // fresh persistence identity + cleared cross-round reveal accumulator (usedEntryIds
+    // is intentionally kept so the replay draws a different question)
+    room.persistId = cryptoRandomId();
+    room.persisted = false;
+    matchRevealsBySeat.set(room, {});
+    room.round = null;
+    room.endRoundReq = null;
+    room.status = "IN_PROGRESS";
+    void this.deps.persist.createMatch(room).then(() => (room.persisted = true)).catch(() => {});
+    this.deps.emit(room.id, TT_SERVER_EVENTS.matchStarted, { matchId: room.id });
+    this.startRound(room, 1);
   }
 
   // ---- views --------------------------------------------------------------
@@ -607,6 +696,13 @@ export class Matches {
             needed: activeSeats(room).filter((s) => !s.isBot).length,
           }
         : null,
+      newRoundRequest: room.newRound
+        ? {
+            readySeats: [...room.newRound.readySeats],
+            needed: room.seats.filter((s) => s.connected && !s.isBot && s.status === "ACTIVE").length,
+            deadlineTs: room.newRound.deadlineTs,
+          }
+        : null,
     };
   }
 
@@ -624,7 +720,7 @@ export class Matches {
 
   removeRoom(matchId: string): void {
     const room = this.rooms.get(matchId);
-    if (room) this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot");
+    if (room) this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound");
     this.rooms.delete(matchId);
   }
 }

@@ -81,22 +81,34 @@ describe("Top Ten match orchestration", () => {
     expect(currentTurnSeat(room.round!.state)).not.toBe(seat); // advanced
   });
 
-  it("completes a full 3-round match and ends with standings", () => {
+  it("completes the single round and ends with standings", () => {
     const { matches, events } = makeMatches();
     const room = twoPlayerMatch(matches);
-    for (let round = 1; round <= 3; round++) {
-      // reveal all 10 cards this round
-      for (let rank = 10; rank >= 1; rank--) {
-        const seat = currentTurnSeat(room.round!.state)!;
-        matches.guess(room, seat, `p${rank}`);
-      }
-      // round ended; advance the 5s gap to start the next round (rounds 1,2)
-      vi.advanceTimersByTime(5000);
+    // reveal all 10 cards → the (single) round ends, which ends the match
+    for (let rank = 10; rank >= 1; rank--) {
+      const seat = currentTurnSeat(room.round!.state)!;
+      matches.guess(room, seat, `p${rank}`);
     }
     expect(room.status).toBe("ENDED");
     const ended = events[TT_SERVER_EVENTS.matchEnded] as { standings: { place: number }[] }[];
     expect(ended.length).toBe(1);
     expect(ended[0]!.standings[0]!.place).toBe(1);
+    // a clean end opens the new-round ready vote at the same table
+    expect(room.newRound).toBeTruthy();
+  });
+
+  it("after a round ends, all-ready starts a FRESH round at the same table", () => {
+    const { matches } = makeMatches();
+    const room = twoPlayerMatch(matches); // seats 0 (u0) + 1 (u1)
+    for (let rank = 10; rank >= 1; rank--) matches.guess(room, currentTurnSeat(room.round!.state)!, `p${rank}`);
+    expect(room.status).toBe("ENDED");
+    const firstPersistId = room.persistId;
+    matches.requestNewRound(room, 0);
+    matches.requestNewRound(room, 1); // both humans ready → immediate restart
+    expect(room.status).toBe("IN_PROGRESS");
+    expect(room.round).toBeTruthy();
+    expect(room.persistId).not.toBe(firstPersistId); // fresh persistence identity
+    expect(room.seats.every((s) => s.totalPoints === 0)).toBe(true); // scores reset
   });
 
   it("switches to HINT after two scoreless rotations, then a target guess scores", () => {
@@ -168,18 +180,15 @@ describe("Top Ten match orchestration", () => {
     const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
     matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 }, false);
     matches.start(room, "u0");
-    // play 3 full rounds (alternating guesses → the first guesser nets 30 > 25 = clear winner)
-    for (let round = 1; round <= 3; round++) {
-      for (let rank = 10; rank >= 1; rank--) {
-        const seat = currentTurnSeat(room.round!.state)!;
-        matches.guess(room, seat, `p${rank}`);
-      }
-      vi.advanceTimersByTime(5000);
+    // play the single round (alternating guesses → the first guesser nets 30 > 25 = clear winner)
+    for (let rank = 10; rank >= 1; rank--) {
+      const seat = currentTurnSeat(room.round!.state)!;
+      matches.guess(room, seat, `p${rank}`);
     }
     expect(room.status).toBe("ENDED");
-    // round XP + saveRound persisted once per round
-    expect(persist.awardRoundXp).toHaveBeenCalledTimes(3);
-    expect(persist.saveRound).toHaveBeenCalledTimes(3);
+    // round XP + saveRound persisted once (one round = one match)
+    expect(persist.awardRoundXp).toHaveBeenCalledTimes(1);
+    expect(persist.saveRound).toHaveBeenCalledTimes(1);
     // round XP map carried a positive award for the scoring seats
     const firstRoundXp = persist.awardRoundXp.mock.calls[0]![1] as Map<number, number>;
     expect([...firstRoundXp.values()].some((v) => v > 0)).toBe(true);

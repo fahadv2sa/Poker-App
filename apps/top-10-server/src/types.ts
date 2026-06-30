@@ -37,10 +37,16 @@ export type Timers = {
   hintWindow?: ReturnType<typeof setTimeout>;
   round?: ReturnType<typeof setTimeout>;
   bot?: ReturnType<typeof setTimeout>;
+  /** Auto-start countdown for the post-round New-Round ready vote. */
+  newRound?: ReturnType<typeof setTimeout>;
 };
 
 export interface MatchRoom {
   id: string;
+  /** Persistence identity for the CURRENT round-match. The socket room keeps `id`
+   *  for its lifetime; each replayed round gets a fresh `persistId` so its DB rows
+   *  (match, players, reveals, XP references) never collide with a prior round. */
+  persistId: string;
   kind: TtMatchKind;
   difficulty: TtDifficulty;
   roundTimerSec: number;
@@ -58,6 +64,8 @@ export interface MatchRoom {
   usedEntryIds: Set<string>;
   round: ActiveRound | null;
   endRoundReq: { bySeat: number; approvals: Set<number> } | null;
+  /** Post-round New-Round ready vote (status ENDED). Null otherwise. */
+  newRound: { readySeats: Set<number>; deadlineTs: number } | null;
   deadlineTs: number | null; // current phase deadline (turn / hint window)
   timers: Timers;
   persisted: boolean; // whether the TtMatch row exists yet

@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Atmosphere, BackIcon, BoltIcon, GoldButton, GoldGradientDefs, GoldTitle, Panel, cn } from "@fb/top-10-ui";
+import { AnimatePresence, motion } from "framer-motion";
+import { Atmosphere, BackIcon, BoltIcon, GoldButton, GoldGradientDefs, Panel, cn } from "@fb/top-10-ui";
+import { SeatAvatar, useRemainingMs } from "@fb/table-ui";
 import {
   TT_DIFFICULTIES,
   TT_MAX_PLAYERS,
@@ -13,6 +15,14 @@ import { connectTopTen, type TtConnection } from "@/lib/top-10/socket";
 import { TenTable } from "./table/TenTable";
 import { ttSound } from "@/lib/top-10/sound";
 import type { TtRevealEvent } from "@fb/shared";
+
+/** A completed round's result, captured for the live winner screen + the leave-summary. */
+type RoundSnapshot = {
+  round: number;
+  standings: TtStandingRow[];
+  seats: TtStateView["seats"];
+  cards: TtStateView["cards"];
+};
 
 const DIFF_AR: Record<TtDifficulty, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
 
@@ -43,11 +53,14 @@ export function TopTenClient({
   const [view, setView] = useState<View>("lobby");
   const [state, setState] = useState<TtStateView | null>(null);
   const [queue, setQueue] = useState<{ waiting: number; needed: number; countdownSec: number | null } | null>(null);
-  const [endStandings, setEndStandings] = useState<TtStandingRow[] | null>(null);
-  const [roundBanner, setRoundBanner] = useState<string | null>(null);
+  const [result, setResult] = useState<RoundSnapshot | null>(null);
+  const [rounds, setRounds] = useState<RoundSnapshot[]>([]);
+  const [showSummary, setShowSummary] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [reveal, setReveal] = useState<{ event: TtRevealEvent; id: number } | null>(null);
   const revealSeq = useRef(0);
+  // Latest state — so onMatchEnded can snapshot the seat roster for the breakdown.
+  const stateRef = useRef<TtStateView | null>(null);
 
   useEffect(() => {
     const conn = connectTopTen(token, {
@@ -65,9 +78,11 @@ export function TopTenClient({
           });
       },
       onState: (s) => {
+        stateRef.current = s;
         setState(s);
-        if (s.status === "IN_PROGRESS" || s.status === "LOBBY") setView("match");
-        if (s.status === "ENDED" || s.status === "ABANDONED") setView("match");
+        // a (re)started round clears the previous winner overlay
+        if (s.status === "IN_PROGRESS") setResult(null);
+        setView("match");
       },
       onQueueState: (q) => {
         setQueue({ waiting: q.waiting, needed: q.needed, countdownSec: q.countdownSec });
@@ -76,11 +91,12 @@ export function TopTenClient({
       },
       onQueueMatched: () => setView("match"),
       onReveal: (r) => setReveal({ event: r, id: ++revealSeq.current }),
-      onRoundEnded: (r) => {
-        setRoundBanner(`انتهت الجولة ${r.roundNo} — ${reasonAr(r.reason)}`);
-        setTimeout(() => setRoundBanner(null), 4000);
+      onMatchEnded: (m) => {
+        const seats = stateRef.current?.seats ?? [];
+        const snap: RoundSnapshot = { round: 0, standings: m.standings, seats, cards: m.cards ?? [] };
+        setResult(snap);
+        setRounds((rs) => [...rs, { ...snap, round: rs.length + 1 }]);
       },
-      onMatchEnded: (m) => setEndStandings(m.standings),
       onToast: (p) => flash(p.text),
       onError: (msg) => flash(msg),
       onAuthExpired: () => {
@@ -100,9 +116,20 @@ export function TopTenClient({
   function backToLobby() {
     conn()?.leave();
     setState(null);
-    setEndStandings(null);
+    stateRef.current = null;
+    setResult(null);
+    setRounds([]);
+    setShowSummary(false);
     setQueue(null);
     setView("lobby");
+  }
+
+  // Leaving the table: like Link Up, if any round was played show the round summary
+  // first; otherwise drop straight back to the quick-play lobby.
+  function onExit() {
+    conn()?.leave();
+    if (rounds.length > 0) setShowSummary(true);
+    else backToLobby();
   }
 
   return (
@@ -141,18 +168,14 @@ export function TopTenClient({
           }}
         />
       )}
-      {view === "match" && state && (
-        <MatchView
-          state={state}
-          me={me}
-          endStandings={endStandings}
-          roundBanner={roundBanner}
-          reveal={reveal}
-          conn={conn}
-          onLeave={backToLobby}
-        />
+      {view === "match" && state && !showSummary && (
+        <MatchView state={state} me={me} result={result} reveal={reveal} conn={conn} onExit={onExit} />
       )}
       </div>
+
+      <AnimatePresence>
+        {showSummary ? <TenTableSummary rounds={rounds} meId={me.userId} onClose={backToLobby} /> : null}
+      </AnimatePresence>
 
       {toast && (
         <div className="fixed inset-x-0 bottom-6 z-50 mx-auto w-fit rounded-full bg-black/80 px-5 py-2 text-[var(--lu-cream)] shadow-lg">
@@ -161,16 +184,6 @@ export function TopTenClient({
       )}
     </main>
   );
-}
-
-function reasonAr(r: string): string {
-  return r === "ALL_REVEALED"
-    ? "اكتملت القائمة"
-    : r === "UNANIMOUS_END"
-      ? "اتفاق على الإنهاء"
-      : r === "TIMER"
-        ? "انتهى وقت الجولة"
-        : "انسحاب لاعب";
 }
 
 // ---------------------------------------------------------------- Lobby
@@ -272,57 +285,54 @@ function QueueView({
 function MatchView({
   state,
   me,
-  endStandings,
-  roundBanner,
+  result,
   reveal,
   conn,
-  onLeave,
+  onExit,
 }: {
   state: TtStateView;
   me: { userId: string; username: string };
-  endStandings: TtStandingRow[] | null;
-  roundBanner: string | null;
+  result: RoundSnapshot | null;
   reveal: { event: TtRevealEvent; id: number } | null;
   conn: () => TtConnection | null;
-  onLeave: () => void;
+  onExit: () => void;
 }) {
   const mySeat = useMemo(() => state.seats.find((s) => s.userId === me.userId), [state, me]);
   // Stable guess handler so the memoized PlayerSearch isn't re-created each render.
   const onPick = useCallback((id: string) => conn()?.guess(id), [conn]);
 
-  if (endStandings || state.status === "ENDED" || state.status === "ABANDONED") {
-    return <MatchOver standings={endStandings ?? state.seats.map(seatToStanding)} abandoned={state.status === "ABANDONED"} onLeave={onLeave} />;
+  if (state.status === "ENDED" || state.status === "ABANDONED") {
+    return (
+      <TenWinner
+        state={state}
+        meId={me.userId}
+        result={result}
+        abandoned={state.status === "ABANDONED"}
+        onNewRound={() => conn()?.newRound()}
+        onClose={state.createdByUserId === me.userId ? () => conn()?.close() : undefined}
+        onExit={onExit}
+      />
+    );
   }
 
   if (state.status === "LOBBY") {
     return (
       <Panel className="fade-rise">
-        <LobbyRoom state={state} me={me} conn={conn} onLeave={onLeave} />
+        <LobbyRoom state={state} me={me} conn={conn} onLeave={onExit} />
       </Panel>
     );
   }
 
-  // IN_PROGRESS — the immersive felt table (full-screen overlay). Reuses <TenTable>
-  // verbatim with live socket state; the roundBanner toast rides above it.
+  // IN_PROGRESS — the immersive felt table (full-screen overlay).
   return (
-    <>
-      <TenTable
-        state={state}
-        meId={me.userId}
-        nickname={mySeat?.username ?? me.username}
-        reveal={reveal}
-        onPick={onPick}
-        onLeave={onLeave}
-        onClose={state.createdByUserId === me.userId ? () => conn()?.close() : undefined}
-        onRequestEndRound={() => conn()?.requestEndRound()}
-        onVoteEndRound={(a) => conn()?.voteEndRound(a)}
-      />
-      {roundBanner ? (
-        <div className="fixed inset-x-0 top-12 z-[90] mx-auto w-fit rounded-full bg-black/85 px-6 py-2 font-bold text-[var(--gold)] shadow-lg">
-          {roundBanner}
-        </div>
-      ) : null}
-    </>
+    <TenTable
+      state={state}
+      meId={me.userId}
+      nickname={mySeat?.username ?? me.username}
+      reveal={reveal}
+      onPick={onPick}
+      onLeave={onExit}
+    />
   );
 }
 
@@ -474,26 +484,250 @@ function LobbyRoom({
   );
 }
 
-function MatchOver({ standings, abandoned, onLeave }: { standings: TtStandingRow[]; abandoned: boolean; onLeave: () => void }) {
+/**
+ * Winner-announcement overlay — Link Up's result-screen style for Top Ten: three top
+ * controls (جولة جديدة / إغلاق الطاولة / خروج) with a ready-vote + auto-start countdown,
+ * over a per-player breakdown (points + the cards each player revealed). The creator
+ * also gets Close; a clean end offers New Round, an abandoned table only Exit.
+ */
+function TenWinner({
+  state,
+  meId,
+  result,
+  abandoned,
+  onNewRound,
+  onClose,
+  onExit,
+}: {
+  state: TtStateView;
+  meId: string;
+  result: RoundSnapshot | null;
+  abandoned: boolean;
+  onNewRound: () => void;
+  onClose?: () => void;
+  onExit: () => void;
+}) {
   useEffect(() => {
-    if (!abandoned) ttSound.play("win");
+    ttSound.play(abandoned ? "lock" : "win");
   }, [abandoned]);
+
+  const standings = result?.standings ?? [...state.seats].map(seatToStanding);
+  const seats = result?.seats ?? state.seats;
+  const cards = result?.cards ?? [];
+  const nr = state.newRoundRequest;
+  const mySeat = state.seats.find((s) => s.userId === meId);
+  const youReady = !!(nr && mySeat && nr.readySeats.includes(mySeat.seat));
+  const canNewRound = !abandoned;
+  const showClose = !!onClose && !abandoned;
+  const cols = (canNewRound ? 1 : 0) + (showClose ? 1 : 0) + 1;
+
   return (
-    <Panel className="flex flex-col items-center gap-4 py-8 text-center fade-rise">
-      <GoldTitle className="text-3xl">{abandoned ? "انتهت المباراة" : "النتيجة النهائية"}</GoldTitle>
-      <ol className="w-full max-w-md">
-        {standings.map((s) => (
-          <li key={s.userId} className="mb-2 flex items-center justify-between rounded-xl lu-frame px-4 py-3">
-            <span className="font-bold text-[var(--lu-cream)]">
-              <span className="num ml-2 text-[var(--gold)]">#{s.place}</span>
-              {s.username}
-              {s.tiedWithPrev ? " (تعادل)" : ""}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-40 flex justify-center overflow-y-auto bg-[var(--lu-abyss)]/95 p-3 backdrop-blur-md sm:p-6"
+    >
+      <div className="my-auto w-full max-w-md space-y-3">
+        {/* top controls + ready vote (mirrors Link Up's result-screen controls) */}
+        <div className="space-y-2">
+          {canNewRound && nr ? (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-xs text-[var(--lu-tan)]">
+                الاستعداد للجولة: <span className="num font-bold text-[var(--lu-cream)]">{nr.readySeats.length}</span>
+                /<span className="num">{Math.max(1, nr.needed)}</span>
+              </span>
+              {nr.deadlineTs ? (
+                <span className="lu-chip inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
+                  تبدأ خلال <NewRoundCountdown deadlineTs={nr.deadlineTs} /> ث
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+          <div className={cn("grid gap-2", cols === 3 ? "grid-cols-3" : cols === 2 ? "grid-cols-2" : "grid-cols-1")}>
+            {canNewRound ? (
+              <TenResultAction glyph={youReady ? "✓" : "▶"} label={youReady ? "جاهز" : "جولة جديدة"} variant="primary" disabled={youReady} onClick={onNewRound} />
+            ) : null}
+            {showClose ? <TenResultAction glyph="✕" label="إغلاق الطاولة" variant="destructive" onClick={onClose!} /> : null}
+            <TenResultAction glyph="⮐" label="خروج" variant="neutral" onClick={onExit} />
+          </div>
+        </div>
+
+        {/* the announcement body */}
+        <RoundResultView standings={standings} seats={seats} cards={cards} meId={meId} abandoned={abandoned} />
+      </div>
+    </motion.div>
+  );
+}
+
+function NewRoundCountdown({ deadlineTs }: { deadlineTs: number }) {
+  const ms = useRemainingMs(deadlineTs) ?? 0;
+  return <span className="num text-base font-black">{Math.max(0, Math.ceil(ms / 1000))}</span>;
+}
+
+function TenResultAction({
+  glyph,
+  label,
+  variant,
+  onClick,
+  disabled,
+}: {
+  glyph: string;
+  label: string;
+  variant: "primary" | "destructive" | "neutral";
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  const styles = {
+    primary: "btn-gold-cta text-black",
+    destructive: "border border-[#d9694f]/50 bg-[#d9694f]/15 text-[#d9694f]",
+    neutral: "lu-frame text-[var(--lu-cream)]",
+  } as const;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn("flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-3 text-sm font-bold transition disabled:opacity-60", styles[variant])}
+    >
+      <span aria-hidden className="text-lg leading-none">{glyph}</span>
+      {label}
+    </button>
+  );
+}
+
+/** Per-player breakdown for a finished round — winner highlighted (gold), then the
+ *  rest, each showing points + the rank cards they revealed. Reused by the live winner
+ *  overlay and each expanded round in the leave-summary. */
+function RoundResultView({
+  standings,
+  seats,
+  cards,
+  meId,
+  abandoned,
+}: {
+  standings: TtStandingRow[];
+  seats: TtStateView["seats"];
+  cards: TtStateView["cards"];
+  meId: string;
+  abandoned: boolean;
+}) {
+  const seatOf = (seat: number) => seats.find((s) => s.seat === seat);
+  const revealsBy = (seat: number) => cards.filter((c) => c.revealed && c.bySeat === seat).sort((a, b) => b.rank - a.rank);
+  const winner = !abandoned && standings.length > 0 && !standings[1]?.tiedWithPrev ? standings[0] : null;
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-col items-center gap-1">
+        <span className="grid size-12 place-items-center rounded-full border border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 text-2xl">
+          {abandoned ? "🚪" : winner ? "🏆" : "🤝"}
+        </span>
+        <div className="lu-gold-text lu-gold-title text-lg font-black">
+          {abandoned ? "انتهت المباراة" : winner ? "الفائز" : "تعادل"}
+        </div>
+      </div>
+      {winner ? (
+        <PlayerResultRow row={winner} seat={seatOf(winner.seat)} reveals={revealsBy(winner.seat)} meId={meId} tone="gold" />
+      ) : null}
+      <div className="space-y-1.5">
+        {standings
+          .filter((s) => !winner || s.userId !== winner.userId)
+          .map((s) => (
+            <PlayerResultRow key={s.userId} row={s} seat={seatOf(s.seat)} reveals={revealsBy(s.seat)} meId={meId} tone="plain" />
+          ))}
+      </div>
+    </div>
+  );
+}
+
+function PlayerResultRow({
+  row,
+  seat,
+  reveals,
+  meId,
+  tone,
+}: {
+  row: TtStandingRow;
+  seat: TtStateView["seats"][number] | undefined;
+  reveals: TtStateView["cards"];
+  meId: string;
+  tone: "gold" | "plain";
+}) {
+  return (
+    <div className={cn("flex flex-col gap-2 rounded-2xl border p-3", tone === "gold" ? "border-[var(--lu-gold-1)]/45 bg-gradient-to-b from-[var(--lu-gold-2)]/15 to-transparent" : "lu-frame")}>
+      <div className="flex items-center gap-2.5">
+        <SeatAvatar playerNumber={seat?.playerNumber ?? 0} seed={seat?.username ?? row.username} size={36} sizeClass="size-9" className="ring-1 ring-white/15" />
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-bold text-[var(--lu-cream)]">
+            {row.userId === meId ? "أنت" : row.username}
+            {row.tiedWithPrev ? " (تعادل)" : ""}
+          </div>
+          <div className="num text-[0.7rem] text-[var(--lu-tan)]">المركز #{row.place}</div>
+        </div>
+        <span className="num text-xl font-black text-[var(--gold)]">{row.points}</span>
+      </div>
+      {reveals.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {reveals.map((c) => (
+            <span key={c.rank} className="inline-flex items-center gap-1 rounded-full border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/[0.06] px-2 py-0.5 text-[0.66rem] font-bold text-[var(--lu-gold-1)]">
+              <span className="num">#{c.rank}</span>
+              {c.player ? <span className="text-[var(--lu-cream)]/80">{c.player.nameAr}</span> : null}
             </span>
-            <span className="num text-lg font-bold text-[var(--gold)]">{s.points}</span>
-          </li>
-        ))}
-      </ol>
-      <GoldButton onClick={onLeave}>العودة للقائمة</GoldButton>
-    </Panel>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Leave-summary — like Link Up's: a collapsed card per round played this session,
+ *  each expanding to that round's full breakdown. X returns to the lobby. */
+function TenTableSummary({ rounds, meId, onClose }: { rounds: RoundSnapshot[]; meId: string; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex justify-center overflow-y-auto bg-[var(--lu-abyss)]/95 p-3 backdrop-blur-md sm:p-6"
+    >
+      <div className="my-auto w-full max-w-md space-y-3">
+        <div className="lu-frame flex items-center justify-between gap-3 rounded-2xl px-4 py-3">
+          <div className="flex min-w-0 flex-col">
+            <span className="lu-gold-text lu-gold-title text-base font-black">ملخص الطاولة</span>
+            <span className="num text-[0.7rem] text-[var(--lu-tan)]">
+              {rounds.length} {rounds.length === 1 ? "جولة" : "جولات"}
+            </span>
+          </div>
+          <button type="button" onClick={onClose} aria-label="إغلاق" className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-black/40 text-lg text-[var(--lu-cream)]/85">
+            ✕
+          </button>
+        </div>
+        <div className="space-y-2">
+          {rounds.map((rd) => (
+            <SummaryRoundCard key={rd.round} rd={rd} meId={meId} />
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function SummaryRoundCard({ rd, meId }: { rd: RoundSnapshot; meId: string }) {
+  const [open, setOpen] = useState(false);
+  const winner = rd.standings[0];
+  return (
+    <div className="lu-frame overflow-hidden rounded-2xl">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-2 px-4 py-3">
+        <span className="font-bold text-[var(--lu-cream)]">الجولة {rd.round}</span>
+        <span className="flex items-center gap-1.5 text-xs text-[var(--lu-tan)]">
+          الفائز: {winner ? (winner.userId === meId ? "أنت" : winner.username) : "—"}
+          <span className="text-[0.6rem]">{open ? "▲" : "▼"}</span>
+        </span>
+      </button>
+      {open ? (
+        <div className="border-t border-white/10 p-3">
+          <RoundResultView standings={rd.standings} seats={rd.seats} cards={rd.cards} meId={meId} abandoned={false} />
+        </div>
+      ) : null}
+    </div>
   );
 }

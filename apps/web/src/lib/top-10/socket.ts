@@ -43,6 +43,8 @@ export interface TtConnection {
   guess: (playerId: string) => void;
   requestEndRound: () => void;
   voteEndRound: (accept: boolean) => void;
+  /** Ready up for a new round at the same table after a round ends. */
+  newRound: () => void;
   queueJoin: (difficulty: TtDifficulty) => void;
   queueLeave: () => void;
   leave: () => void;
@@ -81,6 +83,7 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
     guess: (playerId) => socket.emit(TT_CLIENT_EVENTS.guess, { playerId }),
     requestEndRound: () => socket.emit(TT_CLIENT_EVENTS.endRoundRequest, {}),
     voteEndRound: (accept) => socket.emit(TT_CLIENT_EVENTS.endRoundVote, { accept }),
+    newRound: () => socket.emit(TT_CLIENT_EVENTS.newRound, {}),
     queueJoin: (difficulty) => socket.emit(TT_CLIENT_EVENTS.queueJoin, { difficulty }),
     queueLeave: () => socket.emit(TT_CLIENT_EVENTS.queueLeave, {}),
     leave: () => socket.emit(TT_CLIENT_EVENTS.leave, {}),

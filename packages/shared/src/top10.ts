@@ -257,7 +257,7 @@ export const TT_CLUBS: readonly TtClub[] = [
 export const TT_LIST_SIZE = 10;
 export const TT_MIN_PLAYERS = 2;
 export const TT_MAX_PLAYERS = 4;
-export const TT_ROUNDS_PER_MATCH = 3; // fixed (brief §5.1)
+export const TT_ROUNDS_PER_MATCH = 1; // a match is a single round
 
 // ---- season display --------------------------------------------------------
 
@@ -299,9 +299,10 @@ export const TT_TOURNAMENT_FINALS_MAX_APPS = 8;
  * disagree with the data (0% display error by construction).
  */
 export function ttSeasonLabel(season: number, seasonEnd: number, leagueId: number): string {
+  // Cross-calendar → short two-year form "2020/21"; single-year tournament → "2020".
   const fmt = TT_SINGLE_YEAR_LEAGUE_IDS.includes(leagueId)
     ? (y: number) => `${y}`
-    : (y: number) => `${y}/${y + 1}`;
+    : (y: number) => `${y}/${String((y + 1) % 100).padStart(2, "0")}`;
   return season === seasonEnd ? fmt(season) : `${fmt(season)}–${fmt(seasonEnd)}`;
 }
 
@@ -310,8 +311,8 @@ export function ttSeasonLabel(season: number, seasonEnd: number, leagueId: numbe
 export const TT_TIMING = {
   /** Per-PLAYER turn timer in normal mode (brief §4.1). */
   turnSec: 30,
-  /** Hint mode: countdown from 10→0 with inputs LOCKED (brief §4.3). */
-  hintCountdownSec: 10,
+  /** Hint mode: countdown from 5→0 with inputs LOCKED (brief §4.3). */
+  hintCountdownSec: 5,
   /** Hint mode: open answer window after a hint is shown. */
   hintAnswerSec: 30,
   /** Default round timer; customizable in CREATED rooms only (brief §5.2 case 3). */
@@ -319,6 +320,10 @@ export const TT_TIMING = {
   /** Reconnect grace before a dropped socket is treated as a withdrawal (reused
    *  from Link Up's value). */
   reconnectGraceMs: 5 * 60 * 1000,
+  /** After a round ends, players ready up for a NEW round at the same table; when
+   *  all connected humans are ready (bots auto-ready) or this grace elapses, a fresh
+   *  round starts. Mirrors Link Up's NEW_ROUND_GRACE_SEC. */
+  newRoundGraceSec: 15,
 } as const;
 
 export const TT_HINT = {

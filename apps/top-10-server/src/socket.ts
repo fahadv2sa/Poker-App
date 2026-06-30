@@ -33,6 +33,10 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
   const user = (socket: Socket): RealtimeClaims => socket.data.user as RealtimeClaims;
   const findRoomOf = (userId: string): MatchRoom | undefined =>
     matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ENDED" && r.status !== "ABANDONED");
+  // Includes a just-ENDED room so the post-round New-Round window (ready vote / leave /
+  // reconnect) can still find it; an ABANDONED room is torn down and never matched.
+  const findActiveOrEnded = (userId: string): MatchRoom | undefined =>
+    matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ABANDONED");
 
   function broadcastQueue(difficulty: TtDifficulty): void {
     const q = queues.get(difficulty);
@@ -118,8 +122,9 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
   io.on("connection", (socket) => {
     const u = user(socket);
 
-    // reconnect: if the player has a held seat, cancel its grace and resync
-    const existing = findRoomOf(u.userId);
+    // reconnect: if the player has a held seat, cancel its grace and resync (also
+    // re-attaches to a just-ENDED room so they see the winner screen + new-round vote)
+    const existing = findActiveOrEnded(u.userId);
     if (existing) {
       const seat = existing.seats.find((s) => s.userId === u.userId);
       if (seat) {
@@ -193,6 +198,12 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
       if (room && seat) matches.voteEndRound(room, seat.seat, parsed.data.accept);
     });
 
+    socket.on(TT_CLIENT_EVENTS.newRound, () => {
+      const room = findActiveOrEnded(u.userId);
+      const seat = room?.seats.find((s) => s.userId === u.userId);
+      if (room && seat) matches.requestNewRound(room, seat.seat);
+    });
+
     socket.on(TT_CLIENT_EVENTS.queueJoin, (raw) => {
       const parsed = ttQueueJoinSchema.safeParse(raw);
       if (!parsed.success) return;
@@ -214,7 +225,7 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
 
     socket.on(TT_CLIENT_EVENTS.leave, () => {
       leaveAllQueues(socket.id);
-      const room = findRoomOf(u.userId);
+      const room = findActiveOrEnded(u.userId);
       if (room) {
         matches.withdraw(room, u.userId);
         socket.leave(room.id);
@@ -223,11 +234,17 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
 
     socket.on("disconnect", () => {
       leaveAllQueues(socket.id);
-      const room = findRoomOf(u.userId);
+      const room = findActiveOrEnded(u.userId);
       if (!room) return;
       const seat = room.seats.find((s) => s.userId === u.userId);
       if (!seat) return;
       seat.connected = false;
+      // During the post-round new-round window just update the ready count; that
+      // window's own grace (or all-ready) resolves the restart/teardown shortly.
+      if (room.status === "ENDED") {
+        matches.sync(room);
+        return;
+      }
       // Hold the seat for the reconnect grace in the LOBBY as well as a live match —
       // a creator who backgrounds the tab (or leaves to a share sheet / messaging app)
       // to share the invite link must NOT be dropped, which would tear down the room

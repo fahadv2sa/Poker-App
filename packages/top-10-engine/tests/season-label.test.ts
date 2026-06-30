@@ -15,18 +15,19 @@ import {
  * label is a 0%-error violation, so these are pinned.
  */
 describe("ttSeasonLabel — season display mapping", () => {
-  it("cross-calendar leagues render a two-year span (start/start+1)", () => {
-    expect(ttSeasonLabel(2019, 2019, 39)).toBe("2019/2020"); // Premier League
-    expect(ttSeasonLabel(2020, 2020, 140)).toBe("2020/2021"); // La Liga
-    expect(ttSeasonLabel(2011, 2011, 78)).toBe("2011/2012"); // Bundesliga
+  it("cross-calendar leagues render the short two-year span (start/end-2-digit)", () => {
+    expect(ttSeasonLabel(2019, 2019, 39)).toBe("2019/20"); // Premier League
+    expect(ttSeasonLabel(2020, 2020, 140)).toBe("2020/21"); // La Liga
+    expect(ttSeasonLabel(2011, 2011, 78)).toBe("2011/12"); // Bundesliga
+    expect(ttSeasonLabel(2009, 2009, 39)).toBe("2009/10"); // zero-padded end year
   });
 
   it("the Champions League is cross-calendar", () => {
-    expect(ttSeasonLabel(2019, 2019, TT_UCL_LEAGUE_ID)).toBe("2019/2020");
+    expect(ttSeasonLabel(2019, 2019, TT_UCL_LEAGUE_ID)).toBe("2019/20");
   });
 
   it("the Top-5 grouped scope (stored leagueId 0) is cross-calendar", () => {
-    expect(ttSeasonLabel(2020, 2020, 0)).toBe("2020/2021");
+    expect(ttSeasonLabel(2020, 2020, 0)).toBe("2020/21");
   });
 
   it("single-year tournaments stay one year (no false two-year span)", () => {
@@ -36,7 +37,7 @@ describe("ttSeasonLabel — season display mapping", () => {
   });
 
   it("cumulative windows expand BOTH endpoints per the league rule", () => {
-    expect(ttSeasonLabel(2018, 2020, 39)).toBe("2018/2019–2020/2021"); // 3-season PL
+    expect(ttSeasonLabel(2018, 2020, 39)).toBe("2018/19–2020/21"); // 3-season PL
     expect(ttSeasonLabel(2014, 2018, 1)).toBe("2014–2018"); // single-year tournament range
   });
 

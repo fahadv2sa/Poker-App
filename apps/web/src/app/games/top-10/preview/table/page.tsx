@@ -91,6 +91,7 @@ export default function PreviewTable() {
     deadlineTs,
     hint: hintPhase === "off" ? null : { phase: hintPhase === "countdown" ? "COUNTDOWN" : "OPEN", text: "لاعب فاز بالكرة الذهبية", hintNumber: 1, rank: 7 },
     endRoundRequest: null,
+    newRoundRequest: null,
   };
 
   const btn = (active: boolean) => `rounded px-2 py-0.5 ${active ? "bg-[var(--gold)] text-black" : "bg-white/10"}`;
@@ -122,7 +123,6 @@ export default function PreviewTable() {
         reveal={reveal}
         onPick={(id) => console.log("pick", id)}
         onLeave={() => console.log("leave")}
-        onClose={() => console.log("close")}
       />
     </div>
   );

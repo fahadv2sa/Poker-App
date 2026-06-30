@@ -28,7 +28,7 @@ export class PrismaTtPersistence implements TtPersistence {
   async createMatch(room: MatchRoom): Promise<void> {
     await prisma.ttMatch.create({
       data: {
-        id: room.id,
+        id: room.persistId,
         kind: room.kind,
         difficulty: room.difficulty,
         roundTimerSec: room.roundTimerSec,
@@ -54,7 +54,7 @@ export class PrismaTtPersistence implements TtPersistence {
     if (!room.persisted) return; // match row never created (e.g., early failure)
     await prisma.ttRound.create({
       data: {
-        matchId: room.id,
+        matchId: room.persistId,
         roundNo: round.roundNo,
         catalogEntryId: round.entry.id,
         mode: round.state.mode,
@@ -81,7 +81,7 @@ export class PrismaTtPersistence implements TtPersistence {
       const add = perSeat[s.seat] ?? 0;
       if (add === 0) continue;
       await prisma.ttMatchPlayer.updateMany({
-        where: { matchId: room.id, userId: s.userId },
+        where: { matchId: room.persistId, userId: s.userId },
         data: { totalPoints: { increment: add } },
       });
     }
@@ -93,7 +93,7 @@ export class PrismaTtPersistence implements TtPersistence {
       if (xp <= 0) continue;
       const s = room.seats.find((x) => x.seat === seat);
       if (!s || isBotSeat(s)) continue; // bots never get progression/XP
-      await this.applyXp(s.userId, room.id, xp, `${room.id}:${room.round?.roundNo ?? "r"}:${s.userId}:round`, "ROUND_POINTS");
+      await this.applyXp(s.userId, room.persistId, xp, `${room.persistId}:${room.round?.roundNo ?? "r"}:${s.userId}:round`, "ROUND_POINTS");
     }
   }
 
@@ -112,14 +112,14 @@ export class PrismaTtPersistence implements TtPersistence {
   ): Promise<void> {
     if (!room.persisted) return;
     await prisma.ttMatch.update({
-      where: { id: room.id },
+      where: { id: room.persistId },
       data: { status: room.status, endedAt: new Date() },
     });
     // winner bonus XP
     for (const [seat, xp] of xpForWinner) {
       const s = room.seats.find((x) => x.seat === seat);
       if (!s || isBotSeat(s)) continue;
-      await this.applyXp(s.userId, room.id, xp, `${room.id}:${s.userId}:win`, "MATCH_WIN");
+      await this.applyXp(s.userId, room.persistId, xp, `${room.persistId}:${s.userId}:win`, "MATCH_WIN");
     }
     // matchesPlayed / matchesWon
     for (const s of room.seats) {
