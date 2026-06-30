@@ -185,30 +185,20 @@ const DIFF_SUB: Record<TtDifficulty, string> = {
  *  dedicated pages (/create-room, /rooms); links provided for discoverability. */
 function Lobby({ onJoin }: { onJoin: (d: TtDifficulty) => void }) {
   return (
-    <div className="flex flex-col gap-3 fade-rise">
-      <p className="px-1 text-sm text-[var(--lu-tan)]">اختر المستوى وابدأ فورًا — تُملأ المقاعد بالبوتات عند الحاجة.</p>
-      {TT_DIFFICULTIES.map((d) => (
-        <button
-          key={d}
-          onClick={() => onJoin(d)}
-          className="lu-btn lu-frame group flex items-center justify-between rounded-2xl px-5 py-4 text-right"
-        >
-          <div>
-            <div className="text-xl font-black lu-gold-text">{DIFF_AR[d]}</div>
-            <div className="text-xs text-[var(--lu-tan)]">{DIFF_SUB[d]}</div>
-          </div>
-          <span className="lu-chip grid size-11 place-items-center rounded-xl text-lg font-black text-[var(--gold)] ring-1 ring-[var(--lu-gold-1)]/30 group-hover:ring-[var(--lu-ember-glow)]/60">
-            ▶
-          </span>
-        </button>
-      ))}
-      <div className="mt-1 flex gap-2">
-        <a href="/games/top-10/create-room" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
-          إنشاء غرفة
-        </a>
-        <a href="/games/top-10/rooms" className="lu-btn lu-chip flex-1 rounded-xl py-2.5 text-center text-sm font-bold lu-gold-text">
-          دخول بكود
-        </a>
+    <div className="flex flex-col gap-4 fade-rise">
+      <p className="text-sm text-[var(--lu-tan)]">اختر المستوى وابدأ فورًا — تُملأ المقاعد بالبوتات عند الحاجة.</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {TT_DIFFICULTIES.map((d) => (
+          <button
+            key={d}
+            type="button"
+            onClick={() => onJoin(d)}
+            className="lu-btn lu-frame flex flex-col gap-1 rounded-2xl p-5 text-right"
+          >
+            <span className="text-lg font-black text-[var(--lu-cream)]">{DIFF_AR[d]}</span>
+            <span className="text-xs text-[var(--lu-tan)]">{DIFF_SUB[d]}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

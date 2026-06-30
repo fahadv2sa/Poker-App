@@ -1,100 +1,105 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@fb/db";
 import { levelForXp, levelProgress } from "@fb/top-10-engine";
-import { StatsIcon } from "@fb/top-10-ui";
 import { auth } from "@/auth";
-import { LuHeader, LuPanel, LuScreen } from "@/components/top-10/lu-screen";
+import { TenStatsView, type TtMilestone, type TtStatTile, type TtStatsVM } from "@/components/top-10/TenStatsView";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "الإحصائيات — توب 10" };
 
-const DIFF_AR: Record<string, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
-
-type Tile = { icon: string; label: string; value: string; tone: "cream" | "gold" | "lose" };
-const TONE: Record<Tile["tone"], string> = {
-  cream: "var(--lu-cream)",
-  gold: "var(--lu-gold-1)",
-  lose: "#d9694f",
-};
+/** Deterministic gradient hue for the generated avatar fallback (same approach as
+ *  the rank/profile views — a tiny local copy, no shared export). */
+function hueFromSeed(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
+  return h;
+}
 
 export default async function StatsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [prog, recent] = await Promise.all([
-    prisma.ttProgression.findUnique({ where: { userId } }),
-    prisma.ttMatchPlayer.findMany({
-      where: { userId },
-      orderBy: { joinedAt: "desc" },
-      take: 10,
-      include: { match: { select: { difficulty: true } } },
+  // Real Top Ten metrics from the top_10 schema: progression (xp/level/matches/wins),
+  // per-match points (sum/best), and personal reveals (cards + rank-10 "الأندر").
+  const [user, prog, pointsAgg, cardsRevealed, valuableReveals, rarestReveals] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        username: true,
+        nickname: true,
+        avatarSeed: true,
+        playerNumber: true,
+        avatar: { select: { updatedAt: true } },
+      },
     }),
+    prisma.ttProgression.findUnique({ where: { userId } }),
+    prisma.ttMatchPlayer.aggregate({ where: { userId }, _sum: { totalPoints: true }, _max: { totalPoints: true } }),
+    prisma.ttRoundReveal.count({ where: { revealedByUserId: userId } }),
+    prisma.ttRoundReveal.count({ where: { revealedByUserId: userId, rank: { gte: 8 } } }),
+    prisma.ttRoundReveal.count({ where: { revealedByUserId: userId, rank: 10 } }),
   ]);
+  if (!user) redirect("/login");
 
   const xp = Number(prog?.xp ?? 0n);
   const level = prog?.level ?? levelForXp(xp);
-  const played = prog?.matchesPlayed ?? 0;
-  const won = prog?.matchesWon ?? 0;
-  const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
-  const prg = levelProgress(xp);
-  const pct = prg.levelSpan > 0 ? Math.min(100, Math.round((prg.intoLevel / prg.levelSpan) * 100)) : 0;
+  const matches = prog?.matchesPlayed ?? 0;
+  const wins = prog?.matchesWon ?? 0;
+  const winRate = matches > 0 ? wins / matches : 0;
+  const totalPoints = pointsAgg._sum.totalPoints ?? 0;
+  const bestMatch = pointsAgg._max.totalPoints ?? 0;
+  const avgPoints = matches > 0 ? Math.round(totalPoints / matches) : 0;
+  const valuableRate = cardsRevealed > 0 ? valuableReveals / cardsRevealed : 0;
 
-  const core: Tile[] = [
-    { icon: "⚽", label: "المباريات", value: String(played), tone: "cream" },
-    { icon: "🏆", label: "الانتصارات", value: String(won), tone: "gold" },
-    { icon: "🎯", label: "نسبة الفوز", value: `${winRate}%`, tone: "gold" },
+  const prg = levelProgress(xp);
+  const progress = prg.levelSpan > 0 ? Math.min(1, prg.intoLevel / prg.levelSpan) : 0;
+  const xpToNext = Math.max(0, prg.levelSpan - prg.intoLevel);
+
+  const displayName = user.nickname ?? user.username;
+  const avatarSrc = user.avatar ? `/api/profile/avatar/${userId}?v=${user.avatar.updatedAt.getTime()}` : null;
+  const hue = hueFromSeed(user.avatarSeed ?? user.username);
+
+  const core: TtStatTile[] = [
+    { icon: "⚽", label: "المباريات", value: String(matches), tone: "cream" },
+    { icon: "🏆", label: "الانتصارات", value: String(wins), tone: "gold" },
+    { icon: "🎯", label: "نسبة الفوز", value: `${Math.round(winRate * 100)}%`, tone: "gold" },
+    { icon: "⭐", label: "إجمالي النقاط", value: totalPoints.toLocaleString("en-US"), tone: "gold" },
+    { icon: "🃏", label: "البطاقات المكشوفة", value: String(cardsRevealed), tone: "cream" },
+    { icon: "💎", label: "كشوف الأندر", value: String(rarestReveals), tone: "gold" },
   ];
 
-  return (
-    <LuScreen>
-      <LuHeader icon={<StatsIcon size={22} />} title="الإحصائيات" subtitle="مستواك وأداؤك" />
+  const analysis = {
+    bars: [
+      { label: "نسبة الفوز", r: Math.max(0, Math.min(1, winRate)), display: `${Math.round(winRate * 100)}%`, tone: "gold" as const },
+      { label: "نسبة كشف الأثمن", r: Math.max(0, Math.min(1, valuableRate)), display: `${Math.round(valuableRate * 100)}%`, tone: "gold" as const },
+    ],
+    bestMatch: bestMatch.toLocaleString("en-US"),
+    avgPoints: avgPoints.toLocaleString("en-US"),
+  };
 
-      {/* level hero */}
-      <LuPanel className="mt-3 flex flex-col items-center gap-3 text-center">
-        <span className="lu-orb grid size-24 place-items-center rounded-full">
-          <span className="num text-3xl font-black text-[#2a1f02]">{level}</span>
-        </span>
-        <p className="lu-gold-text lu-gold-title text-lg font-black">المستوى {level}</p>
-        <div className="w-full">
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-black/40">
-            <div className="bar-fill h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#f7e6b0,#c9962e)" }} />
-          </div>
-          <p className="mt-1.5 text-xs text-[var(--lu-tan)]">
-            <span className="num">{prg.intoLevel.toLocaleString("en-US")}</span> /{" "}
-            <span className="num">{prg.levelSpan.toLocaleString("en-US")}</span> خبرة للمستوى التالي
-          </p>
-        </div>
-      </LuPanel>
+  // Milestones — unlock states derived from the real metrics above (no fabricated data).
+  const milestones: TtMilestone[] = [
+    { icon: "⚽", nameAr: "أول مباراة", descAr: "العب مباراتك الأولى", unlocked: matches >= 1 },
+    { icon: "🏆", nameAr: "أول فوز", descAr: "افز بمباراة واحدة", unlocked: wins >= 1 },
+    { icon: "🃏", nameAr: "كاشف", descAr: "اكشف ١٠ بطاقات", unlocked: cardsRevealed >= 10 },
+    { icon: "💎", nameAr: "صائد الأندر", descAr: "اكشف بطاقة المركز ١٠", unlocked: rarestReveals >= 1 },
+    { icon: "🔥", nameAr: "قنّاص", descAr: "سجّل ٣٠ نقطة بمباراة", unlocked: bestMatch >= 30 },
+    { icon: "🧠", nameAr: "خبير", descAr: "ابلغ المستوى ١٠", unlocked: level >= 10 },
+  ];
 
-      {/* core tiles */}
-      <div className="mt-4 grid grid-cols-3 gap-2.5">
-        {core.map((t) => (
-          <div key={t.label} className="lu-frame flex flex-col items-center gap-1 rounded-2xl py-4">
-            <span aria-hidden className="text-xl">{t.icon}</span>
-            <span className="num text-2xl font-black" style={{ color: TONE[t.tone] }}>{t.value}</span>
-            <span className="text-xs text-[var(--lu-tan)]">{t.label}</span>
-          </div>
-        ))}
-      </div>
+  const vm: TtStatsVM = {
+    displayName,
+    playerNumber: user.playerNumber,
+    avatarSrc,
+    hue,
+    level,
+    xp,
+    progress,
+    xpToNext,
+    core,
+    analysis,
+    milestones,
+  };
 
-      {/* recent matches */}
-      <h2 className="mb-2 mt-5 px-1 text-sm font-bold text-[var(--lu-cream)]">آخر المباريات</h2>
-      {recent.length === 0 ? (
-        <LuPanel className="text-center text-sm text-[var(--lu-tan)]">لا توجد مباريات بعد — ابدأ أول مباراة!</LuPanel>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {recent.map((m) => (
-            <li key={m.id} className="lu-frame flex items-center justify-between rounded-xl px-4 py-3">
-              <div className="flex items-center gap-3">
-                <span className="lu-chip rounded-lg px-2.5 py-1 text-xs font-bold lu-gold-text">{DIFF_AR[m.match.difficulty] ?? m.match.difficulty}</span>
-                <span className="text-sm text-[var(--lu-cream)]">{m.status === "WITHDRAWN" ? "منسحب" : "مكتملة"}</span>
-              </div>
-              <span className="num text-lg font-bold text-[var(--lu-gold-1)]">{m.totalPoints}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </LuScreen>
-  );
+  return <TenStatsView vm={vm} />;
 }

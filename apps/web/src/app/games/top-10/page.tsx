@@ -1,26 +1,32 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@fb/db";
-import { levelForXp } from "@fb/top-10-engine";
 import { auth } from "@/auth";
 import { TenHome } from "@/components/top-10/TenHome";
-import { logoutAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-/** Top Ten home (launcher). Server component: verifies the session and reads the
- *  player's XP/level for the level strip. */
+/** Top Ten home (launcher). Server component: verifies the session and computes the
+ *  player's global rank for the rank strip (mirrors Link Up's home). */
 export default async function Home() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const userId = session.user.id;
 
-  const prog = await prisma.ttProgression.findUnique({
-    where: { userId: session.user.id },
-    select: { xp: true, level: true },
+  // Global rank = position among all players by LEVEL (XP tiebreak) — the same
+  // ordering as the /rank leaderboard the strip opens. Bots never get a
+  // ttProgression row, so the table is humans-only; one cheap count.
+  const myProg = await prisma.ttProgression.findUnique({
+    where: { userId },
+    select: { level: true, xp: true },
   });
-  const xp = Number(prog?.xp ?? 0n);
-  const level = prog?.level ?? levelForXp(xp);
-  // Unified platform: the hub is the same-origin root of this web service.
-  const hubUrl = "/";
+  const myLevel = myProg?.level ?? 1;
+  const myXp = myProg?.xp ?? 0n;
+  const rankNum =
+    (await prisma.ttProgression.count({
+      where: { OR: [{ level: { gt: myLevel } }, { level: myLevel, xp: { gt: myXp } }] },
+    })) + 1;
+  const rank = `#${rankNum.toLocaleString("en-US")}`;
 
-  return <TenHome level={level} xp={xp} hubUrl={hubUrl} logoutAction={logoutAction} />;
+  // Unified platform: the hub is the same-origin root of this web service.
+  return <TenHome rank={rank} hubUrl="/" />;
 }

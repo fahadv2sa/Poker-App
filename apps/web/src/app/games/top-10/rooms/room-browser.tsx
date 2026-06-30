@@ -92,18 +92,13 @@ function RoomCard({ r }: { r: RoomCardData }) {
   );
 }
 
-function EmptyState({ text, glyph, cta }: { text: string; glyph: string; cta?: { href: string; label: string } }) {
+function EmptyState({ text, glyph }: { text: string; glyph: string }) {
   return (
-    <div className="col-span-full flex flex-col items-center gap-3 py-12 text-center">
+    <div className="col-span-full flex flex-col items-center gap-2 py-12 text-center">
       <span className="text-3xl opacity-60" aria-hidden>
         {glyph}
       </span>
       <p className="text-[var(--lu-tan)]">{text}</p>
-      {cta ? (
-        <Link href={cta.href} className="lu-btn lu-chip rounded-full px-4 py-2 text-sm font-bold lu-gold-text">
-          {cta.label}
-        </Link>
-      ) : null}
     </div>
   );
 }
@@ -144,9 +139,9 @@ export function RoomBrowser({ publicRooms, friendsRooms }: { publicRooms: RoomCa
       <div className="grid gap-3">
         {rooms.length === 0 ? (
           tab === "public" ? (
-            <EmptyState glyph="⚡" text="لا توجد طاولات سريعة نشطة الآن" cta={{ href: "/games/top-10/play", label: "ابدأ لعبًا سريعًا" }} />
+            <EmptyState glyph="⚡" text="لا توجد طاولات سريعة نشطة الآن" />
           ) : (
-            <EmptyState glyph="🔒" text="لا توجد غرف أصدقاء مفتوحة" cta={{ href: "/games/top-10/create-room", label: "أنشئ غرفة" }} />
+            <EmptyState glyph="🔒" text="لا توجد غرف أصدقاء مفتوحة" />
           )
         ) : (
           rooms.map((r) => <RoomCard key={r.id} r={r} />)

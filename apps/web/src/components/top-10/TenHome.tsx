@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   Atmosphere,
   BackIcon,
@@ -9,16 +9,18 @@ import {
   GuideIcon,
   HomeIcon,
   JoinRoomIcon,
-  LevelIcon,
-  LogoutIcon,
+  SoundOffIcon,
+  SoundOnIcon,
   StatsIcon,
+  TrophyIcon,
   cn,
 } from "@fb/top-10-ui";
+import { ttSound } from "@/lib/top-10/sound";
 
 /**
  * Top Ten — game home. A faithful gold-on-black launcher built to Link Up's home
- * standard (atmosphere + hero orb + action grid + level strip + bottom nav), fitted
- * to Top Ten. Visual layer only; every control is a normal <Link>/<form>.
+ * standard (atmosphere + hero orb + action grid + rank strip + bottom nav), fitted
+ * to Top Ten. Visual layer only; every control is a normal <Link>/<button>.
  */
 
 const ACTIONS = [
@@ -43,17 +45,29 @@ const EMBERS = [
   { left: "90%", top: "46%", size: 3, dx: "-6px", dur: "7s", delay: "1.2s" },
 ] as const;
 
-export function TenHome({
-  level,
-  xp,
-  hubUrl,
-  logoutAction,
-}: {
-  level: number;
-  xp: number;
-  hubUrl: string;
-  logoutAction: () => void | Promise<void>;
-}) {
+/** Sound mute toggle — mirrors Link Up's home MuteButton (same position/size/icons),
+ *  driven by Top Ten's own sound layer. Reflects the persisted state on mount. */
+function MuteButton() {
+  const [muted, setMuted] = useState(false);
+  useEffect(() => setMuted(ttSound.muted), []);
+  return (
+    <button
+      type="button"
+      aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"}
+      aria-pressed={muted}
+      onClick={() => {
+        ttSound.unlock();
+        setMuted(ttSound.toggle());
+      }}
+      className="lu-btn lu-frame grid size-10 place-items-center rounded-xl"
+    >
+      {muted ? <SoundOffIcon size={20} /> : <SoundOnIcon size={20} />}
+    </button>
+  );
+}
+
+export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
+  const [hasImg, setHasImg] = useState(true);
   return (
     <main className="relative mx-auto flex min-h-[100dvh] max-w-[26rem] flex-col overflow-hidden bg-[var(--lu-abyss)] px-5 pb-4 page-top">
       <GoldGradientDefs />
@@ -68,11 +82,8 @@ export function TenHome({
           <h1 className="lu-gold-text lu-gold-title pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black tracking-tight">
             توب 10
           </h1>
-          <form action={logoutAction}>
-            <button type="submit" aria-label="تسجيل الخروج" className="lu-btn lu-frame grid size-10 place-items-center rounded-xl">
-              <LogoutIcon size={20} />
-            </button>
-          </form>
+          {/* trailing (leftmost in RTL): UI sound mute — exactly like Link Up's home */}
+          <MuteButton />
         </header>
 
         <div aria-hidden className="grow-[3]" />
@@ -105,13 +116,23 @@ export function TenHome({
               className="lu-anim-pulse absolute size-64 rounded-full"
               style={{ background: "radial-gradient(circle, rgba(255,106,26,0.45), rgba(255,106,26,0.12) 42%, transparent 68%)" }}
             />
-            <span className="lu-orb lu-anim-breathe relative grid size-48 place-items-center overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
-              <span className="num text-6xl font-black text-[#2a1f02] drop-shadow-[0_2px_0_rgba(255,255,255,0.25)]">10</span>
-              <span aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.2), transparent 30%)" }} />
+            {/* the hero ball — the SAME live fire-gold football as the table center
+                (ember glow + breathing pulse), so home and table match Link Up. */}
+            <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgba(255,106,26,0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
+              {hasImg ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/table-ball.png"
+                  alt="كرة قدم ذهبية محاطة بنيران — ابدأ اللعب"
+                  onError={() => setHasImg(false)}
+                  className="absolute inset-0 size-full object-cover"
+                />
+              ) : null}
+              <span aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent 30%)" }} />
             </span>
           </Link>
           <p className="lu-gold-text lu-gold-title mt-5 text-2xl font-black tracking-tight">اللعب السريع</p>
-          <p className="mt-1 text-sm text-[var(--lu-tan)]">خمّن لاعبي القائمة — الأندر أثمن</p>
+          <p className="mt-1 text-sm text-[var(--lu-tan)]">ابدأ مباراة فورية بنقرة واحدة</p>
         </section>
 
         <div aria-hidden className="grow" />
@@ -130,20 +151,18 @@ export function TenHome({
 
         <div aria-hidden className="grow" />
 
-        {/* level strip */}
-        <Link href="/games/top-10/stats" aria-label="الإحصائيات" className="lu-btn lu-frame flex shrink-0 items-center justify-between rounded-2xl px-5 py-3">
+        {/* rank strip — mirrors Link Up's home (التصنيف → leaderboard) */}
+        <Link href="/games/top-10/rank" aria-label="التصنيف" className="lu-btn lu-frame flex shrink-0 items-center justify-between rounded-2xl px-5 py-3">
           <div className="flex items-center gap-3">
             <span className="lu-chip grid size-10 place-items-center rounded-xl ring-1 ring-[var(--lu-gold-1)]/35">
-              <LevelIcon size={22} />
+              <TrophyIcon size={22} />
             </span>
             <div className="text-right">
-              <p className="text-base font-bold text-[var(--lu-cream)]">المستوى</p>
-              <p className="text-[11px] text-[var(--lu-tan)]">
-                <span className="num">{xp.toLocaleString("en-US")}</span> نقطة خبرة
-              </p>
+              <p className="text-base font-bold text-[var(--lu-cream)]">التصنيف</p>
+              <p className="text-[11px] text-[var(--lu-tan)]">ترتيبك بين اللاعبين</p>
             </div>
           </div>
-          <span className="num lu-gold-text lu-gold-title text-[2.1rem] font-bold leading-none">{level}</span>
+          <span className="num lu-gold-text lu-gold-title text-[2.1rem] font-bold leading-none">{rank}</span>
         </Link>
 
         <div aria-hidden className="grow" />
