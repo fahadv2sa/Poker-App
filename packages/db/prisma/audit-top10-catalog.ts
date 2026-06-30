@@ -29,8 +29,11 @@ import {
   TT_ACTIVE_QUESTION_TYPES,
   TT_COMPETITIONS,
   TT_GATE,
+  TT_SINGLE_YEAR_LEAGUE_IDS,
+  TT_TOURNAMENT_FINALS_MAX_APPS,
   TT_TYPE_META,
   TT_WHITELIST_LEAGUE_IDS,
+  ttSeasonLabel,
   type TtQuestionType,
 } from "@fb/shared";
 import {
@@ -115,6 +118,21 @@ async function main() {
     include: { players: { orderBy: { rank: "asc" } } },
   });
 
+  // National-team tournament seasons whose stat lines bundle QUALIFYING (a finals run is
+  // ≤ TT_TOURNAMENT_FINALS_MAX_APPS matches). Any active entry on such a season ships a
+  // qualifying-based "finals" list — flagged below as a violation (the build now blocks them).
+  const contaminatedTournamentSeasons = new Set<string>();
+  {
+    const rows = await prisma.$queryRaw<Array<{ league_id: number; season: number; max_app: number | null }>>(Prisma.sql`
+      SELECT league_id, season, MAX(games_appearances) AS max_app
+      FROM football.player_season_stats
+      WHERE league_id IN (${Prisma.join([...TT_SINGLE_YEAR_LEAGUE_IDS])})
+      GROUP BY league_id, season`);
+    for (const r of rows) {
+      if ((r.max_app ?? 0) > TT_TOURNAMENT_FINALS_MAX_APPS) contaminatedTournamentSeasons.add(`${r.league_id}:${r.season}`);
+    }
+  }
+
   // current football meta for every stored player (catches inactive / missing /
   // no-Arabic-name even if a group re-derivation is unavailable).
   const allIds = [...new Set(entries.flatMap((e) => e.players.map((p) => p.footballPlayerId)))];
@@ -147,7 +165,7 @@ async function main() {
     const type = e.type as TtQuestionType;
     const scope = e.scope as TtScopeKind;
     const end = e.seasonEnd ?? e.season;
-    const win = end !== e.season ? `${e.season}–${end}` : `${e.season}`;
+    const win = ttSeasonLabel(e.season, end, e.leagueId);
     const title = `${type} · ${e.competitionName} ${win} [${e.difficulty}]`;
 
     // reconstruct the exact scope: which leagues + (optional) which club team.
@@ -162,6 +180,13 @@ async function main() {
       issues.push(`competition ${e.leagueId} has no Arabic name`);
     }
     if ((scope.startsWith("CLUB")) && !club) issues.push(`unknown club_key "${e.clubKey}"`);
+
+    // qualifier-contaminated national-team tournament season (finals list would be misleading)
+    for (let y = e.season; y <= end; y++) {
+      if (TT_SINGLE_YEAR_LEAGUE_IDS.includes(e.leagueId) && contaminatedTournamentSeasons.has(`${e.leagueId}:${y}`)) {
+        issues.push(`qualifier-bundled tournament season ${y} (maxApps > ${TT_TOURNAMENT_FINALS_MAX_APPS}) — finals answer list is misleading`);
+      }
+    }
 
     // stored list as RankedPlayer[]
     const storedList = e.players.map((p) => {

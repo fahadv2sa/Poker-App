@@ -43,11 +43,14 @@ import {
   TT_CLUBS,
   TT_COMPETITIONS,
   TT_GATE,
+  TT_SINGLE_YEAR_LEAGUE_IDS,
   TT_TOP5_LABEL_AR,
   TT_TOP5_LEAGUE_IDS,
+  TT_TOURNAMENT_FINALS_MAX_APPS,
   TT_TYPE_META,
   TT_UCL_LEAGUE_ID,
   TT_WHITELIST_LEAGUE_IDS,
+  ttSeasonLabel,
   type TtQuestionType,
 } from "@fb/shared";
 import {
@@ -67,9 +70,11 @@ import {
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
-/** "2022" for a single season, "2020–2022" for a cumulative range. */
-const seasonLabel = (season: number, seasonEnd: number) =>
-  season === seasonEnd ? `${season}` : `${season}–${seasonEnd}`;
+/** Contestant-facing season label (league-aware two-year span / single-year
+ *  tournament). Single source of truth in @fb/shared so the artifact matches what
+ *  the game-server renders at runtime. */
+const seasonLabel = (season: number, seasonEnd: number, leagueId: number) =>
+  ttSeasonLabel(season, seasonEnd, leagueId);
 
 /** Every ACTIVE player, mirroring the search index, so findability is checked against
  *  the exact same data the runtime search ranks over. */
@@ -130,6 +135,7 @@ interface Admitted {
 interface Rejected {
   type: TtQuestionType;
   scope: TtScopeKind;
+  leagueId: number;
   competitionName: string;
   season: number;
   seasonEnd: number;
@@ -244,6 +250,27 @@ async function main() {
     return c;
   };
 
+  // GUARD — national-team tournaments (WC/Euro/Copa) sometimes bundle QUALIFYING into a
+  // season's stat lines, making the "finals" answer list qualifying-based (e.g. Euro 2020
+  // → 13 appearances, a GK with 42 saves). A finals run is ≤ TT_TOURNAMENT_FINALS_MAX_APPS
+  // matches, so any such season with more is contaminated and must never be admitted. Keyed
+  // off the FULL data (all players/positions), so the verdict is type-independent.
+  const contaminatedTournamentSeasons = new Set<string>();
+  {
+    const rows = await prisma.$queryRaw<Array<{ league_id: number; season: number; max_app: number | null }>>(Prisma.sql`
+      SELECT league_id, season, MAX(games_appearances) AS max_app
+      FROM football.player_season_stats
+      WHERE league_id IN (${Prisma.join([...TT_SINGLE_YEAR_LEAGUE_IDS])})
+      GROUP BY league_id, season`);
+    for (const r of rows) {
+      if ((r.max_app ?? 0) > TT_TOURNAMENT_FINALS_MAX_APPS) contaminatedTournamentSeasons.add(`${r.league_id}:${r.season}`);
+    }
+    if (contaminatedTournamentSeasons.size > 0) {
+      console.log(`  guard — excluding qualifier-bundled tournament seasons (maxApps > ${TT_TOURNAMENT_FINALS_MAX_APPS}): ${[...contaminatedTournamentSeasons].sort().join(", ")}`);
+    }
+  }
+  const isContaminated = (leagueId: number, season: number) => contaminatedTournamentSeasons.has(`${leagueId}:${season}`);
+
   for (const type of TT_ACTIVE_QUESTION_TYPES) {
     const rows = await aggregateType(type);
     const metaById = new Map<string, ListPlayerMeta>();
@@ -278,7 +305,9 @@ async function main() {
       }
       leagueComplete.set(lg, set);
     }
-    const lc = (lg: number, s: number) => leagueComplete.get(lg)?.has(s) ?? false;
+    // A season is usable for a scope only if its data is complete AND (for tournaments)
+    // it isn't qualifier-contaminated — so no window can ever include a bundled season.
+    const lc = (lg: number, s: number) => (leagueComplete.get(lg)?.has(s) ?? false) && !isContaminated(lg, s);
 
     const scopes = buildScopes(new Set(byLeague.keys()), lc);
 
@@ -307,7 +336,7 @@ async function main() {
           const candidates = aggregateWindow(subset, s, end);
           const gate = evaluateGate(candidates, cfg);
           if (!gate.admit) {
-            rejected.push({ type, scope: scope.kind, competitionName: scope.label, season: s, seasonEnd: end, reasons: gate.reasons, metrics: gate.metrics });
+            rejected.push({ type, scope: scope.kind, leagueId: scope.storedLeagueId, competitionName: scope.label, season: s, seasonEnd: end, reasons: gate.reasons, metrics: gate.metrics });
             continue;
           }
           const { list: players, excludedTopValue } = buildAnswerList(candidates);
@@ -322,7 +351,7 @@ async function main() {
               .map((p) => `rank ${p.rank}: player ${p.playerId} ("${p.nameAr}") is not findable by its Arabic name`),
           ];
           if (violations.length > 0) {
-            rejected.push({ type, scope: scope.kind, competitionName: scope.label, season: s, seasonEnd: end, reasons: violations, metrics: gate.metrics });
+            rejected.push({ type, scope: scope.kind, leagueId: scope.storedLeagueId, competitionName: scope.label, season: s, seasonEnd: end, reasons: violations, metrics: gate.metrics });
             continue;
           }
           // Difficulty Σfame stays comparable: one representative (strongest) per rank.
@@ -405,15 +434,20 @@ async function main() {
   // broken question must never reach the catalog. This is the build-level guarantee.
   const assertionFailures: string[] = [];
   for (const a of admitted) {
+    const tournamentContamination: string[] = [];
+    for (let y = a.season; y <= a.seasonEnd; y++) {
+      if (isContaminated(a.leagueId, y)) tournamentContamination.push(`qualifier-bundled tournament season ${y} (maxApps > ${TT_TOURNAMENT_FINALS_MAX_APPS})`);
+    }
     const violations = [
       ...validateRankedList({ list: a.players, excludedTopValue: a.excludedTopValue, meta: a.meta }),
       ...valueSanityViolations(a.type, a.players, a.seasonEnd - a.season + 1),
       ...a.players
         .filter((p) => !isFindable(searchIndex, { id: p.playerId, nameAr: p.nameAr }))
         .map((p) => `unfindable: ${p.playerId} ("${p.nameAr}")`),
+      ...tournamentContamination,
     ];
     if (violations.length > 0) {
-      assertionFailures.push(`${a.type} · ${a.competitionName} ${seasonLabel(a.season, a.seasonEnd)}: ${violations.join("; ")}`);
+      assertionFailures.push(`${a.type} · ${a.competitionName} ${seasonLabel(a.season, a.seasonEnd, a.leagueId)}: ${violations.join("; ")}`);
     }
   }
   if (assertionFailures.length > 0) {
@@ -508,7 +542,7 @@ function writeArtifact(
       competition: a.competitionName,
       season: a.season,
       seasonEnd: a.seasonEnd,
-      window: seasonLabel(a.season, a.seasonEnd),
+      window: seasonLabel(a.season, a.seasonEnd, a.leagueId),
       difficulty: classifyDifficulty(a.fameSum, thresholds),
       fameSum: Number(a.fameSum.toFixed(1)),
       top: a.players.map((p) => ({ rank: p.rank, name: p.nameAr, value: p.value })),
@@ -519,7 +553,7 @@ function writeArtifact(
       type: r.type,
       scope: r.scope,
       competition: r.competitionName,
-      window: seasonLabel(r.season, r.seasonEnd),
+      window: seasonLabel(r.season, r.seasonEnd, r.leagueId),
       reasons: r.reasons,
     })),
   };
@@ -566,7 +600,7 @@ function writeArtifact(
     (x, y) => x.type.localeCompare(y.type) || x.competitionName.localeCompare(y.competitionName) || x.season - y.season || x.seasonEnd - y.seasonEnd,
   )) {
     lines.push(
-      `- ${a.type} · ${a.competitionName} · ${seasonLabel(a.season, a.seasonEnd)} · ${classifyDifficulty(a.fameSum, thresholds)} · Σ${a.fameSum.toFixed(0)}`,
+      `- ${a.type} · ${a.competitionName} · ${seasonLabel(a.season, a.seasonEnd, a.leagueId)} · ${classifyDifficulty(a.fameSum, thresholds)} · Σ${a.fameSum.toFixed(0)}`,
     );
   }
   writeFileSync(resolve(dir, "CATALOG.md"), lines.join("\n"));

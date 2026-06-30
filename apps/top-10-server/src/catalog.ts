@@ -1,5 +1,5 @@
 import { prisma } from "@fb/db";
-import { TT_TYPE_META, type TtDifficulty, type TtQuestionType } from "@fb/shared";
+import { TT_TYPE_META, ttSeasonLabel, type TtDifficulty, type TtQuestionType } from "@fb/shared";
 
 /**
  * Frozen-catalog source (PLATFORM_CONTRACTS §4 read seam). Loads the ACTIVE catalog
@@ -91,9 +91,11 @@ export class CatalogSource {
         return { rank: cp.rank, playerId: cp.footballPlayerId, value: cp.value, name, nameAr, photoUrl: p?.photoUrl ?? null, hints };
       });
       const seasonEnd = e.seasonEnd ?? e.season;
-      // "2022" for a single season; "2020–2022" for a cumulative range — the title
-      // ALWAYS states the exact window so it's never misleading.
-      const seasonLabel = e.season === seasonEnd ? `${e.season}` : `${e.season}–${seasonEnd}`;
+      // The exact season window, league-aware: cross-calendar competitions render the
+      // real two-year span ("2019/2020"); single-year tournaments (WC/Euro/Copa) stay
+      // one year. Derived from the SAME stored season/leagueId the list was built from,
+      // so the displayed season can never disagree with the answers (verified mapping).
+      const seasonLabel = ttSeasonLabel(e.season, seasonEnd, e.leagueId);
       const entry: CatalogEntry = {
         id: e.id,
         type,

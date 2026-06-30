@@ -259,6 +259,52 @@ export const TT_MIN_PLAYERS = 2;
 export const TT_MAX_PLAYERS = 4;
 export const TT_ROUNDS_PER_MATCH = 3; // fixed (brief §5.1)
 
+// ---- season display --------------------------------------------------------
+
+/**
+ * A stored `season` integer is API-Football's value = the season's START year
+ * (VERIFIED against source data: e.g. Premier League season=2019 → Vardy's 2019/20
+ * Golden Boot, not the 2018/19 list; La Liga season=2011 → Messi's 50-goal 2011/12).
+ *
+ * Cross-calendar competitions (the domestic leagues, the Champions League, and the
+ * Top-5 grouping) run Aug→May, so season=YYYY means the YYYY/(YYYY+1) season and is
+ * displayed as "2019/2020". The competitions BELOW are played inside a SINGLE
+ * calendar year (summer tournaments), so their season=YYYY is that exact year and
+ * must NOT be expanded (there is no "World Cup 2018/2019").
+ */
+export const TT_SINGLE_YEAR_LEAGUE_IDS: readonly number[] = [
+  1, // FIFA World Cup
+  4, // UEFA Euro
+  9, // Copa América
+];
+
+/**
+ * A national-team tournament FINALS runs at most this many matches (the 48-team
+ * World Cup 2026 champion plays 8; Euro/Copa champions ≤ 7). For some seasons
+ * API-Football bundles QUALIFYING into the tournament `league_id` (verified: Euro
+ * 2020 → max 13 appearances; WC 2010/2014/2018 → 11/10/18), which makes the "finals"
+ * answer list qualifying-based and misleading (e.g. a GK with 42 "Euro 2020 saves").
+ * The catalog therefore rejects any TT_SINGLE_YEAR_LEAGUE_IDS season whose maximum
+ * appearances exceed this cap — every contaminated season observed is ≥ 10, so the
+ * 8↔10 gap is a safe margin that keeps clean finals (WC 2022, Euro 2024, all Copa).
+ */
+export const TT_TOURNAMENT_FINALS_MAX_APPS = 8;
+
+/**
+ * The contestant-facing season label for a stored window, keyed off the entry's
+ * stored competition id. Cross-calendar → the real two-year span ("2019/2020");
+ * single-year tournament → one year ("2018"). A cumulative window expands BOTH
+ * endpoints ("2018/2019–2020/2021"). The label is derived from the SAME stored
+ * `season`/`seasonEnd`/`leagueId` the answer list was computed from, so it can never
+ * disagree with the data (0% display error by construction).
+ */
+export function ttSeasonLabel(season: number, seasonEnd: number, leagueId: number): string {
+  const fmt = TT_SINGLE_YEAR_LEAGUE_IDS.includes(leagueId)
+    ? (y: number) => `${y}`
+    : (y: number) => `${y}/${y + 1}`;
+  return season === seasonEnd ? fmt(season) : `${fmt(season)}–${fmt(seasonEnd)}`;
+}
+
 // ---- timing (server-authoritative) -----------------------------------------
 
 export const TT_TIMING = {
