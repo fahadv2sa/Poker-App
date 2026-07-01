@@ -57,4 +57,40 @@ export default tseslint.config(
       "@next/next/no-html-link-for-pages": "off",
     },
   },
+
+  // ── THEME GUARDRAIL ─────────────────────────────────────────────────────────
+  // Colours live ONLY in @fb/theme. No hardcoded hex / rgb / rgba literals in the
+  // app or shared UI — use a token (var(--fb-*) or rgb(var(--c-*))). This is what
+  // keeps the centralization from eroding as new pages/cards/notifications are added.
+  // Tokenized forms (var(--…), rgb(var(--…))) are allowed; numeric literals are not.
+  {
+    files: ["apps/web/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"],
+    ignores: [
+      "apps/web/src/app/preview/**", // temporary theme-proof harness (removed at Phase 1 sign-off)
+      "packages/theme/**",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+          message:
+            "No hardcoded hex colour — use a theme token: var(--fb-*) or rgb(var(--c-*)). Colours live only in @fb/theme.",
+        },
+        {
+          selector: "Literal[value=/rgba?\\(\\s*[0-9]/]",
+          message:
+            "No hardcoded rgb/rgba colour — use rgb(var(--c-*) / a). Colours live only in @fb/theme.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b/]",
+          message: "No hardcoded hex colour in a template literal — use a theme token.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/rgba?\\(\\s*[0-9]/]",
+          message: "No hardcoded rgb/rgba colour in a template literal — use a theme token.",
+        },
+      ],
+    },
+  },
 );
