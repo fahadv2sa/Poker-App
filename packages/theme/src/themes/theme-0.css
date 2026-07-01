@@ -1,0 +1,99 @@
+/* ────────────────────────────────────────────────────────────────────────────
+ * THEME 0 — "Gold on Black" (the current look), centralized VERBATIM.
+ *
+ * Phase 1 rule: this file reproduces every existing color value EXACTLY, so the
+ * product is pixel-identical before/after centralization. Each theme is fully
+ * self-contained: it defines its own primitive channels (--c-*) AND the semantic
+ * tokens (--fb-*) that the whole platform draws from, scoped under its number.
+ *
+ * `:root` carries Theme 0 as the default so the app renders correctly even before
+ * a data-theme attribute is set; `[data-theme="0"]` selects it explicitly. Exactly
+ * one theme block applies at a time (see the numbered themes in ../themes.ts).
+ * ──────────────────────────────────────────────────────────────────────────── */
+:root,
+[data-theme="0"] {
+  /* ── primitive channels (space-separated R G B → any opacity via rgb(var()/a)) ── */
+  --c-abyss: 7 6 10;          /* #07060a */
+  --c-base: 14 12 11;         /* #0e0c0b */
+  --c-panel: 22 19 15;        /* #16130f */
+  --c-surface: 11 9 8;        /* #0b0908 */
+  --c-surface-2: 22 18 12;    /* #16120c */
+  --c-felt-bg: 8 6 10;        /* #08060a */
+  --c-cream: 243 236 221;     /* #f3ecdd */
+  --c-tan: 185 168 121;       /* #b9a879 */
+  --c-gold-hi: 255 244 207;   /* #fff4cf */
+  --c-gold-soft: 247 230 176; /* #f7e6b0 */
+  --c-gold-mid: 240 212 136;  /* #f0d488 */
+  --c-gold-1: 242 210 122;    /* #f2d27a */
+  --c-gold-2: 201 150 46;     /* #c9962e */
+  --c-gold-3: 138 106 32;     /* #8a6a20 */
+  --c-gold-deep: 110 82 26;   /* #6e521a */
+  --c-gold-shadow: 44 31 11;  /* #2c1f0b */
+  --c-gold-ink: 42 31 2;      /* #2a1f02 */
+  --c-ember: 255 106 26;      /* #ff6a1a */
+  --c-ember-2: 255 122 26;    /* #ff7a1a */
+  --c-ember-glow: 255 179 71; /* #ffb347 */
+  --c-ember-hi: 255 217 154;  /* #ffd99a */
+  --c-danger: 217 105 79;     /* #d9694f */
+  --c-danger-deep: 170 51 51; /* #a33 */
+  --c-danger-hi: 226 106 106; /* #e26a6a */
+  --c-amber: 224 165 58;      /* #e0a53a */
+  --c-black: 0 0 0;
+  --c-white: 255 255 255;
+  /* legacy ramps (dormant, kept for parity) */
+  --c-felt-green-1: 31 107 82; /* #1f6b52 */
+  --c-felt-green-2: 19 71 56;  /* #134738 */
+  --c-felt-green-3: 10 40 32;  /* #0a2820 */
+  --c-navy: 8 11 19;           /* #080b13 (PWA chrome) */
+
+  /* ── semantic tokens — the app-facing API (draw from these, never from literals) ── */
+  --fb-bg: rgb(var(--c-abyss));
+  --fb-base: rgb(var(--c-base));
+  --fb-panel: rgb(var(--c-panel));
+  --fb-surface: rgb(var(--c-surface));
+  --fb-surface-2: rgb(var(--c-surface-2));
+  --fb-felt: rgb(var(--c-felt-bg));
+  --fb-text: rgb(var(--c-cream));
+  --fb-text-muted: rgb(var(--c-tan));
+  --fb-gold: rgb(var(--c-gold-1));
+  --fb-gold-strong: rgb(var(--c-gold-2));
+  --fb-gold-deep: rgb(var(--c-gold-3));
+  --fb-ember: rgb(var(--c-ember));
+  --fb-ember-glow: rgb(var(--c-ember-glow));
+  --fb-danger: rgb(var(--c-danger));
+  --fb-amber: rgb(var(--c-amber));
+
+  /* ── legacy --lu-* names kept as ALIASES → same values (existing code untouched) ── */
+  --lu-base: rgb(var(--c-base));
+  --lu-abyss: rgb(var(--c-abyss));
+  --lu-panel: rgb(var(--c-panel));
+  --lu-cream: rgb(var(--c-cream));
+  --lu-tan: rgb(var(--c-tan));
+  --lu-ember: rgb(var(--c-ember));
+  --lu-ember-glow: rgb(var(--c-ember-glow));
+  --lu-gold-1: rgb(var(--c-gold-1));
+  --lu-gold-2: rgb(var(--c-gold-2));
+  --lu-gold-3: rgb(var(--c-gold-3));
+
+  /* ── legacy Arena-Felt / shadcn tokens (dormant; kept verbatim for the 3 stragglers) ── */
+  --background: oklch(0.16 0.02 260);
+  --foreground: oklch(0.93 0.01 250);
+  --card: oklch(0.2 0.025 260);
+  --card-foreground: oklch(0.93 0.01 250);
+  --popover: oklch(0.2 0.025 260);
+  --popover-foreground: oklch(0.93 0.01 250);
+  --primary: oklch(0.82 0.16 165);
+  --primary-foreground: oklch(0.24 0.06 165);
+  --secondary: oklch(0.27 0.03 260);
+  --secondary-foreground: oklch(0.93 0.01 250);
+  --muted: oklch(0.27 0.03 260);
+  --muted-foreground: oklch(0.68 0.02 255);
+  --accent: oklch(0.74 0.13 230);
+  --accent-foreground: oklch(0.2 0.06 245);
+  --destructive: oklch(0.64 0.2 12);
+  --border: oklch(0.32 0.03 260);
+  --input: oklch(0.3 0.03 260);
+  --ring: oklch(0.82 0.16 165);
+  --gold: oklch(0.83 0.13 85);
+  --felt: radial-gradient(125% 125% at 50% 8%, #1f6b52 0%, #134738 45%, #0a2820 100%);
+}

@@ -17,6 +17,7 @@
     "@fb/db": "workspace:*",
     "@fb/shared": "workspace:*",
     "@fb/table-ui": "workspace:*",
+    "@fb/theme": "workspace:*",
     "@fb/top-10-engine": "workspace:*",
     "@fb/top-10-ui": "workspace:*",
     "@node-rs/argon2": "^2.0.2",

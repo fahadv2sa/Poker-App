@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter, Tajawal } from "next/font/google";
 import "./globals.css";
+import { chromeFor, DEFAULT_THEME_ID } from "@fb/theme/themes";
 import { InteractionSound } from "@/components/interaction-sound";
 import { SwRegister } from "@/components/sw-register";
 
@@ -57,7 +58,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#080b13",
+  // PWA/browser chrome colour comes from the active theme's registry entry (one source).
+  themeColor: chromeFor(DEFAULT_THEME_ID),
   width: "device-width",
   initialScale: 1,
   // Let the table use the full screen and expose env(safe-area-inset-*) so the
@@ -67,7 +69,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ar" dir="rtl" className={`${tajawal.variable} ${inter.variable}`}>
+    <html lang="ar" dir="rtl" data-theme={String(DEFAULT_THEME_ID)} className={`${tajawal.variable} ${inter.variable}`}>
       <body>
         <SwRegister />
         <InteractionSound />

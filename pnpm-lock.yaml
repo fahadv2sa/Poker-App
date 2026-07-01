@@ -118,6 +118,9 @@ importers:
       '@fb/table-ui':
         specifier: workspace:*
         version: link:../../packages/table-ui
+      '@fb/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       '@fb/top-10-engine':
         specifier: workspace:*
         version: link:../../packages/top-10-engine
@@ -292,6 +295,12 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.7
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/theme:
+    devDependencies:
       typescript:
         specifier: ^5.6.3
         version: 5.9.3

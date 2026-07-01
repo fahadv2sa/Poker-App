@@ -1,0 +1,5 @@
+/* @fb/theme — the single entry point for the whole platform theme.
+ * Core wiring first, then every numbered theme (each self-contained). Adding a
+ * theme later = create themes/theme-N.css + one line here + one line in themes.ts. */
+@import "./core.css";
+@import "./themes/theme-0.css";

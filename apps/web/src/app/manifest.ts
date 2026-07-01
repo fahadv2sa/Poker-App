@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { chromeFor, DEFAULT_THEME_ID } from "@fb/theme/themes";
 
 // Web app manifest → enables a polished add-to-home-screen install on Android
 // (Chrome reads name/icons/colors from here). iOS uses the apple-touch-icon +
@@ -16,8 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#080b13",
-    theme_color: "#080b13",
+    background_color: chromeFor(DEFAULT_THEME_ID),
+    theme_color: chromeFor(DEFAULT_THEME_ID),
     lang: "ar",
     dir: "rtl",
     orientation: "portrait",

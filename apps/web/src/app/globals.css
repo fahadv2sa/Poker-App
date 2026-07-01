@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Single source of truth for the WHOLE platform theme (all games) — @fb/theme.
+   Holds the numbered themes (Theme 0 = the current look) + the Tailwind colour
+   wiring. Imported before everything else so every token is defined up front. */
+@import "../../../../packages/theme/src/index.css";
 /* Shared live-table surfaces (felt + pitch lines + glow + confetti) — the single
    canonical source, shared with Top Ten (replaces the former inline copies below). */
 @import "../../../../packages/table-ui/src/table.css";
@@ -9,76 +13,11 @@
 @source "../../../../packages/table-ui/src";
 
 /*
- * Football B — premium dark RTL theme on Tailwind v4 + shadcn tokens
- * (Section 15). The app is always dark; tokens are tuned for a modern poker
- * table: deep navy-black surfaces, neon-mint primary, cyan accent, gold Coins.
+ * Football B — theme tokens + Tailwind wiring now live in @fb/theme (imported
+ * above). The component utilities below still reference those tokens and are
+ * unchanged; they will be relocated into @fb/theme/core.css next (Phase 1),
+ * with no visual change.
  */
-
-@custom-variant dark (&:is(.dark *));
-
-:root {
-  --radius: 0.85rem;
-
-  --background: oklch(0.16 0.02 260);
-  --foreground: oklch(0.93 0.01 250);
-
-  --card: oklch(0.2 0.025 260);
-  --card-foreground: oklch(0.93 0.01 250);
-  --popover: oklch(0.2 0.025 260);
-  --popover-foreground: oklch(0.93 0.01 250);
-
-  --primary: oklch(0.82 0.16 165); /* neon mint */
-  --primary-foreground: oklch(0.24 0.06 165);
-  --secondary: oklch(0.27 0.03 260);
-  --secondary-foreground: oklch(0.93 0.01 250);
-  --muted: oklch(0.27 0.03 260);
-  --muted-foreground: oklch(0.68 0.02 255);
-  --accent: oklch(0.74 0.13 230); /* cyan */
-  --accent-foreground: oklch(0.2 0.06 245);
-  --destructive: oklch(0.64 0.2 12);
-
-  --border: oklch(0.32 0.03 260);
-  --input: oklch(0.3 0.03 260);
-  --ring: oklch(0.82 0.16 165);
-
-  --gold: oklch(0.83 0.13 85);
-  --felt: radial-gradient(125% 125% at 50% 8%, #1f6b52 0%, #134738 45%, #0a2820 100%);
-
-  /* Fallback stacks. The real fonts (--font-ar / --font-num) are injected on
-     <html> by next/font (layout.tsx); these add system fallbacks. */
-  --font-ar-fallback: "Segoe UI", "Noto Kufi Arabic", Tahoma, system-ui, sans-serif;
-  --font-num-fallback: "Segoe UI", system-ui, sans-serif;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-gold: var(--gold);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-
-  --font-sans: var(--font-ar), var(--font-ar-fallback);
-  --font-mono: var(--font-num), var(--font-num-fallback);
-}
 
 @layer base {
   * {
@@ -561,18 +500,9 @@
  * were re-authored natively from the approved v0 visual target — no external
  * code was imported.
  * ────────────────────────────────────────────────────────────────────────── */
-:root {
-  --lu-base: #0e0c0b;
-  --lu-abyss: #07060a;
-  --lu-panel: #16130f;
-  --lu-cream: #f3ecdd;
-  --lu-tan: #b9a879;
-  --lu-ember: #ff6a1a;
-  --lu-ember-glow: #ffb347;
-  --lu-gold-1: #f2d27a;
-  --lu-gold-2: #c9962e;
-  --lu-gold-3: #8a6a20;
-}
+/* The --lu-* tokens now live in @fb/theme (Theme 0) as aliases of the platform
+   --fb-*/--c-* tokens — identical values, single source. The .lu-* utilities below
+   consume them unchanged. */
 
 @layer utilities {
   /* Real-metal gold fill for text (gradient clipped to the glyphs). */

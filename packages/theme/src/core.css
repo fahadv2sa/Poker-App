@@ -1,0 +1,69 @@
+/* ────────────────────────────────────────────────────────────────────────────
+ * @fb/theme — CORE (theme-AGNOSTIC wiring). The single place that maps the
+ * platform's semantic tokens to Tailwind utilities and holds structural, non-color
+ * constants (radius, font fallbacks). Color VALUES live only in the numbered theme
+ * files (themes/theme-N.css). This file never encodes a color.
+ *
+ * NOTE (Phase 1, in progress): the component utility classes (lu-, panel, felt, …)
+ * and table surfaces still live in apps/web/globals.css; they will be relocated here
+ * and tokenized next, without any visual change.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.85rem;
+
+  /* Fallback stacks. The real fonts (--font-ar / --font-num) are injected on
+     <html> by next/font (layout.tsx); these add system fallbacks. */
+  --font-ar-fallback: "Segoe UI", "Noto Kufi Arabic", Tahoma, system-ui, sans-serif;
+  --font-num-fallback: "Segoe UI", system-ui, sans-serif;
+}
+
+@theme inline {
+  /* legacy Arena-Felt / shadcn colour utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-gold: var(--gold);
+
+  /* platform semantic colour utilities (bg-fb-surface, text-fb-gold, …) */
+  --color-fb-bg: var(--fb-bg);
+  --color-fb-base: var(--fb-base);
+  --color-fb-panel: var(--fb-panel);
+  --color-fb-surface: var(--fb-surface);
+  --color-fb-surface-2: var(--fb-surface-2);
+  --color-fb-felt: var(--fb-felt);
+  --color-fb-text: var(--fb-text);
+  --color-fb-text-muted: var(--fb-text-muted);
+  --color-fb-gold: var(--fb-gold);
+  --color-fb-gold-strong: var(--fb-gold-strong);
+  --color-fb-gold-deep: var(--fb-gold-deep);
+  --color-fb-ember: var(--fb-ember);
+  --color-fb-ember-glow: var(--fb-ember-glow);
+  --color-fb-danger: var(--fb-danger);
+  --color-fb-amber: var(--fb-amber);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-ar), var(--font-ar-fallback);
+  --font-mono: var(--font-num), var(--font-num-fallback);
+}
