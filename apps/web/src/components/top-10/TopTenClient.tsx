@@ -595,7 +595,7 @@ function LobbyRoom({
  * over a per-player breakdown (points + the cards each player revealed). The creator
  * also gets Close; a clean end offers New Round, an abandoned table only Exit.
  */
-function TenWinner({
+export function TenWinner({
   state,
   meId,
   result,
