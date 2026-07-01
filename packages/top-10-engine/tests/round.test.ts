@@ -65,15 +65,21 @@ describe("normal turn mode", () => {
     expect(s.noCorrectRotations).toBe(0);
   });
 
-  it("revealing the last hidden rank ends the round (ALL_REVEALED)", () => {
+  it("revealing the last hidden rank ends the round (ALL_REVEALED) and KEEPS the final reveal event", () => {
     let s = initRound([0, 1]);
+    let last!: ReturnType<typeof normalGuess>;
     for (let rank = 1; rank <= 10; rank++) {
       const seat = currentTurnSeat(s)!;
-      s = normalGuess(s, seat, { type: "correct", rank }).state;
+      last = normalGuess(s, seat, { type: "correct", rank });
+      s = last.state;
     }
     expect(s.done).toBe(true);
     expect(s.endReason).toBe("ALL_REVEALED");
     expect(s.hidden).toHaveLength(0);
+    // the FINAL reveal must survive alongside roundEnded (else the UI jumps to the winner
+    // screen without ever showing the last card).
+    expect(last.events.some((e) => e.t === "reveal" && e.rank === 10)).toBe(true);
+    expect(last.events.some((e) => e.t === "roundEnded")).toBe(true);
   });
 });
 
@@ -142,6 +148,26 @@ describe("hint / fastest-answer mode", () => {
     expect(s.reveals.find((x) => x.rank === 7)!.points).toBe(0);
     expect(s.reveals.find((x) => x.rank === 7)!.bySeat).toBeNull();
     expect(s.hint).toBeNull();
+  });
+
+  it("auto-revealing the LAST hidden card keeps its reveal event alongside roundEnded", () => {
+    let s = enterHint();
+    s = beginHintCard(s, 7).state; // target rank 7, default 3 hints
+    s = revealHint(s).state; // hint 1 open
+    // reveal the 9 NON-target cards (fastest-answer) → hint stays open on rank 7
+    for (const rank of [1, 2, 3, 4, 5, 6, 8, 9, 10]) {
+      s = hintGuess(s, 0, { type: "correct", rank }).state;
+    }
+    expect(s.hidden).toEqual([7]);
+    // exhaust all 3 hints on the last card with no answer → auto-reveal ends the round
+    s = hintWindowTimeout(s).state; // → countdown (hintsGiven 1)
+    s = revealHint(s).state; // hint 2
+    s = hintWindowTimeout(s).state; // → countdown (hintsGiven 2)
+    s = revealHint(s).state; // hint 3
+    const r = hintWindowTimeout(s); // hintsGiven 3 ≥ max → auto-reveal + endRound
+    expect(r.state.done).toBe(true);
+    expect(r.events.some((e) => e.t === "reveal" && e.rank === 7 && e.bySeat === null)).toBe(true);
+    expect(r.events.some((e) => e.t === "roundEnded")).toBe(true);
   });
 });
 

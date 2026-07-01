@@ -155,7 +155,7 @@ export function normalGuess(state: RoundState, seat: number, outcome: Outcome): 
     events.push({ t: "reveal", rank: rec.rank, bySeat: seat, points: rec.points });
     s.rotationHadCorrect = true;
     s.noCorrectRotations = 0; // any correct resets the counter immediately (§4.2)
-    if (s.hidden.length === 0) return endRound(s, "ALL_REVEALED");
+    if (s.hidden.length === 0) return endRoundKeeping(s, "ALL_REVEALED", events);
     advanceTurn(s, events);
     return { state: s, events };
   }
@@ -218,7 +218,7 @@ export function hintGuess(state: RoundState, seat: number, outcome: Outcome): St
     const targetSolved = outcome.rank === s.hint.targetRank;
     const rec = reveal(s, outcome.rank, seat);
     events.push({ t: "reveal", rank: rec.rank, bySeat: seat, points: rec.points });
-    if (s.hidden.length === 0) return endRound(s, "ALL_REVEALED");
+    if (s.hidden.length === 0) return endRoundKeeping(s, "ALL_REVEALED", events);
     if (targetSolved) {
       // move on to the next card (server will pick a target & begin its countdown)
       s.hint = null;
@@ -248,7 +248,7 @@ export function hintWindowTimeout(state: RoundState): Step {
     events.push({ t: "reveal", rank: rec.rank, bySeat: null, points: 0 });
     events.push({ t: "hintCardAutoRevealed", rank });
     s.hint = null;
-    if (s.hidden.length === 0) return endRound(s, "ALL_REVEALED");
+    if (s.hidden.length === 0) return endRoundKeeping(s, "ALL_REVEALED", events);
     return { state: s, events };
   }
   // give another hint for the same card → server reopens via revealHint()
@@ -266,6 +266,15 @@ export function endRound(state: RoundState, reason: TtRoundEndReason): Step {
   s.endReason = reason;
   events.push({ t: "roundEnded", reason });
   return { state: s, events };
+}
+
+/** End the round while KEEPING the events already accumulated this step (e.g. the final
+ *  card's `reveal`) BEFORE the `roundEnded`. `endRound` alone returns only its own
+ *  `roundEnded` event, which drops the last reveal — so the UI jumps straight to results
+ *  without ever showing/animating the final card. */
+function endRoundKeeping(s: RoundState, reason: TtRoundEndReason, prior: RoundEvent[]): Step {
+  const ended = endRound(s, reason);
+  return { state: ended.state, events: [...prior, ...ended.events] };
 }
 
 /** Points each seat earned this round (from the reveals). */
