@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { BackArrow } from "@/components/back-arrow";
 import { BackIcon, GoldGradientDefs } from "./lu-icons";
 
 /**
@@ -67,13 +67,12 @@ export function LuHeader({
 }) {
   return (
     <header className="flex items-center gap-3 pb-2 pt-1">
-      <Link
-        href={back}
-        aria-label="رجوع"
+      <BackArrow
+        fallback={back}
         className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl"
       >
         <BackIcon size={20} />
-      </Link>
+      </BackArrow>
       <span className="lu-chip grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/30">
         {icon}
       </span>

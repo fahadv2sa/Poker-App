@@ -13,6 +13,7 @@ import {
   type TtStateView,
 } from "@fb/shared";
 import { connectTopTen, type TtConnection } from "@/lib/top-10/socket";
+import { BackArrow } from "@/components/back-arrow";
 import { TenTable } from "./table/TenTable";
 import { ttSound } from "@/lib/top-10/sound";
 import type { TtRevealEvent } from "@fb/shared";
@@ -224,9 +225,9 @@ export function TopTenClient({
       <Atmosphere />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
       <header className="mb-3 flex shrink-0 items-center gap-3 pt-1">
-        <a href="/games/top-10" aria-label="رجوع" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
+        <BackArrow fallback="/games/top-10" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
           <BackIcon size={20} />
-        </a>
+        </BackArrow>
         <span className="lu-chip grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/30">
           <BoltIcon size={22} />
         </span>

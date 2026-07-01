@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { sound, useUiSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
+import { BackArrow } from "@/components/back-arrow";
 import {
   BackIcon,
   BankIcon,
@@ -130,14 +131,13 @@ function Atmosphere() {
 function TopBar() {
   return (
     <header className="relative flex shrink-0 items-center justify-between gap-3 pt-1">
-      {/* leading (rightmost in RTL): back to the platform hub */}
-      <Link
-        href="/"
-        aria-label="رجوع"
+      {/* leading (rightmost in RTL): back to the previous page (hub fallback) */}
+      <BackArrow
+        fallback="/"
         className="lu-btn grid size-10 place-items-center rounded-xl lu-frame"
       >
         <BackIcon size={20} />
-      </Link>
+      </BackArrow>
 
       {/* centered brand title */}
       <h1 className="lu-gold-text lu-gold-title pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black tracking-tight">

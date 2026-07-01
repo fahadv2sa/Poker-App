@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BackIcon, CrownIcon, GoldGradientDefs } from "@/components/games/lu-icons";
 import { LuAtmosphere } from "@/components/games/lu-screen";
+import { BackArrow } from "@/components/back-arrow";
 
 export const metadata = { title: "الاشتراك — فوتبول بي" };
 
@@ -18,13 +19,12 @@ export default function SubscribePage() {
       <div className="relative z-10 flex flex-1 flex-col">
         {/* back to hub */}
         <header className="flex items-center pt-1">
-          <Link
-            href="/"
-            aria-label="رجوع"
+          <BackArrow
+            fallback="/"
             className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl"
           >
             <BackIcon size={20} />
-          </Link>
+          </BackArrow>
         </header>
 
         {/* large centered card */}

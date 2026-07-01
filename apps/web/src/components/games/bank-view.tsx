@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClaimButton } from "@/app/bank/claim-button";
+import { BackArrow } from "@/components/back-arrow";
 import { LuScreen } from "./lu-screen";
 import { MuteButton } from "./mute-button";
 import { BackIcon, BankIcon, CoinIcon, GuideIcon, HomeIcon, SettingsIcon } from "./lu-icons";
@@ -35,9 +36,9 @@ export function BankView({
     <LuScreen className="pb-28">
       {/* top bar — back (right) · centered title · mute (left) */}
       <header className="relative flex items-center justify-between gap-3 pt-1">
-        <Link href="/games/link-up" aria-label="رجوع" className="lu-btn lu-frame grid size-10 place-items-center rounded-xl">
+        <BackArrow fallback="/games/link-up" className="lu-btn lu-frame grid size-10 place-items-center rounded-xl">
           <BackIcon size={20} />
-        </Link>
+        </BackArrow>
         <h1 className="lu-gold-text lu-gold-title pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black tracking-tight">
           البنك
         </h1>

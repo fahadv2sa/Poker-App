@@ -16,6 +16,7 @@ import {
   cn,
 } from "@fb/top-10-ui";
 import { ttSound } from "@/lib/top-10/sound";
+import { BackArrow } from "@/components/back-arrow";
 
 /**
  * Top Ten — game home. A faithful gold-on-black launcher built to Link Up's home
@@ -76,9 +77,9 @@ export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         {/* top bar */}
         <header className="relative flex shrink-0 items-center justify-between gap-3 pt-1">
-          <a href={hubUrl} aria-label="رجوع للمنصة" className="lu-btn lu-frame grid size-10 place-items-center rounded-xl">
+          <BackArrow fallback={hubUrl} label="رجوع للمنصة" className="lu-btn lu-frame grid size-10 place-items-center rounded-xl">
             <BackIcon size={20} />
-          </a>
+          </BackArrow>
           <h1 className="lu-gold-text lu-gold-title pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black tracking-tight">
             توب 10
           </h1>
