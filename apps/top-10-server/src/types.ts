@@ -42,6 +42,8 @@ export type Timers = {
   bot?: ReturnType<typeof setTimeout>;
   /** Auto-start countdown for the post-round New-Round ready vote. */
   newRound?: ReturnType<typeof setTimeout>;
+  /** Celebratory hold on the fully-revealed board before the winner screen. */
+  finish?: ReturnType<typeof setTimeout>;
 };
 
 export interface MatchRoom {

@@ -92,13 +92,18 @@ export function TenCard({
           </div>
         )}
 
-        {/* rank — top (bare number; jackpot = gold) */}
+        {/* rank — top-right: a "#N" POSITION chip, deliberately styled apart from the
+            gold stat below (cream text + gold ring, with a "#" marker, no glyph/emoji) so
+            a small stat value can never be mistaken for the rank. Jackpot stays gold. */}
         <span
           className={cn(
-            "num absolute right-1 top-1 grid min-w-[1.1rem] place-items-center rounded px-1 text-[clamp(0.6rem,2.7vw,0.82rem)] font-black leading-tight",
-            jackpot ? "bg-[var(--lu-gold-1)] text-black" : "bg-black/75 text-[var(--lu-gold-1)]",
+            "num absolute right-1 top-1 inline-flex items-center gap-px rounded-md px-1.5 text-[clamp(0.6rem,2.7vw,0.82rem)] font-black leading-tight ring-1",
+            jackpot
+              ? "bg-[var(--lu-gold-1)] text-black ring-[var(--lu-gold-1)]"
+              : "bg-black/80 text-[var(--lu-cream)] ring-[var(--lu-gold-1)]/60",
           )}
         >
+          <span className="text-[0.72em] font-bold opacity-70">#</span>
           {card.rank}
         </span>
 

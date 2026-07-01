@@ -197,7 +197,7 @@ export class Matches {
 
   private beginTurn(room: MatchRoom): void {
     const r = room.round;
-    if (!r || r.state.mode !== "NORMAL") return;
+    if (!r || r.state.mode !== "NORMAL" || r.state.done) return;
     const seat = currentTurnSeat(r.state);
     if (seat == null) return;
     this.clear(room, "turn");
@@ -273,7 +273,7 @@ export class Matches {
     }
 
     if (roundEnded) {
-      this.finishRound(room, r.state.endReason ?? "ALL_REVEALED");
+      this.holdThenFinishRound(room, r.state.endReason ?? "ALL_REVEALED");
       return;
     }
     if (modeSwitched) {
@@ -360,16 +360,8 @@ export class Matches {
       }
     }
     if (roundEnded) {
-      // The LAST card just auto-revealed. Push the revealed board, then HOLD briefly so
-      // contestants can see it before the winner screen (finishRound → matchEnded would
-      // otherwise land in the same tick and cover the reveal). Guarded against a
-      // withdrawal/close during the hold (which nulls room.round / ends the match).
-      const reason = state.endReason ?? "ALL_REVEALED";
-      this.sync(room);
-      this.clear(room, "hintWindow");
-      room.timers.hintWindow = setTimeout(() => {
-        if (room.round && room.status === "IN_PROGRESS") this.finishRound(room, reason);
-      }, TT_TIMING.finalRevealHoldMs);
+      // The last card just auto-revealed → hold on the completed board before results.
+      this.holdThenFinishRound(room, state.endReason ?? "ALL_REVEALED");
       return;
     }
     // The engine cleared the hint (auto-revealed after the last real hint) → next card;
@@ -550,10 +542,28 @@ export class Matches {
 
   // ---- round / match completion ------------------------------------------
 
+  /** End the round — but when the WHOLE list was just revealed (ALL_REVEALED), hold on the
+   *  completed board for a celebratory pause (TT_TIMING.finalRevealHoldMs) so everyone sees
+   *  the finished list before the winner screen. Every other end reason (timer / unanimous /
+   *  withdrawal) finishes immediately. Guarded so a withdrawal/close during the hold can't
+   *  double-finish. */
+  private holdThenFinishRound(room: MatchRoom, reason: Parameters<typeof endRound>[1]): void {
+    if (reason !== "ALL_REVEALED") {
+      this.finishRound(room, reason);
+      return;
+    }
+    this.sync(room); // push the fully-revealed board
+    this.clear(room, "turn", "hintCountdown", "hintWindow", "finish");
+    this.deps.bots?.cancel(room);
+    room.timers.finish = setTimeout(() => {
+      if (room.round && room.status === "IN_PROGRESS") this.finishRound(room, reason);
+    }, TT_TIMING.finalRevealHoldMs);
+  }
+
   private finishRound(room: MatchRoom, reason: Parameters<typeof endRound>[1]): void {
     const r = room.round;
     if (!r) return;
-    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot");
+    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "finish");
     this.deps.bots?.cancel(room);
     if (!r.state.done) r.state = endRound(r.state, reason).state;
 
@@ -601,7 +611,7 @@ export class Matches {
   }
 
   private finishMatch(room: MatchRoom, abandoned = false, finalCards?: TtCardView[]): void {
-    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot");
+    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "finish");
     this.deps.bots?.cancel(room);
     // fold an in-progress round (direct finish: withdrawal/no-question) before tally,
     // capturing its revealed board for the winner breakdown unless one was passed in
@@ -671,7 +681,7 @@ export class Matches {
   }
 
   private restartRound(room: MatchRoom): void {
-    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound");
+    this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound", "finish");
     this.deps.bots?.cancel(room);
     room.newRound = null;
     // keep only seats that will actually play; reset their scores

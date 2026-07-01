@@ -89,6 +89,9 @@ describe("Top Ten match orchestration", () => {
       const seat = currentTurnSeat(room.round!.state)!;
       matches.guess(room, seat, `p${rank}`);
     }
+    // full-list completion holds on the board for a celebratory pause before finishing
+    expect(room.status).toBe("IN_PROGRESS");
+    vi.advanceTimersByTime(TT_TIMING.finalRevealHoldMs);
     expect(room.status).toBe("ENDED");
     const ended = events[TT_SERVER_EVENTS.matchEnded] as { standings: { place: number }[] }[];
     expect(ended.length).toBe(1);
@@ -97,10 +100,27 @@ describe("Top Ten match orchestration", () => {
     expect(room.newRound).toBeTruthy();
   });
 
+  it("holds on the fully-revealed board for a celebratory pause before ending", () => {
+    const { matches, events } = makeMatches();
+    const room = twoPlayerMatch(matches);
+    for (let rank = 10; rank >= 1; rank--) matches.guess(room, currentTurnSeat(room.round!.state)!, `p${rank}`);
+    // still IN_PROGRESS on the completed board; matchEnded not sent yet
+    expect(room.status).toBe("IN_PROGRESS");
+    expect(events[TT_SERVER_EVENTS.matchEnded]).toBeUndefined();
+    // just before the hold elapses → still not ended
+    vi.advanceTimersByTime(TT_TIMING.finalRevealHoldMs - 1);
+    expect(room.status).toBe("IN_PROGRESS");
+    // hold elapsed → the winner screen (matchEnded) fires
+    vi.advanceTimersByTime(1);
+    expect(room.status).toBe("ENDED");
+    expect((events[TT_SERVER_EVENTS.matchEnded] as unknown[]).length).toBe(1);
+  });
+
   it("after a round ends, all-ready starts a FRESH round at the same table", () => {
     const { matches } = makeMatches();
     const room = twoPlayerMatch(matches); // seats 0 (u0) + 1 (u1)
     for (let rank = 10; rank >= 1; rank--) matches.guess(room, currentTurnSeat(room.round!.state)!, `p${rank}`);
+    vi.advanceTimersByTime(TT_TIMING.finalRevealHoldMs); // past the celebratory hold
     expect(room.status).toBe("ENDED");
     const firstPersistId = room.persistId;
     matches.requestNewRound(room, 0);
@@ -185,6 +205,7 @@ describe("Top Ten match orchestration", () => {
       const seat = currentTurnSeat(room.round!.state)!;
       matches.guess(room, seat, `p${rank}`);
     }
+    vi.advanceTimersByTime(TT_TIMING.finalRevealHoldMs); // past the celebratory hold
     expect(room.status).toBe("ENDED");
     // round XP + saveRound persisted once (one round = one match)
     expect(persist.awardRoundXp).toHaveBeenCalledTimes(1);
