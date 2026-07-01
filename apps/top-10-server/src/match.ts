@@ -444,6 +444,23 @@ export class Matches {
     this.finishMatch(room, true);
   }
 
+  // ---- anti-cheat presence ------------------------------------------------
+
+  /** A contestant switched AWAY from the table (tab hidden / app backgrounded) without
+   *  leaving, or returned. Transient — never persisted. Going away broadcasts a one-shot
+   *  notice for everyone; the persistent "away" badge rides on the seat via tt:state and
+   *  clears the instant they return (or reconnect). Bots are ignored. */
+  setAway(room: MatchRoom, userId: string, away: boolean): void {
+    const seat = room.seats.find((s) => s.userId === userId);
+    if (!seat || seat.isBot) return;
+    if (!!seat.away === away) return; // no change
+    seat.away = away;
+    if (away) {
+      this.deps.emit(room.id, TT_SERVER_EVENTS.awayNotice, { seat: seat.seat, username: seat.username });
+    }
+    this.sync(room);
+  }
+
   // ---- withdrawal ---------------------------------------------------------
 
   /** A player leaves (explicit) or their grace expires. During a match this is a
@@ -748,6 +765,7 @@ export class Matches {
         status: s.status,
         wrongAttempts: r?.state.wrongAttempts[s.seat] ?? 0,
         locked: r?.state.lockedSeats.includes(s.seat) ?? false,
+        away: s.away ?? false,
       })),
       turnSeat: r && r.state.mode === "NORMAL" ? currentTurnSeat(r.state) : null,
       deadlineTs: room.deadlineTs,

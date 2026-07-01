@@ -52,6 +52,7 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
         seat.graceTimer = undefined;
       }
       seat.connected = true;
+      seat.away = false; // reconnecting = back at the table; clear any stale away badge
       seat.socketId = socket.id;
     }
     socket.join(room.id);
@@ -241,6 +242,15 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
       ensureQueue(parsed.data.difficulty).set(socket.id, { ...u, socketId: socket.id });
       startFillTimer(parsed.data.difficulty);
       broadcastQueue(parsed.data.difficulty);
+    });
+
+    socket.on(TT_CLIENT_EVENTS.away, () => {
+      const room = findRoomOf(u.userId);
+      if (room) matches.setAway(room, u.userId, true);
+    });
+    socket.on(TT_CLIENT_EVENTS.back, () => {
+      const room = findRoomOf(u.userId);
+      if (room) matches.setAway(room, u.userId, false);
     });
 
     socket.on(TT_CLIENT_EVENTS.queueLeave, () => leaveAllQueues(socket.id));

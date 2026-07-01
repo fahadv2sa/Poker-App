@@ -30,7 +30,7 @@ const VALUES = [24, 22, 19, 18, 16, 14, 13, 11, 10, 8];
 function seat(i: number, username: string, userId: string, total: number, round: number, opts: Partial<TtSeatView> = {}): TtSeatView {
   return {
     seat: i, userId, username, playerNumber: 9000 + i, isBot: false, connected: true,
-    totalPoints: total, roundPoints: round, status: "ACTIVE", wrongAttempts: 0, locked: false, ...opts,
+    totalPoints: total, roundPoints: round, status: "ACTIVE", wrongAttempts: 0, locked: false, away: false, ...opts,
   };
 }
 

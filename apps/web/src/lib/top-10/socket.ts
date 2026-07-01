@@ -25,6 +25,8 @@ export interface TtHandlers {
   onToast?: (p: { text: string }) => void;
   /** The creator closed the table — bounce back to the lobby with a notice. */
   onTableClosed?: (p: { text?: string }) => void;
+  /** Anti-cheat: a contestant just switched away from the table (transient notice). */
+  onAwayNotice?: (p: { seat: number; username: string }) => void;
   onError?: (msg: string) => void;
   onAuthExpired?: () => void;
 }
@@ -54,6 +56,9 @@ export interface TtConnection {
   queueLeave: () => void;
   leave: () => void;
   close: () => void;
+  /** Anti-cheat presence: report switching away / returning to the table. */
+  away: () => void;
+  back: () => void;
   disconnect: () => void;
 }
 
@@ -90,6 +95,7 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
   socket.on(TT_SERVER_EVENTS.queueMatched, (p: unknown) => handlers.onQueueMatched?.(p as { matchId: string }));
   socket.on(TT_SERVER_EVENTS.toast, (p: unknown) => handlers.onToast?.(p as { text: string }));
   socket.on(TT_SERVER_EVENTS.tableClosed, (p: unknown) => handlers.onTableClosed?.(p as { text?: string }));
+  socket.on(TT_SERVER_EVENTS.awayNotice, (p: unknown) => handlers.onAwayNotice?.(p as { seat: number; username: string }));
   socket.on(TT_SERVER_EVENTS.error, (p: unknown) => handlers.onError?.(String((p as { messageAr?: string })?.messageAr ?? "خطأ")));
 
   return {
@@ -105,6 +111,8 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
     queueLeave: () => socket.emit(TT_CLIENT_EVENTS.queueLeave, {}),
     leave: () => socket.emit(TT_CLIENT_EVENTS.leave, {}),
     close: () => socket.emit(TT_CLIENT_EVENTS.close, {}),
+    away: () => socket.emit(TT_CLIENT_EVENTS.away, {}),
+    back: () => socket.emit(TT_CLIENT_EVENTS.back, {}),
     disconnect: () => {
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       socket.disconnect();

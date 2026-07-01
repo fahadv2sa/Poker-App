@@ -27,6 +27,10 @@ export const TT_CLIENT_EVENTS = {
   newRound: "tt:newRound",
   queueJoin: "tt:queueJoin",
   queueLeave: "tt:queueLeave",
+  /** Anti-cheat presence: the player switched away from the table (tab hidden / app
+   *  backgrounded) without leaving — and returned. Debounced client-side. */
+  away: "tt:away",
+  back: "tt:back",
 } as const;
 
 export const TT_SERVER_EVENTS = {
@@ -43,6 +47,9 @@ export const TT_SERVER_EVENTS = {
   /** The creator closed the table (from the winner screen): every player is returned
    *  to the lobby with a notice. Carries an optional Arabic reason for the toast. */
   tableClosed: "tt:tableClosed",
+  /** Anti-cheat: a contestant just switched away from the table — a transient notice for
+   *  everyone (their persistent "away" badge lives on the seat via tt:state). */
+  awayNotice: "tt:awayNotice",
 } as const;
 
 // ---- client → server (validated) -------------------------------------------
@@ -99,6 +106,9 @@ export type TtSeatView = {
   /** Hint mode: wrong attempts used + whether locked out this round. */
   wrongAttempts: number;
   locked: boolean;
+  /** Anti-cheat: switched away from the table (tab hidden / app backgrounded) without
+   *  leaving. Transient — cleared the instant they return. */
+  away: boolean;
 };
 
 export type TtStateView = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { cn } from "@fb/top-10-ui";
 import { FlyProvider } from "@fb/table-ui";
 import { TT_HINT, TT_TIMING, type TtCardView, type TtRevealEvent, type TtStateView } from "@fb/shared";
@@ -15,6 +15,7 @@ import { TenRevealNotice, type RevealDisplay } from "./TenRevealNotice";
 import { TenHintOverlay } from "./TenHintOverlay";
 import { TenEffects } from "./TenEffects";
 import { TenCoachmark } from "./TenCoachmark";
+import { TenProfileModal } from "../TenProfileModal";
 
 /** Header sound toggle — matches Link Up's SoundControl button (round, gold border,
  *  speaker glyph). Clicking also unlocks the audio context (a user gesture). */
@@ -73,6 +74,7 @@ export function TenTable({
   onPick,
   onLeave,
   reveal = null,
+  awayNotice = null,
 }: {
   state: TtStateView;
   meId: string;
@@ -82,7 +84,11 @@ export function TenTable({
   /** Latest correct-guess event (with a monotonic id) → drives the big reveal notice.
    *  The live client bumps `id` per tt:reveal; the preview simulates it. */
   reveal?: { event: TtRevealEvent; id: number } | null;
+  /** Anti-cheat: latest "left the table" notice (with a monotonic id) → transient overlay. */
+  awayNotice?: { username: string; id: number } | null;
 }) {
+  // Tapping a seat opens the contestant's profile (view / like / friend / report).
+  const [profileNumber, setProfileNumber] = useState<number | null>(null);
   const me = useMemo(() => state.seats.find((s) => s.userId === meId), [state.seats, meId]);
   const opponents = useMemo(() => state.seats.filter((s) => s.userId !== meId), [state.seats, meId]);
   const turnTotalMs = state.roundTimerSec ? Math.min(state.roundTimerSec, 30) * 1000 : 30_000;
@@ -191,6 +197,7 @@ export function TenTable({
                   isActive={state.mode === "NORMAL" && state.turnSeat === s.seat}
                   deadlineTs={state.deadlineTs}
                   turnTotalMs={turnTotalMs}
+                  onTap={() => setProfileNumber(s.playerNumber)}
                 />
               </div>
             );
@@ -239,6 +246,9 @@ export function TenTable({
 
         {/* hint-mode theatre (start flash · circular countdown · hint text) */}
         <TenHintOverlay mode={state.mode} hint={state.hint} deadlineTs={state.deadlineTs} />
+
+        {/* anti-cheat: transient "left the table" notice (countdown-sized, appears→fades) */}
+        <TenAwayNotice notice={awayNotice} />
       </section>
 
       {/* one-time onboarding nudge (first round only) */}
@@ -297,8 +307,50 @@ export function TenTable({
         hintMode={hint}
         locked={!!(hint && me?.locked)}
       />
+
+      {/* contestant profile (tap a seat) — view / like / friend / report cheating */}
+      <AnimatePresence>
+        {profileNumber != null ? (
+          <TenProfileModal playerNumber={profileNumber} onClose={() => setProfileNumber(null)} />
+        ) : null}
+      </AnimatePresence>
     </main>
     </FlyProvider>
     </MotionConfig>
+  );
+}
+
+/** Anti-cheat: a transient, countdown-sized "غادر الطاولة — <name>" notice shown to
+ *  everyone the moment a contestant switches away from the table; it appears then fades
+ *  (~3s). The persistent "away" badge lives on that player's seat until they return. */
+function TenAwayNotice({ notice }: { notice: { username: string; id: number } | null }) {
+  const [shown, setShown] = useState<{ username: string; id: number } | null>(null);
+  const lastId = useRef(0);
+  useEffect(() => {
+    if (notice && notice.id !== lastId.current) {
+      lastId.current = notice.id;
+      setShown(notice);
+      const t = setTimeout(() => setShown(null), 3200);
+      return () => clearTimeout(t);
+    }
+  }, [notice]);
+  return (
+    <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center px-4">
+      <AnimatePresence>
+        {shown ? (
+          <motion.div
+            key={shown.id}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.12 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="max-w-[62vw] rounded-2xl border border-amber-400/70 bg-[#0b0908]/90 px-5 py-4 text-center shadow-[0_0_30px_rgba(224,165,58,0.4)] backdrop-blur"
+          >
+            <div className="text-lg font-black text-amber-300">غادر الطاولة</div>
+            <div className="mt-1 text-sm text-[var(--lu-cream)]/85">{shown.username}</div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }

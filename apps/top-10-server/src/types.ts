@@ -14,6 +14,9 @@ export interface TtSeat {
   socketId?: string;
   totalPoints: number; // accumulated across the match
   status: "ACTIVE" | "WITHDRAWN";
+  /** Anti-cheat presence: switched away from the table (tab hidden) without leaving.
+   *  Transient — cleared on return / reconnect. Never persisted. */
+  away?: boolean;
   /** Grace timer handle when a human socket drops (held, not removed). */
   graceTimer?: ReturnType<typeof setTimeout>;
 }

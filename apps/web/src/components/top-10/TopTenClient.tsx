@@ -67,6 +67,9 @@ export function TopTenClient({
   const [toast, setToast] = useState<string | null>(null);
   const [reveal, setReveal] = useState<{ event: TtRevealEvent; id: number } | null>(null);
   const revealSeq = useRef(0);
+  // Anti-cheat: transient "left the table" notice (a contestant switched away).
+  const [awayNotice, setAwayNotice] = useState<{ username: string; id: number } | null>(null);
+  const awaySeq = useRef(0);
   // Latest state — so onMatchEnded can snapshot the seat roster for the breakdown.
   const stateRef = useRef<TtStateView | null>(null);
   // Latest completed-rounds list, mirrored to a ref so socket handlers (which close over
@@ -142,6 +145,7 @@ export function TopTenClient({
         if (roundsRef.current.length > 0) setShowSummary(true);
         else goHome();
       },
+      onAwayNotice: (p) => setAwayNotice({ username: p.username, id: ++awaySeq.current }),
       onError: (msg) => flash(msg),
       onAuthExpired: () => {
         window.location.href = "/login";
@@ -156,6 +160,48 @@ export function TopTenClient({
     setTimeout(() => setToast(null), 2500);
   }
   const conn = useCallback(() => connRef.current, []);
+
+  // Anti-cheat presence: while in a LIVE match, if the player switches tab/app or the
+  // window loses focus for >2s, flag them "away" (surfaced to everyone); clear on return.
+  // Debounced so a momentary blip (notification, accidental swipe) doesn't flag anyone.
+  const myStatus = state?.seats.find((s) => s.userId === me.userId)?.status;
+  const inLiveMatch = state?.status === "IN_PROGRESS" && myStatus === "ACTIVE";
+  useEffect(() => {
+    if (!inLiveMatch) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let flagged = false;
+    const evaluate = () => {
+      const away = document.visibilityState === "hidden" || !document.hasFocus();
+      if (away) {
+        if (!timer && !flagged) {
+          timer = setTimeout(() => {
+            connRef.current?.away();
+            flagged = true;
+            timer = null;
+          }, 2000);
+        }
+      } else {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        if (flagged) {
+          connRef.current?.back();
+          flagged = false;
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", evaluate);
+    window.addEventListener("blur", evaluate);
+    window.addEventListener("focus", evaluate);
+    return () => {
+      document.removeEventListener("visibilitychange", evaluate);
+      window.removeEventListener("blur", evaluate);
+      window.removeEventListener("focus", evaluate);
+      if (timer) clearTimeout(timer);
+      if (flagged) connRef.current?.back();
+    };
+  }, [inLiveMatch]);
 
   // Leaving a table always returns to the Top Ten HOME (not the quick-play difficulty
   // selector). The seat is released by the caller's conn.leave() — or already gone when
@@ -212,7 +258,7 @@ export function TopTenClient({
       )}
       {view === "connecting" && <ConnectingView />}
       {view === "match" && state && !showSummary && (
-        <MatchView state={state} me={me} result={result} reveal={reveal} conn={conn} onExit={onExit} />
+        <MatchView state={state} me={me} result={result} reveal={reveal} awayNotice={awayNotice} conn={conn} onExit={onExit} />
       )}
       </div>
 
@@ -343,6 +389,7 @@ function MatchView({
   me,
   result,
   reveal,
+  awayNotice,
   conn,
   onExit,
 }: {
@@ -350,6 +397,7 @@ function MatchView({
   me: { userId: string; username: string };
   result: RoundSnapshot | null;
   reveal: { event: TtRevealEvent; id: number } | null;
+  awayNotice: { username: string; id: number } | null;
   conn: () => TtConnection | null;
   onExit: () => void;
 }) {
@@ -386,6 +434,7 @@ function MatchView({
       meId={me.userId}
       nickname={mySeat?.username ?? me.username}
       reveal={reveal}
+      awayNotice={awayNotice}
       onPick={onPick}
       onLeave={onExit}
     />
