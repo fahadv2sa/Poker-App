@@ -16,13 +16,10 @@ interface Found {
 function PlayerSearchInner({
   disabled,
   onPick,
-  openUp = false,
   placeholder,
 }: {
   disabled: boolean;
   onPick: (playerId: string) => void;
-  /** Float the results list ABOVE the input (for a bottom-docked search bar). */
-  openUp?: boolean;
   placeholder?: string;
 }) {
   const [q, setQ] = useState("");
@@ -58,17 +55,15 @@ function PlayerSearchInner({
     setOpen(false);
   }
 
+  const showList = open && results.length > 0 && !disabled;
+
   return (
-    <div className="relative w-full">
-      <input
-        value={q}
-        disabled={disabled}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder={placeholder ?? (disabled ? "ليس دورك الآن…" : "اكتب اسم اللاعب…")}
-        className="w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-lg text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
-      />
-      {open && results.length > 0 && !disabled && (
-        <ul className={`lu-frame absolute z-20 max-h-72 w-full overflow-auto rounded-xl p-1 ${openUp ? "bottom-full mb-1" : "mt-1"}`}>
+    // Bottom-docked column: the results list sits ABOVE the input, in normal flow, so
+    // it appears AT THE BOTTOM of the screen and the felt/board compresses to make room
+    // rather than being covered.
+    <div className="flex w-full flex-col">
+      {showList && (
+        <ul className="lu-frame z-20 mb-1.5 max-h-[34dvh] w-full overflow-auto overscroll-contain rounded-xl p-1">
           {results.map((p) => (
             <li key={p.id}>
               <button
@@ -85,6 +80,13 @@ function PlayerSearchInner({
           ))}
         </ul>
       )}
+      <input
+        value={q}
+        disabled={disabled}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder={placeholder ?? (disabled ? "ليس دورك الآن…" : "اكتب اسم اللاعب…")}
+        className="w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-lg text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
+      />
     </div>
   );
 }

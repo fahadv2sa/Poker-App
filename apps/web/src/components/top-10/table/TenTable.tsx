@@ -256,31 +256,6 @@ export function TenTable({
         <TenCoachmark active={state.roundNo === 1} />
       </div>
 
-      {/* search dock — the action bar (results float UP over the felt) */}
-      <motion.div
-        key={shakeKey}
-        animate={shakeKey > 0 ? { x: [0, -8, 8, -5, 5, 0] } : undefined}
-        transition={{ duration: 0.4 }}
-        className="mt-1.5 shrink-0"
-      >
-        <PlayerSearch
-          disabled={!canGuess}
-          onPick={onPick}
-          openUp
-          placeholder={
-            canGuess
-              ? hintOpen
-                ? "الأسرع يفوز — اكتب الآن!"
-                : "دورك — اكتب اسم لاعب من القائمة…"
-              : me?.locked
-                ? "نَفِدت محاولاتك هذه الجولة"
-                : hint
-                  ? "وضع التلميح…"
-                  : "ليس دورك الآن…"
-          }
-        />
-      </motion.div>
-
       {/* my account HUD */}
       <div className="mt-1.5 shrink-0">
         {me ? (
@@ -295,6 +270,32 @@ export function TenTable({
           />
         ) : null}
       </div>
+
+      {/* search dock — the bottom-docked action bar. The results list renders in-flow
+          just above the input as a compact, scrollable bottom sheet, so the felt/board
+          compresses to make room instead of the list covering the cards. */}
+      <motion.div
+        key={shakeKey}
+        animate={shakeKey > 0 ? { x: [0, -8, 8, -5, 5, 0] } : undefined}
+        transition={{ duration: 0.4 }}
+        className="mt-1.5 shrink-0"
+      >
+        <PlayerSearch
+          disabled={!canGuess}
+          onPick={onPick}
+          placeholder={
+            canGuess
+              ? hintOpen
+                ? "الأسرع يفوز — اكتب الآن!"
+                : "دورك — اكتب اسم لاعب من القائمة…"
+              : me?.locked
+                ? "نَفِدت محاولاتك هذه الجولة"
+                : hint
+                  ? "وضع التلميح…"
+                  : "ليس دورك الآن…"
+          }
+        />
+      </motion.div>
 
       {/* big correct-guess notice (center stage) */}
       <TenRevealNotice latest={revealDisplay} />
