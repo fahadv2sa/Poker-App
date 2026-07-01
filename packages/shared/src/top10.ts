@@ -324,6 +324,9 @@ export const TT_TIMING = {
    *  all connected humans are ready (bots auto-ready) or this grace elapses, a fresh
    *  round starts. Mirrors Link Up's NEW_ROUND_GRACE_SEC. */
   newRoundGraceSec: 15,
+  /** When the LAST hidden card auto-reveals (all hints given, nobody answered), hold
+   *  this long so contestants can see the revealed card before the winner screen. */
+  finalRevealHoldMs: 3500,
 } as const;
 
 export const TT_HINT = {

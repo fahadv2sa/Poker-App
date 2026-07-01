@@ -347,6 +347,7 @@ export class Matches {
     const { state, events } = hintWindowTimeout(r.state);
     r.state = state;
     // auto-reveal emits a reveal event
+    let roundEnded = false;
     for (const e of events) {
       if (e.t === "reveal") {
         const cp = this.revealedPlayer(r, e.rank)!;
@@ -355,9 +356,21 @@ export class Matches {
           player: { id: cp.playerId, name: cp.name, nameAr: cp.nameAr, value: cp.value, photoUrl: cp.photoUrl },
         });
       } else if (e.t === "roundEnded") {
-        this.finishRound(room, state.endReason ?? "ALL_REVEALED");
-        return;
+        roundEnded = true;
       }
+    }
+    if (roundEnded) {
+      // The LAST card just auto-revealed. Push the revealed board, then HOLD briefly so
+      // contestants can see it before the winner screen (finishRound → matchEnded would
+      // otherwise land in the same tick and cover the reveal). Guarded against a
+      // withdrawal/close during the hold (which nulls room.round / ends the match).
+      const reason = state.endReason ?? "ALL_REVEALED";
+      this.sync(room);
+      this.clear(room, "hintWindow");
+      room.timers.hintWindow = setTimeout(() => {
+        if (room.round && room.status === "IN_PROGRESS") this.finishRound(room, reason);
+      }, TT_TIMING.finalRevealHoldMs);
+      return;
     }
     // The engine cleared the hint (auto-revealed after the last real hint) → next card;
     // otherwise it kept the hint for another distinct hint → reopen a fresh answer

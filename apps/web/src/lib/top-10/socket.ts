@@ -37,10 +37,13 @@ export interface TtCreateOptions {
   maxPlayers?: number;
 }
 
+/** Server ack for create/join — either the match id or a coded error. */
+export type TtJoinAck = { matchId?: string; inviteCode?: string | null; error?: string };
+
 export interface TtConnection {
   socket: Socket;
-  create: (opts: TtCreateOptions) => void;
-  join: (inviteCode: string) => void;
+  create: (opts: TtCreateOptions, ack?: (r: TtJoinAck) => void) => void;
+  join: (inviteCode: string, ack?: (r: TtJoinAck) => void) => void;
   start: () => void;
   guess: (playerId: string) => void;
   requestEndRound: () => void;
@@ -91,8 +94,8 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
 
   return {
     socket,
-    create: (opts) => socket.emit(TT_CLIENT_EVENTS.create, opts),
-    join: (inviteCode) => socket.emit(TT_CLIENT_EVENTS.join, { inviteCode }),
+    create: (opts, ack) => socket.emit(TT_CLIENT_EVENTS.create, opts, ack),
+    join: (inviteCode, ack) => socket.emit(TT_CLIENT_EVENTS.join, { inviteCode }, ack),
     start: () => socket.emit(TT_CLIENT_EVENTS.start, {}),
     guess: (playerId) => socket.emit(TT_CLIENT_EVENTS.guess, { playerId }),
     requestEndRound: () => socket.emit(TT_CLIENT_EVENTS.endRoundRequest, {}),

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Atmosphere, BackIcon, BoltIcon, GoldButton, GoldGradientDefs, Panel, cn } from "@fb/top-10-ui";
 import { SeatAvatar, useRemainingMs } from "@fb/table-ui";
@@ -26,7 +27,7 @@ type RoundSnapshot = {
 
 const DIFF_AR: Record<TtDifficulty, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
 
-type View = "lobby" | "queue" | "match";
+type View = "lobby" | "queue" | "match" | "connecting";
 export type PlayScreen = "quick" | "create" | "join";
 
 export function TopTenClient({
@@ -48,12 +49,16 @@ export function TopTenClient({
     maxPlayers?: number;
   } | null;
 }) {
+  const router = useRouter();
   const connRef = useRef<TtConnection | null>(null);
   const autoFiredRef = useRef(false);
   // The quick-play difficulty the player is queued for — re-asserted on every (re)connect
   // so a dropped socket doesn't strand them out of the matchmaking queue.
   const queueDiffRef = useRef<TtDifficulty | null>(null);
-  const [view, setView] = useState<View>("lobby");
+  // Deep-link (join by code/link or auto-create): start in a neutral "connecting" view so
+  // the quick-play difficulty selector never flashes before the room snapshot arrives.
+  const isDeepLink = !!(autoJoinCode || autoCreate);
+  const [view, setView] = useState<View>(isDeepLink ? "connecting" : "lobby");
   const [state, setState] = useState<TtStateView | null>(null);
   const [queue, setQueue] = useState<{ waiting: number; needed: number; countdownSec: number | null } | null>(null);
   const [result, setResult] = useState<RoundSnapshot | null>(null);
@@ -64,6 +69,12 @@ export function TopTenClient({
   const revealSeq = useRef(0);
   // Latest state — so onMatchEnded can snapshot the seat roster for the breakdown.
   const stateRef = useRef<TtStateView | null>(null);
+  // Latest completed-rounds list, mirrored to a ref so socket handlers (which close over
+  // the first render) can read the live value when deciding whether to show the summary.
+  const roundsRef = useRef<RoundSnapshot[]>([]);
+  useEffect(() => {
+    roundsRef.current = rounds;
+  }, [rounds]);
 
   useEffect(() => {
     const conn = connectTopTen(token, {
@@ -73,15 +84,30 @@ export function TopTenClient({
         if (queueDiffRef.current) conn.queueJoin(queueDiffRef.current);
         if (autoFiredRef.current) return;
         autoFiredRef.current = true;
-        if (autoJoinCode) conn.join(autoJoinCode);
-        else if (autoCreate)
-          conn.create({
-            difficulty: autoCreate.difficulty,
-            roundTimerSec: autoCreate.minutes * 60,
-            isPrivate: autoCreate.isPrivate,
-            roomName: autoCreate.roomName,
-            maxPlayers: autoCreate.maxPlayers,
+        if (autoJoinCode)
+          conn.join(autoJoinCode, (res) => {
+            // Bad / expired code → don't hang on the connecting spinner: notify + go home.
+            if (res?.error) {
+              flash("تعذّر الانضمام إلى الغرفة");
+              goHome();
+            }
           });
+        else if (autoCreate)
+          conn.create(
+            {
+              difficulty: autoCreate.difficulty,
+              roundTimerSec: autoCreate.minutes * 60,
+              isPrivate: autoCreate.isPrivate,
+              roomName: autoCreate.roomName,
+              maxPlayers: autoCreate.maxPlayers,
+            },
+            (res) => {
+              if (res?.error) {
+                flash("تعذّر إنشاء الغرفة");
+                goHome();
+              }
+            },
+          );
       },
       onState: (s) => {
         // A room snapshot means we're seated (lobby or match), not queueing.
@@ -110,9 +136,11 @@ export function TopTenClient({
       },
       onToast: (p) => flash(p.text),
       onTableClosed: (p) => {
-        // Creator closed the table (from the winner screen) → everyone returns to lobby.
+        // Host closed the table for everyone → show the rounds summary (if any were
+        // played) before returning home, exactly like a manual exit.
         flash(p.text ?? "أُغلقت الطاولة");
-        backToLobby();
+        if (roundsRef.current.length > 0) setShowSummary(true);
+        else goHome();
       },
       onError: (msg) => flash(msg),
       onAuthExpired: () => {
@@ -129,24 +157,19 @@ export function TopTenClient({
   }
   const conn = useCallback(() => connRef.current, []);
 
-  function backToLobby() {
-    conn()?.leave();
-    setState(null);
-    stateRef.current = null;
-    queueDiffRef.current = null;
-    setResult(null);
-    setRounds([]);
-    setShowSummary(false);
-    setQueue(null);
-    setView("lobby");
+  // Leaving a table always returns to the Top Ten HOME (not the quick-play difficulty
+  // selector). The seat is released by the caller's conn.leave() — or already gone when
+  // the host closed the table.
+  function goHome() {
+    router.push("/games/top-10");
   }
 
-  // Leaving the table: like Link Up, if any round was played show the round summary
-  // first; otherwise drop straight back to the quick-play lobby.
+  // Leaving the table: release the seat, then — if any round was played — show the round
+  // summary first (its close returns home); otherwise go straight home.
   function onExit() {
     conn()?.leave();
-    if (rounds.length > 0) setShowSummary(true);
-    else backToLobby();
+    if (roundsRef.current.length > 0) setShowSummary(true);
+    else goHome();
   }
 
   return (
@@ -187,13 +210,14 @@ export function TopTenClient({
           }}
         />
       )}
+      {view === "connecting" && <ConnectingView />}
       {view === "match" && state && !showSummary && (
         <MatchView state={state} me={me} result={result} reveal={reveal} conn={conn} onExit={onExit} />
       )}
       </div>
 
       <AnimatePresence>
-        {showSummary ? <TenTableSummary rounds={rounds} meId={me.userId} onClose={backToLobby} /> : null}
+        {showSummary ? <TenTableSummary rounds={rounds} meId={me.userId} onClose={goHome} /> : null}
       </AnimatePresence>
 
       {toast && (
@@ -232,6 +256,19 @@ function Lobby({ onJoin }: { onJoin: (d: TtDifficulty) => void }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Connecting
+
+/** Neutral placeholder while a deep-link (join by code/link or auto-create) connects —
+ *  keeps the quick-play difficulty selector from flashing before the room snapshot. */
+function ConnectingView() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 fade-rise">
+      <span className="size-10 animate-spin rounded-full border-2 border-[var(--lu-gold-1)]/25 border-t-[var(--lu-gold-1)]" />
+      <p className="text-sm text-[var(--lu-tan)]">جارٍ الاتصال…</p>
     </div>
   );
 }
