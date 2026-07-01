@@ -25,6 +25,7 @@
     "db:diff-import": "pnpm --filter @fb/db diff-import",
     "db:transliterate-names": "pnpm --filter @fb/db transliterate:names",
     "db:calculate-scores": "pnpm --filter @fb/db calculate:scores",
+    "db:classify-reserve-clubs": "pnpm --filter @fb/db classify:reserve-clubs",
     "db:reset": "pnpm --filter @fb/db migrate:reset",
     "db:build-top10-catalog": "pnpm --filter @fb/db build:top10-catalog",
     "dev:web": "pnpm --filter @fb/web dev",

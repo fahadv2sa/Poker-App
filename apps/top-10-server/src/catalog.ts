@@ -79,11 +79,13 @@ export class CatalogSource {
         const nameAr = p?.nameAr ?? name;
         const hints: string[] = [];
         if (p?.nationality?.name) hints.push(`الجنسية: ${p.nationality.name}`);
-        // Offer a DIFFERENT club from the player's career — never the scoped club
-        // (omitted entirely if they have no other club).
+        // Offer a DIFFERENT club from the player's career — never the scoped club, and
+        // never a reserve / "B" side (a hint must name a FIRST team). Omitted entirely
+        // if they have no other senior club.
         const clubName = (p?.playerClubs ?? [])
-          .map((pc) => pc.club?.name)
-          .find((n): n is string => !!n && n !== scopedClubName);
+          .filter((pc) => pc.club && !pc.club.isReserve)
+          .map((pc) => pc.club!.name)
+          .find((n): n is string => n !== scopedClubName);
         if (clubName) hints.push(`أحد أنديته: ${clubName}`);
         // Skip the position hint when the question is already position-scoped (the title
         // says المدافعين / لاعبي الوسط / الحراس), otherwise it just restates the title.

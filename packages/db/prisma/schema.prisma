@@ -567,6 +567,13 @@ model Club {
   // Entity type (see ClubKind): separates real clubs from national teams and
   // youth-club academies so career history can be clubs-only.
   kind        ClubKind     @default(CLUB)
+  // Reserve / "B" / second team (e.g. "Barcelona B", "Real Madrid Castilla",
+  // "Bayern II", "Jong Ajax"). A curation flag populated by
+  // `pnpm db:classify-reserve-clubs` (name heuristics + manual edits). Consumed
+  // ONLY by the Top Ten hint generator, which must reference a player's FIRST team,
+  // never a reserve side. Additive & default false → NO effect on the Link Up rank
+  // engine, fame scores, or career display, none of which read it.
+  isReserve   Boolean      @default(false) @map("is_reserve")
 
   country       Nationality?         @relation(fields: [countryId], references: [id], onDelete: SetNull)
   playerClubs   PlayerClub[]

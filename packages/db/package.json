@@ -22,6 +22,7 @@
     "transliterate:names": "tsx prisma/transliterate-names.ts",
     "calculate:scores": "tsx prisma/calculate-scores.ts",
     "calculate:avg-rating": "tsx prisma/calculate-avg-rating.ts",
+    "classify:reserve-clubs": "tsx prisma/classify-reserve-clubs.ts",
     "build:top10-catalog": "tsx prisma/build-top10-catalog.ts",
     "audit:top10-catalog": "tsx prisma/audit-top10-catalog.ts",
     "studio": "prisma studio",
