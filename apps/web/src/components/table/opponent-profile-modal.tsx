@@ -27,7 +27,7 @@ interface PublicProfile {
 /** Stadium-scoreboard stat tile. */
 function StatTile({ icon, label, value, tone }: { icon: string; label: string; value: string; tone: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[#0b0908]/60 px-2 py-3 text-center">
+    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[var(--fb-surface)]/60 px-2 py-3 text-center">
       <span aria-hidden className="text-base leading-none">
         {icon}
       </span>
@@ -125,14 +125,14 @@ export function OpponentProfileModal({
               className="relative flex flex-col items-center gap-2 px-6 pb-5 pt-7"
               style={{
                 background:
-                  "radial-gradient(120% 90% at 50% -20%, rgba(255,106,26,0.26), transparent 60%), linear-gradient(180deg, rgba(201,150,46,0.08), transparent)",
+                  "radial-gradient(120% 90% at 50% -20%, rgb(var(--c-ember)/0.26), transparent 60%), linear-gradient(180deg, rgb(var(--c-gold-2)/0.08), transparent)",
               }}
             >
               <SeatAvatar
                 playerNumber={p.playerNumber}
                 seed={p.avatarSeed}
                 size={84}
-                className="ring-2 ring-[var(--lu-gold-1)]/70 shadow-[0_0_28px_rgba(255,106,26,0.35)]"
+                className="ring-2 ring-[var(--lu-gold-1)]/70 shadow-[0_0_28px_rgb(var(--c-ember)/0.35)]"
               />
               <div className="text-center">
                 <div className="text-xl font-black">{p.displayName}</div>
@@ -148,9 +148,9 @@ export function OpponentProfileModal({
               <StatTile icon="❤️" label="الإعجابات" value={String(p.likes)} tone="text-[var(--lu-ember-glow)]" />
               <StatTile icon="👥" label="الأصدقاء" value={String(p.friends)} tone="text-[var(--lu-gold-1)]" />
               <StatTile icon="🏆" label="الانتصارات" value={String(p.wins)} tone="text-[var(--lu-gold-1)]" />
-              <StatTile icon="💔" label="الخسارات" value={String(p.losses)} tone="text-[#d9694f]" />
+              <StatTile icon="💔" label="الخسارات" value={String(p.losses)} tone="text-[var(--fb-danger)]" />
               <StatTile icon="📈" label="أكبر رهان فائز" value={p.biggestWin} tone="text-[var(--lu-gold-1)]" />
-              <StatTile icon="📉" label="أكبر رهان خاسر" value={p.biggestLoss} tone="text-[#d9694f]" />
+              <StatTile icon="📉" label="أكبر رهان خاسر" value={p.biggestLoss} tone="text-[var(--fb-danger)]" />
             </div>
 
             {/* actions */}

@@ -17,11 +17,11 @@ export interface RoomCardData {
 }
 
 const DIFFICULTY_AR: Record<string, string> = { EASY: "سهل", MEDIUM: "متوسط", HARD: "صعب" };
-const DIFFICULTY_TONE: Record<string, string> = { EASY: "#c9962e", MEDIUM: "#ff6a1a", HARD: "#f2d27a" };
+const DIFFICULTY_TONE: Record<string, string> = { EASY: "var(--fb-gold-strong)", MEDIUM: "var(--fb-ember)", HARD: "var(--fb-gold)" };
 
 /** Cinematic, premium room card (copied from Link Up's room card, Top Ten tones). */
 function RoomCard({ r }: { r: RoomCardData }) {
-  const tone = DIFFICULTY_TONE[r.difficulty] ?? "#c9962e";
+  const tone = DIFFICULTY_TONE[r.difficulty] ?? "var(--fb-gold-strong)";
   const pct = r.maxPlayers > 0 ? Math.min(100, (r.filled / r.maxPlayers) * 100) : 0;
   const isPublic = r.kind === "PUBLIC";
   // Quick-play tables are matchmaking (not directly joinable) → jump into quick play;

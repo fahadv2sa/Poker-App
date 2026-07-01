@@ -29,7 +29,7 @@ const BETTING_PHASES = new Set(["PREFLOP", "FLOP", "TURN", "RIVER"]);
 // Fixed (non-random) confetti pieces for the winner screen — deterministic so
 // there's no hydration mismatch and it stays cheap. Purely decorative; the
 // global reduced-motion rule hides them. Colors map to the brand palette.
-const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "#fff4cf"];
+const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "rgb(var(--c-gold-hi))"];
 const CONFETTI = Array.from({ length: 26 }, (_, i) => ({
   left: (i * 37 + 5) % 100,
   delay: (i % 10) * 0.32,
@@ -105,9 +105,9 @@ function StatCard({
   glyph?: string;
 }) {
   const tones = {
-    gold: "border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_12px_rgba(255,106,26,0.2)]",
-    up: "border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_14px_rgba(255,179,71,0.25)]",
-    down: "border-[#d9694f]/50 bg-[#d9694f]/10 text-[#d9694f] shadow-[0_0_12px_rgba(217,105,79,0.25)]",
+    gold: "border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_12px_rgb(var(--c-ember)/0.2)]",
+    up: "border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)] shadow-[0_0_14px_rgb(var(--c-ember-glow)/0.25)]",
+    down: "border-[var(--fb-danger)]/50 bg-[var(--fb-danger)]/10 text-[var(--fb-danger)] shadow-[0_0_12px_rgb(var(--c-danger)/0.25)]",
   } as const;
   const sign = signed ? (value > 0 ? "+" : value < 0 ? "−" : "") : "";
   return (
@@ -318,7 +318,7 @@ export function GameTable({
               around the far edge of the table, so the felt is freed for play. */}
           <div className="relative z-10 -mb-5 flex w-full max-w-3xl flex-nowrap items-end justify-center gap-1 px-1 sm:-mb-7 sm:gap-3">
             {opponents.length === 0 ? (
-              <span className="mb-5 rounded-full border border-white/10 bg-[#0b0908]/70 px-3 py-1.5 text-xs text-white/50 sm:mb-7">
+              <span className="mb-5 rounded-full border border-white/10 bg-[var(--fb-surface)]/70 px-3 py-1.5 text-xs text-white/50 sm:mb-7">
                 بانتظار لاعبين آخرين…
               </span>
             ) : (
@@ -347,14 +347,14 @@ export function GameTable({
               the play animations. Flexes to fill the freed vertical space. */}
           <section
             className="lu-felt relative mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[28px] border border-[var(--lu-gold-1)]/20 px-2 pb-2 pt-5 sm:flex-none sm:justify-start sm:gap-5 sm:rounded-[44px] sm:px-8 sm:pb-9 sm:pt-12"
-            style={{ boxShadow: "inset 0 0 0 1px rgba(242,210,122,0.1), inset 0 0 70px rgba(0,0,0,0.55), 0 18px 50px rgba(0,0,0,0.5)" }}
+            style={{ boxShadow: "inset 0 0 0 1px rgb(var(--c-gold-1)/0.1), inset 0 0 70px rgb(var(--c-black)/0.55), 0 18px 50px rgb(var(--c-black)/0.5)" }}
           >
             {/* (Molten surface + faint gold pitch-line overlay come from `.lu-felt`.) */}
             {/* Warm gold floodlight rim along the top edge. */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-x-0 top-0 h-24"
-              style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.18), transparent)" }}
+              style={{ background: "radial-gradient(60% 100% at 50% 0%, rgb(var(--c-ember)/0.18), transparent)" }}
             />
             {/* fire-gold football — LIVE centerpiece on the pitch CENTER CIRCLE
                 (the felt midpoint). Ember glow + breathing; sits BEHIND everything
@@ -363,7 +363,7 @@ export function GameTable({
             <span
               aria-hidden
               className="lu-anim-pulse pointer-events-none absolute left-1/2 top-1/2 z-0 size-56 -translate-x-1/2 -translate-y-1/2 rounded-full sm:size-80"
-              style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), rgba(255,106,26,0.1) 46%, transparent 70%)" }}
+              style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.4), rgb(var(--c-ember)/0.1) 46%, transparent 70%)" }}
             />
             <span
               aria-hidden
@@ -404,7 +404,7 @@ export function GameTable({
                 initial={{ scale: 0.85, opacity: 0.6 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                className="glow-gold relative z-10 flex flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/80 px-7 py-2 shadow-lg backdrop-blur"
+                className="glow-gold relative z-10 flex flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[var(--fb-surface)]/80 px-7 py-2 shadow-lg backdrop-blur"
               >
                 {/* #4 absorb ripple — replays on each pot change */}
                 {anim("potCountUp") ? (
@@ -434,7 +434,7 @@ export function GameTable({
                   {s.pots.map((p, i) => (
                     <span
                       key={i}
-                      className="rounded-full border border-gold/30 bg-[#0b0908]/50 px-2.5 py-1 text-gold/90"
+                      className="rounded-full border border-gold/30 bg-[var(--fb-surface)]/50 px-2.5 py-1 text-gold/90"
                       title={`مؤهلون: ${p.eligibleSeats.join("، ") || "—"}`}
                     >
                       {i === 0 ? "المجمّع الرئيسي" : `جانبي ${i}`}: 🪙{" "}
@@ -503,7 +503,7 @@ export function GameTable({
                   (matches the opponent seats; keeps dealer clarity, no clutter) */}
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-2xl border bg-[#0b0908]/75 px-2.5 py-1.5 backdrop-blur transition",
+                  "flex items-center gap-2 rounded-2xl border bg-[var(--fb-surface)]/75 px-2.5 py-1.5 backdrop-blur transition",
                   isMyTurn ? "border-[var(--lu-ember-glow)]/50 lu-glow-ember" : "border-[var(--lu-gold-1)]/15",
                 )}
               >
@@ -752,7 +752,7 @@ function LobbyPanel({
           <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-[0.68rem] font-bold tracking-[0.18em] text-gold">
             <span aria-hidden>🎟️</span> كود الدعوة
           </span>
-          <div className="num inline-flex rounded-xl border border-gold/40 bg-[#0b0908]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-gold shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
+          <div className="num inline-flex rounded-xl border border-gold/40 bg-[var(--fb-surface)]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-gold shadow-[inset_0_1px_0_rgb(var(--c-white)/0.06),0_8px_20px_rgb(var(--c-black)/0.35)] sm:text-4xl">
             {inviteCode}
           </div>
           <p className="text-xs text-muted-foreground">ادعُ أصدقاءك بالكود أو شارك الرابط مباشرة</p>
@@ -1325,7 +1325,7 @@ function MoneyMath({ r }: { r: GameResultEntry }) {
         <span aria-hidden className="text-muted-foreground/50">•</span>
         <span className="text-muted-foreground">
           صافي{" "}
-          <b className={r.coinsDelta >= 0 ? "text-[var(--lu-gold-1)]" : "text-[#d9694f]"}>
+          <b className={r.coinsDelta >= 0 ? "text-[var(--lu-gold-1)]" : "text-[var(--fb-danger)]"}>
             {r.coinsDelta >= 0 ? "+" : ""}
             {r.coinsDelta}
           </b>
@@ -1428,7 +1428,7 @@ function PlayerResultCard({
             r.coinsDelta > 0
               ? "text-[var(--lu-gold-1)]"
               : r.coinsDelta < 0
-                ? "text-[#d9694f]"
+                ? "text-[var(--fb-danger)]"
                 : "text-muted-foreground",
           )}
         >

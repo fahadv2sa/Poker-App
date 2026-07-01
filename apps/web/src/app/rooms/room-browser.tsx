@@ -24,14 +24,14 @@ const DIFFICULTY_AR: Record<string, string> = {
 };
 // Gold-world tones.
 const DIFFICULTY_TONE: Record<string, string> = {
-  EASY: "#c9962e",
-  MEDIUM: "#ff6a1a",
-  ELITE: "#f2d27a",
+  EASY: "var(--fb-gold-strong)",
+  MEDIUM: "var(--fb-ember)",
+  ELITE: "var(--fb-gold)",
 };
 
 /** Cinematic, premium room card. Presentational only — links to the table. */
 function RoomCard({ r }: { r: RoomCardData }) {
-  const tone = DIFFICULTY_TONE[r.difficulty] ?? "#c9962e";
+  const tone = DIFFICULTY_TONE[r.difficulty] ?? "var(--fb-gold-strong)";
   const pct = r.maxPlayers > 0 ? Math.min(100, (r.filled / r.maxPlayers) * 100) : 0;
   const isPublic = r.kind === "PUBLIC";
   return (
@@ -144,7 +144,7 @@ export function RoomBrowser({
       className={cn(
         "flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition",
         tab === id
-          ? "text-[var(--lu-gold-1)] shadow-[inset_0_0_0_1px_rgba(242,210,122,0.4)]"
+          ? "text-[var(--lu-gold-1)] shadow-[inset_0_0_0_1px_rgb(var(--c-gold-1)/0.4)]"
           : "text-[var(--lu-tan)] hover:text-[var(--lu-cream)]",
       )}
     >

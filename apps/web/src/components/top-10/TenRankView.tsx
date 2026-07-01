@@ -57,7 +57,7 @@ function Podium({ p, place }: { p: TtRankedPlayer; place: 1 | 2 | 3 }) {
   const medal = place === 1 ? "🥇" : place === 2 ? "🥈" : "🥉";
   const ring =
     place === 1
-      ? "ring-2 ring-[var(--lu-gold-1)]/80 shadow-[0_0_22px_rgba(255,106,26,0.35)]"
+      ? "ring-2 ring-[var(--lu-gold-1)]/80 shadow-[0_0_22px_rgb(var(--c-ember)/0.35)]"
       : "ring-2 ring-[var(--lu-gold-1)]/40";
   return (
     <div className={cn("flex flex-1 flex-col items-center gap-2", place === 1 ? "-mt-4" : "mt-2")}>
@@ -139,7 +139,7 @@ export function TenRankView({
       {podium.length > 0 ? (
         <section
           className="lu-frame mb-5 mt-3 flex items-end justify-center gap-3 rounded-3xl px-3 pb-6 pt-8 sm:gap-5 sm:px-6"
-          style={{ background: "radial-gradient(120% 90% at 50% 0%, rgba(255,106,26,0.12), transparent 60%), linear-gradient(180deg, rgba(30,26,19,0.92), rgba(11,10,9,0.96))" }}
+          style={{ background: "radial-gradient(120% 90% at 50% 0%, rgb(var(--c-ember)/0.12), transparent 60%), linear-gradient(180deg, rgb(var(--c-frame-3)/0.92), rgb(var(--c-frame-4)/0.96))" }}
         >
           {podium.map(({ p, place }) => (
             <Podium key={p.id} p={p} place={place} />

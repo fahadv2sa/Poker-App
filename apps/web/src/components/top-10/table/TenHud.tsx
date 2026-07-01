@@ -35,7 +35,7 @@ export function TenHud({
       {/* profile */}
       <div
         className={cn(
-          "relative flex flex-1 items-center gap-2 rounded-2xl border bg-[#0b0908]/80 px-2.5 py-1.5 backdrop-blur transition",
+          "relative flex flex-1 items-center gap-2 rounded-2xl border bg-[var(--fb-surface)]/80 px-2.5 py-1.5 backdrop-blur transition",
           isMyTurn ? "border-[var(--lu-ember-glow)]/50 lu-glow-ember" : "border-[var(--lu-gold-1)]/15",
         )}
       >
@@ -50,7 +50,7 @@ export function TenHud({
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="truncate text-sm font-bold text-[var(--lu-cream)]">{nickname}</span>
           {locked ? (
-            <span className="text-[0.66rem] font-black text-[#d9694f]">✕ نَفِدت محاولاتك</span>
+            <span className="text-[0.66rem] font-black text-[var(--fb-danger)]">✕ نَفِدت محاولاتك</span>
           ) : isMyTurn ? (
             <span className="text-[0.66rem] font-bold text-[var(--lu-ember-glow)]">دورك — اكتب اسم لاعب</span>
           ) : hint ? (
@@ -85,19 +85,19 @@ function WrongAttempts({ used, max }: { used: number; max: number }) {
     <div
       className={cn(
         "flex min-w-[3.6rem] flex-col items-center justify-center gap-0.5 rounded-2xl border px-1.5 py-1",
-        exhausted ? "border-[#d9694f]/70 bg-[#d9694f]/20" : "border-[#d9694f]/40 bg-[#d9694f]/10",
+        exhausted ? "border-[var(--fb-danger)]/70 bg-[var(--fb-danger)]/20" : "border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10",
       )}
     >
-      <span className="flex items-center gap-1 text-[0.55rem] font-bold tracking-wide text-[#d9694f]/90">
+      <span className="flex items-center gap-1 text-[0.55rem] font-bold tracking-wide text-[var(--fb-danger)]/90">
         <span aria-hidden>✕</span> محاولات
       </span>
       <span className="flex items-center gap-1">
         <span className="flex gap-0.5">
           {Array.from({ length: max }).map((_, i) => (
-            <span key={i} className={cn("size-1.5 rounded-full border", i < used ? "border-[#d9694f] bg-[#d9694f]" : "border-white/30 bg-transparent")} />
+            <span key={i} className={cn("size-1.5 rounded-full border", i < used ? "border-[var(--fb-danger)] bg-[var(--fb-danger)]" : "border-white/30 bg-transparent")} />
           ))}
         </span>
-        <span className="num text-xs font-black text-[#d9694f]">{used}/{max}</span>
+        <span className="num text-xs font-black text-[var(--fb-danger)]">{used}/{max}</span>
       </span>
     </div>
   );

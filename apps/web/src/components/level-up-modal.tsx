@@ -17,7 +17,7 @@ import { sound } from "@/lib/sound";
  * (advancing celebrated_level) BEFORE refreshing, so it never re-shows.
  */
 
-const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "#fff4cf"];
+const CONFETTI_COLORS = ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "rgb(var(--c-gold-hi))"];
 const CONFETTI = Array.from({ length: 28 }, (_, i) => ({
   left: (i * 37 + 5) % 100,
   delay: (i % 10) * 0.28,
@@ -93,7 +93,7 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
                 className="pointer-events-none absolute inset-0"
                 style={{
                   background:
-                    "radial-gradient(60% 48% at 50% 32%, rgba(255,106,26,0.22), transparent 70%)",
+                    "radial-gradient(60% 48% at 50% 32%, rgb(var(--c-ember)/0.22), transparent 70%)",
                 }}
               />
 
@@ -106,7 +106,7 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
                   initial={{ scale: 0, rotate: -25 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 240, damping: 12, delay: 0.12 }}
-                  className="glow-gold badge-shine mx-auto my-4 grid size-28 place-items-center rounded-full border-2 border-[var(--lu-gold-1)]/60 bg-gradient-to-b from-[var(--lu-gold-2)]/25 to-[#0b0908]"
+                  className="glow-gold badge-shine mx-auto my-4 grid size-28 place-items-center rounded-full border-2 border-[var(--lu-gold-1)]/60 bg-gradient-to-b from-[var(--lu-gold-2)]/25 to-[var(--fb-surface)]"
                 >
                   <span className="num lu-gold-text lu-gold-title text-6xl font-black">
                     {newLevel}

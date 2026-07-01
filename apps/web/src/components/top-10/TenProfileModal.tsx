@@ -27,7 +27,7 @@ interface PublicProfile {
 
 function StatTile({ icon, label, value, tone }: { icon: string; label: string; value: string; tone: string }) {
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[#0b0908]/60 px-2 py-3 text-center">
+    <div className="flex flex-col items-center gap-0.5 rounded-xl border border-white/10 bg-[var(--fb-surface)]/60 px-2 py-3 text-center">
       <span aria-hidden className="text-base leading-none">{icon}</span>
       <span className={cn("num text-base font-extrabold leading-none", tone)}>{value}</span>
       <span className="text-[0.62rem] leading-tight text-[var(--lu-tan)]">{label}</span>
@@ -116,7 +116,7 @@ export function TenProfileModal({ playerNumber, onClose }: { playerNumber: numbe
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[var(--lu-gold-1)]/25 bg-[#0b0908] shadow-2xl"
+        className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[var(--lu-gold-1)]/25 bg-[var(--fb-surface)] shadow-2xl"
       >
         {err ? (
           <p className="px-6 py-10 text-center text-sm text-[var(--lu-tan)]">{err}</p>
@@ -126,9 +126,9 @@ export function TenProfileModal({ playerNumber, onClose }: { playerNumber: numbe
           <>
             <div
               className="relative flex flex-col items-center gap-2 px-6 pb-5 pt-7"
-              style={{ background: "radial-gradient(120% 90% at 50% -20%, rgba(255,106,26,0.26), transparent 60%)" }}
+              style={{ background: "radial-gradient(120% 90% at 50% -20%, rgb(var(--c-ember)/0.26), transparent 60%)" }}
             >
-              <SeatAvatar playerNumber={p.playerNumber} seed={p.avatarSeed} size={84} sizeClass="size-20" className="ring-2 ring-[var(--lu-gold-1)]/70 shadow-[0_0_28px_rgba(255,106,26,0.35)]" />
+              <SeatAvatar playerNumber={p.playerNumber} seed={p.avatarSeed} size={84} sizeClass="size-20" className="ring-2 ring-[var(--lu-gold-1)]/70 shadow-[0_0_28px_rgb(var(--c-ember)/0.35)]" />
               <div className="text-center">
                 <div className="text-xl font-black text-[var(--lu-cream)]">{p.displayName}</div>
                 <div className="num text-xs text-[var(--lu-tan)]">رقم العضوية #{p.playerNumber}</div>
@@ -168,7 +168,7 @@ export function TenProfileModal({ playerNumber, onClose }: { playerNumber: numbe
                 ) : p.friendState === "pending_in" ? (
                   <div className="grid grid-cols-2 gap-2">
                     <button type="button" disabled={busy} onClick={() => respond("accept")} className="btn-gold-cta rounded-xl py-2.5 text-sm font-bold text-black disabled:opacity-60">قبول الطلب</button>
-                    <button type="button" disabled={busy} onClick={() => respond("reject")} className="lu-frame rounded-xl py-2.5 text-sm font-bold text-[#d9694f] disabled:opacity-60">رفض</button>
+                    <button type="button" disabled={busy} onClick={() => respond("reject")} className="lu-frame rounded-xl py-2.5 text-sm font-bold text-[var(--fb-danger)] disabled:opacity-60">رفض</button>
                   </div>
                 ) : (
                   <button type="button" disabled={busy} onClick={removeOrCancel} className="lu-frame w-full rounded-xl py-2.5 text-sm font-bold text-[var(--lu-cream)] disabled:opacity-60">✓ صديق · إزالة</button>
@@ -178,7 +178,7 @@ export function TenProfileModal({ playerNumber, onClose }: { playerNumber: numbe
                   type="button"
                   disabled={reported}
                   onClick={reportCheating}
-                  className="w-full rounded-xl border border-[#d9694f]/50 bg-[#d9694f]/12 py-2.5 text-sm font-bold text-[#d9694f] transition hover:bg-[#d9694f]/20 disabled:opacity-60"
+                  className="w-full rounded-xl border border-[var(--fb-danger)]/50 bg-[var(--fb-danger)]/12 py-2.5 text-sm font-bold text-[var(--fb-danger)] transition hover:bg-[var(--fb-danger)]/20 disabled:opacity-60"
                 >
                   {reported ? "✓ تم إرسال البلاغ" : "🚩 الإبلاغ عن غش"}
                 </button>

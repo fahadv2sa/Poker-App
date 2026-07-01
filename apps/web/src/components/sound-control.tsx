@@ -26,7 +26,7 @@ export function SoundControl({ className }: { className?: string }) {
           if (!next) sound.play("click");
         }}
         onMouseEnter={() => setOpen(true)}
-        className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[#0b0908]/70 text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45 hover:text-[var(--lu-cream)]"
+        className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[var(--fb-surface)]/70 text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45 hover:text-[var(--lu-cream)]"
       >
         {muted || volume === 0 ? <IconMuted /> : <IconSound />}
       </button>

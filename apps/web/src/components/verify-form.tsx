@@ -58,7 +58,7 @@ export function VerifyForm({
     >
       <GoldGradientDefs />
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgba(255,106,26,0.3)]">
+        <span className="lu-frame lu-anim-breathe grid size-20 place-items-center rounded-3xl shadow-[0_0_34px_rgb(var(--c-ember)/0.3)]">
           <EmblemIcon size={40} />
         </span>
         <div className="lu-gold-text lu-gold-title text-2xl font-black">فوتبول بي</div>
@@ -75,7 +75,7 @@ export function VerifyForm({
           </div>
 
           {confirmState?.error ? (
-            <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
+            <div className="rounded-md border border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10 px-3 py-2 text-sm text-[var(--fb-danger)]">
               {confirmState.error}
             </div>
           ) : null}
@@ -106,7 +106,7 @@ export function VerifyForm({
             <p className="text-sm text-[var(--lu-gold-1)]">تم إرسال رمز جديد إلى بريدك</p>
           ) : null}
           {resendState?.error && !resendState.cooldownSeconds ? (
-            <p className="text-sm text-[#d9694f]">{resendState.error}</p>
+            <p className="text-sm text-[var(--fb-danger)]">{resendState.error}</p>
           ) : null}
           <form action={resend}>
             <Button

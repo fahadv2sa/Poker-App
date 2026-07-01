@@ -47,7 +47,7 @@ export function TenCard({
   const jackpot = card.rank === 10;
   const revealed = card.revealed && !!card.player;
 
-  const frame = "relative h-full aspect-[3/4] overflow-hidden rounded-lg border shadow-[0_4px_10px_rgba(0,0,0,0.45)]";
+  const frame = "relative h-full aspect-[3/4] overflow-hidden rounded-lg border shadow-[0_4px_10px_rgb(var(--c-black)/0.45)]";
 
   if (!revealed) {
     // Uniform face-down card back (Link Up's flipped-card style) + the rank, nothing else.
@@ -57,7 +57,7 @@ export function TenCard({
         aria-label={`بطاقة مغلقة — المركز ${card.rank}`}
         className={cn(
           frame,
-          "grid place-items-center [background:repeating-linear-gradient(135deg,#0b0908,#0b0908_7px,#16120c_7px,#16120c_14px)] shadow-[inset_0_1px_0_rgba(255,234,180,0.08)]",
+          "grid place-items-center [background:repeating-linear-gradient(135deg,var(--fb-surface),var(--fb-surface)_7px,var(--fb-surface-2)_7px,var(--fb-surface-2)_14px)] shadow-[inset_0_1px_0_rgb(var(--c-gold-pale)/0.08)]",
           hintMode ? "border-[var(--lu-ember)]/70" : jackpot ? "border-[var(--lu-gold-1)]/55" : "border-[var(--lu-gold-1)]/30",
         )}
       >
@@ -79,15 +79,15 @@ export function TenCard({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); } }}
         className={cn(
           frame,
-          "cursor-pointer bg-[#16120c]",
-          hintMode ? "border-[var(--lu-ember)]/60" : jackpot ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_12px_rgba(255,179,71,0.3)]" : "border-[var(--lu-gold-1)]/45",
+          "cursor-pointer bg-[var(--fb-surface-2)]",
+          hintMode ? "border-[var(--lu-ember)]/60" : jackpot ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_12px_rgb(var(--c-ember-glow)/0.3)]" : "border-[var(--lu-gold-1)]/45",
         )}
       >
         {/* photo fills the frame */}
         {p.photoUrl ? (
           <img src={p.photoUrl} alt="" referrerPolicy="no-referrer" className="absolute inset-0 size-full object-cover object-top" />
         ) : (
-          <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-[#1b160e] to-[#0b0908] text-[clamp(0.9rem,4vw,1.4rem)] font-black text-white/40">
+          <div className="absolute inset-0 grid place-items-center bg-gradient-to-b from-[rgb(var(--c-panel-2a))] to-[var(--fb-surface)] text-[clamp(0.9rem,4vw,1.4rem)] font-black text-white/40">
             {initials(p.name)}
           </div>
         )}
@@ -130,10 +130,10 @@ function ExpandModal({ card, metricType, onClose }: { card: TtCardView; metricTy
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.18, ease: "easeOut" }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-[80vw] max-w-[320px] overflow-hidden rounded-2xl border border-[var(--lu-gold-1)]/40 bg-gradient-to-b from-[#16120c] to-[#0b0908] text-center shadow-2xl"
+        className="relative w-[80vw] max-w-[320px] overflow-hidden rounded-2xl border border-[var(--lu-gold-1)]/40 bg-gradient-to-b from-[var(--fb-surface-2)] to-[var(--fb-surface)] text-center shadow-2xl"
       >
         <button onClick={onClose} aria-label="إغلاق" className="absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-black/60 text-lg text-white/85">✕</button>
-        <div className="aspect-[4/5] w-full overflow-hidden bg-[#0b0908]">
+        <div className="aspect-[4/5] w-full overflow-hidden bg-[var(--fb-surface)]">
           {p.photoUrl ? (
             <img src={p.photoUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover object-top" />
           ) : (

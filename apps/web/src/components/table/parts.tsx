@@ -111,8 +111,8 @@ export function PlayerCardModal({
         onClick={(e) => e.stopPropagation()}
         className={cn(
           "relative my-auto max-h-[92vh] w-[88vw] max-w-[360px] overflow-y-auto rounded-2xl border text-center shadow-2xl",
-          "bg-linear-to-b from-[#16120c] to-[#0b0908]",
-          legendary ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_34px_rgba(255,106,26,0.5)]" : "border-[var(--lu-gold-1)]/30",
+          "bg-linear-to-b from-[var(--fb-surface-2)] to-[var(--fb-surface)]",
+          legendary ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_34px_rgb(var(--c-ember)/0.5)]" : "border-[var(--lu-gold-1)]/30",
         )}
       >
         <button
@@ -125,7 +125,7 @@ export function PlayerCardModal({
         </button>
 
         {/* Large photo */}
-        <div className="relative w-full overflow-hidden bg-[#0b0908]">
+        <div className="relative w-full overflow-hidden bg-[var(--fb-surface)]">
           <div className="aspect-[4/5] w-full">
             {showPhoto ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -137,14 +137,14 @@ export function PlayerCardModal({
                 className="h-full w-full object-cover object-top"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#16120c] to-[#0b0908]">
+              <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[var(--fb-surface-2)] to-[var(--fb-surface)]">
                 <span className="text-6xl font-black tracking-wide text-white/40">
                   {cardInitials(card.name)}
                 </span>
               </div>
             )}
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[rgb(var(--c-navy-3))] to-transparent" />
         </div>
 
         {/* Fame score — gold strip between photo and name (never over the face). */}
@@ -153,7 +153,7 @@ export function PlayerCardModal({
             className={cn(
               "flex w-full items-center justify-center gap-1.5 py-1 text-base font-black tabular-nums",
               legendary
-                ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_12px_rgba(255,106,26,0.6)]"
+                ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_12px_rgb(var(--c-ember)/0.6)]"
                 : "border-y border-[var(--lu-gold-1)]/30 bg-linear-to-b from-[var(--lu-gold-2)]/30 to-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]",
             )}
             title={`درجة الشهرة: ${Math.round(fame)}/100`}
@@ -272,8 +272,8 @@ export function FootballCard({
         className={cn(
           "flex items-center justify-center rounded-xl border border-[var(--lu-gold-1)]/25 text-2xl text-[var(--lu-gold-1)]/45",
           compact ? "aspect-[4/5]" : "aspect-[2/3]",
-          "[background:repeating-linear-gradient(135deg,#0b0908,#0b0908_7px,#16120c_7px,#16120c_14px)]",
-          "shadow-[inset_0_1px_0_rgba(255,234,180,0.08)]",
+          "[background:repeating-linear-gradient(135deg,var(--fb-surface),var(--fb-surface)_7px,var(--fb-surface-2)_7px,var(--fb-surface-2)_14px)]",
+          "shadow-[inset_0_1px_0_rgb(var(--c-gold-pale)/0.08)]",
           width,
         )}
         aria-label="بطاقة مغلقة"
@@ -330,19 +330,19 @@ export function FootballCard({
       }}
       className={cn(
         "group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border text-center",
-        "bg-linear-to-b from-[#16120c] to-[#0b0908]",
-        "shadow-[0_6px_16px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,234,180,0.08)]",
+        "bg-linear-to-b from-[var(--fb-surface-2)] to-[var(--fb-surface)]",
+        "shadow-[0_6px_16px_rgb(var(--c-black)/0.45),inset_0_1px_0_rgb(var(--c-gold-pale)/0.08)]",
         "transition duration-200 hover:-translate-y-0.5 hover:border-[var(--lu-gold-1)]/60",
-        "hover:shadow-[0_12px_26px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,234,180,0.1)]",
+        "hover:shadow-[0_12px_26px_rgb(var(--c-black)/0.6),inset_0_1px_0_rgb(var(--c-gold-pale)/0.1)]",
         legendary
-          ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_20px_rgba(255,106,26,0.5),inset_0_1px_0_rgba(255,234,180,0.1)]"
+          ? "border-[var(--lu-gold-1)]/80 shadow-[0_0_20px_rgb(var(--c-ember)/0.5),inset_0_1px_0_rgb(var(--c-gold-pale)/0.1)]"
           : "border-[var(--lu-gold-1)]/35",
         width,
       )}
       title={card.name}
     >
       {/* Photo — dominates the top, rounded by the card's overflow-hidden. */}
-      <div className="relative w-full overflow-hidden bg-[#0b1322]">
+      <div className="relative w-full overflow-hidden bg-[rgb(var(--c-navy-4))]">
         <div className={cn(compact ? "aspect-square" : "aspect-[4/5]", "w-full")}>
           {showPhoto ? (
             // Remote provider image; plain <img> avoids next/image remote config.
@@ -356,7 +356,7 @@ export function FootballCard({
               className="h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.05]"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[#16120c] to-[#0b0908]">
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-b from-[var(--fb-surface-2)] to-[var(--fb-surface)]">
               <span
                 className={cn(
                   "font-black tracking-wide text-white/40",
@@ -369,7 +369,7 @@ export function FootballCard({
           )}
         </div>
         {/* Soft scrim blends the photo into the card body. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[#101a2e] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-[rgb(var(--c-navy-3))] to-transparent" />
       </div>
 
       {/* Fame score — gold strip between the photo and the name (never over the
@@ -379,7 +379,7 @@ export function FootballCard({
           className={cn(
             "flex w-full items-center justify-center gap-1 font-black tabular-nums",
             legendary
-              ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_10px_rgba(255,106,26,0.6)]"
+              ? "bg-[var(--lu-gold-1)] text-black shadow-[0_0_10px_rgb(var(--c-ember)/0.6)]"
               : "border-y border-[var(--lu-gold-1)]/30 bg-linear-to-b from-[var(--lu-gold-2)]/30 to-[var(--lu-gold-2)]/10 text-[var(--lu-gold-1)]",
             size === "lg" ? "py-0.5 text-[0.6rem] sm:text-[0.72rem]" : "py-px text-[0.56rem]",
           )}
@@ -427,7 +427,7 @@ export function FootballCard({
 /** The cinematic per-seat action labels + tone. FOLD is intentionally absent —
  *  it keeps its persistent greyed-out + «انسحب» seat state instead of a flash. */
 const SEAT_ACTION_FX: Record<string, { label: string; cls: string }> = {
-  CHECK: { label: "مرّر", cls: "border-white/30 bg-[#1a160f]/95 text-[var(--lu-cream)]" },
+  CHECK: { label: "مرّر", cls: "border-white/30 bg-[rgb(var(--c-panel-2b))]/95 text-[var(--lu-cream)]" },
   CALL: { label: "ساوى", cls: "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/95 text-black" },
   RAISE: { label: "رفع", cls: "border-[var(--lu-ember-glow)]/70 bg-[var(--lu-ember)]/95 text-black" },
   ALLIN: { label: "كل الرصيد", cls: "border-[var(--lu-ember-glow)]/70 bg-[var(--lu-ember)]/95 text-white" },
@@ -483,8 +483,8 @@ export function OpponentSeat({
       title={onOpenProfile ? "عرض الملف الشخصي" : undefined}
       onClick={onOpenProfile ? () => onOpenProfile(player.playerNumber) : undefined}
       className={cn(
-        "relative flex w-[58px] flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/15 bg-[#0b0908]/70 px-1 py-1 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:px-1.5 sm:py-2",
-        onOpenProfile && "cursor-pointer hover:border-[var(--lu-gold-1)]/40 hover:bg-[#16120c]/85",
+        "relative flex w-[58px] flex-col items-center gap-0.5 rounded-2xl border border-[var(--lu-gold-1)]/15 bg-[var(--fb-surface)]/70 px-1 py-1 backdrop-blur transition sm:w-[84px] sm:gap-1 sm:px-1.5 sm:py-2",
+        onOpenProfile && "cursor-pointer hover:border-[var(--lu-gold-1)]/40 hover:bg-[var(--fb-surface-2)]/85",
         isActive && "lu-turn border-[var(--lu-ember-glow)]/50",
         folded && "opacity-45 grayscale",
       )}
@@ -521,13 +521,13 @@ export function OpponentSeat({
         {/* #7 fold stamp */}
         {folded && anim("foldMuck") ? (
           <span className="absolute inset-0 grid place-items-center">
-            <span className="-rotate-12 rounded border border-[var(--lu-ember)]/70 bg-[#0b0908]/75 px-1.5 text-[0.55rem] font-black tracking-wider text-[var(--lu-ember-glow)]">
+            <span className="-rotate-12 rounded border border-[var(--lu-ember)]/70 bg-[var(--fb-surface)]/75 px-1.5 text-[0.55rem] font-black tracking-wider text-[var(--lu-ember-glow)]">
               انسحب
             </span>
           </span>
         ) : null}
         {isActive ? (
-          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-[#070b14] px-0.5">
+          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-[rgb(var(--c-navy-2))] px-0.5">
             <Countdown deadlineTs={deadlineTs ?? null} compact />
           </span>
         ) : null}

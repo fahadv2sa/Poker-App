@@ -27,7 +27,7 @@ export type TtStatsVM = {
 const valueTone: Record<TtStatTile["tone"], string> = {
   cream: "text-[var(--lu-cream)]",
   gold: "lu-gold-text",
-  lose: "text-[#d9694f]",
+  lose: "text-[var(--fb-danger)]",
 };
 
 export function TenStatsView({ vm }: { vm: TtStatsVM }) {
@@ -38,7 +38,7 @@ export function TenStatsView({ vm }: { vm: TtStatsVM }) {
       {/* identity + level ring */}
       <section
         className="lu-frame mt-3 rounded-3xl p-5"
-        style={{ background: "radial-gradient(120% 120% at 0% 0%, rgba(255,106,26,0.12), transparent 55%), linear-gradient(180deg, rgba(30,26,19,0.92), rgba(11,10,9,0.96))" }}
+        style={{ background: "radial-gradient(120% 120% at 0% 0%, rgb(var(--c-ember)/0.12), transparent 55%), linear-gradient(180deg, rgb(var(--c-frame-3)/0.92), rgb(var(--c-frame-4)/0.96))" }}
       >
         <div className="flex items-center justify-between gap-5">
           <div className="flex min-w-0 flex-1 items-center gap-4">
@@ -88,7 +88,7 @@ export function TenStatsView({ vm }: { vm: TtStatsVM }) {
               style={{
                 width: `${vm.progress * 100}%`,
                 background: "linear-gradient(90deg, var(--lu-gold-2), var(--lu-ember))",
-                boxShadow: "0 0 12px rgba(255,106,26,0.4), inset 0 1px 0 rgba(255,255,255,0.35)",
+                boxShadow: "0 0 12px rgb(var(--c-ember)/0.4), inset 0 1px 0 rgb(var(--c-white)/0.35)",
               }}
             />
           </div>
@@ -166,7 +166,7 @@ export function TenStatsView({ vm }: { vm: TtStatsVM }) {
               className={cn(
                 "relative flex flex-col items-center gap-1.5 rounded-2xl border p-4 text-center",
                 b.unlocked
-                  ? "badge-shine border-[var(--lu-gold-1)]/45 bg-gradient-to-b from-[var(--lu-gold-2)]/15 to-transparent shadow-[0_0_18px_rgba(255,106,26,0.16)]"
+                  ? "badge-shine border-[var(--lu-gold-1)]/45 bg-gradient-to-b from-[var(--lu-gold-2)]/15 to-transparent shadow-[0_0_18px_rgb(var(--c-ember)/0.16)]"
                   : "border-white/10 bg-black/20",
               )}
             >

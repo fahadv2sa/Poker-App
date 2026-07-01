@@ -29,7 +29,7 @@ export function TenStandings({ seats, meId }: { seats: TtSeatView[]; meId: strin
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-[var(--lu-gold-1)]/30 bg-[#0b0908]/95 p-1.5 shadow-2xl backdrop-blur"
+            className="absolute right-0 top-full z-50 mt-1 w-44 rounded-xl border border-[var(--lu-gold-1)]/30 bg-[var(--fb-surface)]/95 p-1.5 shadow-2xl backdrop-blur"
           >
             {ranked.map((s, i) => (
               <div

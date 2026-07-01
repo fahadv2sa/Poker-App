@@ -67,12 +67,12 @@ export function PlatformHub({
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="size-20 rounded-full object-cover shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
+                className="size-20 rounded-full object-cover shadow-[0_0_0_2px_rgb(var(--c-gold-1)/0.5),0_0_28px_rgb(var(--c-ember)/0.3)]"
               />
             ) : (
               <div
                 aria-hidden
-                className="grid size-20 place-items-center rounded-full text-3xl font-black text-white shadow-[0_0_0_2px_rgba(242,210,122,0.5),0_0_28px_rgba(255,106,26,0.3)]"
+                className="grid size-20 place-items-center rounded-full text-3xl font-black text-white shadow-[0_0_0_2px_rgb(var(--c-gold-1)/0.5),0_0_28px_rgb(var(--c-ember)/0.3)]"
                 style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))` }}
               >
                 {initial}
@@ -114,21 +114,21 @@ function Atmosphere() {
         className="absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(60deg, rgba(242,210,122,0.6) 0, rgba(242,210,122,0.6) 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-60deg, rgba(242,210,122,0.6) 0, rgba(242,210,122,0.6) 1px, transparent 1px, transparent 26px)",
-          WebkitMaskImage: "radial-gradient(120% 90% at 50% 18%, #000 30%, transparent 78%)",
-          maskImage: "radial-gradient(120% 90% at 50% 18%, #000 30%, transparent 78%)",
+            "repeating-linear-gradient(60deg, rgb(var(--c-gold-1)/0.6) 0, rgb(var(--c-gold-1)/0.6) 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-60deg, rgb(var(--c-gold-1)/0.6) 0, rgb(var(--c-gold-1)/0.6) 1px, transparent 1px, transparent 26px)",
+          WebkitMaskImage: "radial-gradient(120% 90% at 50% 18%, rgb(var(--c-black)) 30%, transparent 78%)",
+          maskImage: "radial-gradient(120% 90% at 50% 18%, rgb(var(--c-black)) 30%, transparent 78%)",
         }}
       />
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(120% 45% at 50% 6%, rgba(255,106,26,0.16), transparent 55%), radial-gradient(90% 40% at 50% 100%, rgba(201,150,46,0.12), transparent 60%)",
+            "radial-gradient(120% 45% at 50% 6%, rgb(var(--c-ember)/0.16), transparent 55%), radial-gradient(90% 40% at 50% 100%, rgb(var(--c-gold-2)/0.12), transparent 60%)",
         }}
       />
       <div
         className="absolute inset-0"
-        style={{ background: "radial-gradient(120% 100% at 50% 50%, transparent 58%, rgba(0,0,0,0.6) 100%)" }}
+        style={{ background: "radial-gradient(120% 100% at 50% 50%, transparent 58%, rgb(var(--c-black)/0.6) 100%)" }}
       />
     </div>
   );
@@ -164,9 +164,9 @@ function SubscribeCard() {
         <span
           aria-hidden
           className="lu-anim-pulse absolute size-16 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(255,106,26,0.45), transparent 66%)" }}
+          style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.45), transparent 66%)" }}
         />
-        <span className="lu-chip relative grid size-14 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_8px_24px_rgba(255,106,26,0.28)]">
+        <span className="lu-chip relative grid size-14 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_8px_24px_rgb(var(--c-ember)/0.28)]">
           <CrownIcon size={28} />
         </span>
       </span>
@@ -184,7 +184,7 @@ function SubscribeCard() {
         height={20}
         viewBox="0 0 24 24"
         className="relative z-10 shrink-0 transition-transform group-hover:-translate-x-0.5"
-        style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5)) drop-shadow(0 0 5px rgba(255,179,71,0.35))" }}
+        style={{ filter: "drop-shadow(0 1px 1px rgb(var(--c-black)/0.5)) drop-shadow(0 0 5px rgb(var(--c-ember-glow)/0.35))" }}
       >
         <path d="M14 6l-6 6 6 6" fill="none" stroke="url(#lu-gold)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -202,9 +202,9 @@ function GameCard({ game }: { game: GameEntry }) {
       <span
         aria-hidden
         className="lu-anim-pulse absolute size-24 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), transparent 66%)" }}
+        style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.4), transparent 66%)" }}
       />
-      <span className="lu-anim-breathe relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgba(255,106,26,0.3)]">
+      <span className="lu-anim-breathe relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgb(var(--c-ember)/0.3)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/table-ball.png" alt="" className="absolute inset-0 size-full object-cover" />
       </span>

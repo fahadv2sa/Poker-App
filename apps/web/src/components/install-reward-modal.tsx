@@ -111,7 +111,7 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
         </button>
 
         {/* glowing app mark */}
-        <div className="mx-auto mb-3 grid size-20 place-items-center rounded-3xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/10 [box-shadow:0_0_28px_rgba(255,106,26,0.28)]">
+        <div className="mx-auto mb-3 grid size-20 place-items-center rounded-3xl border border-[var(--lu-gold-1)]/30 bg-[var(--lu-gold-2)]/10 [box-shadow:0_0_28px_rgb(var(--c-ember)/0.28)]">
           <EmblemIcon size={44} />
         </div>
 

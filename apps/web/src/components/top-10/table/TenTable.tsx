@@ -28,7 +28,7 @@ function SoundButton() {
       aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"}
       aria-pressed={muted}
       onClick={() => { ttSound.unlock(); setMuted(ttSound.toggle()); }}
-      className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[#0b0908]/70 text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45 hover:text-[var(--lu-cream)]"
+      className="grid size-8 place-items-center rounded-full border border-[var(--lu-gold-1)]/25 bg-[var(--fb-surface)]/70 text-[var(--lu-cream)]/80 transition hover:border-[var(--lu-gold-1)]/45 hover:text-[var(--lu-cream)]"
     >
       {muted ? <IconMuted /> : <IconSound />}
     </button>
@@ -164,7 +164,7 @@ export function TenTable({
             onClick={() => setConfirmLeave(true)}
             aria-label="الخروج من الطاولة"
             title="الخروج من الطاولة"
-            className="grid size-9 place-items-center rounded-full border border-[#d9694f]/40 bg-[#d9694f]/10 text-[#d9694f] transition hover:border-[#d9694f]/70"
+            className="grid size-9 place-items-center rounded-full border border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10 text-[var(--fb-danger)] transition hover:border-[var(--fb-danger)]/70"
           >
             <ExitIcon />
           </button>
@@ -174,10 +174,10 @@ export function TenTable({
         <SoundButton />
       </header>
       {confirmLeave ? (
-        <div className="mb-1 flex shrink-0 flex-col items-center gap-1.5 rounded-lg border border-[#d9694f]/30 bg-[#d9694f]/10 px-3 py-2 text-center">
+        <div className="mb-1 flex shrink-0 flex-col items-center gap-1.5 rounded-lg border border-[var(--fb-danger)]/30 bg-[var(--fb-danger)]/10 px-3 py-2 text-center">
           <p className="text-[0.72rem] text-[var(--lu-cream)]">إذا خرجت الآن تنسحب من الجولة وتخسر نقاطك. متأكد؟</p>
           <div className="flex gap-1.5">
-            <button onClick={onLeave} className="rounded-lg bg-[#a33] px-3 py-1 text-xs font-bold text-white">تأكيد الخروج</button>
+            <button onClick={onLeave} className="rounded-lg bg-[rgb(var(--c-danger-deep))] px-3 py-1 text-xs font-bold text-white">تأكيد الخروج</button>
             <button onClick={() => setConfirmLeave(false)} className="rounded-lg bg-white/10 px-3 py-1 text-xs font-bold text-[var(--lu-cream)]">إلغاء</button>
           </div>
         </div>
@@ -213,7 +213,7 @@ export function TenTable({
         )}
       >
         {/* warm floodlight rim */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.16), transparent)" }} />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-16" style={{ background: "radial-gradient(60% 100% at 50% 0%, rgb(var(--c-ember)/0.16), transparent)" }} />
 
         {/* banner crown — the full question title in a distinct framed card (never
             truncated; wraps). The competition/season is already in the title; the
@@ -344,7 +344,7 @@ function TenAwayNotice({ notice }: { notice: { username: string; id: number } | 
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.12 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="max-w-[62vw] rounded-2xl border border-amber-400/70 bg-[#0b0908]/90 px-5 py-4 text-center shadow-[0_0_30px_rgba(224,165,58,0.4)] backdrop-blur"
+            className="max-w-[62vw] rounded-2xl border border-amber-400/70 bg-[var(--fb-surface)]/90 px-5 py-4 text-center shadow-[0_0_30px_rgb(var(--c-amber)/0.4)] backdrop-blur"
           >
             <div className="text-lg font-black text-amber-300">غادر الطاولة</div>
             <div className="mt-1 text-sm text-[var(--lu-cream)]/85">{shown.username}</div>

@@ -64,7 +64,7 @@ export function PasswordConfirmFields({
               ✓ كلمتا المرور متطابقتان
             </p>
           ) : (
-            <p className="flex items-center gap-1 text-xs font-bold text-[#d9694f]">
+            <p className="flex items-center gap-1 text-xs font-bold text-[var(--fb-danger)]">
               ✕ كلمتا المرور غير متطابقتين
             </p>
           )

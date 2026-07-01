@@ -339,7 +339,7 @@ function QueueView({
     <div className="lu-frame overflow-hidden rounded-3xl fade-rise">
       <div
         className="flex flex-col items-center gap-3 px-6 py-8 text-center"
-        style={{ background: "radial-gradient(120% 90% at 50% -10%, rgba(255,106,26,0.16), transparent 60%)" }}
+        style={{ background: "radial-gradient(120% 90% at 50% -10%, rgb(var(--c-ember)/0.16), transparent 60%)" }}
       >
         <span className="text-sm tracking-[0.2em] text-[var(--lu-gold-1)]/80">لعب سريع</span>
         <span className="num text-5xl font-black text-[var(--lu-cream)]">
@@ -355,7 +355,7 @@ function QueueView({
               key={i}
               className={cn(
                 "size-3 rounded-full transition",
-                i < count ? "bg-[var(--lu-ember)] shadow-[0_0_10px_rgba(255,106,26,0.6)]" : "bg-white/12",
+                i < count ? "bg-[var(--lu-ember)] shadow-[0_0_10px_rgb(var(--c-ember)/0.6)]" : "bg-white/12",
               )}
             />
           ))}
@@ -373,7 +373,7 @@ function QueueView({
       <div className="border-t border-white/10 p-4">
         <button
           onClick={onCancel}
-          className="lu-btn w-full rounded-md py-2 text-center font-bold text-[#d9694f] hover:text-[#d9694f]"
+          className="lu-btn w-full rounded-md py-2 text-center font-bold text-[var(--fb-danger)] hover:text-[var(--fb-danger)]"
         >
           مغادرة الطابور
         </button>
@@ -508,13 +508,13 @@ function LobbyRoom({
           <span
             aria-hidden
             className="pointer-events-none absolute inset-x-0 -top-12 h-28"
-            style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(255,106,26,0.28), transparent)" }}
+            style={{ background: "radial-gradient(60% 100% at 50% 0%, rgb(var(--c-ember)/0.28), transparent)" }}
           />
           <div className="relative flex flex-col items-center gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--lu-gold-1)]/25 bg-[var(--lu-gold-2)]/10 px-3 py-1 text-[0.68rem] font-bold tracking-[0.18em] text-[var(--lu-gold-1)]">
               <span aria-hidden>🎟️</span> كود الدعوة
             </span>
-            <div className="num inline-flex rounded-xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-[var(--lu-gold-1)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_20px_rgba(0,0,0,0.35)] sm:text-4xl">
+            <div className="num inline-flex rounded-xl border border-[var(--lu-gold-1)]/40 bg-[var(--fb-surface)]/70 px-5 py-2.5 text-3xl font-black tracking-[0.3em] text-[var(--lu-gold-1)] shadow-[inset_0_1px_0_rgb(var(--c-white)/0.06),0_8px_20px_rgb(var(--c-black)/0.35)] sm:text-4xl">
               {code}
             </div>
             <p className="text-xs text-[var(--lu-tan)]">ادعُ أصدقاءك بالكود أو شارك الرابط مباشرة</p>
@@ -685,7 +685,7 @@ function TenResultAction({
 }) {
   const styles = {
     primary: "btn-gold-cta text-black",
-    destructive: "border border-[#d9694f]/50 bg-[#d9694f]/15 text-[#d9694f]",
+    destructive: "border border-[var(--fb-danger)]/50 bg-[var(--fb-danger)]/15 text-[var(--fb-danger)]",
     neutral: "lu-frame text-[var(--lu-cream)]",
   } as const;
   return (

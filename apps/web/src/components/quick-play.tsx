@@ -88,7 +88,7 @@ export function QuickPlay({ token }: { token: string }) {
       <div className="lu-frame overflow-hidden rounded-3xl">
         <div
           className="flex flex-col items-center gap-3 px-6 py-8 text-center"
-          style={{ background: "radial-gradient(120% 90% at 50% -10%, rgba(255,106,26,0.16), transparent 60%)" }}
+          style={{ background: "radial-gradient(120% 90% at 50% -10%, rgb(var(--c-ember)/0.16), transparent 60%)" }}
         >
           <span className="text-sm tracking-[0.2em] text-[var(--lu-gold-1)]/80">
             لعب سريع · {TIERS.find((x) => x.value === tier)?.label}
@@ -109,7 +109,7 @@ export function QuickPlay({ token }: { token: string }) {
                 className={cn(
                   "size-3 rounded-full transition",
                   i < count
-                    ? "bg-[var(--lu-ember)] shadow-[0_0_10px_rgba(255,106,26,0.6)]"
+                    ? "bg-[var(--lu-ember)] shadow-[0_0_10px_rgb(var(--c-ember)/0.6)]"
                     : "bg-white/12",
                 )}
               />
@@ -127,7 +127,7 @@ export function QuickPlay({ token }: { token: string }) {
           )}
         </div>
         <div className="border-t border-white/10 p-4">
-          <Button variant="ghost" className="w-full text-[#d9694f] hover:text-[#d9694f]" onClick={leave}>
+          <Button variant="ghost" className="w-full text-[var(--fb-danger)] hover:text-[var(--fb-danger)]" onClick={leave}>
             مغادرة الطابور
           </Button>
         </div>
@@ -139,7 +139,7 @@ export function QuickPlay({ token }: { token: string }) {
   return (
     <div className="flex flex-col gap-4">
       {error ? (
-        <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
+        <div className="rounded-md border border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10 px-3 py-2 text-sm text-[var(--fb-danger)]">
           {error}
         </div>
       ) : null}

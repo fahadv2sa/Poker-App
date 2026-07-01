@@ -102,8 +102,8 @@ export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
                       top: e.top,
                       width: e.size,
                       height: e.size,
-                      background: "radial-gradient(circle, #ffd99a, #ff7a1a 60%, transparent 72%)",
-                      boxShadow: "0 0 8px rgba(255,138,40,0.9)",
+                      background: "radial-gradient(circle, rgb(var(--c-ember-hi)), rgb(var(--c-ember-2)) 60%, transparent 72%)",
+                      boxShadow: "0 0 8px rgb(var(--c-ember-hot)/0.9)",
                       ["--dx" as string]: e.dx,
                       animation: `lu-float-ember ${e.dur} ease-in-out ${e.delay} infinite`,
                     } as CSSProperties
@@ -114,11 +114,11 @@ export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
             <span
               aria-hidden
               className="lu-anim-pulse absolute size-64 rounded-full"
-              style={{ background: "radial-gradient(circle, rgba(255,106,26,0.45), rgba(255,106,26,0.12) 42%, transparent 68%)" }}
+              style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.45), rgb(var(--c-ember)/0.12) 42%, transparent 68%)" }}
             />
             {/* the hero ball — the SAME live fire-gold football as the table center
                 (ember glow + breathing pulse), so home and table match Link Up. */}
-            <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgba(255,106,26,0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
+            <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgb(var(--c-ember)/0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
               {hasImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -128,7 +128,7 @@ export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
                   className="absolute inset-0 size-full object-cover"
                 />
               ) : null}
-              <span aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent 30%)" }} />
+              <span aria-hidden className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgb(var(--c-white)/0.18), transparent 30%)" }} />
             </span>
           </Link>
           <p className="lu-gold-text lu-gold-title mt-5 text-2xl font-black tracking-tight">اللعب السريع</p>
@@ -176,7 +176,7 @@ export function TenHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
               <span
                 className={cn(
                   "grid size-10 place-items-center rounded-full ring-1 transition-all",
-                  active ? "lu-chip shadow-[0_0_16px_rgba(255,106,26,0.4)] ring-[var(--lu-ember-glow)]/60" : "bg-black/25 ring-[var(--lu-gold-1)]/20 group-hover:ring-[var(--lu-gold-1)]/45",
+                  active ? "lu-chip shadow-[0_0_16px_rgb(var(--c-ember)/0.4)] ring-[var(--lu-ember-glow)]/60" : "bg-black/25 ring-[var(--lu-gold-1)]/20 group-hover:ring-[var(--lu-gold-1)]/45",
                 )}
               >
                 <Icon size={20} />

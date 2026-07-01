@@ -23,7 +23,7 @@ const optionCls = (active: boolean) =>
   cn(
     "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",
     active
-      ? "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/10 shadow-[0_0_0_1px_rgba(242,210,122,0.35)]"
+      ? "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/10 shadow-[0_0_0_1px_rgb(var(--c-gold-1)/0.35)]"
       : "border-white/10 bg-black/20 hover:border-white/25",
   );
 
@@ -67,7 +67,7 @@ export function CreateRoomForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       {error ? (
-        <div className="rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]">
+        <div className="rounded-md border border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10 px-3 py-2 text-sm text-[var(--fb-danger)]">
           {error}
         </div>
       ) : null}

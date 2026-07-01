@@ -14,15 +14,15 @@ export function GoldGradientDefs() {
     <svg width="0" height="0" className="absolute" aria-hidden focusable="false">
       <defs>
         <linearGradient id="lu-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f7e6b0" />
-          <stop offset="35%" stopColor="#f2d27a" />
-          <stop offset="70%" stopColor="#c9962e" />
-          <stop offset="100%" stopColor="#8a6a20" />
+          <stop offset="0%" stopColor="rgb(var(--c-gold-soft))" />
+          <stop offset="35%" stopColor="var(--fb-gold)" />
+          <stop offset="70%" stopColor="var(--fb-gold-strong)" />
+          <stop offset="100%" stopColor="var(--fb-gold-deep)" />
         </linearGradient>
         <linearGradient id="lu-gold-fill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f7e6b0" />
-          <stop offset="50%" stopColor="#d8a93f" />
-          <stop offset="100%" stopColor="#8a6a20" />
+          <stop offset="0%" stopColor="rgb(var(--c-gold-soft))" />
+          <stop offset="50%" stopColor="rgb(var(--c-amber-2))" />
+          <stop offset="100%" stopColor="var(--fb-gold-deep)" />
         </linearGradient>
       </defs>
     </svg>
@@ -47,7 +47,7 @@ function Svg({ size = 24, style, children, ...props }: IconProps) {
       viewBox="0 0 24 24"
       aria-hidden
       style={{
-        filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.5)) drop-shadow(0 0 5px rgba(255,179,71,0.35))",
+        filter: "drop-shadow(0 1px 1px rgb(var(--c-black)/0.5)) drop-shadow(0 0 5px rgb(var(--c-ember-glow)/0.35))",
         ...style,
       }}
       {...props}

@@ -60,7 +60,7 @@ export function LinkUpHome({
   rank,
   totalPlayers,
 }: {
-  /** Global rank, pre-formatted, e.g. "#128". */
+  /** Global rank, pre-formatted, e.g. "rgb(var(--c-navy-accent))". */
   rank: string;
   /** Optional total human-player count, pre-formatted, e.g. "4.2K". Omitted on
    *  the live page (no extra query); shown in the preview. */
@@ -100,15 +100,15 @@ function Atmosphere() {
         className="absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(60deg, rgba(242,210,122,0.6) 0, rgba(242,210,122,0.6) 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-60deg, rgba(242,210,122,0.6) 0, rgba(242,210,122,0.6) 1px, transparent 1px, transparent 26px)",
-          WebkitMaskImage: "radial-gradient(120% 100% at 50% 45%, #000 30%, transparent 78%)",
-          maskImage: "radial-gradient(120% 100% at 50% 45%, #000 30%, transparent 78%)",
+            "repeating-linear-gradient(60deg, rgb(var(--c-gold-1)/0.6) 0, rgb(var(--c-gold-1)/0.6) 1px, transparent 1px, transparent 26px), repeating-linear-gradient(-60deg, rgb(var(--c-gold-1)/0.6) 0, rgb(var(--c-gold-1)/0.6) 1px, transparent 1px, transparent 26px)",
+          WebkitMaskImage: "radial-gradient(120% 100% at 50% 45%, rgb(var(--c-black)) 30%, transparent 78%)",
+          maskImage: "radial-gradient(120% 100% at 50% 45%, rgb(var(--c-black)) 30%, transparent 78%)",
         }}
       />
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
-          backgroundImage: "radial-gradient(rgba(255,179,71,0.7) 1px, transparent 1.4px)",
+          backgroundImage: "radial-gradient(rgb(var(--c-ember-glow)/0.7) 1px, transparent 1.4px)",
           backgroundSize: "22px 22px",
         }}
       />
@@ -116,12 +116,12 @@ function Atmosphere() {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(115% 50% at 50% 14%, rgba(255,106,26,0.16), transparent 55%), radial-gradient(95% 42% at 50% 100%, rgba(201,150,46,0.14), transparent 60%)",
+            "radial-gradient(115% 50% at 50% 14%, rgb(var(--c-ember)/0.16), transparent 55%), radial-gradient(95% 42% at 50% 100%, rgb(var(--c-gold-2)/0.14), transparent 60%)",
         }}
       />
       <div
         className="absolute inset-0"
-        style={{ background: "radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.65) 100%)" }}
+        style={{ background: "radial-gradient(120% 100% at 50% 50%, transparent 55%, rgb(var(--c-black)/0.65) 100%)" }}
       />
     </div>
   );
@@ -192,8 +192,8 @@ function Hero() {
                 top: e.top,
                 width: e.size,
                 height: e.size,
-                background: "radial-gradient(circle, #ffd99a, #ff7a1a 60%, transparent 72%)",
-                boxShadow: "0 0 8px rgba(255,138,40,0.9)",
+                background: "radial-gradient(circle, rgb(var(--c-ember-hi)), rgb(var(--c-ember-2)) 60%, transparent 72%)",
+                boxShadow: "0 0 8px rgb(var(--c-ember-hot)/0.9)",
                 ["--dx" as string]: e.dx,
                 animation: `lu-float-ember ${e.dur} ease-in-out ${e.delay} infinite`,
               } as CSSProperties}
@@ -207,12 +207,12 @@ function Hero() {
           className="lu-anim-pulse absolute size-64 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,106,26,0.45), rgba(255,106,26,0.12) 42%, transparent 68%)",
+              "radial-gradient(circle, rgb(var(--c-ember)/0.45), rgb(var(--c-ember)/0.12) 42%, transparent 68%)",
           }}
         />
         {/* the hero ball — the SAME live fire-gold football as the table center
             (ember glow + breathing pulse, no rings), so home and table match. */}
-        <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgba(255,106,26,0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
+        <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgb(var(--c-ember)/0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
           {hasImg ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -225,7 +225,7 @@ function Hero() {
           <span
             aria-hidden
             className="absolute inset-0"
-            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18), transparent 30%)" }}
+            style={{ background: "linear-gradient(180deg, rgb(var(--c-white)/0.18), transparent 30%)" }}
           />
         </span>
       </Link>
@@ -301,7 +301,7 @@ function BottomNav() {
               className={cn(
                 "grid size-10 place-items-center rounded-full ring-1 transition-all",
                 active
-                  ? "lu-chip shadow-[0_0_16px_rgba(255,106,26,0.4)] ring-[var(--lu-ember-glow)]/60"
+                  ? "lu-chip shadow-[0_0_16px_rgb(var(--c-ember)/0.4)] ring-[var(--lu-ember-glow)]/60"
                   : "bg-black/25 ring-[var(--lu-gold-1)]/20 group-hover:ring-[var(--lu-gold-1)]/45",
               )}
             >

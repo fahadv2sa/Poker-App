@@ -50,12 +50,12 @@ export function ProfileScreen({
             <img
               src={avatarUrl}
               alt={displayName}
-              className="size-16 rounded-full object-cover ring-2 ring-[var(--lu-gold-1)]/50 shadow-[0_0_18px_rgba(255,106,26,0.25)]"
+              className="size-16 rounded-full object-cover ring-2 ring-[var(--lu-gold-1)]/50 shadow-[0_0_18px_rgb(var(--c-ember)/0.25)]"
             />
           ) : (
             <div
               aria-hidden
-              className="grid size-16 place-items-center rounded-full text-2xl font-black text-white ring-2 ring-[var(--lu-gold-1)]/50 shadow-[0_0_18px_rgba(255,106,26,0.25)]"
+              className="grid size-16 place-items-center rounded-full text-2xl font-black text-white ring-2 ring-[var(--lu-gold-1)]/50 shadow-[0_0_18px_rgb(var(--c-ember)/0.25)]"
               style={{ background: `linear-gradient(135deg, hsl(${hue} 70% 45%), hsl(${(hue + 40) % 360} 70% 35%))` }}
             >
               {initial}

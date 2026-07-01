@@ -48,7 +48,7 @@ function Panel({
     <section
       className={cn(
         "lu-frame overflow-hidden rounded-2xl transition-shadow",
-        open && "shadow-[0_0_22px_rgba(255,106,26,0.16)]",
+        open && "shadow-[0_0_22px_rgb(var(--c-ember)/0.16)]",
       )}
     >
       <button
@@ -202,8 +202,8 @@ export function HowToPlay({ ranks, badges }: { ranks: RankItem[]; badges: BadgeI
                 <li>إذا انسحب كل المنافسين، تكسب القِدر تلقائيًا دون حاجة للكشف.</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-[#d9694f]/30 bg-[#d9694f]/[0.06] p-4">
-              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-[#d9694f]">
+            <div className="rounded-xl border border-[var(--fb-danger)]/30 bg-[var(--fb-danger)]/[0.06] p-4">
+              <h3 className="mb-2 flex items-center gap-1.5 font-extrabold text-[var(--fb-danger)]">
                 <span aria-hidden>💔</span> كيف تخسر
               </h3>
               <ul className="flex list-disc flex-col gap-1.5 pe-4 text-[var(--lu-tan)]">

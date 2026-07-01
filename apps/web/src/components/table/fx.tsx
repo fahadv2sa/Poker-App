@@ -108,7 +108,7 @@ export function StreetFlourish({ phase }: { phase: string }) {
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
             className={cn(
-              "rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/80 px-8 py-3 text-2xl font-black text-[var(--lu-gold-1)]",
+              "rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[var(--fb-surface)]/80 px-8 py-3 text-2xl font-black text-[var(--lu-gold-1)]",
               "shadow-2xl backdrop-blur",
             )}
           >

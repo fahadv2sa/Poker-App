@@ -47,7 +47,7 @@ export function BankView({
       {/* hero balance panel — COIN medallion above the balance */}
       <section
         className="lu-frame mt-5 flex flex-col items-center gap-2 rounded-3xl px-6 pb-6 pt-7 text-center"
-        style={{ background: "radial-gradient(120% 90% at 50% -6%, rgba(255,106,26,0.16), transparent 62%), linear-gradient(180deg, rgba(30,26,19,0.92), rgba(11,10,9,0.96))" }}
+        style={{ background: "radial-gradient(120% 90% at 50% -6%, rgb(var(--c-ember)/0.16), transparent 62%), linear-gradient(180deg, rgb(var(--c-frame-3)/0.92), rgb(var(--c-frame-4)/0.96))" }}
       >
         {/* gold bank-building medallion — centered icon with the ember glow ring
             + breathing pulse around it. */}
@@ -55,9 +55,9 @@ export function BankView({
           <span
             aria-hidden
             className="lu-anim-pulse absolute size-44 rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(255,106,26,0.42), rgba(255,106,26,0.12) 46%, transparent 70%)" }}
+            style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.42), rgb(var(--c-ember)/0.12) 46%, transparent 70%)" }}
           />
-          <span className="lu-anim-breathe relative size-28 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_34px_rgba(255,106,26,0.4)]">
+          <span className="lu-anim-breathe relative size-28 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_34px_rgb(var(--c-ember)/0.4)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/bank-icon.png" alt="" className="absolute inset-0 size-full object-cover" />
           </span>
@@ -148,7 +148,7 @@ function BankBottomNav() {
             <span
               className={
                 active
-                  ? "lu-chip grid size-10 place-items-center rounded-full shadow-[0_0_16px_rgba(255,106,26,0.4)] ring-1 ring-[var(--lu-ember-glow)]/60"
+                  ? "lu-chip grid size-10 place-items-center rounded-full shadow-[0_0_16px_rgb(var(--c-ember)/0.4)] ring-1 ring-[var(--lu-ember-glow)]/60"
                   : "grid size-10 place-items-center rounded-full bg-black/25 ring-1 ring-[var(--lu-gold-1)]/20 group-hover:ring-[var(--lu-gold-1)]/45"
               }
             >

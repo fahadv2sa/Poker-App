@@ -59,7 +59,7 @@ export function TenRevealNotice({ latest }: { latest: RevealDisplay | null }) {
               animate={{ opacity: 1, scale: [0.5, 1.12, 1], rotate: 0 }}
               exit={{ opacity: 0, scale: 1.15 }}
               transition={{ type: "spring", stiffness: 240, damping: 14 }}
-              className="max-w-[64vw] overflow-hidden rounded-2xl border-2 border-[var(--lu-gold-1)] bg-gradient-to-b from-[var(--lu-gold-2)]/40 to-[#0b0908]/95 px-5 py-3 text-center shadow-[0_0_40px_rgba(255,179,71,0.6)] backdrop-blur"
+              className="max-w-[64vw] overflow-hidden rounded-2xl border-2 border-[var(--lu-gold-1)] bg-gradient-to-b from-[var(--lu-gold-2)]/40 to-[var(--fb-surface)]/95 px-5 py-3 text-center shadow-[0_0_40px_rgb(var(--c-ember-glow)/0.6)] backdrop-blur"
             >
               <div className="text-2xl">🏆</div>
               <div className="lu-gold-text lu-gold-title text-lg font-black leading-tight">المركز العاشر!</div>
@@ -74,7 +74,7 @@ export function TenRevealNotice({ latest }: { latest: RevealDisplay | null }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.08, y: -8 }}
               transition={{ type: "spring", stiffness: 280, damping: 20 }}
-              className="max-w-[52vw] rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[#0b0908]/92 px-4 py-2.5 text-center shadow-2xl backdrop-blur"
+              className="max-w-[52vw] rounded-2xl border border-[var(--lu-gold-1)]/40 bg-[var(--fb-surface)]/92 px-4 py-2.5 text-center shadow-2xl backdrop-blur"
             >
               {current.byName ? <div className="truncate text-sm font-bold text-[var(--lu-ember-glow)]">{current.byName}</div> : null}
               <div className="truncate text-xl font-black text-[var(--lu-cream)]">{current.playerNameAr}</div>

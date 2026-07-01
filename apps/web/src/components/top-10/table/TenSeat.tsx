@@ -35,17 +35,17 @@ export function TenSeat({
       onClick={onTap}
       aria-label={`ملف ${seat.username}`}
       className={cn(
-        "relative flex w-[clamp(52px,18vw,76px)] flex-col items-center gap-0.5 rounded-2xl border bg-[#0b0908]/75 px-1 py-1 text-center backdrop-blur transition",
+        "relative flex w-[clamp(52px,18vw,76px)] flex-col items-center gap-0.5 rounded-2xl border bg-[var(--fb-surface)]/75 px-1 py-1 text-center backdrop-blur transition",
         isActive ? "lu-turn border-[var(--lu-ember-glow)]/50" : "border-[var(--lu-gold-1)]/15",
         withdrawn && "opacity-45 grayscale",
-        away && "border-[var(--lu-amber,#e0a53a)]/60 opacity-70",
+        away && "border-[var(--lu-amber,var(--fb-amber))]/60 opacity-70",
       )}
     >
       {isActive ? <TurnFrame remainingMs={remainingMs} totalMs={turnTotalMs} radius={16} /> : null}
       <div className="relative">
         <SeatAvatar playerNumber={seat.playerNumber} seed={seat.username} size={36} sizeClass="size-9 sm:size-10" className={cn(ring, away && "grayscale")} />
         {isActive ? (
-          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-[#070b14] px-0.5">
+          <span className="absolute -top-1 -right-1 z-10 rounded-full bg-[rgb(var(--c-navy-2))] px-0.5">
             <Countdown deadlineTs={deadlineTs} totalMs={turnTotalMs} compact />
           </span>
         ) : null}

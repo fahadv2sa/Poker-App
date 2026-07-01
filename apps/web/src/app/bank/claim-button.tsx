@@ -53,7 +53,7 @@ export function ClaimButton({ amount, claimedToday }: { amount: string; claimedT
           className={
             msg.kind === "ok"
               ? "rounded-md border border-[var(--lu-gold-1)]/40 bg-[var(--lu-gold-2)]/10 px-3 py-2 text-sm text-[var(--lu-gold-1)]"
-              : "rounded-md border border-[#d9694f]/40 bg-[#d9694f]/10 px-3 py-2 text-sm text-[#d9694f]"
+              : "rounded-md border border-[var(--fb-danger)]/40 bg-[var(--fb-danger)]/10 px-3 py-2 text-sm text-[var(--fb-danger)]"
           }
         >
           {msg.text}

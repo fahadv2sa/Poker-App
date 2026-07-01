@@ -37,9 +37,9 @@ export default function SubscribePage() {
               <span
                 aria-hidden
                 className="lu-anim-pulse absolute size-24 rounded-full"
-                style={{ background: "radial-gradient(circle, rgba(255,106,26,0.4), transparent 66%)" }}
+                style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.4), transparent 66%)" }}
               />
-              <span className="lu-chip relative grid size-20 place-items-center rounded-3xl ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_30px_rgba(255,106,26,0.3)]">
+              <span className="lu-chip relative grid size-20 place-items-center rounded-3xl ring-1 ring-[var(--lu-gold-1)]/40 shadow-[0_10px_30px_rgb(var(--c-ember)/0.3)]">
                 <CrownIcon size={40} />
               </span>
             </span>

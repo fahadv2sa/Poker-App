@@ -56,11 +56,20 @@
   --c-chip-1: 70 58 36;
   --c-chip-2: 13 11 9;
   --c-sub-1: 34 28 19;
+  --c-panel-2a: 27 22 14;     /* #1b160e */
+  --c-panel-2b: 26 22 15;     /* #1a160f */
+  --c-ember-red: 178 58 18;   /* #b23a12 */
+  --c-amber-2: 216 169 63;    /* #d8a93f */
+  --c-neutral: 120 110 90;
   /* legacy ramps (dormant, kept for parity) */
   --c-felt-green-1: 31 107 82; /* #1f6b52 */
   --c-felt-green-2: 19 71 56;  /* #134738 */
   --c-felt-green-3: 10 40 32;  /* #0a2820 */
   --c-navy: 8 11 19;           /* #080b13 (PWA chrome) */
+  --c-navy-2: 7 11 20;         /* #070b14 */
+  --c-navy-3: 16 26 46;        /* #101a2e */
+  --c-navy-4: 11 19 34;        /* #0b1322 */
+  --c-navy-accent: 17 34 136;  /* #112288 (#128) */
 
   /* ── semantic tokens — the app-facing API (draw from these, never from literals) ── */
   --fb-bg: rgb(var(--c-abyss));
