@@ -6,6 +6,7 @@
    the two leaf files directly (tokens first) — a nested @import barrel leaves a stray
    ';' at the boundary that Lightning CSS mis-parses, dropping the token rule. */
 @import "../../../../packages/theme/src/themes/theme-0.css";
+@import "../../../../packages/theme/src/themes/theme-1.css";
 @import "../../../../packages/theme/src/core.css";
 
 /* Tailwind v4: scan the shared UI packages so any utility classes used in their

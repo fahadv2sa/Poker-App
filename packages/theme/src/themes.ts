@@ -18,12 +18,14 @@ export interface ThemeDef {
   chrome: string;
 }
 
-/** All themes, by number. Theme 0 = the current "Gold on Black" look. */
+/** All themes, by number. Theme 0 = "Gold on Black" (original); Theme 1 = "Daylight"
+ *  (light) and is the current default. */
 export const THEMES: readonly ThemeDef[] = [
   { id: 0, name: "Gold on Black", chrome: "#080b13" },
+  { id: 1, name: "Daylight", chrome: "#f6f1e6" },
 ];
 
-export const DEFAULT_THEME_ID = 0;
+export const DEFAULT_THEME_ID = 1;
 
 export function getTheme(id: number): ThemeDef {
   return THEMES.find((t) => t.id === id) ?? THEMES[0]!;

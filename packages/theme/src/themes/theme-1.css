@@ -1,0 +1,129 @@
+/* ────────────────────────────────────────────────────────────────────────────
+ * THEME 1 — "Daylight" (light). A clean-base, fully self-contained theme: it
+ * defines the COMPLETE token set (--c- channels + --fb- semantics + --lu- / legacy
+ * aliases) with LIGHT values, scoped under [data-theme="1"]. Nothing here is a patch
+ * over Theme 0 — every value is authored fresh for a warm-parchment, dark-ink look
+ * with deep-gold + pitch-green accents.
+ *
+ * The channel KEYS keep their Theme-0 historical names (cream, tan, frame-*, …) so the
+ * shared utilities in core.css resolve unchanged; here they simply carry light values
+ * (e.g. --c-cream is the dark INK text colour in this theme). Switching is by number:
+ * <html data-theme="1">.
+ * ──────────────────────────────────────────────────────────────────────────── */
+[data-theme="1"] {
+  /* ── primitive channels (R G B) — LIGHT ── */
+  --c-abyss: 246 241 230;      /* page background — warm parchment */
+  --c-base: 241 234 217;
+  --c-panel: 239 231 214;
+  --c-surface: 255 253 248;    /* cards — near-white */
+  --c-surface-2: 243 236 221;
+  --c-felt-bg: 234 223 202;    /* light felt */
+  --c-cream: 42 36 28;         /* TEXT is dark ink in this theme */
+  --c-tan: 107 97 82;          /* muted text */
+  /* gold ramp — deepened so gold reads on a light background */
+  --c-gold-hi: 217 184 106;
+  --c-gold-soft: 201 162 78;
+  --c-gold-mid: 191 151 64;
+  --c-gold-1: 166 124 30;      /* primary gold */
+  --c-gold-2: 138 106 32;
+  --c-gold-3: 110 82 26;
+  --c-gold-deep: 90 67 21;
+  --c-gold-shadow: 58 44 14;
+  --c-gold-ink: 42 31 2;       /* text on gold buttons */
+  /* ember / accent — deeper for light */
+  --c-ember: 217 83 26;
+  --c-ember-2: 201 78 16;
+  --c-ember-glow: 224 147 42;
+  --c-ember-hi: 238 178 106;
+  --c-ember-hot: 217 83 26;
+  --c-danger: 192 68 42;       /* deeper red for light contrast */
+  --c-danger-deep: 143 42 26;
+  --c-danger-hi: 217 105 79;
+  --c-amber: 184 134 42;
+  --c-black: 0 0 0;            /* shadows are still black (used at low alpha) */
+  --c-white: 255 255 255;      /* highlights (subtle on light) */
+  /* decorative frame/glass/chip tints — LIGHT warm so gold cards read on light */
+  --c-gold-lite: 255 245 224;
+  --c-gold-warm: 214 168 96;
+  --c-gold-pale: 176 140 70;
+  --c-gold-pale-2: 190 152 78;
+  --c-orb-hi: 255 240 192;     /* the gold orb stays gold */
+  --c-orb-glow: 255 245 210;
+  --c-frame-1: 255 253 248;
+  --c-frame-2: 239 231 214;
+  --c-frame-3: 247 240 226;
+  --c-frame-4: 243 236 221;
+  --c-frame-5: 224 211 186;
+  --c-chip-1: 236 226 202;
+  --c-chip-2: 246 241 230;
+  --c-sub-1: 247 240 226;
+  --c-panel-2a: 235 226 208;   /* #1b160e →  light */
+  --c-panel-2b: 238 230 214;   /* #1a160f →  light */
+  --c-ember-red: 178 58 18;
+  --c-amber-2: 166 124 30;
+  --c-neutral: 120 110 90;
+  /* accents / legacy */
+  --c-felt-green-1: 31 107 82;
+  --c-felt-green-2: 19 71 56;
+  --c-felt-green-3: 10 40 32;
+  --c-navy: 226 219 203;       /* small chips → light in this theme */
+  --c-navy-2: 226 219 203;
+  --c-navy-3: 214 205 186;
+  --c-navy-4: 220 211 193;
+  --c-navy-accent: 31 107 82;  /* pitch-green accent */
+
+  /* ── semantic tokens ── */
+  --fb-bg: rgb(var(--c-abyss));
+  --fb-base: rgb(var(--c-base));
+  --fb-panel: rgb(var(--c-panel));
+  --fb-surface: rgb(var(--c-surface));
+  --fb-surface-2: rgb(var(--c-surface-2));
+  --fb-felt: rgb(var(--c-felt-bg));
+  --fb-text: rgb(var(--c-cream));
+  --fb-text-muted: rgb(var(--c-tan));
+  --fb-gold: rgb(var(--c-gold-1));
+  --fb-gold-strong: rgb(var(--c-gold-2));
+  --fb-gold-deep: rgb(var(--c-gold-3));
+  --fb-ember: rgb(var(--c-ember));
+  --fb-ember-glow: rgb(var(--c-ember-glow));
+  --fb-danger: rgb(var(--c-danger));
+  --fb-amber: rgb(var(--c-amber));
+
+  /* live-table surface image: none in light (the dark molten PNG is Theme-0 only);
+     the felt falls back to the light --c-felt-bg colour + pitch lines overlay. */
+  --fb-felt-image: linear-gradient(rgb(var(--c-felt-bg)), rgb(var(--c-felt-bg)));
+
+  /* ── legacy --lu-* aliases (same names, light values) ── */
+  --lu-base: rgb(var(--c-base));
+  --lu-abyss: rgb(var(--c-abyss));
+  --lu-panel: rgb(var(--c-panel));
+  --lu-cream: rgb(var(--c-cream));
+  --lu-tan: rgb(var(--c-tan));
+  --lu-ember: rgb(var(--c-ember));
+  --lu-ember-glow: rgb(var(--c-ember-glow));
+  --lu-gold-1: rgb(var(--c-gold-1));
+  --lu-gold-2: rgb(var(--c-gold-2));
+  --lu-gold-3: rgb(var(--c-gold-3));
+
+  /* ── legacy Arena-Felt / shadcn tokens (light) ── */
+  --background: oklch(0.96 0.012 90);
+  --foreground: oklch(0.28 0.02 60);
+  --card: oklch(0.99 0.006 90);
+  --card-foreground: oklch(0.28 0.02 60);
+  --popover: oklch(0.99 0.006 90);
+  --popover-foreground: oklch(0.28 0.02 60);
+  --primary: oklch(0.55 0.11 145);       /* pitch green */
+  --primary-foreground: oklch(0.98 0.01 145);
+  --secondary: oklch(0.92 0.012 90);
+  --secondary-foreground: oklch(0.28 0.02 60);
+  --muted: oklch(0.92 0.012 90);
+  --muted-foreground: oklch(0.48 0.02 70);
+  --accent: oklch(0.6 0.1 150);
+  --accent-foreground: oklch(0.98 0.01 150);
+  --destructive: oklch(0.55 0.19 25);
+  --border: oklch(0.86 0.015 85);
+  --input: oklch(0.88 0.015 85);
+  --ring: oklch(0.6 0.12 145);
+  --gold: oklch(0.62 0.11 80);           /* deep gold for light */
+  --felt: radial-gradient(125% 125% at 50% 8%, #eadfca 0%, #ded0b3 45%, #cbb98f 100%);
+}

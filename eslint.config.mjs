@@ -68,6 +68,9 @@ export default tseslint.config(
     ignores: [
       "apps/web/src/app/preview/**", // temporary theme-proof harness (removed at Phase 1 sign-off)
       "packages/theme/**",
+      // Transactional HTML emails: rendered in email clients that DON'T support CSS vars,
+      // so their inline colours must stay literal hex — not part of the app theme.
+      "apps/web/src/lib/email.ts",
     ],
     rules: {
       "no-restricted-syntax": [

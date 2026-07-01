@@ -88,6 +88,11 @@
   --fb-danger: rgb(var(--c-danger));
   --fb-amber: rgb(var(--c-amber));
 
+  /* live-table surface image: the signature dark molten felt + gold pitch-line overlay. */
+  --fb-felt-image: url("/table-pitch.svg"),
+    linear-gradient(rgb(var(--c-felt-bg) / 0.35), rgb(var(--c-felt-bg) / 0.35)),
+    url("/table-felt-even.png");
+
   /* ── legacy --lu-* names kept as ALIASES → same values (existing code untouched) ── */
   --lu-base: rgb(var(--c-base));
   --lu-abyss: rgb(var(--c-abyss));

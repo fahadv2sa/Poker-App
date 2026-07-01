@@ -752,10 +752,9 @@
      symmetric gold football pitch-LINE overlay (table-pitch.svg, stretched to all
      four sides) frames it — a thin overlay on the molten surface, never a replacement. */
   background-color: rgb(var(--c-felt-bg));
-  background-image:
-    url("/table-pitch.svg"),
-    linear-gradient(rgb(var(--c-felt-bg) / 0.35), rgb(var(--c-felt-bg) / 0.35)),
-    url("/table-felt-even.png");
+  /* Per-theme surface image (Theme 0 = molten PNG + pitch lines; light themes fall back
+     to a flat felt colour). Defined in the active theme's token file. */
+  background-image: var(--fb-felt-image);
   background-repeat: no-repeat, no-repeat, no-repeat;
   background-position: center, center, center;
   background-size: 100% 100%, cover, cover;

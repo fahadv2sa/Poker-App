@@ -1,15 +1,16 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * THEME value-identity gate (Phase 1 acceptance). Proves the centralization +
- * tokenization changed NO colour anywhere: it reads the COMPUTED colour styles of every
- * token swatch + every themed utility class (incl. ::before/::after bevels) from the
- * /preview/theme surface and asserts they exactly match the committed baseline.
+ * THEME value-identity + per-theme regression gate. Reads the COMPUTED colour styles of
+ * every token swatch + every themed utility class (incl. ::before/::after) from
+ * /preview/theme, forcing each numbered theme via data-theme, and asserts each matches its
+ * committed baseline. Computed styles are anti-aliasing-immune and normalise
+ * `rgb(var(--c-x)/a)` == `rgba(...)`, so this is exact.
  *
- * Computed styles are anti-aliasing-immune and normalise `rgb(var(--c-x) / a)` and the
- * old `rgba(...)` to the identical string — so an exact text match is the precise proof
- * of "pixel-for-pixel" colour identity, without screenshot AA noise. Any real colour
- * change (a wrong token/channel) shows up as a changed line. Requires dev server :3000.
+ *  - Theme 0 baseline (theme-computed.txt) was captured at the pixel-identical Phase-1
+ *    state → it must STILL match (proves the kept "Gold on Black" theme is unchanged).
+ *  - Theme 1 (Daylight) has its own baseline (the intended new look).
+ * Requires the dev server on :3000.
  */
 const PROPS = [
   "backgroundColor", "backgroundImage", "boxShadow", "color",
@@ -17,14 +18,13 @@ const PROPS = [
   "textShadow", "filter", "outlineColor", "fill",
 ] as const;
 
-test("theme colour computed-style identity (all tokens + utilities)", async ({ page }) => {
+async function snapshotTheme(page: import("@playwright/test").Page, theme: string) {
   await page.setViewportSize({ width: 900, height: 1600 });
   await page.goto("/preview/theme", { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(400);
-
-  const snap = await page.evaluate((props) => {
-    // Freeze animations/transitions so animated glows (lu-turn, lu-sub-rim) read a stable
-    // base value — the gate proves COLOUR identity, not animation frames.
+  await page.waitForTimeout(300);
+  return page.evaluate((props) => {
+    document.documentElement.setAttribute("data-theme", (window as unknown as { __t: string }).__t);
+    // Freeze animations/transitions so animated glows read a stable base value.
     const kill = document.createElement("style");
     kill.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
     document.head.appendChild(kill);
@@ -41,12 +41,18 @@ test("theme colour computed-style identity (all tokens + utilities)", async ({ p
       out[`${key}::before`] = read(el, "::before");
       out[`${key}::after`] = read(el, "::after");
     }
-    return out;
+    return Object.keys(out).sort().map((k) => `${k}\n  ${out[k]}`).join("\n");
   }, PROPS as unknown as string[]);
+}
 
-  const text = Object.keys(snap)
-    .sort()
-    .map((k) => `${k}\n  ${snap[k]}`)
-    .join("\n");
+test("Theme 0 (Gold on Black) colour identity — unchanged from Phase 1 baseline", async ({ page }) => {
+  await page.addInitScript(() => ((window as unknown as { __t: string }).__t = "0"));
+  const text = await snapshotTheme(page, "0");
   expect(text).toMatchSnapshot("theme-computed.txt");
+});
+
+test("Theme 1 (Daylight) colour baseline", async ({ page }) => {
+  await page.addInitScript(() => ((window as unknown as { __t: string }).__t = "1"));
+  const text = await snapshotTheme(page, "1");
+  expect(text).toMatchSnapshot("theme-1-computed.txt");
 });
