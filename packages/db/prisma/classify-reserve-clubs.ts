@@ -26,7 +26,7 @@ const DRY_RUN = process.argv.includes("--dry-run");
 /**
  * True when a club NAME is a reserve/"B"/age side by well-established convention:
  *  - trailing " B" / " C" / " II" / " III"           (Barcelona B, Bayern München II)
- *  - "Castilla" / "Atlètic"/"Atletic" as a Barça/Madrid-style reserve suffix
+ *  - "Castilla"                                       (Real Madrid Castilla)
  *  - Dutch "Jong " prefix                             (Jong Ajax, Jong PSV)
  *  - "Reserve(s)"                                     (… Reserves)
  *  - age teams "U18".."U23" / "Under-XX"              (Man United U21, …)
@@ -36,8 +36,7 @@ export function isReserveName(name: string): boolean {
   const n = name.trim();
   return (
     /\b(?:B|C|II|III)$/.test(n) ||          // trailing single-letter / roman reserve tag
-    /\bcastilla\b/i.test(n) ||
-    /\batl[eè]tic\b/i.test(n) ||             // "Barcelona Atlètic" (historical Barça B)
+    /\bcastilla\b/i.test(n) ||               // Real Madrid Castilla
     /^jong\s/i.test(n) ||                    // Dutch reserves
     /\breserves?\b/i.test(n) ||
     /\bU(?:1[6-9]|2[0-3])\b/i.test(n) ||     // U16..U23
@@ -46,7 +45,13 @@ export function isReserveName(name: string): boolean {
 }
 
 async function main() {
-  const clubs = await prisma.club.findMany({ select: { id: true, name: true, isReserve: true } });
+  // Only real CLUBs — a reserve/"B" side is a club. National (youth) teams and youth-club
+  // academies are separate kinds, live outside player_clubs, and must not be mislabeled
+  // "reserve" (nor do they ever appear as a club-career hint).
+  const clubs = await prisma.club.findMany({
+    where: { kind: "CLUB" },
+    select: { id: true, name: true, isReserve: true },
+  });
   const toFlag = clubs.filter((c) => isReserveName(c.name) && !c.isReserve);
   const alreadyFlagged = clubs.filter((c) => c.isReserve);
 
