@@ -113,19 +113,19 @@
 --c-felt-green-3::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-1
-  backgroundColor=rgb(166, 124, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(160, 118, 28) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-1::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-1::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-2
-  backgroundColor=rgb(138, 106, 32) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(132, 100, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-2::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-2::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-3
-  backgroundColor=rgb(110, 82, 26) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(104, 78, 24) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-3::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-3::before
@@ -137,7 +137,7 @@
 --c-gold-deep::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-hi
-  backgroundColor=rgb(217, 184, 106) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(179, 134, 46) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-hi::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-hi::before
@@ -149,7 +149,7 @@
 --c-gold-ink::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-mid
-  backgroundColor=rgb(191, 151, 64) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(150, 110, 34) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-mid::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-mid::before
@@ -161,7 +161,7 @@
 --c-gold-shadow::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-soft
-  backgroundColor=rgb(201, 162, 78) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(158, 116, 36) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --c-gold-soft::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --c-gold-soft::before
@@ -263,15 +263,15 @@
 --fb-felt::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --fb-gold
-  backgroundColor=rgb(166, 124, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(160, 118, 28) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --fb-gold-deep
-  backgroundColor=rgb(110, 82, 26) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(104, 78, 24) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --fb-gold-deep::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --fb-gold-deep::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --fb-gold-strong
-  backgroundColor=rgb(138, 106, 32) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(132, 100, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --fb-gold-strong::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --fb-gold-strong::before
@@ -365,19 +365,19 @@
 --lu-ember::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-1
-  backgroundColor=rgb(166, 124, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(160, 118, 28) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --lu-gold-1::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-1::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-2
-  backgroundColor=rgb(138, 106, 32) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(132, 100, 30) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --lu-gold-2::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-2::before
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-3
-  backgroundColor=rgb(110, 82, 26) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
+  backgroundColor=rgb(104, 78, 24) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgba(119, 119, 119, 0.467) | borderRightColor=rgba(119, 119, 119, 0.467) | borderBottomColor=rgba(119, 119, 119, 0.467) | borderLeftColor=rgba(119, 119, 119, 0.467) | textShadow=none | filter=none | outlineColor=oklab(0.6 -0.0982982 0.0688292 / 0.4) | fill=rgb(0, 0, 0)
 --lu-gold-3::after
   backgroundColor=rgba(0, 0, 0, 0) | backgroundImage=none | boxShadow=none | color=rgb(238, 238, 238) | borderTopColor=rgb(238, 238, 238) | borderRightColor=rgb(238, 238, 238) | borderBottomColor=rgb(238, 238, 238) | borderLeftColor=rgb(238, 238, 238) | textShadow=none | filter=none | outlineColor=rgb(238, 238, 238) | fill=rgb(0, 0, 0)
 --lu-gold-3::before

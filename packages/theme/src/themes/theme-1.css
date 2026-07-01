@@ -20,13 +20,15 @@
   --c-felt-bg: 234 223 202;    /* light felt */
   --c-cream: 42 36 28;         /* TEXT is dark ink in this theme */
   --c-tan: 107 97 82;          /* muted text */
-  /* gold ramp — deepened so gold reads on a light background */
-  --c-gold-hi: 217 184 106;
-  --c-gold-soft: 201 162 78;
-  --c-gold-mid: 191 151 64;
-  --c-gold-1: 166 124 30;      /* primary gold */
-  --c-gold-2: 138 106 32;
-  --c-gold-3: 110 82 26;
+  /* gold ramp — deepened so gold TEXT (lu-gold-text gradient) reads on a light background.
+     The lightest stops are pulled down to keep the whole title a readable deep gold
+     (~3.5:1 on parchment for large text). */
+  --c-gold-hi: 179 134 46;
+  --c-gold-soft: 158 116 36;
+  --c-gold-mid: 150 110 34;
+  --c-gold-1: 160 118 28;      /* primary gold */
+  --c-gold-2: 132 100 30;
+  --c-gold-3: 104 78 24;
   --c-gold-deep: 90 67 21;
   --c-gold-shadow: 58 44 14;
   --c-gold-ink: 42 31 2;       /* text on gold buttons */
