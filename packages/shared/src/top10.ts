@@ -292,9 +292,10 @@ export const TT_TOURNAMENT_FINALS_MAX_APPS = 8;
 
 /**
  * The contestant-facing season label for a stored window, keyed off the entry's
- * stored competition id. Cross-calendar → the real two-year span ("2019/2020");
- * single-year tournament → one year ("2018"). A cumulative window expands BOTH
- * endpoints ("2018/2019–2020/2021"). The label is derived from the SAME stored
+ * stored competition id. Cross-calendar → the real two-year span ("2019/20");
+ * single-year tournament → one year ("2018"). A multi-season window reads as an
+ * explicit Arabic from→to range ("من 2018/19 إلى 2020/21") — a bare dash was misread
+ * as one hyphenated season. The label is derived from the SAME stored
  * `season`/`seasonEnd`/`leagueId` the answer list was computed from, so it can never
  * disagree with the data (0% display error by construction).
  */
@@ -303,7 +304,9 @@ export function ttSeasonLabel(season: number, seasonEnd: number, leagueId: numbe
   const fmt = TT_SINGLE_YEAR_LEAGUE_IDS.includes(leagueId)
     ? (y: number) => `${y}`
     : (y: number) => `${y}/${String((y + 1) % 100).padStart(2, "0")}`;
-  return season === seasonEnd ? fmt(season) : `${fmt(season)}–${fmt(seasonEnd)}`;
+  // Single season → just the season; multi-season → "من <start> إلى <end>" so the range
+  // is unambiguous (applies to every from–to question).
+  return season === seasonEnd ? fmt(season) : `من ${fmt(season)} إلى ${fmt(seasonEnd)}`;
 }
 
 // ---- timing (server-authoritative) -----------------------------------------

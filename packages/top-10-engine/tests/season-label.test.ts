@@ -36,9 +36,9 @@ describe("ttSeasonLabel — season display mapping", () => {
     expect(ttSeasonLabel(2019, 2019, 9)).toBe("2019"); // Copa América
   });
 
-  it("cumulative windows expand BOTH endpoints per the league rule", () => {
-    expect(ttSeasonLabel(2018, 2020, 39)).toBe("2018/19–2020/21"); // 3-season PL
-    expect(ttSeasonLabel(2014, 2018, 1)).toBe("2014–2018"); // single-year tournament range
+  it("multi-season windows read as an explicit Arabic from→to range", () => {
+    expect(ttSeasonLabel(2018, 2020, 39)).toBe("من 2018/19 إلى 2020/21"); // 3-season PL
+    expect(ttSeasonLabel(2014, 2018, 1)).toBe("من 2014 إلى 2018"); // single-year tournament range
   });
 
   it("the single-year set is exactly WC/Euro/Copa, and they are real whitelisted comps", () => {
