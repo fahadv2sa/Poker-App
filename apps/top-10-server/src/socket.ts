@@ -246,7 +246,9 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     socket.on(TT_CLIENT_EVENTS.queueLeave, () => leaveAllQueues(socket.id));
 
     socket.on(TT_CLIENT_EVENTS.close, () => {
-      const room = findRoomOf(u.userId);
+      // The creator's close button lives on the winner screen (status ENDED), so this
+      // must find a just-ENDED room too — findRoomOf excludes ENDED and would no-op.
+      const room = findActiveOrEnded(u.userId);
       if (room) {
         matches.closeRoom(room, u.userId);
         socket.leave(room.id);

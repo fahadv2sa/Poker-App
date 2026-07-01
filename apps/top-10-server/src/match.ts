@@ -18,7 +18,6 @@ import {
   type RoundState,
 } from "@fb/top-10-engine";
 import {
-  TT_HINT,
   TT_MAX_PLAYERS,
   TT_MIN_PLAYERS,
   TT_ROUNDS_PER_MATCH,
@@ -38,6 +37,9 @@ export interface BotHooks {
   onNormalTurn(ctl: Matches, room: MatchRoom, seat: number): void;
   onHintOpen(ctl: Matches, room: MatchRoom): void;
   cancel(room: MatchRoom): void;
+  /** Seat ONE additional bot into a live room (mid-round substitution for a withdrawing
+   *  human). Returns the new seat number, or null if none could be seated. */
+  fillOne(ctl: Matches, room: MatchRoom): number | null;
 }
 
 export interface MatchDeps {
@@ -229,6 +231,13 @@ export class Matches {
     if (outcome.type === "correct" && step.events.some((e) => e.t === "reveal" && e.bySeat === seat)) {
       r.revealedPlayerByRank.set(outcome.rank, playerId);
     }
+    // Feedback for a no-op pick (an already-revealed / tied player). Tell ONLY the
+    // guesser — via their own socket — so they understand why nothing happened; their
+    // turn timer is deliberately NOT reset (see afterRoundStep). Bots have no socket.
+    if (outcome.type === "already") {
+      const socketId = room.seats.find((s) => s.seat === seat)?.socketId;
+      if (socketId) this.deps.emit(socketId, TT_SERVER_EVENTS.toast, { text: "هذه الرتبة مكشوفة مسبقًا" });
+    }
     this.afterRoundStep(room, step.events);
   }
 
@@ -273,7 +282,11 @@ export class Matches {
       return;
     }
     if (r.state.mode === "NORMAL") {
-      this.beginTurn(room);
+      // Only (re)start the turn timer when the turn ACTUALLY changed. A no-op guess —
+      // picking an already-revealed / tied player, or guessing out of turn — produces
+      // no events; restarting the timer there let a player reset their own clock forever
+      // by repeatedly picking such a name (the "clicking Cancelo resets my timer" bug).
+      if (events.length > 0) this.beginTurn(room);
     } else {
       // still in an OPEN hint window (a different card was revealed) or target solved
       if (r.state.hint == null) this.beginNextHintCard(room);
@@ -292,7 +305,11 @@ export class Matches {
     }
     // choose a target: the most valuable hidden rank (highest rank number)
     const targetRank = Math.max(...r.state.hidden);
-    const { state } = beginHintCard(r.state, targetRank);
+    // Cap this card's hints at how many DISTINCT hints the target actually has, so a
+    // hint is never repeated to pad up to 3 (e.g. position-scoped questions omit the
+    // position hint, leaving only nationality + one club).
+    const target = r.entry.players.find((p) => p.rank === targetRank);
+    const { state } = beginHintCard(r.state, targetRank, target?.hints.length ?? 1);
     r.state = state;
     r.hintNumber = 0;
     r.hintText = null;
@@ -327,7 +344,6 @@ export class Matches {
   private onHintWindowEnd(room: MatchRoom): void {
     const r = room.round;
     if (!r || r.state.mode !== "HINT" || !r.state.hint) return;
-    const hadHints = r.state.hint.hintsGiven;
     const { state, events } = hintWindowTimeout(r.state);
     r.state = state;
     // auto-reveal emits a reveal event
@@ -343,10 +359,12 @@ export class Matches {
         return;
       }
     }
+    // The engine cleared the hint (auto-revealed after the last real hint) → next card;
+    // otherwise it kept the hint for another distinct hint → reopen a fresh answer
+    // window (no extra countdown lock).
     if (r.state.hint == null) {
       this.beginNextHintCard(room);
-    } else if (hadHints < TT_HINT.maxHintsPerCard) {
-      // a new hint for the SAME card, fresh 30s window (no extra countdown lock)
+    } else {
       this.openHintWindow(room);
     }
   }
@@ -392,7 +410,17 @@ export class Matches {
    *  ends the match, notifies all seats, and tears the room down. Only the creator may. */
   closeRoom(room: MatchRoom, byUserId: string): void {
     if (room.createdByUserId !== byUserId) return;
-    if (room.status === "ENDED" || room.status === "ABANDONED") return;
+    if (room.status === "ABANDONED") return; // already torn down
+    if (room.status === "ENDED") {
+      // Closing from the winner screen (the ONLY place the creator's close button
+      // lives): cancel the pending new-round window and tear the table down for
+      // EVERYONE — every client is bounced back to the lobby by tableClosed.
+      this.clear(room, "newRound");
+      room.newRound = null;
+      this.deps.emit(room.id, TT_SERVER_EVENTS.tableClosed, { text: "أُغلقت الطاولة" });
+      this.removeRoom(room.id);
+      return;
+    }
     this.deps.emit(room.id, TT_SERVER_EVENTS.toast, { text: "أُغلقت الطاولة" });
     if (room.status === "LOBBY") {
       // nothing played yet → just evict + drop the room
@@ -452,17 +480,42 @@ export class Matches {
     }
 
     const remaining = activeSeats(room);
-    if (remaining.length < TT_MIN_PLAYERS || !hasConnectedHuman(room)) {
-      // Table drops below the minimum, OR no connected human remains (only bots) →
-      // close it; bots must never keep an abandoned match alive (mirrors Link Up's
-      // hasConnectedHuman teardown). Everyone left loses their points.
+    if (!hasConnectedHuman(room)) {
+      // No connected human remains (only bots) → tear down; bots must never keep an
+      // abandoned match alive (mirrors Link Up's hasConnectedHuman teardown). Everyone
+      // left loses their points.
       for (const s of remaining) s.totalPoints = 0;
       this.finishMatch(room, true);
       return;
     }
+    if (remaining.length < TT_MIN_PLAYERS) {
+      // A human remains but the table would stall below the minimum. Rather than end the
+      // round with no winner, substitute a bot (QUICK-PLAY ONLY) so the round plays out
+      // and a winner is announced normally; the bot's results stay isolated (no XP /
+      // progression / persistence). If we can't backfill (manual room, bots disabled, or
+      // pool exhausted / full), fall back to tearing the table down.
+      const filled = room.kind === "QUICK_PLAY" && this.substituteBot(room);
+      if (!filled) {
+        for (const s of remaining) s.totalPoints = 0;
+        this.finishMatch(room, true);
+        return;
+      }
+    }
     // if it was their turn in normal mode, continue with the next player
     if (r && r.state.mode === "NORMAL") this.beginTurn(room);
     else this.sync(room);
+  }
+
+  /** Seat one bot in place of a withdrawing human so a below-minimum quick-play table
+   *  can finish the round with a normal winner. Adds the bot to the live round's
+   *  rotation so it takes turns / answers hints. Returns false when no bot could be
+   *  seated (bots disabled, pool exhausted, or the room is full). */
+  private substituteBot(room: MatchRoom): boolean {
+    const newSeat = this.deps.bots?.fillOne(this, room);
+    if (newSeat == null) return false;
+    const r = room.round;
+    if (r && !r.state.seats.includes(newSeat)) r.state.seats.push(newSeat);
+    return true;
   }
 
   // ---- round / match completion ------------------------------------------

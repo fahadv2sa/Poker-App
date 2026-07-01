@@ -40,6 +40,9 @@ export const TT_SERVER_EVENTS = {
   queueMatched: "tt:queueMatched",
   toast: "tt:toast",
   error: "tt:error",
+  /** The creator closed the table (from the winner screen): every player is returned
+   *  to the lobby with a notice. Carries an optional Arabic reason for the toast. */
+  tableClosed: "tt:tableClosed",
 } as const;
 
 // ---- client → server (validated) -------------------------------------------

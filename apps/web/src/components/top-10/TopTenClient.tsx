@@ -109,6 +109,11 @@ export function TopTenClient({
         setRounds((rs) => [...rs, { ...snap, round: rs.length + 1 }]);
       },
       onToast: (p) => flash(p.text),
+      onTableClosed: (p) => {
+        // Creator closed the table (from the winner screen) → everyone returns to lobby.
+        flash(p.text ?? "أُغلقت الطاولة");
+        backToLobby();
+      },
       onError: (msg) => flash(msg),
       onAuthExpired: () => {
         window.location.href = "/login";

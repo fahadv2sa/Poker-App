@@ -23,6 +23,8 @@ export interface TtHandlers {
   onQueueState?: (q: TtQueueStateEvent) => void;
   onQueueMatched?: (p: { matchId: string }) => void;
   onToast?: (p: { text: string }) => void;
+  /** The creator closed the table — bounce back to the lobby with a notice. */
+  onTableClosed?: (p: { text?: string }) => void;
   onError?: (msg: string) => void;
   onAuthExpired?: () => void;
 }
@@ -84,6 +86,7 @@ export function connectTopTen(token: string, handlers: TtHandlers): TtConnection
   socket.on(TT_SERVER_EVENTS.queueState, (p: unknown) => handlers.onQueueState?.(p as TtQueueStateEvent));
   socket.on(TT_SERVER_EVENTS.queueMatched, (p: unknown) => handlers.onQueueMatched?.(p as { matchId: string }));
   socket.on(TT_SERVER_EVENTS.toast, (p: unknown) => handlers.onToast?.(p as { text: string }));
+  socket.on(TT_SERVER_EVENTS.tableClosed, (p: unknown) => handlers.onTableClosed?.(p as { text?: string }));
   socket.on(TT_SERVER_EVENTS.error, (p: unknown) => handlers.onError?.(String((p as { messageAr?: string })?.messageAr ?? "خطأ")));
 
   return {

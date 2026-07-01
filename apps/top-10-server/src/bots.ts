@@ -48,7 +48,22 @@ export class TopTenBots {
       onNormalTurn: (ctl, room, seat) => this.onNormalTurn(ctl, room, seat),
       onHintOpen: (ctl, room) => this.onHintOpen(ctl, room),
       cancel: (room) => this.cancel(room),
+      fillOne: (matches, room) => this.fillOne(matches, room),
     };
+  }
+
+  /** Seat ONE fresh bot (mid-round substitution for a withdrawing human). Picks a
+   *  random pool identity not already at the table and returns its new seat number, or
+   *  null if none is available / the room is full. */
+  fillOne(matches: Matches, room: MatchRoom): number | null {
+    if (this.pool.length === 0) return null;
+    const seatedIds = new Set(room.seats.map((s) => s.userId));
+    const available = this.pool.filter((b) => !seatedIds.has(b.userId));
+    if (available.length === 0) return null;
+    const identity = available[Math.floor(Math.random() * available.length)]!;
+    const skill = skillForDifficulty(room.difficulty, Math.random);
+    const seat = matches.addSeat(room, identity, true, skill);
+    return seat ? seat.seat : null;
   }
 
   filler(): BotFiller {

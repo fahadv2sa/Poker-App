@@ -314,7 +314,7 @@ export const TT_TIMING = {
   /** Hint mode: countdown from 5→0 with inputs LOCKED (brief §4.3). */
   hintCountdownSec: 5,
   /** Hint mode: open answer window after a hint is shown. */
-  hintAnswerSec: 30,
+  hintAnswerSec: 15,
   /** Default round timer; customizable in CREATED rooms only (brief §5.2 case 3). */
   defaultRoundSec: 600,
   /** Reconnect grace before a dropped socket is treated as a withdrawal (reused

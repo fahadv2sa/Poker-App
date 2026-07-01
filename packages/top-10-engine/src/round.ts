@@ -22,7 +22,11 @@ export interface RevealRecord {
 
 export interface HintState {
   targetRank: number;
-  hintsGiven: number; // 0 during the initial countdown, 1..3 once shown
+  hintsGiven: number; // 0 during the initial countdown, 1..maxHints once shown
+  /** Per-card cap = how many DISTINCT hints this target player actually has (≤
+   *  TT_HINT.maxHintsPerCard). The card auto-reveals after the last real hint so a
+   *  hint is never repeated to pad up to 3. */
+  maxHints: number;
   phase: "COUNTDOWN" | "OPEN";
 }
 
@@ -174,17 +178,24 @@ export function normalTimeout(state: RoundState, seat: number): Step {
 
 /** Begin a hidden card's cycle: start the 10→0 countdown (inputs locked). The
  *  server chose `targetRank` from the still-hidden ranks. */
-export function beginHintCard(state: RoundState, targetRank: number): Step {
+export function beginHintCard(
+  state: RoundState,
+  targetRank: number,
+  maxHints: number = TT_HINT.maxHintsPerCard,
+): Step {
   const s = clone(state);
   const events: RoundEvent[] = [];
   if (s.done || s.mode !== "HINT") return { state, events };
-  s.hint = { targetRank, hintsGiven: 0, phase: "COUNTDOWN" };
+  // Clamp to [1, TT_HINT.maxHintsPerCard]: never more than 3 windows, and never fewer
+  // than 1 (a target always has at least its nationality hint).
+  const cap = Math.max(1, Math.min(TT_HINT.maxHintsPerCard, Math.floor(maxHints)));
+  s.hint = { targetRank, hintsGiven: 0, maxHints: cap, phase: "COUNTDOWN" };
   events.push({ t: "hintCountdownStarted", targetRank });
   return { state: s, events };
 }
 
-/** Countdown reached 0 (or a previous 30s window expired with hints left) → show a
- *  hint for the SAME card and open the 30s answer window. */
+/** Countdown reached 0 (or a previous answer window expired with hints left) → show a
+ *  hint for the SAME card and open the answer window (TT_TIMING.hintAnswerSec). */
 export function revealHint(state: RoundState): Step {
   const s = clone(state);
   const events: RoundEvent[] = [];
@@ -225,13 +236,13 @@ export function hintGuess(state: RoundState, seat: number, outcome: Outcome): St
   return { state: s, events };
 }
 
-/** The 30s open window expired without the target being solved. Another hint for
+/** The open answer window expired without the target being solved. Another hint for
  *  the same card if any remain, else auto-reveal the target (nobody scores). */
 export function hintWindowTimeout(state: RoundState): Step {
   const s = clone(state);
   const events: RoundEvent[] = [];
   if (s.done || s.mode !== "HINT" || !s.hint) return { state, events };
-  if (s.hint.hintsGiven >= TT_HINT.maxHintsPerCard) {
+  if (s.hint.hintsGiven >= s.hint.maxHints) {
     const rank = s.hint.targetRank;
     const rec = reveal(s, rank, null); // auto-reveal, 0 points
     events.push({ t: "reveal", rank: rec.rank, bySeat: null, points: 0 });

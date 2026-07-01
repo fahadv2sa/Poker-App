@@ -61,8 +61,10 @@ export function TenHud({
         </div>
       </div>
 
-      {/* current points (also the fly-target for reveal stars; pops when it rises) */}
-      <Stat label="نقاطي" value={me.totalPoints} tone="gold" anchor="ten-mine" pop />
+      {/* current points (also the fly-target for reveal stars; pops when it rises).
+          `totalPoints` only tallies at round-end, so during a live round we add the
+          running `roundPoints` — otherwise it sits at 0 the whole round. */}
+      <Stat label="نقاطي" value={me.totalPoints + me.roundPoints} tone="gold" anchor="ten-mine" pop />
 
       {/* wrong-attempts counter — appears only in hint mode */}
       {hint ? <WrongAttempts used={me.wrongAttempts} max={maxAttempts} /> : null}
