@@ -18,7 +18,7 @@ const PROPS = [
   "textShadow", "filter", "outlineColor", "fill",
 ] as const;
 
-async function snapshotTheme(page: import("@playwright/test").Page, theme: string) {
+async function snapshotTheme(page: import("@playwright/test").Page) {
   await page.setViewportSize({ width: 900, height: 1600 });
   await page.goto("/preview/theme", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(300);
@@ -47,12 +47,12 @@ async function snapshotTheme(page: import("@playwright/test").Page, theme: strin
 
 test("Theme 0 (Gold on Black) colour identity — unchanged from Phase 1 baseline", async ({ page }) => {
   await page.addInitScript(() => ((window as unknown as { __t: string }).__t = "0"));
-  const text = await snapshotTheme(page, "0");
+  const text = await snapshotTheme(page);
   expect(text).toMatchSnapshot("theme-computed.txt");
 });
 
 test("Theme 1 (Daylight) colour baseline", async ({ page }) => {
   await page.addInitScript(() => ((window as unknown as { __t: string }).__t = "1"));
-  const text = await snapshotTheme(page, "1");
+  const text = await snapshotTheme(page);
   expect(text).toMatchSnapshot("theme-1-computed.txt");
 });

@@ -27,6 +27,39 @@ export const THEMES: readonly ThemeDef[] = [
 
 export const DEFAULT_THEME_ID = 1;
 
+/** Cookie that carries the chosen theme number across requests (SSR reads it). */
+export const THEME_COOKIE = "fb-theme";
+
+/**
+ * MASTER SWITCH — the single flag that activates runtime theme switching platform-wide.
+ *
+ * false (now): the mechanism is fully built but DORMANT. SSR always renders
+ *   DEFAULT_THEME_ID and ignores the cookie, so players can neither see nor change the
+ *   theme (even by editing the cookie). The API/hook/component below all exist and work,
+ *   but nothing switches persistently.
+ * true (later): SSR honours the `fb-theme` cookie (falling back to the default), so the
+ *   dashboard — and, once you render <ThemeSwitcher>, end users — can switch by number.
+ *
+ * Wiring the dashboard or exposing to users = flip this ONE flag (and mount the switcher
+ * where you want it). No other code changes. See packages/theme/README.md.
+ */
+export const THEME_SWITCHING_ENABLED = false;
+
+export function isValidThemeId(id: unknown): id is number {
+  return typeof id === "number" && THEMES.some((t) => t.id === id);
+}
+
+/**
+ * The active theme number for a request/session. Pure + shared by SSR (layout) and the
+ * client hook. While THEME_SWITCHING_ENABLED is false this ALWAYS returns the default
+ * (the cookie is ignored) — the dormant, players-can't-change state.
+ */
+export function resolveThemeId(cookieValue?: string | number | null): number {
+  if (!THEME_SWITCHING_ENABLED) return DEFAULT_THEME_ID;
+  const n = typeof cookieValue === "string" ? Number(cookieValue) : cookieValue;
+  return isValidThemeId(n) ? n : DEFAULT_THEME_ID;
+}
+
 export function getTheme(id: number): ThemeDef {
   return THEMES.find((t) => t.id === id) ?? THEMES[0]!;
 }
