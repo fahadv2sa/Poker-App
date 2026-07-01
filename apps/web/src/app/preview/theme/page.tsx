@@ -6,6 +6,8 @@
  * Phase 1 is signed off. No layout/logic of the real product depends on this.
  */
 
+import { notFound } from "next/navigation";
+
 export const dynamic = "force-static";
 
 const CHANNELS = [
@@ -42,6 +44,7 @@ function Swatch({ label, style }: { label: string; style: React.CSSProperties })
 }
 
 export default function ThemePreview() {
+  if (process.env.NODE_ENV === "production") notFound();
   return (
     <main style={{ background: "#101010", minHeight: "100vh", padding: 16, color: "#eee" }}>
       <h2 style={{ fontSize: 14 }}>channels --c-*</h2>
