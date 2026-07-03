@@ -11,7 +11,14 @@ const nextConfig: NextConfig = {
   // Internal workspace packages are shipped as TypeScript source.
   transpilePackages: ["@fb/admin-core", "@fb/db", "@fb/shared", "@fb/engine"],
   // Native / engine-backed modules must not be bundled by the server compiler.
-  serverExternalPackages: ["@node-rs/argon2", "@prisma/client"],
+  // Prisma 7 runs through the pg driver adapter, so `@prisma/adapter-pg` and the
+  // native `pg` driver must be externalized alongside the client runtime.
+  serverExternalPackages: [
+    "@node-rs/argon2",
+    "@prisma/client",
+    "@prisma/adapter-pg",
+    "pg",
+  ],
   webpack: (config) => {
     // The workspace TS sources use NodeNext-style ".js" import specifiers that
     // actually resolve to ".ts" files. tsc/vitest handle this; webpack needs an

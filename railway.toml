@@ -88,19 +88,20 @@ builder = "NIXPACKS"
 # is ABORTED and the previous version keeps serving. So a push can no longer ship
 # schema-dependent code ahead of its migration — prod is migrated first, every time.
 #
-# `pnpm db:deploy` → `prisma migrate deploy` (reads DIRECT_URL): applies only
-# PENDING migrations, never resets/drops, and is idempotent (already-applied
-# migrations are skipped). It takes an advisory lock on _prisma_migrations, so if
-# both services deploy at once the concurrent runs serialize safely. Inherited by
-# every service whose Config File Path points at this railway.toml (link-up AND
-# game-server-link-up) — running it per-service is harmless because it is idempotent.
+# `pnpm db:deploy` → `prisma migrate deploy`: applies only PENDING migrations,
+# never resets/drops, and is idempotent (already-applied migrations are skipped).
+# It takes an advisory lock on _prisma_migrations, so if both services deploy at
+# once the concurrent runs serialize safely. Inherited by every service whose
+# Config File Path points at this railway.toml (link-up AND game-server-link-up) —
+# running it per-service is harmless because it is idempotent.
 #
-# `prisma migrate deploy` reads DIRECT_URL (the schema declares directUrl). A
-# service whose RUNTIME only needs DATABASE_URL (e.g. game-server-link-up) may not have
-# DIRECT_URL set, which would make the migrate step — and thus the whole deploy —
-# fail with P1012. So fall back to DATABASE_URL when DIRECT_URL is unset (on
-# Railway PG they are the same value; a future Neon split sets a real DIRECT_URL,
-# which takes precedence). Requires only DATABASE_URL in each service's variables.
+# Prisma 7: the connection URL lives in packages/db/prisma.config.ts, which reads
+# `DIRECT_URL ?? DATABASE_URL` (the schema no longer declares `directUrl`). A
+# service whose RUNTIME only needs DATABASE_URL (e.g. game-server-link-up) may not
+# have DIRECT_URL set, so we export it below. We keep exporting DIRECT_URL (falling
+# back to DATABASE_URL) so the CLI always has a value (on Railway PG they are the
+# same; a future Neon split sets a real DIRECT_URL, which takes precedence).
+# Requires only DATABASE_URL in each service's variables.
 preDeployCommand = 'DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" pnpm db:deploy'
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
