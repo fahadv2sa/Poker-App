@@ -186,10 +186,23 @@ export async function registerUserWithWallet(
     // when bundled (e.g. Next.js), the runtime error can fail an instanceof check
     // against the imported Prisma namespace, letting a raw P2002 escape as a 500.
     if ((err as { code?: string } | null)?.code === "P2002") {
-      // Distinguish which unique column collided (username vs email).
-      const target = (err as { meta?: { target?: unknown } }).meta?.target;
-      const fields = Array.isArray(target) ? target.join(",") : String(target ?? "");
-      if (fields.includes("email")) throw new EmailTakenError();
+      // Distinguish which unique column collided (username vs email). Prisma 7's
+      // pg driver adapter dropped `meta.target`; the colliding fields now live
+      // under `meta.driverAdapterError.cause.constraint.fields`. We check both
+      // shapes plus the (engine-stable) error message so detection survives an
+      // engine/adapter swap. These are field/constraint NAMES, never user data.
+      const meta = (err as {
+        meta?: {
+          target?: unknown;
+          driverAdapterError?: { cause?: { constraint?: { fields?: unknown } } };
+        };
+      }).meta;
+      const adapterFields = meta?.driverAdapterError?.cause?.constraint?.fields;
+      const haystack = [meta?.target, adapterFields, (err as { message?: string }).message]
+        .map((v) => (Array.isArray(v) ? v.join(",") : String(v ?? "")))
+        .join(" ")
+        .toLowerCase();
+      if (haystack.includes("email")) throw new EmailTakenError();
       throw new UsernameTakenError();
     }
     throw err;

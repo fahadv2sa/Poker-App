@@ -4,17 +4,18 @@
 // no real football player is ever inserted (data-driven, Section 17).
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/client"
+  provider = "prisma-client"
+  output   = "../src/generated"
 }
 
 datasource db {
-  provider  = "postgresql"
-  // Runtime queries use the pooled URL; Prisma Migrate uses the direct one.
-  // For Railway PostgreSQL both point at the same connection string; the split
-  // lets a future move to Neon (pooled vs direct) happen with no code change.
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Prisma 7: the connection string no longer lives here. Runtime queries go
+  // through the pg driver adapter (pooled DATABASE_URL, see src/client.ts); the
+  // CLI/Migrate reads the direct URL from prisma.config.ts (DIRECT_URL, falling
+  // back to DATABASE_URL). The split lets a future move to Neon (pooled vs
+  // direct) happen with no code change.
+  //
   // Multi-game isolation: tables live in per-owner schemas (binding contract in
   // docs/architecture/PLATFORM_CONTRACTS.md). platform = identity/social (A),
   // football = reference data (B), link_up = Link Up's economy + session (C+D).

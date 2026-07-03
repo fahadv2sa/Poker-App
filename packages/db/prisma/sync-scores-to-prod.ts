@@ -9,6 +9,7 @@
  *
  * Backs up prod's current 4 columns to a timestamped JSON before writing.
  */
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/client";
 import { writeFileSync } from "node:fs";
 
@@ -17,8 +18,13 @@ const LOCAL_URL =
 const PROD_URL = process.env.PROD_URL;
 if (!PROD_URL) throw new Error("PROD_URL env var is required");
 
-const local = new PrismaClient({ datasources: { db: { url: LOCAL_URL } } });
-const prod = new PrismaClient({ datasources: { db: { url: PROD_URL } } });
+// Prisma 7: per-connection URLs go through the pg adapter (no `datasources`).
+const local = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: LOCAL_URL }),
+});
+const prod = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: PROD_URL }),
+});
 
 const COLS = {
   id: true,

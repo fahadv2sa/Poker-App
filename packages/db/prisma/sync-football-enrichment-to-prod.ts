@@ -24,6 +24,7 @@
  */
 import "./_ensure-system-ca";
 import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/client";
 
 const COMMIT = process.argv.includes("--commit");
@@ -37,8 +38,13 @@ const LOCAL_URL = process.env.DATABASE_URL;
 if (!PROD_URL) throw new Error("PROD_DATABASE_URL is required (the target prod DB).");
 if (!LOCAL_URL) throw new Error("DATABASE_URL is required (the local source DB).");
 
-const prod = new PrismaClient({ datasources: { db: { url: PROD_URL } } });
-const local = new PrismaClient({ datasources: { db: { url: LOCAL_URL } } });
+// Prisma 7: per-connection URLs go through the pg adapter (no `datasources`).
+const prod = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: PROD_URL }),
+});
+const local = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: LOCAL_URL }),
+});
 
 const BIO_FIELDS = [
   "firstName",
