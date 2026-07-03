@@ -4,8 +4,8 @@ Target architecture (one GitHub repo → three Railway services):
 
 ```
 Railway project
-├─ Service "link-up"             → apps/web         (Next.js)        → poker.fmgtech.dev
-├─ Service "game-server-link-up" → apps/game-server (Socket.IO)      → poker-rt.fmgtech.dev
+├─ Service "link-up"             → apps/web         (Next.js)        → game1.fmgtech.dev (custom domain)
+├─ Service "game-server-link-up" → apps/game-server (Socket.IO)      → game-server-production-c304.up.railway.app (Railway domain)
 └─ Plugin  "Postgres"            → Railway PostgreSQL
 ```
 
@@ -126,11 +126,13 @@ Create/select the **game-server-link-up** service (Root Directory = repo root):
   DATABASE_URL = <Railway PostgreSQL connection string>
   DIRECT_URL   = <same as DATABASE_URL>
   AUTH_SECRET  = <generated 32-byte base64 value>
-  WEB_ORIGIN   = https://poker.fmgtech.dev
+  WEB_ORIGIN   = https://game1.fmgtech.dev
   ```
   (Do **not** set `PORT` — Railway injects it.)
-- **Settings → Networking → Custom Domain:** add `poker-rt.fmgtech.dev` (note the
-  CNAME target Railway gives you for STEP 8).
+- **Settings → Networking → Generate Domain:** use the Railway-generated public
+  domain — `game-server-production-c304.up.railway.app`. No custom domain / Cloudflare
+  record is needed for the game-server (the browser's WebSocket connects straight to
+  Railway's TLS endpoint).
 
 ## STEP 7 — Configure the link-up (web) service
 Create/select the **link-up** service (Root Directory = repo root):
@@ -141,28 +143,27 @@ Create/select the **link-up** service (Root Directory = repo root):
   DATABASE_URL                = <Railway PostgreSQL connection string>
   DIRECT_URL                  = <same as DATABASE_URL>
   AUTH_SECRET                 = <exact same value as game-server-link-up>
-  AUTH_URL                    = https://poker.fmgtech.dev
-  NEXT_PUBLIC_GAME_SERVER_URL = https://poker-rt.fmgtech.dev
+  AUTH_URL                    = https://game1.fmgtech.dev
+  NEXT_PUBLIC_GAME_SERVER_URL = https://game-server-production-c304.up.railway.app
   ```
   (`NEXT_PUBLIC_GAME_SERVER_URL` is baked in at **build** time — it must be set
   before the build runs.)
-- **Settings → Networking → Custom Domain:** add `poker.fmgtech.dev` (note the
+- **Settings → Networking → Custom Domain:** add `game1.fmgtech.dev` (note the
   CNAME target for STEP 8).
 
-## STEP 8 — Cloudflare DNS
-In Cloudflare (DNS for fmgtech.dev), add:
+## STEP 8 — Cloudflare DNS (web only)
+Only the web (link-up) service uses a custom domain. In Cloudflare (DNS for fmgtech.dev), add:
 
-| Name      | Type  | Target (Railway-provided)        | Proxy                |
-|-----------|-------|----------------------------------|----------------------|
-| `poker`   | CNAME | link-up service CNAME            | Proxied (orange)     |
-| `poker-rt`| CNAME | game-server-link-up service CNAME | **DNS-only (grey)** |
+| Name    | Type  | Target (Railway-provided) | Proxy            |
+|---------|-------|---------------------------|------------------|
+| `game1` | CNAME | link-up service CNAME     | Proxied (orange) |
 
-SSL/TLS mode: **Full (strict)**. `poker-rt` is DNS-only so the browser's WebSocket
-connects straight to Railway's TLS endpoint (avoids debugging Cloudflare's WS proxy
-on day one; you can switch it to proxied later).
+SSL/TLS mode: **Full (strict)**. The game-server needs **no** Cloudflare record — it uses its
+Railway domain (`game-server-production-c304.up.railway.app`) directly, so the browser's
+WebSocket connects straight to Railway's TLS endpoint.
 
 ## STEP 9 — Verify end to end
-1. Open `https://poker.fmgtech.dev` → **register** → **log in**.
+1. Open `https://game1.fmgtech.dev` → **register** → **log in**.
 2. **Create a room** → join it from a second browser.
 3. **Play a full hand to showdown.**
 
@@ -170,12 +171,13 @@ Troubleshooting:
 - Sockets rejected (`UNAUTHENTICATED` / `SESSION_EXPIRED`) → `AUTH_SECRET` is not
   byte-identical on both services.
 - Sockets connect but the browser logs a CORS error → `WEB_ORIGIN` on
-  game-server-link-up must exactly equal `https://poker.fmgtech.dev`.
+  game-server-link-up must exactly equal `https://game1.fmgtech.dev`.
 - Web build fails on a missing Prisma client → the root `postinstall` didn't run;
   confirm install happens at the repo root.
 - Game-server can't be reached → confirm it bound Railway's `PORT` (logs print
-  `Game server listening on :<port>`), domain is **DNS-only**, and the start
-  command is `pnpm --filter @fb/game-server start` (on the game-server-link-up service).
+  `Game server listening on :<port>`), its Railway public domain is generated
+  (Networking → Generate Domain), and the start command is
+  `pnpm --filter @fb/game-server start` (on the game-server-link-up service).
 
 ---
 
