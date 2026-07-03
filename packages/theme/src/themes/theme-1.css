@@ -107,6 +107,10 @@
   --lu-gold-2: rgb(var(--c-gold-2));
   --lu-gold-3: rgb(var(--c-gold-3));
 
+  /* Hub game-card tap icon: Daylight swaps the fireball for the Play-Now medallion. */
+  --lu-cta-fireball-display: none;
+  --lu-cta-playnow-display: grid;
+
   /* ── legacy Arena-Felt / shadcn tokens (light) ── */
   --background: oklch(0.96 0.012 90);
   --foreground: oklch(0.28 0.02 60);

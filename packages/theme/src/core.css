@@ -681,6 +681,15 @@
 .lu-anim-float { animation: lu-float-ember 3.8s ease-in-out infinite; }
 /* The global prefers-reduced-motion rule above already neutralizes these. */
 
+/* Hub game-card tap icon — THEME-SCOPED. Every theme except Daylight keeps the
+ * live fireball; Theme 1 (Daylight) swaps it for the elegant Play-Now medallion.
+ * Both nodes are rendered in the same size-20 slot; exactly one is shown, so the
+ * visible one stays perfectly centered (the pulsing halo is absolute either way).
+ * Driven by inherited tokens (set per-theme in themes/theme-N.css) so the NEAREST
+ * [data-theme] wins — correct even when previews nest one theme inside another. */
+.lu-cta-fireball { display: var(--lu-cta-fireball-display, block); }
+.lu-cta-playnow { display: var(--lu-cta-playnow-display, none); }
+
 /* ──────────────────────────────────────────────────────────────────────────
  * Link Up — SUBSCRIBE card (hub). Additive, gold-on-black. A live premium card:
  * a slow gold sheen sweeping across the metal, a breathing ember aura behind the

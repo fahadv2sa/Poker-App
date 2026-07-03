@@ -204,9 +204,46 @@ function GameCard({ game }: { game: GameEntry }) {
         className="lu-anim-pulse absolute size-24 rounded-full"
         style={{ background: "radial-gradient(circle, rgb(var(--c-ember)/0.4), transparent 66%)" }}
       />
-      <span className="lu-anim-breathe relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgb(var(--c-ember)/0.3)]">
+      {/* Theme 0 (and any non-Daylight theme): the original live fireball. */}
+      <span className="lu-anim-breathe lu-cta-fireball relative size-20 overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgb(var(--c-ember)/0.3)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/table-ball.png" alt="" className="absolute inset-0 size-full object-cover" />
+      </span>
+      {/* Theme 1 (Daylight) ONLY: an elegant animated "Play Now" (العب الآن) medallion
+          in the EXACT same size-20 slot — a breathing gold-rimmed chip with a slow
+          rotating gold sheen ring and a centered gold play glyph. Visual only. The
+          .lu-cta-* pair is display-toggled by [data-theme] in @fb/theme core.css. */}
+      <span className="lu-anim-breathe lu-chip lu-cta-playnow relative size-20 place-items-center overflow-hidden rounded-full ring-1 ring-[var(--lu-gold-1)]/30 shadow-[0_8px_28px_rgb(var(--c-ember)/0.3)]">
+        <span
+          aria-hidden
+          className="lu-anim-spin absolute inset-0 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, rgb(var(--c-gold-1)/0.55) 40deg, transparent 120deg, transparent 230deg, rgb(var(--c-gold-2)/0.5) 300deg, transparent 360deg)",
+            WebkitMaskImage: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
+            maskImage: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
+          }}
+        />
+        <svg
+          aria-hidden
+          width={30}
+          height={30}
+          viewBox="0 0 24 24"
+          className="relative"
+          style={{
+            transform: "translateX(1px)",
+            filter:
+              "drop-shadow(0 1px 1px rgb(var(--c-black)/0.5)) drop-shadow(0 0 6px rgb(var(--c-ember-glow)/0.45))",
+          }}
+        >
+          <path
+            d="M8 6.5l10 5.5-10 5.5z"
+            fill="url(#lu-gold)"
+            stroke="url(#lu-gold)"
+            strokeWidth={1.2}
+            strokeLinejoin="round"
+          />
+        </svg>
       </span>
     </span>
   ) : (

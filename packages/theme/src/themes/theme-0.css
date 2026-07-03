@@ -105,6 +105,10 @@
   --lu-gold-2: rgb(var(--c-gold-2));
   --lu-gold-3: rgb(var(--c-gold-3));
 
+  /* Hub game-card tap icon: Gold-on-Black keeps the live fireball. */
+  --lu-cta-fireball-display: block;
+  --lu-cta-playnow-display: none;
+
   /* ── legacy Arena-Felt / shadcn tokens (dormant; kept verbatim for the 3 stragglers) ── */
   --background: oklch(0.16 0.02 260);
   --foreground: oklch(0.93 0.01 250);
