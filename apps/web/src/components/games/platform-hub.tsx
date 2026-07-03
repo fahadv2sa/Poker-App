@@ -220,8 +220,10 @@ function GameCard({ game }: { game: GameEntry }) {
           style={{
             background:
               "conic-gradient(from 0deg, transparent 0deg, rgb(var(--c-gold-1)/0.55) 40deg, transparent 120deg, transparent 230deg, rgb(var(--c-gold-2)/0.5) 300deg, transparent 360deg)",
-            WebkitMaskImage: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
-            maskImage: "radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px))",
+            WebkitMaskImage:
+              "radial-gradient(farthest-side, transparent calc(100% - 3px), rgb(var(--c-black)) calc(100% - 3px))",
+            maskImage:
+              "radial-gradient(farthest-side, transparent calc(100% - 3px), rgb(var(--c-black)) calc(100% - 3px))",
           }}
         />
         <svg
