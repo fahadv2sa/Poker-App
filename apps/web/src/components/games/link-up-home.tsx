@@ -5,6 +5,7 @@ import { useState, type CSSProperties } from "react";
 import { sound, useUiSound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 import { BackArrow } from "@/components/back-arrow";
+import { PlayNowMedallion } from "@/components/games/play-now-medallion";
 import {
   BackIcon,
   BankIcon,
@@ -181,8 +182,8 @@ function Hero() {
         aria-label="اللعب السريع — ابدأ مباراة فورية"
         className="group relative grid place-items-center outline-none"
       >
-        {/* floating embers */}
-        <span aria-hidden className="absolute inset-0">
+        {/* floating embers — part of the fireball, so Theme 1 hides them too */}
+        <span aria-hidden className="lu-cta-fireball absolute inset-0">
           {EMBERS.map((e, i) => (
             <span
               key={i}
@@ -210,9 +211,12 @@ function Hero() {
               "radial-gradient(circle, rgb(var(--c-ember)/0.45), rgb(var(--c-ember)/0.12) 42%, transparent 68%)",
           }}
         />
+        {/* Theme 1 (Daylight) ONLY: clean live "العب الآن" medallion, same slot. */}
+        <PlayNowMedallion />
         {/* the hero ball — the SAME live fire-gold football as the table center
-            (ember glow + breathing pulse, no rings), so home and table match. */}
-        <span className="lu-orb lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgb(var(--c-ember)/0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
+            (ember glow + breathing pulse, no rings), so home and table match.
+            Kept for every theme EXCEPT Daylight (theme-toggled via .lu-cta-*). */}
+        <span className="lu-orb lu-cta-fireball lu-anim-breathe relative size-48 overflow-hidden rounded-full shadow-[0_18px_60px_rgb(var(--c-ember)/0.35)] ring-1 ring-[var(--lu-gold-1)]/30 transition-transform duration-300 group-hover:scale-[1.03] group-active:scale-95">
           {hasImg ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
