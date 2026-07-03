@@ -61,7 +61,7 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/75 p-4 backdrop-blur-sm"
+            className="lu-notif-overlay fixed inset-0 z-[90] grid place-items-center overflow-hidden bg-black/75 p-4 backdrop-blur-sm"
           >
             {/* confetti burst (CSS-only; auto-hidden under reduced-motion) */}
             <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -85,7 +85,7 @@ export function LevelUpModal({ newLevel, dailyBank }: { newLevel: number; dailyB
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.92, opacity: 0 }}
               transition={{ type: "spring", stiffness: 280, damping: 22 }}
-              className="lu-frame relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center"
+              className="lu-frame lu-notif-card relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center"
             >
               {/* radial light-burst behind the emblem */}
               <div

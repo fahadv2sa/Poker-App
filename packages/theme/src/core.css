@@ -690,6 +690,21 @@
 .lu-cta-fireball { display: var(--lu-cta-fireball-display, block); }
 .lu-cta-playnow { display: var(--lu-cta-playnow-display, none); }
 
+/* Notification modals (level-up, install-reward) — THEME 1 (Daylight) only.
+ * The shared .lu-frame fill is transparent, so over the modal's dark scrim these
+ * cards read as dark. In Daylight, paint an OPAQUE light card (the intended
+ * --c-frame cream) and soften the black scrim. Unlayered on purpose so it beats
+ * both the layered .lu-frame and Tailwind's `bg-black/*` overlay utility. Theme 0
+ * (the live gold-on-black identity) is deliberately untouched. */
+[data-theme="1"] .lu-notif-card {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(var(--c-frame-1)), rgb(var(--c-frame-2)) 55%),
+    linear-gradient(180deg, rgb(var(--c-frame-3)), rgb(var(--c-frame-4)));
+}
+[data-theme="1"] .lu-notif-overlay {
+  background-color: rgb(var(--c-black) / 0.45);
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
  * Link Up — SUBSCRIBE card (hub). Additive, gold-on-black. A live premium card:
  * a slow gold sheen sweeping across the metal, a breathing ember aura behind the

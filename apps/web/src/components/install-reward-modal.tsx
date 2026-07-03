@@ -94,11 +94,11 @@ export function InstallRewardModal({ claimed, amount }: { claimed: boolean; amou
       aria-modal="true"
       aria-label="أضف اللعبة إلى شاشتك الرئيسية"
       onClick={dismiss}
-      className="fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+      className="lu-notif-overlay fixed inset-0 z-[80] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={cn("lu-frame fade-rise relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center")}
+        className={cn("lu-frame lu-notif-card fade-rise relative w-full max-w-sm overflow-hidden rounded-3xl p-6 text-center")}
       >
         <GoldGradientDefs />
         <button
