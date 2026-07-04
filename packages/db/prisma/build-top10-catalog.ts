@@ -70,6 +70,34 @@ import {
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
+/**
+ * COMPETITION EXPANSION (zero-error safe). The original catalog generated only from the
+ * 9 whitelisted leagues (TT_COMPETITIONS). We additionally admit the major cups — the big-5
+ * domestic cups and the two UEFA club knockouts — because they are contested by the SAME
+ * famous players our database fully covers, so their per-season top-10s are roster-complete
+ * (the completeness gate's field-fill is trustworthy only where the roster is complete).
+ * Obscure/lower leagues are intentionally NOT enabled: our fame-curated DB may miss their
+ * players, and field-fill cannot detect an ABSENT top scorer — that would risk a wrong list.
+ * These cups are cross-calendar (Aug–May), so they are NOT single-year tournaments.
+ */
+const EXTRA_COMPETITIONS: ReadonlyArray<{ leagueId: number; nameAr: string }> = [
+  { leagueId: 3, nameAr: "الدوري الأوروبي" }, // UEFA Europa League
+  { leagueId: 848, nameAr: "دوري المؤتمر الأوروبي" }, // UEFA Europa Conference League
+  { leagueId: 143, nameAr: "كأس ملك إسبانيا" }, // Copa del Rey
+  { leagueId: 45, nameAr: "كأس الاتحاد الإنجليزي" }, // FA Cup
+  { leagueId: 48, nameAr: "كأس الرابطة الإنجليزية" }, // League/EFL Cup
+  { leagueId: 137, nameAr: "كأس إيطاليا" }, // Coppa Italia
+  { leagueId: 81, nameAr: "كأس ألمانيا" }, // DFB Pokal
+  { leagueId: 66, nameAr: "كأس فرنسا" }, // Coupe de France
+  { leagueId: 65, nameAr: "كأس الرابطة الفرنسية" }, // Coupe de la Ligue
+];
+const EXTRA_NAME = new Map(EXTRA_COMPETITIONS.map((c) => [c.leagueId, c.nameAr]));
+/** Every competition the builder generates non-club COMP questions from = whitelist + cups. */
+const ELIGIBLE_LEAGUE_IDS: readonly number[] = [
+  ...TT_WHITELIST_LEAGUE_IDS,
+  ...EXTRA_COMPETITIONS.map((c) => c.leagueId),
+];
+
 /** Contestant-facing season label (league-aware two-year span / single-year
  *  tournament). Single source of truth in @fb/shared so the artifact matches what
  *  the game-server renders at runtime. */
@@ -100,7 +128,7 @@ interface AggRow {
 }
 
 const leagueName = (id: number) =>
-  TT_COMPETITIONS.find((c) => c.leagueId === id)?.nameAr ?? String(id);
+  TT_COMPETITIONS.find((c) => c.leagueId === id)?.nameAr ?? EXTRA_NAME.get(id) ?? String(id);
 
 /** A scope = the "where/who" of a question: which leagues + (optional) which club.
  *  `completeSeason` tells whether a single season's DATA is complete for this scope
@@ -146,7 +174,7 @@ interface Rejected {
 async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   const pos = TT_TYPE_META[type].position;
   const posFilter = pos ? Prisma.sql`AND pos.code = ${pos}::"football"."position_code"` : Prisma.empty;
-  const leagueList = Prisma.join(TT_WHITELIST_LEAGUE_IDS);
+  const leagueList = Prisma.join(ELIGIBLE_LEAGUE_IDS);
   // VALUE_EXPR is a fixed internal constant (never user input) → safe to inline.
   const valueExpr = Prisma.raw(VALUE_EXPR[type]);
   // Per (league, season, player, TEAM): team granularity lets a club-scoped question
@@ -176,8 +204,8 @@ function buildScopes(
 ): Scope[] {
   const scopes: Scope[] = [];
 
-  // competition — each whitelist league present in the data
-  for (const lg of TT_WHITELIST_LEAGUE_IDS) {
+  // competition — each eligible league (whitelist + major cups) present in the data
+  for (const lg of ELIGIBLE_LEAGUE_IDS) {
     if (!leaguesWithData.has(lg)) continue;
     scopes.push({
       kind: "COMP",
