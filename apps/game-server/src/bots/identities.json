@@ -1,48 +1,602 @@
 [
-  { "nickname": "سعود ", "avatar": "pexels-33844953-16001638.jpg" },
-  { "nickname": "Liberty", "avatar": "pexels-abdulaziz-asiri-220481192-36673466.jpg" },
-  { "nickname": "Abood", "avatar": "pexels-abdullahg-11274849.jpg" },
-  { "nickname": "F", "avatar": "pexels-abdullahg-11274857.jpg" },
-  { "nickname": "King Poker", "avatar": "pexels-ab-pixels-ng-33853469.jpg" },
-  { "nickname": "Ahmed", "avatar": "pexels-ahmadsalamat-11763234.jpg" },
-  { "nickname": "أبو راكان", "avatar": "pexels-b_s-media-production-568838161-34171662.jpg" },
-  { "nickname": "بسطويسي", "avatar": "pexels-badun-27117869.jpg" },
-  { "nickname": "Khaled", "avatar": "pexels-cottonbro-6530926.jpg" },
-  { "nickname": "Nf", "avatar": "pexels-cottonbro-8261587.jpg" },
-  { "nickname": "Kenji", "avatar": "pexels-devvishu-7497819.jpg" },
-  { "nickname": "صقر الملاعب", "avatar": "pexels-dpsinghbhullar-29261090.jpg" },
-  { "nickname": "نمر الصحراء", "avatar": "pexels-elijahsad-2738919.jpg" },
-  { "nickname": "تركي الفهد", "avatar": "pexels-fariborzart-8150547.jpg" },
-  { "nickname": "Foad", "avatar": "pexels-foadshariyati-29526363.jpg" },
-  { "nickname": "Gül", "avatar": "pexels-gulsahaydgn-17496738.jpg" },
-  { "nickname": "Hamid", "avatar": "pexels-hamidtajikph-17959562.jpg" },
-  { "nickname": "ون اوف كايند", "avatar": "pexels-harimadhav-s-408240636-18548118.jpg" },
-  { "nickname": "Ilya", "avatar": "pexels-ilya-dudnikov-174851160-13427041.jpg" },
-  { "nickname": "Layla", "avatar": "pexels-jalil-saeidi-135940189-17429845.jpg" },
-  { "nickname": "ليدي بوكر", "avatar": "pexels-javon-swaby-197616-3279685.jpg" },
-  { "nickname": "Joao", "avatar": "pexels-joao-vinicius-771722796-19086746.jpg" },
-  { "nickname": "أصفهاني", "avatar": "pexels-justguryan-11109656.jpg" },
-  { "nickname": "مستر بوكر", "avatar": "pexels-khalededes-5416865.jpg" },
-  { "nickname": "صحراوي", "avatar": "pexels-kouki-walim-1227247-36124623.jpg" },
-  { "nickname": "Lubna", "avatar": "pexels-lubna-18946070.jpg" },
-  { "nickname": "Mark", "avatar": "pexels-maorattias-5191742.jpg" },
-  { "nickname": "Spiske", "avatar": "pexels-markusspiske-116724.jpg" },
-  { "nickname": "نسر الليل", "avatar": "pexels-mart-production-7269208.jpg" },
-  { "nickname": "Claudia", "avatar": "pexels-mihaela-claudia-puscas-836545137-32953051.jpg" },
-  { "nickname": "محمد عبيد", "avatar": "pexels-mohammad-ubaid-584981963-17956264.jpg" },
-  { "nickname": "Olly", "avatar": "pexels-olly-3812738.jpg" },
-  { "nickname": "بلاك سايد", "avatar": "pexels-olly-3907420.jpg" },
-  { "nickname": "أبو الشباب", "avatar": "pexels-oscar-rockr-255750792-16383209.jpg" },
-  { "nickname": "ريم", "avatar": "pexels-reem-138931776-11309513.jpg" },
-  { "nickname": "الكاسح الأحمر", "avatar": "pexels-rohan-patwa-360409347-14350436.jpg" },
-  { "nickname": "وحش الورق", "avatar": "pexels-sweeming-young-418924930-31970661.jpg" },
-  { "nickname": "Tabitha", "avatar": "pexels-tabithaf-8419740.jpg" },
-  { "nickname": "Nora", "avatar": "pexels-thelazyartist-1161282.jpg" },
-  { "nickname": "Shoot", "avatar": "pexels-thiago-alencar-3591921-10154770.jpg" },
-  { "nickname": "أبو ميرة", "avatar": "pexels-tiago-morheto-1937330012-29095925.jpg" },
-  { "nickname": "Najwa", "avatar": "pexels-valeria-drozdova-2148646707-35003040.jpg" },
-  { "nickname": "N8", "avatar": "pexels-valeriya-9157920.jpg" },
-  { "nickname": "أبو الجماجم", "avatar": "pexels-victor-chijioke-350220031-15826610.jpg" },
-  { "nickname": "Wandering", "avatar": "pexels-wanderinglenses-18259911.jpg" },
-  { "nickname": "ليل الكازينو", "avatar": "pexels-yankrukov-9005510.jpg" }
+  {
+    "nickname": "سعود ",
+    "avatar": "pexels-33844953-16001638.jpg"
+  },
+  {
+    "nickname": "Liberty",
+    "avatar": "pexels-abdulaziz-asiri-220481192-36673466.jpg"
+  },
+  {
+    "nickname": "Abood",
+    "avatar": "pexels-abdullahg-11274849.jpg"
+  },
+  {
+    "nickname": "F",
+    "avatar": "pexels-abdullahg-11274857.jpg"
+  },
+  {
+    "nickname": "King Poker",
+    "avatar": "pexels-ab-pixels-ng-33853469.jpg"
+  },
+  {
+    "nickname": "Ahmed",
+    "avatar": "pexels-ahmadsalamat-11763234.jpg"
+  },
+  {
+    "nickname": "أبو راكان",
+    "avatar": "pexels-b_s-media-production-568838161-34171662.jpg"
+  },
+  {
+    "nickname": "بسطويسي",
+    "avatar": "pexels-badun-27117869.jpg"
+  },
+  {
+    "nickname": "Khaled",
+    "avatar": "pexels-cottonbro-6530926.jpg"
+  },
+  {
+    "nickname": "Nf",
+    "avatar": "pexels-cottonbro-8261587.jpg"
+  },
+  {
+    "nickname": "Kenji",
+    "avatar": "pexels-devvishu-7497819.jpg"
+  },
+  {
+    "nickname": "صقر الملاعب",
+    "avatar": "pexels-dpsinghbhullar-29261090.jpg"
+  },
+  {
+    "nickname": "نمر الصحراء",
+    "avatar": "pexels-elijahsad-2738919.jpg"
+  },
+  {
+    "nickname": "تركي الفهد",
+    "avatar": "pexels-fariborzart-8150547.jpg"
+  },
+  {
+    "nickname": "Foad",
+    "avatar": "pexels-foadshariyati-29526363.jpg"
+  },
+  {
+    "nickname": "Gül",
+    "avatar": "pexels-gulsahaydgn-17496738.jpg"
+  },
+  {
+    "nickname": "Hamid",
+    "avatar": "pexels-hamidtajikph-17959562.jpg"
+  },
+  {
+    "nickname": "ون اوف كايند",
+    "avatar": "pexels-harimadhav-s-408240636-18548118.jpg"
+  },
+  {
+    "nickname": "Ilya",
+    "avatar": "pexels-ilya-dudnikov-174851160-13427041.jpg"
+  },
+  {
+    "nickname": "Layla",
+    "avatar": "pexels-jalil-saeidi-135940189-17429845.jpg"
+  },
+  {
+    "nickname": "ليدي بوكر",
+    "avatar": "pexels-javon-swaby-197616-3279685.jpg"
+  },
+  {
+    "nickname": "Joao",
+    "avatar": "pexels-joao-vinicius-771722796-19086746.jpg"
+  },
+  {
+    "nickname": "أصفهاني",
+    "avatar": "pexels-justguryan-11109656.jpg"
+  },
+  {
+    "nickname": "مستر بوكر",
+    "avatar": "pexels-khalededes-5416865.jpg"
+  },
+  {
+    "nickname": "صحراوي",
+    "avatar": "pexels-kouki-walim-1227247-36124623.jpg"
+  },
+  {
+    "nickname": "Lubna",
+    "avatar": "pexels-lubna-18946070.jpg"
+  },
+  {
+    "nickname": "Mark",
+    "avatar": "pexels-maorattias-5191742.jpg"
+  },
+  {
+    "nickname": "Spiske",
+    "avatar": "pexels-markusspiske-116724.jpg"
+  },
+  {
+    "nickname": "نسر الليل",
+    "avatar": "pexels-mart-production-7269208.jpg"
+  },
+  {
+    "nickname": "Claudia",
+    "avatar": "pexels-mihaela-claudia-puscas-836545137-32953051.jpg"
+  },
+  {
+    "nickname": "محمد عبيد",
+    "avatar": "pexels-mohammad-ubaid-584981963-17956264.jpg"
+  },
+  {
+    "nickname": "Olly",
+    "avatar": "pexels-olly-3812738.jpg"
+  },
+  {
+    "nickname": "بلاك سايد",
+    "avatar": "pexels-olly-3907420.jpg"
+  },
+  {
+    "nickname": "أبو الشباب",
+    "avatar": "pexels-oscar-rockr-255750792-16383209.jpg"
+  },
+  {
+    "nickname": "ريم",
+    "avatar": "pexels-reem-138931776-11309513.jpg"
+  },
+  {
+    "nickname": "الكاسح الأحمر",
+    "avatar": "pexels-rohan-patwa-360409347-14350436.jpg"
+  },
+  {
+    "nickname": "وحش الورق",
+    "avatar": "pexels-sweeming-young-418924930-31970661.jpg"
+  },
+  {
+    "nickname": "Tabitha",
+    "avatar": "pexels-tabithaf-8419740.jpg"
+  },
+  {
+    "nickname": "Nora",
+    "avatar": "pexels-thelazyartist-1161282.jpg"
+  },
+  {
+    "nickname": "Shoot",
+    "avatar": "pexels-thiago-alencar-3591921-10154770.jpg"
+  },
+  {
+    "nickname": "أبو ميرة",
+    "avatar": "pexels-tiago-morheto-1937330012-29095925.jpg"
+  },
+  {
+    "nickname": "Najwa",
+    "avatar": "pexels-valeria-drozdova-2148646707-35003040.jpg"
+  },
+  {
+    "nickname": "N8",
+    "avatar": "pexels-valeriya-9157920.jpg"
+  },
+  {
+    "nickname": "أبو الجماجم",
+    "avatar": "pexels-victor-chijioke-350220031-15826610.jpg"
+  },
+  {
+    "nickname": "Wandering",
+    "avatar": "pexels-wanderinglenses-18259911.jpg"
+  },
+  {
+    "nickname": "ليل الكازينو",
+    "avatar": "pexels-yankrukov-9005510.jpg"
+  },
+  {
+    "nickname": "محمد",
+    "avatar": "pexels-33844953-16001638.jpg"
+  },
+  {
+    "nickname": "علي",
+    "avatar": "pexels-abdulaziz-asiri-220481192-36673466.jpg"
+  },
+  {
+    "nickname": "عبدالله",
+    "avatar": "pexels-abdullahg-11274849.jpg"
+  },
+  {
+    "nickname": "فيصل",
+    "avatar": "pexels-abdullahg-11274857.jpg"
+  },
+  {
+    "nickname": "ماجد",
+    "avatar": "pexels-ab-pixels-ng-33853469.jpg"
+  },
+  {
+    "nickname": "سلطان",
+    "avatar": "pexels-ahmadsalamat-11763234.jpg"
+  },
+  {
+    "nickname": "بندر",
+    "avatar": "pexels-b_s-media-production-568838161-34171662.jpg"
+  },
+  {
+    "nickname": "نواف",
+    "avatar": "pexels-badun-27117869.jpg"
+  },
+  {
+    "nickname": "ياسر",
+    "avatar": "pexels-cottonbro-6530926.jpg"
+  },
+  {
+    "nickname": "وليد",
+    "avatar": "pexels-cottonbro-8261587.jpg"
+  },
+  {
+    "nickname": "طلال",
+    "avatar": "pexels-devvishu-7497819.jpg"
+  },
+  {
+    "nickname": "مشعل",
+    "avatar": "pexels-dpsinghbhullar-29261090.jpg"
+  },
+  {
+    "nickname": "عبدالعزيز",
+    "avatar": "pexels-elijahsad-2738919.jpg"
+  },
+  {
+    "nickname": "ريان",
+    "avatar": "pexels-fariborzart-8150547.jpg"
+  },
+  {
+    "nickname": "عمر",
+    "avatar": "pexels-foadshariyati-29526363.jpg"
+  },
+  {
+    "nickname": "حسن",
+    "avatar": "pexels-gulsahaydgn-17496738.jpg"
+  },
+  {
+    "nickname": "حسين",
+    "avatar": "pexels-hamidtajikph-17959562.jpg"
+  },
+  {
+    "nickname": "إبراهيم",
+    "avatar": "pexels-harimadhav-s-408240636-18548118.jpg"
+  },
+  {
+    "nickname": "يوسف",
+    "avatar": "pexels-ilya-dudnikov-174851160-13427041.jpg"
+  },
+  {
+    "nickname": "سعد",
+    "avatar": "pexels-jalil-saeidi-135940189-17429845.jpg"
+  },
+  {
+    "nickname": "ناصر",
+    "avatar": "pexels-javon-swaby-197616-3279685.jpg"
+  },
+  {
+    "nickname": "فهد",
+    "avatar": "pexels-joao-vinicius-771722796-19086746.jpg"
+  },
+  {
+    "nickname": "تركي",
+    "avatar": "pexels-justguryan-11109656.jpg"
+  },
+  {
+    "nickname": "بدر",
+    "avatar": "pexels-khalededes-5416865.jpg"
+  },
+  {
+    "nickname": "راكان",
+    "avatar": "pexels-kouki-walim-1227247-36124623.jpg"
+  },
+  {
+    "nickname": "زياد",
+    "avatar": "pexels-lubna-18946070.jpg"
+  },
+  {
+    "nickname": "أنس",
+    "avatar": "pexels-maorattias-5191742.jpg"
+  },
+  {
+    "nickname": "معاذ",
+    "avatar": "pexels-markusspiske-116724.jpg"
+  },
+  {
+    "nickname": "رائد",
+    "avatar": "pexels-mart-production-7269208.jpg"
+  },
+  {
+    "nickname": "سامي",
+    "avatar": "pexels-mihaela-claudia-puscas-836545137-32953051.jpg"
+  },
+  {
+    "nickname": "أبو فهد",
+    "avatar": "pexels-mohammad-ubaid-584981963-17956264.jpg"
+  },
+  {
+    "nickname": "أبو خالد",
+    "avatar": "pexels-olly-3812738.jpg"
+  },
+  {
+    "nickname": "أبو محمد",
+    "avatar": "pexels-olly-3907420.jpg"
+  },
+  {
+    "nickname": "أبو ياسر",
+    "avatar": "pexels-oscar-rockr-255750792-16383209.jpg"
+  },
+  {
+    "nickname": "أبو سلطان",
+    "avatar": "pexels-reem-138931776-11309513.jpg"
+  },
+  {
+    "nickname": "أبو نواف",
+    "avatar": "pexels-rohan-patwa-360409347-14350436.jpg"
+  },
+  {
+    "nickname": "أبو عمر",
+    "avatar": "pexels-sweeming-young-418924930-31970661.jpg"
+  },
+  {
+    "nickname": "أبو علي",
+    "avatar": "pexels-tabithaf-8419740.jpg"
+  },
+  {
+    "nickname": "أبو حمزة",
+    "avatar": "pexels-thelazyartist-1161282.jpg"
+  },
+  {
+    "nickname": "أبو تركي",
+    "avatar": "pexels-thiago-alencar-3591921-10154770.jpg"
+  },
+  {
+    "nickname": "أبو بدر",
+    "avatar": "pexels-tiago-morheto-1937330012-29095925.jpg"
+  },
+  {
+    "nickname": "أبو ريان",
+    "avatar": "pexels-valeria-drozdova-2148646707-35003040.jpg"
+  },
+  {
+    "nickname": "أبو مازن",
+    "avatar": "pexels-valeriya-9157920.jpg"
+  },
+  {
+    "nickname": "أبو وليد",
+    "avatar": "pexels-victor-chijioke-350220031-15826610.jpg"
+  },
+  {
+    "nickname": "أبو ناصر",
+    "avatar": "pexels-wanderinglenses-18259911.jpg"
+  },
+  {
+    "nickname": "أسد الملاعب",
+    "avatar": "pexels-yankrukov-9005510.jpg"
+  },
+  {
+    "nickname": "صقر الجزيرة",
+    "avatar": "pexels-33844953-16001638.jpg"
+  },
+  {
+    "nickname": "نمر الشمال",
+    "avatar": "pexels-abdulaziz-asiri-220481192-36673466.jpg"
+  },
+  {
+    "nickname": "فارس الميدان",
+    "avatar": "pexels-abdullahg-11274849.jpg"
+  },
+  {
+    "nickname": "وحش الطاولة",
+    "avatar": "pexels-abdullahg-11274857.jpg"
+  },
+  {
+    "nickname": "ملك الورق",
+    "avatar": "pexels-ab-pixels-ng-33853469.jpg"
+  },
+  {
+    "nickname": "نجم القمة",
+    "avatar": "pexels-ahmadsalamat-11763234.jpg"
+  },
+  {
+    "nickname": "ذئب الليل",
+    "avatar": "pexels-b_s-media-production-568838161-34171662.jpg"
+  },
+  {
+    "nickname": "عاصفة الصحراء",
+    "avatar": "pexels-badun-27117869.jpg"
+  },
+  {
+    "nickname": "بطل الديار",
+    "avatar": "pexels-cottonbro-6530926.jpg"
+  },
+  {
+    "nickname": "سيف العرب",
+    "avatar": "pexels-cottonbro-8261587.jpg"
+  },
+  {
+    "nickname": "فهد الرياض",
+    "avatar": "pexels-devvishu-7497819.jpg"
+  },
+  {
+    "nickname": "صقر قريش",
+    "avatar": "pexels-dpsinghbhullar-29261090.jpg"
+  },
+  {
+    "nickname": "نسر الجنوب",
+    "avatar": "pexels-elijahsad-2738919.jpg"
+  },
+  {
+    "nickname": "أسطورة",
+    "avatar": "pexels-fariborzart-8150547.jpg"
+  },
+  {
+    "nickname": "الجوكر",
+    "avatar": "pexels-foadshariyati-29526363.jpg"
+  },
+  {
+    "nickname": "الغامض",
+    "avatar": "pexels-gulsahaydgn-17496738.jpg"
+  },
+  {
+    "nickname": "القناص",
+    "avatar": "pexels-hamidtajikph-17959562.jpg"
+  },
+  {
+    "nickname": "الفارس",
+    "avatar": "pexels-harimadhav-s-408240636-18548118.jpg"
+  },
+  {
+    "nickname": "المحترف",
+    "avatar": "pexels-ilya-dudnikov-174851160-13427041.jpg"
+  },
+  {
+    "nickname": "Ace",
+    "avatar": "pexels-jalil-saeidi-135940189-17429845.jpg"
+  },
+  {
+    "nickname": "Joker",
+    "avatar": "pexels-javon-swaby-197616-3279685.jpg"
+  },
+  {
+    "nickname": "Shadow",
+    "avatar": "pexels-joao-vinicius-771722796-19086746.jpg"
+  },
+  {
+    "nickname": "Falcon",
+    "avatar": "pexels-justguryan-11109656.jpg"
+  },
+  {
+    "nickname": "Titan",
+    "avatar": "pexels-khalededes-5416865.jpg"
+  },
+  {
+    "nickname": "Ninja",
+    "avatar": "pexels-kouki-walim-1227247-36124623.jpg"
+  },
+  {
+    "nickname": "Viper",
+    "avatar": "pexels-lubna-18946070.jpg"
+  },
+  {
+    "nickname": "Legend",
+    "avatar": "pexels-maorattias-5191742.jpg"
+  },
+  {
+    "nickname": "Maverick",
+    "avatar": "pexels-markusspiske-116724.jpg"
+  },
+  {
+    "nickname": "Sultan",
+    "avatar": "pexels-mart-production-7269208.jpg"
+  },
+  {
+    "nickname": "Prince",
+    "avatar": "pexels-mihaela-claudia-puscas-836545137-32953051.jpg"
+  },
+  {
+    "nickname": "Ghost",
+    "avatar": "pexels-mohammad-ubaid-584981963-17956264.jpg"
+  },
+  {
+    "nickname": "Blaze",
+    "avatar": "pexels-olly-3812738.jpg"
+  },
+  {
+    "nickname": "Storm",
+    "avatar": "pexels-olly-3907420.jpg"
+  },
+  {
+    "nickname": "Reaper",
+    "avatar": "pexels-oscar-rockr-255750792-16383209.jpg"
+  },
+  {
+    "nickname": "Phantom",
+    "avatar": "pexels-reem-138931776-11309513.jpg"
+  },
+  {
+    "nickname": "Rocky",
+    "avatar": "pexels-rohan-patwa-360409347-14350436.jpg"
+  },
+  {
+    "nickname": "Zen",
+    "avatar": "pexels-sweeming-young-418924930-31970661.jpg"
+  },
+  {
+    "nickname": "Neo",
+    "avatar": "pexels-tabithaf-8419740.jpg"
+  },
+  {
+    "nickname": "Kaiser",
+    "avatar": "pexels-thelazyartist-1161282.jpg"
+  },
+  {
+    "nickname": "Diesel",
+    "avatar": "pexels-thiago-alencar-3591921-10154770.jpg"
+  },
+  {
+    "nickname": "Turbo",
+    "avatar": "pexels-tiago-morheto-1937330012-29095925.jpg"
+  },
+  {
+    "nickname": "Cobra",
+    "avatar": "pexels-valeria-drozdova-2148646707-35003040.jpg"
+  },
+  {
+    "nickname": "Rex",
+    "avatar": "pexels-valeriya-9157920.jpg"
+  },
+  {
+    "nickname": "Max",
+    "avatar": "pexels-victor-chijioke-350220031-15826610.jpg"
+  },
+  {
+    "nickname": "Poker Master",
+    "avatar": "pexels-wanderinglenses-18259911.jpg"
+  },
+  {
+    "nickname": "Card Shark",
+    "avatar": "pexels-yankrukov-9005510.jpg"
+  },
+  {
+    "nickname": "All In",
+    "avatar": "pexels-33844953-16001638.jpg"
+  },
+  {
+    "nickname": "Bluff King",
+    "avatar": "pexels-abdulaziz-asiri-220481192-36673466.jpg"
+  },
+  {
+    "nickname": "Royal Flush",
+    "avatar": "pexels-abdullahg-11274849.jpg"
+  },
+  {
+    "nickname": "Ten Ace",
+    "avatar": "pexels-abdullahg-11274857.jpg"
+  },
+  {
+    "nickname": "Full House",
+    "avatar": "pexels-ab-pixels-ng-33853469.jpg"
+  },
+  {
+    "nickname": "Big Blind",
+    "avatar": "pexels-ahmadsalamat-11763234.jpg"
+  },
+  {
+    "nickname": "The Dealer",
+    "avatar": "pexels-b_s-media-production-568838161-34171662.jpg"
+  },
+  {
+    "nickname": "High Roller",
+    "avatar": "pexels-badun-27117869.jpg"
+  },
+  {
+    "nickname": "Top Scorer",
+    "avatar": "pexels-cottonbro-6530926.jpg"
+  },
+  {
+    "nickname": "Golden Boot",
+    "avatar": "pexels-cottonbro-8261587.jpg"
+  },
+  {
+    "nickname": "Number 10",
+    "avatar": "pexels-devvishu-7497819.jpg"
+  },
+  {
+    "nickname": "Captain",
+    "avatar": "pexels-dpsinghbhullar-29261090.jpg"
+  }
 ]

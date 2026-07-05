@@ -176,7 +176,7 @@ async function main(): Promise<void> {
           update: { data: avatarData, mimeType: AVATAR_MIME },
         });
       }
-    });
+    }, { maxWait: 30_000, timeout: 30_000 }); // generous waits so remote (proxy) seeding can acquire a tx
 
     if ((i + 1) % 10 === 0) console.log(`  … ${i + 1}/${raw.length}`);
   }
