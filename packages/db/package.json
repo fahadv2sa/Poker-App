@@ -24,6 +24,7 @@
     "classify:reserve-clubs": "tsx prisma/classify-reserve-clubs.ts",
     "build:top10-catalog": "tsx prisma/build-top10-catalog.ts",
     "audit:top10-catalog": "tsx prisma/audit-top10-catalog.ts",
+    "cleanup": "tsx prisma/cleanup.ts",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
