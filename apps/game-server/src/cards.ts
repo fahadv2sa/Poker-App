@@ -103,6 +103,14 @@ export class PrismaCardSource implements CardSource {
         playerClubs: { include: { club: true } },
       },
     });
+    // Card "power" (used in the showdown score-sum tiebreak) now comes from the NEW
+    // composite score (football.player_score.score) — the legacy fame_score/legend_score
+    // are retired.
+    const scoreRows = await prisma.$queryRaw<{ id: string; score: number }[]>(Prisma.sql`
+      SELECT player_id AS id, score FROM football.player_score
+      WHERE player_id IN (${Prisma.join(pickedIds)})
+    `);
+    const scoreById = new Map(scoreRows.map((s) => [s.id, Number(s.score)]));
     // Preserve the deck order from draw().
     const byId = new Map(rows.map((r) => [r.id, r]));
     const dealt: DealtCard[] = pickedIds.map((id) => {
@@ -114,9 +122,8 @@ export class PrismaCardSource implements CardSource {
         nationality: r.nationality.name,
         position: r.position.code,
         positionNameAr: r.position.nameAr,
-        // Effective card score: legends show their legend-track score, everyone
-        // else their base fame_score (legendScore is null for non-legends).
-        fameScore: r.legendScore ?? r.fameScore,
+        // Effective card score = the new composite player score.
+        fameScore: scoreById.get(id) ?? 0,
         clubs: r.playerClubs.map((pc) => pc.club.name),
         photoUrl: r.photoUrl,
       };
@@ -134,7 +141,7 @@ export class PrismaCardSource implements CardSource {
   /**
    * Get (or build) the table's deck. Built once per table from the full eligible
    * pool for the difficulty: ELITE = every active player; the others restrict to
-   * floor(fame_score) >= the tier floor (decimals never shift a boundary). If the
+   * floor(player_score.score) >= the tier floor (decimals never shift a boundary). If the
    * stored deck's difficulty differs (shouldn't change mid-table) it is rebuilt.
    */
   private async deckFor(
@@ -146,10 +153,14 @@ export class PrismaCardSource implements CardSource {
     if (existing && existing.difficulty === difficulty) return existing.deck;
 
     const minScore = DIFFICULTY_MIN_SCORE[difficulty];
+    // Difficulty pool reads the NEW composite score (football.player_score.score),
+    // not the retired legacy fame_score. ELITE (minScore<=0) = every active player.
     const scoreFilter =
-      minScore <= 0 ? Prisma.empty : Prisma.sql`AND floor(fame_score) >= ${minScore}`;
+      minScore <= 0 ? Prisma.empty : Prisma.sql`AND floor(ps.score) >= ${minScore}`;
     const eligible = await prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
-      SELECT id FROM football.players WHERE active = true ${scoreFilter}
+      SELECT p.id FROM football.players p
+      LEFT JOIN football.player_score ps ON ps.player_id = p.id
+      WHERE p.active = true ${scoreFilter}
     `);
     if (eligible.length < need) {
       throw new Error(

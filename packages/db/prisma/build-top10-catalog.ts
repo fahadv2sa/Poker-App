@@ -179,19 +179,22 @@ async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   const valueExpr = Prisma.raw(VALUE_EXPR[type]);
   // Per (league, season, player, TEAM): team granularity lets a club-scoped question
   // filter to one club; non-club scopes simply sum across a player's teams in a window.
+  // Difficulty tiering reads the NEW composite score (football.player_score.score),
+  // not the retired legacy fame_score. Every question's Σ score drives its EASY/MEDIUM/HARD.
   return prisma.$queryRaw<AggRow[]>(Prisma.sql`
     SELECT s.league_id, s.season, s.player_id, s.team_id,
            ${valueExpr} AS value,
            SUM(s.games_appearances) AS apps,
-           COALESCE(p.fame_score, 0) AS fame,
+           COALESCE(psc.score, 0) AS fame,
            p.name, p.name_ar, p.active
     FROM football.player_season_stats s
     JOIN football.players p ON p.id = s.player_id
     JOIN football.positions pos ON pos.id = p.position_id
+    LEFT JOIN football.player_score psc ON psc.player_id = p.id
     WHERE s.league_id IN (${leagueList}) AND s.league_id IS NOT NULL
       AND s.season BETWEEN ${TT_GATE.seasonMin} AND ${TT_GATE.seasonMax}
       ${posFilter}
-    GROUP BY s.league_id, s.season, s.player_id, s.team_id, p.fame_score, p.name, p.name_ar, p.active
+    GROUP BY s.league_id, s.season, s.player_id, s.team_id, psc.score, p.name, p.name_ar, p.active
   `);
 }
 
