@@ -289,7 +289,7 @@ const DIFF_SUB: Record<TtDifficulty, string> = {
 function Lobby({ onJoin }: { onJoin: (d: TtDifficulty) => void }) {
   return (
     <div className="flex flex-col gap-4 fade-rise">
-      <p className="text-sm text-[var(--lu-tan)]">اختر المستوى وابدأ فورًا — تُملأ المقاعد بالبوتات عند الحاجة.</p>
+      <p className="text-sm text-[var(--lu-tan)]">اختر المستوى وابدأ فورًا.</p>
       <div className="grid gap-3 sm:grid-cols-3">
         {TT_DIFFICULTIES.map((d) => (
           <button
