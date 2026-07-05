@@ -58,7 +58,6 @@ export function TenSeat({
       {/* name */}
       <span className="max-w-full truncate text-[clamp(0.56rem,2.4vw,0.7rem)] font-bold leading-tight text-[var(--lu-cream)]">
         {seat.username}
-        {seat.isBot ? " 🤖" : ""}
       </span>
       {/* cumulative TOTAL points (across all rounds) — single figure, no breakdown, no level */}
       <span className="num inline-flex items-center gap-0.5 rounded-full bg-[var(--gold)]/10 px-1.5 text-[clamp(0.54rem,2.3vw,0.66rem)] font-bold text-[var(--gold)]">

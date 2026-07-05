@@ -41,7 +41,7 @@ export function TenStandings({ seats, meId }: { seats: TtSeatView[]; meId: strin
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   <span className="num w-4 shrink-0 text-center font-black text-[var(--gold)]">{i + 1}</span>
-                  <span className="truncate">{s.username}{s.isBot ? " 🤖" : ""}{s.userId === meId ? " (أنت)" : ""}</span>
+                  <span className="truncate">{s.username}{s.userId === meId ? " (أنت)" : ""}</span>
                 </span>
                 <span className="num shrink-0 font-black text-[var(--gold)]">{s.totalPoints}</span>
               </div>

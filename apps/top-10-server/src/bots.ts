@@ -27,10 +27,12 @@ export interface BotIdentity {
 export async function loadBotPool(): Promise<BotIdentity[]> {
   const rows = await prisma.user.findMany({
     where: { playerNumber: { gte: BOT_PLAYER_NUMBER_BASE } },
-    select: { id: true, username: true, playerNumber: true },
+    select: { id: true, username: true, nickname: true, playerNumber: true },
     orderBy: { playerNumber: "asc" },
   });
-  return rows.map((r) => ({ userId: r.id, username: r.username, playerNumber: r.playerNumber }));
+  // A bot is seated under its human-looking NICKNAME (never the bot_<n> username) so an
+  // opponent can't tell it's a bot. userId stays the real identity key.
+  return rows.map((r) => ({ userId: r.id, username: r.nickname?.trim() || r.username, playerNumber: r.playerNumber }));
 }
 
 export class TopTenBots {

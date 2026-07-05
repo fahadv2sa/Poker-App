@@ -96,7 +96,7 @@ export function CreateRoomForm() {
       <div className="flex flex-col gap-2">
         <Label htmlFor="maxPlayers" className="text-[var(--lu-cream)]">أقصى عدد لاعبين</Label>
         <Input id="maxPlayers" name="maxPlayers" type="number" min={2} max={4} defaultValue={4} className="num" />
-        <span className="text-[0.7rem] text-[var(--lu-tan)]">من ٢ إلى ٤ لاعبين · بدون بوتات.</span>
+        <span className="text-[0.7rem] text-[var(--lu-tan)]">من ٢ إلى ٤ لاعبين.</span>
       </div>
 
       <div className="flex flex-col gap-2">
