@@ -5,6 +5,7 @@ import { SeatAvatar, useRemainingMs } from "@fb/table-ui";
 import type { GpAskInput, GpQuestionView, GpRevealEvent, GpStateView } from "@fb/shared";
 import { Composer } from "./Composer";
 import { PlayerEntitySearch } from "./EntitySearch";
+import { gpSound } from "@/lib/guess-player/sound";
 import {
   BOARD_CATEGORIES,
   CHIP_MARK,
@@ -46,9 +47,35 @@ export function GpTable({
   const iAmPicker = !!mySeat?.isPicker;
   const myTurn = mySeat != null && state.turnSeat === mySeat.seat && !iAmPicker;
 
+  // Sound: "your turn" cue when the turn arrives at my seat.
+  const prevMyTurn = useRef(false);
+  useEffect(() => {
+    if (myTurn && !prevMyTurn.current) gpSound.play("turn");
+    prevMyTurn.current = myTurn;
+  }, [myTurn]);
+
+  // Sound: urgency ticking over the last 5 seconds of MY turn timer.
+  useEffect(() => {
+    if (!myTurn || !state.deadlineTs) return;
+    let lastSec: number | null = null;
+    const iv = setInterval(() => {
+      const remaining = state.deadlineTs! - Date.now();
+      const sec = Math.ceil(remaining / 1000);
+      if (remaining > 0 && sec <= 5 && sec !== lastSec) {
+        lastSec = sec;
+        gpSound.play("tick");
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, [myTurn, state.deadlineTs]);
+
+  // Safer exit (final ruling): the always-visible exit button opens a
+  // confirmation dialog so accidental leaves are impossible.
+  const [confirmExit, setConfirmExit] = useState(false);
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col gap-2 fade-rise">
-      <Hud state={state} onLeave={onLeave} />
+      <Hud state={state} onLeave={() => setConfirmExit(true)} />
       <SeatsRow state={state} meId={meId} />
       <Board state={state} />
       <ActionArea
@@ -65,6 +92,33 @@ export function GpTable({
         onPick={onPick}
       />
       {reveal ? <RevealOverlay reveal={reveal.event} seats={state.seats} meId={meId} /> : null}
+      {confirmExit ? (
+        <div className="absolute inset-0 z-40 flex items-center justify-center rounded-2xl bg-[var(--lu-abyss)]/85 p-4 backdrop-blur-sm fade-rise">
+          <div className="lu-frame w-full max-w-xs rounded-2xl p-5 text-center">
+            <span aria-hidden className="text-3xl">🚪</span>
+            <p className="mt-2 text-base font-black text-[var(--lu-cream)]">هل أنت متأكد من الخروج؟</p>
+            <p className="mt-1 text-xs text-[var(--lu-tan)]">
+              الانسحاب أثناء المباراة يُسقط نقاطك في هذه الطاولة.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmExit(false)}
+                className="lu-btn lu-frame rounded-xl py-2.5 text-sm font-bold text-[var(--lu-cream)]"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={onLeave}
+                className="rounded-xl border border-[var(--fb-danger)]/50 bg-[var(--fb-danger)]/15 py-2.5 text-sm font-black text-[var(--fb-danger)]"
+              >
+                تأكيد الخروج
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -403,7 +457,7 @@ function ActionArea({
   // PLAYING
   if (iAmPicker) {
     return (
-      <div className="shrink-0 rounded-2xl border border-white/10 bg-black/25 px-3 py-2.5 text-center text-sm text-[var(--lu-tan)]">
+      <div className="shrink-0 rounded-2xl border border-[var(--border)] bg-[var(--fb-surface)] px-3 py-2.5 text-center text-sm text-[var(--lu-tan)]">
         أنت المنتقي هذه الجولة{myPick ? <> — اللاعب الخفي: <b className="text-[var(--lu-gold-1)]">{myPick.nameAr ?? myPick.name}</b></> : null}. المنصة تجيب تلقائيًا.
       </div>
     );
@@ -413,9 +467,9 @@ function ActionArea({
   }
 
   return (
-    <div className="shrink-0 rounded-2xl border border-[var(--lu-gold-1)]/35 bg-black/30 p-3">
+    <div className="shrink-0 rounded-2xl border border-[var(--lu-gold-1)]/35 bg-[var(--fb-surface)] p-3">
       {/* segmented mode switch: ask (gold) / guess (ember, with attempt pips) */}
-      <div className="mb-2.5 flex rounded-xl bg-black/40 p-1 ring-1 ring-white/10">
+      <div className="mb-2.5 flex rounded-xl bg-[var(--fb-surface-2)] p-1 ring-1 ring-[var(--border)]">
         <ModeBtn
           active={tab === "ask"}
           onClick={() => setTab("ask")}
@@ -438,7 +492,7 @@ function ActionArea({
         <div className="flex flex-col gap-1.5">
           <p className="text-center text-xs text-[var(--lu-tan)]">
             تخمين خاطئ يستهلك محاولة — المتبقي{" "}
-            <span className="num font-bold text-[var(--lu-ember-glow)]">{guessesLeft}</span> من{" "}
+            <span className="num font-bold text-[var(--lu-ember)]">{guessesLeft}</span> من{" "}
             <span className="num">3</span>
           </p>
           <PlayerEntitySearch onPick={onGuess} placeholder="🎯 من هو اللاعب الخفي؟" />
@@ -470,7 +524,7 @@ function ModeBtn({
   const activeCls =
     tone === "gold"
       ? "lu-chip text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/55"
-      : "bg-[var(--lu-ember)]/12 text-[var(--lu-ember-glow)] ring-1 ring-[var(--lu-ember)]/55 shadow-[0_0_12px_rgb(var(--c-ember)/0.3)]";
+      : "bg-[var(--lu-ember)]/12 text-[var(--lu-ember)] ring-1 ring-[var(--lu-ember)]/55 shadow-[0_0_12px_rgb(var(--c-ember)/0.3)]";
   return (
     <button
       type="button"
@@ -479,7 +533,7 @@ function ModeBtn({
       className={cn(
         "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-black transition",
         // ALWAYS fully visible — never hover-gated (mobile-first ruling #2).
-        active ? activeCls : "bg-black/20 text-[var(--lu-cream)]/85 ring-1 ring-white/15",
+        active ? activeCls : "bg-[var(--fb-surface)] text-[var(--lu-cream)]/85 ring-1 ring-[var(--border)]",
       )}
     >
       <span aria-hidden>{icon}</span>
@@ -491,7 +545,11 @@ function ModeBtn({
               key={i}
               className={cn(
                 "size-1.5 rounded-full",
-                i < pips ? "bg-[var(--lu-ember)] shadow-[0_0_6px_rgb(var(--c-ember)/0.7)]" : "bg-white/15",
+                // Spent pips use muted-ink alpha (visible on BOTH themes;
+                // literal white/15 vanished on Daylight).
+                i < pips
+                  ? "bg-[var(--lu-ember)] shadow-[0_0_6px_rgb(var(--c-ember)/0.7)]"
+                  : "bg-[var(--lu-tan)]/35",
               )}
             />
           ))}
@@ -503,7 +561,7 @@ function ModeBtn({
 
 function WaitBanner({ text, deadlineTs }: { text: string; deadlineTs: number | null }) {
   return (
-    <div className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/25 px-3 py-3 text-sm text-[var(--lu-tan)]">
+    <div className="flex shrink-0 items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--fb-surface)] px-3 py-3 text-sm text-[var(--lu-tan)]">
       <span aria-hidden className="size-2 animate-pulse rounded-full bg-[var(--lu-ember)]" />
       {text}
       {deadlineTs ? (

@@ -71,7 +71,7 @@ function EntitySearchInner({
             <li key={item.id}>
               <button
                 onClick={() => pick(item)}
-                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-right hover:bg-white/5"
+                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-right transition hover:bg-[var(--lu-gold-2)]/10 active:bg-[var(--lu-gold-2)]/15"
               >
                 <span className="font-semibold text-[var(--lu-cream)]">{item.label}</span>
                 {item.sub ? <span className="text-xs text-[var(--lu-tan)]">{item.sub}</span> : null}
@@ -85,7 +85,7 @@ function EntitySearchInner({
         disabled={disabled}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-base text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--fb-surface)] px-4 py-3 text-base text-[var(--lu-cream)] outline-none placeholder:text-[var(--lu-tan)] focus:border-[var(--gold)] disabled:opacity-50"
       />
     </div>
   );
@@ -161,7 +161,7 @@ function PlayerSearchAdapterInner({
                   setResults([]);
                   setOpen(false);
                 }}
-                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-right hover:bg-white/5"
+                className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-right transition hover:bg-[var(--lu-gold-2)]/10 active:bg-[var(--lu-gold-2)]/15"
               >
                 <span className="font-semibold text-[var(--lu-cream)]">
                   {p.nameAr}
@@ -180,7 +180,7 @@ function PlayerSearchAdapterInner({
         disabled={disabled}
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-base text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
+        className="w-full rounded-xl border border-[var(--border)] bg-[var(--fb-surface)] px-4 py-3 text-base text-[var(--lu-cream)] outline-none placeholder:text-[var(--lu-tan)] focus:border-[var(--gold)] disabled:opacity-50"
       />
     </div>
   );

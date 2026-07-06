@@ -14,6 +14,7 @@ import {
   type GpStateView,
 } from "@fb/shared";
 import { connectGuessPlayer, type GpConnection } from "@/lib/guess-player/socket";
+import { gpSound } from "@/lib/guess-player/sound";
 import { BackArrow } from "@/components/back-arrow";
 import { GpTable } from "./GpTable";
 import { GpSummary, type GpRoundSummary } from "./GpSummary";
@@ -112,14 +113,20 @@ export function GuessPlayerClient({
         stateRef.current = s;
         // New round (or replay) started → clear the previous reveal + pick echo.
         if (s.roundNo !== roundNoRef.current) {
+          const wasLive = roundNoRef.current > 0;
           roundNoRef.current = s.roundNo;
           setReveal(null);
           setMyPick(null);
+          if (s.roundNo > 0 && s.status === "IN_PROGRESS" && wasLive) gpSound.play("roundStart");
         }
         if (s.status === "IN_PROGRESS") setResult(null);
         setState(s);
         setView("match");
       },
+      onQuestion: (q) => {
+        gpSound.play(q.answer === "YES" ? "yes" : q.answer === "NO" ? "no" : "unknown");
+      },
+      onWrongGuess: () => gpSound.play("wrongGuess"),
       onQueueState: (q) => {
         setQueue({ waiting: q.waiting, countdownSec: q.countdownSec });
         setView((v) => (v === "lobby" ? "queue" : v));
@@ -131,6 +138,7 @@ export function GuessPlayerClient({
       onReveal: (r) => {
         setReveal({ event: r, id: ++revealSeq.current });
         if (r.reason !== "ABANDONED") setRoundsPlayed((rs) => [...rs, r]);
+        gpSound.play(r.reason === "CORRECT_GUESS" ? "correctGuess" : "reveal");
       },
       onPickConfirmed: (p) => setMyPick({ name: p.player.name, nameAr: p.player.nameAr }),
       onMatchEnded: (m) => {
@@ -259,6 +267,7 @@ export function GuessPlayerClient({
             result={result}
             reveal={reveal}
             myPick={myPick}
+            lastRound={roundsPlayed.at(-1) ?? null}
             conn={conn}
             onExit={onExit}
           />
@@ -380,6 +389,7 @@ function MatchView({
   result,
   reveal,
   myPick,
+  lastRound,
   conn,
   onExit,
 }: {
@@ -388,6 +398,7 @@ function MatchView({
   result: MatchSnapshot | null;
   reveal: { event: GpRevealEvent; id: number } | null;
   myPick: { name: string; nameAr: string | null } | null;
+  lastRound: GpRoundSummary | null;
   conn: () => GpConnection | null;
   onExit: () => void;
 }) {
@@ -401,6 +412,7 @@ function MatchView({
         state={state}
         meId={me.userId}
         result={result}
+        lastRound={lastRound}
         abandoned={state.status === "ABANDONED"}
         onNewMatch={() => conn()?.newMatch()}
         onClose={state.createdByUserId === me.userId ? () => conn()?.close() : undefined}
@@ -576,6 +588,7 @@ export function GpWinner({
   state,
   meId,
   result,
+  lastRound,
   abandoned,
   onNewMatch,
   onClose,
@@ -584,6 +597,8 @@ export function GpWinner({
   state: GpStateView;
   meId: string;
   result: MatchSnapshot | null;
+  /** The final round's reveal — the hidden player is ALWAYS shown here. */
+  lastRound: GpRoundSummary | null;
   abandoned: boolean;
   onNewMatch: () => void;
   onClose?: () => void;
@@ -607,8 +622,11 @@ export function GpWinner({
   const youReady = !!(nm && mySeat && nm.readySeats.includes(mySeat.seat));
   const canNewMatch = !abandoned;
   const showClose = !!onClose && !abandoned;
-  const cols = (canNewMatch ? 1 : 0) + (showClose ? 1 : 0) + 1;
   const winner = !abandoned && standings.length > 0 && !standings[1]?.tiedWithPrev ? standings[0] : null;
+
+  useEffect(() => {
+    gpSound.play(abandoned ? "reveal" : "win");
+  }, [abandoned]);
 
   return (
     <motion.div
@@ -618,32 +636,35 @@ export function GpWinner({
       className="fixed inset-0 z-40 flex justify-center overflow-y-auto bg-[var(--lu-abyss)]/95 p-3 backdrop-blur-md sm:p-6"
     >
       <div className="my-auto w-full max-w-md space-y-3">
+        {/* ── hidden-player reveal card — ALWAYS shown, solved or not ─────── */}
+        {lastRound ? <HiddenPlayerCard round={lastRound} seats={seats} meId={meId} /> : null}
+
+        {/* ── new-round flow: countdown auto-start + two clear actions ────── */}
+        {canNewMatch && nm?.deadlineTs ? (
+          <div className="flex flex-col items-center gap-1 pt-1">
+            <span className="text-xs text-[var(--lu-tan)]">تبدأ جولة جديدة تلقائيًا خلال</span>
+            <NewMatchCountdown deadlineTs={nm.deadlineTs} />
+          </div>
+        ) : null}
         <div className="space-y-2">
-          {canNewMatch && nm ? (
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-xs text-[var(--lu-tan)]">
-                الاستعداد للمباراة: <span className="num font-bold text-[var(--lu-cream)]">{nm.readySeats.length}</span>
-                /<span className="num">{Math.max(1, nm.needed)}</span>
-              </span>
-              {nm.deadlineTs ? (
-                <span className="lu-chip inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
-                  تبدأ خلال <NewMatchCountdown deadlineTs={nm.deadlineTs} /> ث
-                </span>
-              ) : null}
-            </div>
+          {canNewMatch ? (
+            <button
+              type="button"
+              onClick={onNewMatch}
+              disabled={youReady}
+              className={cn(
+                "w-full rounded-2xl py-3.5 text-lg font-black transition",
+                youReady
+                  ? "border border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/12 text-[var(--lu-gold-1)]"
+                  : "btn-gold-cta text-black",
+              )}
+            >
+              {youReady ? "✓ جاهز — بانتظار البقية" : "▶ جولة جديدة"}
+            </button>
           ) : null}
-          <div className={cn("grid gap-2", cols === 3 ? "grid-cols-3" : cols === 2 ? "grid-cols-2" : "grid-cols-1")}>
-            {canNewMatch ? (
-              <ResultAction
-                glyph={youReady ? "✓" : "▶"}
-                label={youReady ? "جاهز" : "مباراة جديدة"}
-                variant="primary"
-                disabled={youReady}
-                onClick={onNewMatch}
-              />
-            ) : null}
-            {showClose ? <ResultAction glyph="✕" label="إغلاق الطاولة" variant="destructive" onClick={onClose!} /> : null}
+          <div className={cn("grid gap-2", showClose ? "grid-cols-2" : "grid-cols-1")}>
             <ResultAction glyph="⮐" label="خروج" variant="neutral" onClick={onExit} />
+            {showClose ? <ResultAction glyph="✕" label="إغلاق الطاولة" variant="destructive" onClick={onClose!} /> : null}
           </div>
         </div>
 
@@ -695,9 +716,130 @@ export function GpWinner({
   );
 }
 
+/** The big auto-start countdown — ticks audibly over the final 5 seconds. */
 function NewMatchCountdown({ deadlineTs }: { deadlineTs: number }) {
   const ms = useRemainingMs(deadlineTs) ?? 0;
-  return <span className="num text-base font-black">{Math.max(0, Math.ceil(ms / 1000))}</span>;
+  const secs = Math.max(0, Math.ceil(ms / 1000));
+  const lastTicked = useRef<number | null>(null);
+  useEffect(() => {
+    if (secs > 0 && secs <= 5 && lastTicked.current !== secs) {
+      lastTicked.current = secs;
+      gpSound.play("countTick");
+    }
+  }, [secs]);
+  return (
+    <span
+      className={cn(
+        "num grid size-16 place-items-center rounded-full border-2 text-3xl font-black",
+        secs <= 5
+          ? "border-[var(--lu-ember)]/70 text-[var(--lu-ember)] shadow-[0_0_18px_rgb(var(--c-ember)/0.4)]"
+          : "border-[var(--lu-gold-1)]/50 text-[var(--lu-gold-1)]",
+      )}
+    >
+      {secs}
+    </span>
+  );
+}
+
+/** Themed confetti pieces (core.css .confetti-pc) for the solved celebration. */
+const CONFETTI = Array.from({ length: 16 }, (_, i) => ({
+  left: (i * 61) % 100,
+  color: ["var(--lu-gold-1)", "var(--lu-ember)", "var(--lu-ember-glow)", "var(--fb-gold-strong)"][i % 4],
+  delay: (i * 0.23) % 1.6,
+  duration: 2.6 + ((i * 0.37) % 1.8),
+}));
+
+/** The hidden player, ALWAYS revealed on the winner screen: celebratory when
+ *  cracked (confetti + glow + who did it), neutral «لم يخمنه أحد» otherwise. */
+function HiddenPlayerCard({
+  round,
+  seats,
+  meId,
+}: {
+  round: GpRoundSummary;
+  seats: GpStateView["seats"];
+  meId: string;
+}) {
+  const solved = round.reason === "CORRECT_GUESS";
+  const cracker = seats.find((s) => s.seat === round.winnerSeat);
+  const picker = seats.find((s) => s.seat === round.pickerSeat);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 220, damping: 18 }}
+      className={cn(
+        "relative overflow-hidden rounded-3xl border px-4 py-5 text-center",
+        solved
+          ? "border-[var(--lu-gold-1)]/60 bg-gradient-to-b from-[var(--lu-gold-2)]/18 to-[var(--fb-surface)]/95 shadow-[0_0_40px_rgb(var(--c-ember-glow)/0.35)]"
+          : "lu-frame",
+      )}
+    >
+      {solved ? (
+        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          {CONFETTI.map((c, i) => (
+            <span
+              key={i}
+              className="confetti-pc"
+              style={{
+                left: `${c.left}%`,
+                background: c.color,
+                animationDelay: `${c.delay}s`,
+                animationDuration: `${c.duration}s`,
+              }}
+            />
+          ))}
+        </span>
+      ) : null}
+      <div className="relative flex flex-col items-center gap-2">
+        <span className="text-[0.68rem] font-bold tracking-[0.22em] text-[var(--lu-gold-1)]/80">
+          اللاعب الخفي
+        </span>
+        {round.player.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={round.player.photoUrl}
+            alt={round.player.nameAr ?? round.player.name}
+            className={cn(
+              "size-20 rounded-full object-cover ring-2",
+              solved ? "ring-[var(--lu-gold-1)]/70" : "ring-[var(--lu-gold-1)]/35",
+            )}
+          />
+        ) : (
+          <span
+            className={cn(
+              "grid size-20 place-items-center rounded-full bg-[var(--lu-gold-2)]/15 text-3xl ring-2",
+              solved ? "ring-[var(--lu-gold-1)]/70" : "ring-[var(--lu-gold-1)]/35",
+            )}
+          >
+            ⚽
+          </span>
+        )}
+        <div className="lu-gold-text lu-gold-title text-2xl font-black leading-tight">
+          {round.player.nameAr ?? round.player.name}
+        </div>
+        <div className="num text-[0.7rem] text-[var(--lu-tan)]">{round.player.name}</div>
+        {solved && cracker ? (
+          <div className="mt-1 flex flex-col items-center gap-1">
+            <span className="rounded-full border border-[var(--lu-gold-1)]/45 bg-[var(--lu-gold-2)]/12 px-4 py-1.5 text-sm font-black text-[var(--lu-cream)]">
+              🎯 كشفه {cracker.userId === meId ? "أنت" : cracker.username}{" "}
+              <span className="num text-[var(--lu-gold-1)]">+{round.winnerPoints}</span>
+            </span>
+            {picker && round.pickerPoints > 0 ? (
+              <span className="text-[0.7rem] text-[var(--lu-tan)]">
+                المنتقي {picker.userId === meId ? "أنت" : picker.username}{" "}
+                <span className="num text-[var(--lu-gold-1)]">+{round.pickerPoints}</span>
+              </span>
+            ) : null}
+          </div>
+        ) : !solved ? (
+          <span className="mt-1 rounded-full border border-[var(--border)] bg-[var(--fb-surface)] px-4 py-1.5 text-sm font-bold text-[var(--lu-tan)]">
+            لم يخمنه أحد
+          </span>
+        ) : null}
+      </div>
+    </motion.div>
+  );
 }
 
 function ResultAction({

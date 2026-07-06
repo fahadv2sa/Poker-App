@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { GpRevealEvent, GpStateView } from "@fb/shared";
 import { GpWinner } from "@/components/guess-player/GuessPlayerClient";
 import { GpTable } from "@/components/guess-player/GpTable";
+import type { GpRoundSummary } from "@/components/guess-player/GpSummary";
 
 /**
  * PREVIEW ONLY — visual harness for the end-of-match WINNER screen and the
@@ -41,10 +42,28 @@ function baseState(over: Partial<GpStateView>): GpStateView {
     turnSeat: null,
     deadlineTs: null,
     roundDeadlineTs: null,
-    newMatchRequest: { readySeats: [1], needed: 3, deadlineTs: Date.now() + 38_000 },
+    newMatchRequest: { readySeats: [1], needed: 3, deadlineTs: Date.now() + 15_000 },
     ...over,
   };
 }
+
+const LAST_ROUND_SOLVED: GpRoundSummary = {
+  reason: "CORRECT_GUESS",
+  player: { id: "p1", name: "Mohamed Salah", nameAr: "محمد صلاح", photoUrl: null },
+  winnerSeat: 0,
+  winnerPoints: 415,
+  pickerSeat: 1,
+  pickerPoints: 104,
+};
+
+const LAST_ROUND_TIMEOUT: GpRoundSummary = {
+  reason: "TIMER",
+  player: { id: "p2", name: "Yaya Touré", nameAr: "يايا توريه", photoUrl: null },
+  winnerSeat: null,
+  winnerPoints: 0,
+  pickerSeat: 1,
+  pickerPoints: 150,
+};
 
 const QUESTIONS: GpStateView["questions"] = [
   { turnNo: 1, seat: 0, template: "NATIONALITY", params: { countryName: "مصر" }, answer: "YES" },
@@ -78,7 +97,7 @@ const REVEAL_TIMEOUT: GpRevealEvent = {
   pickerPoints: 150,
 };
 
-type View = "winner" | "tie" | "abandoned" | "reveal-win" | "reveal-timeout";
+type View = "winner" | "tie" | "abandoned" | "reveal-win" | "reveal-timeout" | "composer";
 
 export default function PreviewWinner() {
   const [view, setView] = useState<View>("winner");
@@ -113,6 +132,7 @@ export default function PreviewWinner() {
         <span className="mx-1 opacity-50">|</span>
         <button onClick={() => setView("reveal-win")} className={btn(view === "reveal-win")}>كشف الجولة: فائز</button>
         <button onClick={() => setView("reveal-timeout")} className={btn(view === "reveal-timeout")}>كشف الجولة: انتهى الوقت</button>
+        <button onClick={() => setView("composer")} className={btn(view === "composer")}>🎛 لوحة السؤال والتخمين</button>
       </div>
 
       <div className="pt-8" />
@@ -122,6 +142,7 @@ export default function PreviewWinner() {
           state={baseState({})}
           meId="me"
           result={null}
+          lastRound={LAST_ROUND_SOLVED}
           abandoned={false}
           onNewMatch={() => console.log("newMatch")}
           onClose={() => console.log("close")}
@@ -134,6 +155,7 @@ export default function PreviewWinner() {
           state={baseState({ seats: tieSeats })}
           meId="me"
           result={{ match: 1, standings: tieStandings, seats: tieSeats }}
+          lastRound={LAST_ROUND_TIMEOUT}
           abandoned={false}
           onNewMatch={() => console.log("newMatch")}
           onClose={() => console.log("close")}
@@ -146,13 +168,14 @@ export default function PreviewWinner() {
           state={baseState({ status: "ABANDONED", newMatchRequest: null })}
           meId="me"
           result={null}
+          lastRound={LAST_ROUND_TIMEOUT}
           abandoned
           onNewMatch={() => console.log("newMatch")}
           onExit={() => console.log("exit")}
         />
       ) : null}
 
-      {isReveal ? (
+      {isReveal || view === "composer" ? (
         <GpTable
           state={baseState({
             status: "IN_PROGRESS",
@@ -165,7 +188,9 @@ export default function PreviewWinner() {
             newMatchRequest: null,
           })}
           meId="me"
-          reveal={{ event: view === "reveal-win" ? REVEAL_SOLVED : REVEAL_TIMEOUT, id: 1 }}
+          reveal={
+            isReveal ? { event: view === "reveal-win" ? REVEAL_SOLVED : REVEAL_TIMEOUT, id: 1 } : null
+          }
           myPick={null}
           onAsk={(q) => console.log("ask", q)}
           onGuess={(id) => console.log("guess", id)}

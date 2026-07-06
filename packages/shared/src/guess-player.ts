@@ -49,8 +49,10 @@ export const GP_TIMING = {
   reconnectGraceMs: 5 * 60 * 1000,
   /** Quick-play gather window before starting below max seats (solo allowed). */
   fillWindowSec: 8,
-  /** Post-match "play again" ready-vote auto-resolve window. */
-  newMatchGraceSec: 45,
+  /** Winner-screen countdown: the next match auto-starts for everyone still
+   *  at the table when it hits zero; everyone pressing جولة جديدة starts it
+   *  immediately (owner ruling 2026-07-06 — replaced the 45s ready-vote). */
+  newMatchGraceSec: 15,
   /** A table with no HUMAN ACTION for this long closes immediately (final
    *  ruling #2) — auto-advancing turn timers do NOT count as activity. */
   idleCloseMs: 30 * 60 * 1000,

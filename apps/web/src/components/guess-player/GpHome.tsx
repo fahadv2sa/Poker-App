@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   Atmosphere,
   BackIcon,
@@ -9,10 +9,13 @@ import {
   GuideIcon,
   HomeIcon,
   JoinRoomIcon,
+  SoundOffIcon,
+  SoundOnIcon,
   StatsIcon,
   TrophyIcon,
   cn,
 } from "@fb/top-10-ui";
+import { gpSound } from "@/lib/guess-player/sound";
 import { PlayNowMedallion } from "@/components/games/play-now-medallion";
 
 /**
@@ -43,6 +46,27 @@ const EMBERS = [
   { left: "90%", top: "46%", size: 3, dx: "-6px", dur: "7s", delay: "1.2s" },
 ] as const;
 
+/** Sound mute toggle — same pattern/position as Link Up's and Top Ten's home
+ *  mute buttons, driven by this game's own sound layer. */
+function MuteButton() {
+  const [muted, setMuted] = useState(false);
+  useEffect(() => setMuted(gpSound.muted), []);
+  return (
+    <button
+      type="button"
+      aria-label={muted ? "تشغيل الصوت" : "كتم الصوت"}
+      aria-pressed={muted}
+      onClick={() => {
+        gpSound.unlock();
+        setMuted(gpSound.toggle());
+      }}
+      className="lu-btn lu-frame grid size-10 place-items-center rounded-xl"
+    >
+      {muted ? <SoundOffIcon size={20} /> : <SoundOnIcon size={20} />}
+    </button>
+  );
+}
+
 export function GpHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
   const [hasImg, setHasImg] = useState(true);
   return (
@@ -58,7 +82,7 @@ export function GpHome({ rank, hubUrl }: { rank: string; hubUrl: string }) {
           <h1 className="lu-gold-text lu-gold-title pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black tracking-tight">
             خمن اللاعب
           </h1>
-          <span aria-hidden className="size-10" />
+          <MuteButton />
         </header>
 
         <div aria-hidden className="grow-[3]" />

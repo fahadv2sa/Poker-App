@@ -224,9 +224,11 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
               onClick={() => selectCategory(c.id)}
               className={cn(
                 "flex flex-col items-center gap-1 rounded-2xl border px-1 py-2 transition-all disabled:opacity-50",
+                // Themed surfaces only — literal black/white surfaces went
+                // near-invisible on Daylight (contrast pass 2026-07-06).
                 active
                   ? "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/12 shadow-[0_0_14px_rgb(var(--c-ember)/0.3)]"
-                  : "border-white/10 bg-black/25 hover:border-[var(--lu-gold-1)]/30",
+                  : "border-[var(--border)] bg-[var(--fb-surface)] hover:border-[var(--lu-gold-1)]/40",
               )}
             >
               <span aria-hidden className={cn("text-xl leading-none", !active && "opacity-70 grayscale-[35%]")}>
@@ -264,10 +266,11 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
               aria-pressed={template === v.t}
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-xs font-bold ring-1 transition disabled:opacity-50",
-                // Inactive pills stay fully readable — never hover-gated.
+                // Inactive pills stay fully readable — never hover-gated,
+                // themed surface (not literal black) so Daylight stays light.
                 template === v.t
                   ? "lu-chip text-[var(--lu-gold-1)] ring-[var(--lu-gold-1)]/55"
-                  : "bg-black/25 text-[var(--lu-cream)]/85 ring-white/15",
+                  : "bg-[var(--fb-surface)] text-[var(--lu-cream)]/85 ring-[var(--border)]",
               )}
             >
               {v.label}
@@ -317,9 +320,11 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
                   onClick={() => setActiveSlot(seg.slot)}
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-xl border border-dashed px-3 py-1 text-base font-bold transition",
+                    // Deep ember TEXT (not glow) so the active hole reads on
+                    // Daylight; themed surface for the idle hole.
                     currentSlot === seg.slot
-                      ? "animate-pulse border-[var(--lu-ember-glow)]/80 bg-[var(--lu-ember)]/10 text-[var(--lu-ember-glow)] shadow-[0_0_12px_rgb(var(--c-ember)/0.45)]"
-                      : "border-[var(--lu-gold-1)]/35 bg-black/25 text-[var(--lu-tan)]",
+                      ? "animate-pulse border-[var(--lu-ember)]/70 bg-[var(--lu-ember)]/10 text-[var(--lu-ember)] shadow-[0_0_12px_rgb(var(--c-ember)/0.45)]"
+                      : "border-[var(--lu-gold-1)]/35 bg-[var(--fb-surface-2)] text-[var(--lu-tan)]",
                   )}
                 >
                   <span aria-hidden className="text-sm">{SLOT_META[seg.slot].icon}</span>
@@ -340,7 +345,7 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
             const v = e.target.value;
             if (v) fill("season", { id: v, label: v });
           }}
-          className="num w-full rounded-xl border border-[var(--border)] bg-black/50 px-4 py-3 text-base text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
+          className="num w-full rounded-xl border border-[var(--border)] bg-[var(--fb-surface)] px-4 py-3 text-base text-[var(--lu-cream)] outline-none focus:border-[var(--gold)] disabled:opacity-50"
         >
           <option value="" disabled>
             📅 اختر الموسم…
