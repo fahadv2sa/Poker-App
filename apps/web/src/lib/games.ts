@@ -31,6 +31,15 @@ export const GAMES: GameEntry[] = [
     status: "live",
     icon: "🔟",
   },
-  { id: "guess-player", nameAr: "خمن اللاعب", href: null, status: "soon", icon: "❓" },
+  {
+    id: "guess-player",
+    nameAr: "خمن اللاعب",
+    // Game #3 — served by THIS same web service at /games/guess-player; its
+    // realtime game-server is the only separate service (mirrors Top Ten).
+    // LOCAL-ONLY flip: must NOT reach production before final owner approval.
+    href: "/games/guess-player",
+    status: "live",
+    icon: "❓",
+  },
   { id: "game-4", nameAr: "قريباً", href: null, status: "soon", icon: "⚽" },
 ];
