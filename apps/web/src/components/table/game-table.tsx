@@ -660,10 +660,16 @@ export function GameTable({
           >
             <div className="flex flex-col items-center gap-2">
               <p className="text-xl font-black">
-                {view.closed === "CLOSED_BY_HOST" ? "أغلق المضيف الطاولة" : "أُغلقت الطاولة"}
+                {view.closed === "CLOSED_BY_HOST"
+                  ? "أغلق المضيف الطاولة"
+                  : view.closed === "SEAT_RELEASED"
+                    ? "انتقلت إلى طاولة أخرى"
+                    : "أُغلقت الطاولة"}
               </p>
               <p className="text-sm text-muted-foreground">
-                تمت إعادة أي رهانات نشطة إلى رصيدك — يتم إرجاعك إلى القائمة…
+                {view.closed === "SEAT_RELEASED"
+                  ? "مقعدك هنا أُخلي لأنك دخلت طاولة أخرى — يتم إرجاعك إلى القائمة…"
+                  : "تمت إعادة أي رهانات نشطة إلى رصيدك — يتم إرجاعك إلى القائمة…"}
               </p>
             </div>
           </motion.div>
@@ -1219,7 +1225,7 @@ function TableSummary({
   onClose,
 }: {
   rounds: RoundSummary[];
-  closedReason: "CLOSED_BY_HOST" | "EMPTY" | null;
+  closedReason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED" | null;
   onClose: () => void;
 }) {
   return (
@@ -1239,7 +1245,9 @@ function TableSummary({
                 ? "أغلق المضيف الطاولة"
                 : closedReason === "EMPTY"
                   ? "أُغلقت الطاولة"
-                  : `استعرض جولاتك — ${rounds.length} ${rounds.length === 1 ? "جولة" : "جولات"}`}
+                  : closedReason === "SEAT_RELEASED"
+                    ? "انتقلت إلى طاولة أخرى"
+                    : `استعرض جولاتك — ${rounds.length} ${rounds.length === 1 ? "جولة" : "جولات"}`}
             </span>
           </div>
           <button

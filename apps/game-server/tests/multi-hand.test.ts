@@ -503,6 +503,63 @@ describe("a player who busts is sat out, the room keeps playing", () => {
   });
 });
 
+describe("L-2 — the grace auto-advance requires at least ONE explicit ready (money safety)", () => {
+  it("nobody ready when the grace fires → the table PARKS (open, no deal) and no antes are charged", async () => {
+    const { room, persistence, emitter, timers } = makeRoom(
+      [
+        [1, "a"],
+        [2, "b"],
+      ],
+      { a: 5000n, b: 5000n },
+    );
+    room.state.kind = "MANUAL"; // real rooms carry a kind → the ready-check arms
+    await room.start();
+    await playHand(room);
+
+    // The ready-check armed the auto-advance; only hand 1's antes so far.
+    expect(timers.pending.has("nexthand")).toBe(true);
+    expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(2);
+
+    // The grace elapses with NOBODY having pressed "New Round": the table must
+    // park (stay open, no deal) instead of charging an AFK table more antes.
+    timers.pending.get("nexthand")!();
+    expect(room.state.status).toBe("LOBBY");
+    expect(room.state.phase).toBe("LOBBY");
+    const waiting = emitter.room.filter((e) => e.event === "session:waiting");
+    expect(waiting.at(-1)?.payload.reason).toBe("NOT_READY");
+    expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(2); // unchanged
+
+    // The host restarts the parked table explicitly — only then are antes charged.
+    await room.start();
+    expect(room.state.phase).toBe("PREFLOP");
+    expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(4);
+  });
+
+  it("ONE player ready → the grace auto-deal proceeds exactly as before", async () => {
+    const { room, persistence, timers } = makeRoom(
+      [
+        [1, "a"],
+        [2, "b"],
+      ],
+      { a: 5000n, b: 5000n },
+    );
+    room.state.kind = "MANUAL";
+    await room.start();
+    await playHand(room);
+
+    room.markReady(1); // one human asked to continue; the other is idle
+    expect(room.state.phase).toBe("ENDED"); // not all ready — no instant deal
+
+    timers.pending.get("nexthand")!(); // grace fires → auto-deal is allowed
+    for (let i = 0; i < 40 && room.state.phase !== "PREFLOP"; i++) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    expect(room.state.phase).toBe("PREFLOP");
+    expect(room.state.handNumber).toBe(2);
+    expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(4);
+  });
+});
+
 describe("a player can leave between hands without breaking the room", () => {
   it("drops the leaver from the next hand and keeps the session alive", async () => {
     const { room, persistence } = makeRoom(

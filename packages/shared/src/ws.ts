@@ -302,9 +302,12 @@ export interface RoundStatusPayload {
   deadlineTs: number | null;
 }
 
-/** The session is open but idle: not enough players can afford the next ante. */
+/** The session is open but idle. `NEED_PLAYERS` = not enough players can afford
+ *  the next ante; `NOT_READY` = the winner-screen grace elapsed with NOBODY
+ *  pressing "New Round", so the table parked instead of auto-charging antes
+ *  (money safety — an AFK table must never drain wallets). */
 export interface SessionWaitingPayload {
-  reason: "NEED_PLAYERS";
+  reason: "NEED_PLAYERS" | "NOT_READY";
   eligible: number;
 }
 
@@ -314,10 +317,13 @@ export interface PlayerLeftPayload {
   username: string;
 }
 
-/** The room was closed and removed. `CLOSED_BY_HOST` = the creator closed it;
- *  `EMPTY` = it auto-deleted when the last player left. */
+/** The room was closed and removed — or this seat's session there ended.
+ *  `CLOSED_BY_HOST` = the creator closed it; `EMPTY` = it auto-deleted when the
+ *  last player left; `SEAT_RELEASED` = sent only to a stale socket whose user
+ *  deliberately entered ANOTHER table (one table at a time — the old seat was
+ *  released via the normal leave path). */
 export interface RoomClosedPayload {
-  reason: "CLOSED_BY_HOST" | "EMPTY";
+  reason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED";
 }
 
 /** Quick Play waiting-lobby state for one tier's queue. `deadlineTs` (epoch ms)

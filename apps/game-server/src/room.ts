@@ -420,6 +420,18 @@ export class GameRoom {
     this.readySeats.clear();
     this.readyDeadlineTs = this.deps.clock.now() + NEW_ROUND_GRACE_SEC * 1000;
     this.deps.timers.arm(NEXT_HAND_KEY, NEW_ROUND_GRACE_SEC * 1000, () => {
+      // Money safety: the grace auto-advance deals (and charges antes) only if
+      // at least ONE human explicitly pressed "New Round". Nobody ready = the
+      // whole table is AFK — park it open instead of draining wallets hand
+      // after hand (antes + timeout-fold forfeits). The host's explicit deal
+      // and the all-ready path are unchanged.
+      if (this.readySeats.size === 0) {
+        this.parkSession(
+          this.state.players.filter((p) => p.connected).length,
+          "NOT_READY",
+        );
+        return;
+      }
       void this.startNextHand().catch((err) =>
         console.error("[ready] auto-advance failed", err),
       );
@@ -612,8 +624,10 @@ export class GameRoom {
     p.claimStrength = 0;
   }
 
-  /** Not enough players can afford a hand: keep the room open but idle. */
-  private parkSession(eligible: number): void {
+  /** Keep the room open but idle (no deal, no antes): `NEED_PLAYERS` = fewer
+   *  than two can afford the ante; `NOT_READY` = the winner-screen grace ran
+   *  out with nobody asking to continue. The host restarts via game:start. */
+  private parkSession(eligible: number, reason: "NEED_PLAYERS" | "NOT_READY" = "NEED_PLAYERS"): void {
     this.deps.timers.clearAll();
     for (const p of this.state.players) {
       this.resetHandState(p);
@@ -628,7 +642,7 @@ export class GameRoom {
     this.state.currentBet = 0n;
     this.state.turnDeadlineTs = null;
     this.deps.emitter.toRoom(SERVER_EVENTS.sessionWaiting, {
-      reason: "NEED_PLAYERS",
+      reason,
       eligible,
     });
   }

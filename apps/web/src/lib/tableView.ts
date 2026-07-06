@@ -52,9 +52,11 @@ export interface TableView {
   balance: number | null;
   /** True between hands when the room can't deal (fewer than 2 can ante). */
   waiting: boolean;
-  /** Set once the room is closed (host closed it, or it auto-emptied). The table
-   *  shows a notice and returns to the menu; null while the room is live. */
-  closed: "CLOSED_BY_HOST" | "EMPTY" | null;
+  /** Set once the room is closed (host closed it, or it auto-emptied) — or this
+   *  seat was released because the user entered another table (SEAT_RELEASED,
+   *  one table at a time). The table shows a notice and returns to the menu;
+   *  null while the room is live. */
+  closed: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED" | null;
   error: string | null;
   /** Set when the handshake is rejected for a gone session (inactivity logout or
    *  an invalid token). The table sends the user to /login to re-authenticate. */

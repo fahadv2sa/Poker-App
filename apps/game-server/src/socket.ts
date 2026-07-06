@@ -15,7 +15,7 @@ import {
 } from "@fb/shared";
 import type { Server, Socket } from "socket.io";
 import { computeLivePots, GameRoom, type RoomDeps } from "./room.js";
-import type { Emitter } from "./ports.js";
+import type { CardSource, Emitter, RoomPersistence } from "./ports.js";
 import { Matchmaking } from "./matchmaking.js";
 import { hydrateRoom } from "./factory.js";
 import { PrismaCardSource } from "./cards.js";
@@ -27,6 +27,68 @@ import { hasConnectedHuman } from "./presence.js";
 import type { RankInfo, RoomPlayer, RoomState } from "./types.js";
 
 const roomKey = (gameId: string) => `game:${gameId}`;
+
+/**
+ * Data-layer seam for the socket handlers. Production uses the Prisma-backed
+ * default below; the socket-layer tests inject in-memory fakes so the wiring
+ * (join/leave/release/teardown) is testable with real socket.io clients and
+ * NO database — the same injected-deps design the Top Ten / Guess the Player
+ * servers use. Behavior with the default is byte-identical to the previous
+ * direct calls.
+ */
+export interface SocketDataDeps {
+  /** Resolve an invite code to the game row (id + authoritative room kind). */
+  findGameByInvite(inviteCode: string): Promise<{ id: string; kind: "MANUAL" | "QUICK_PLAY" } | null>;
+  /** Authoritative wallet balance (join seating + queue entry gate). */
+  getBalance(userId: string): Promise<bigint>;
+  /** Load a room's persisted state (null for ABANDONED/missing rooms). */
+  hydrate(gameId: string, ranks: RankInfo[]): Promise<RoomState | null>;
+  /** Per-room card source / persistence used by hydrated runtimes. */
+  makeCards(): CardSource;
+  makePersistence(): RoomPersistence;
+  /** Fire-and-forget session-activity touch (never throws). */
+  touchActivity(userId: string): void;
+  /** Create a Quick Play Game row (matchmaking). */
+  createQuickGame(tier: Difficulty, hostUserId: string): Promise<{ gameId: string; inviteCode: string }>;
+}
+
+const quickInviteCode = () =>
+  randomBytes(6).toString("base64url").replace(/[-_]/g, "").slice(0, 8).toUpperCase();
+
+const prismaDataDeps: SocketDataDeps = {
+  async findGameByInvite(inviteCode) {
+    const game = await prisma.game.findUnique({
+      where: { inviteCode },
+      select: { id: true, kind: true },
+    });
+    return game as { id: string; kind: "MANUAL" | "QUICK_PLAY" } | null;
+  },
+  getBalance: (userId) => getWalletBalance(userId),
+  hydrate: (gameId, ranks) => hydrateRoom(gameId, ranks),
+  makeCards: () => new PrismaCardSource(),
+  makePersistence: () => new PrismaRoomPersistence(),
+  touchActivity: (userId) => void touchUserActivity(userId),
+  async createQuickGame(tier, hostUserId) {
+    const game = await prisma.game.create({
+      data: {
+        roomName: `لعب سريع — ${tier}`,
+        isPrivate: true, // never listed in the public rooms list
+        kind: "QUICK_PLAY", // authoritative room-type: matchmaking-only, no rejoin
+        maxPlayers: QUICK_PLAY.maxSeats,
+        difficulty: tier,
+        inviteCode: quickInviteCode(),
+        createdBy: hostUserId, // first queued player hosts (host-transfer applies)
+        config: {
+          ...DEFAULT_GAME_CONFIG,
+          ante: QUICK_PLAY.entryByTier[tier],
+          resolveMode: QUICK_PLAY.resolveMode,
+        } as unknown as Prisma.InputJsonValue,
+      },
+      select: { id: true, inviteCode: true },
+    });
+    return { gameId: game.id, inviteCode: game.inviteCode };
+  },
+};
 
 /** Emits to a Socket.IO room and to individual seats (private hole cards). */
 class SocketEmitter implements Emitter {
@@ -89,6 +151,7 @@ export function attachSocketHandlers(
   store: RoomStore,
   ranks: RankInfo[],
   bots?: BotRuntime,
+  data: SocketDataDeps = prismaDataDeps,
 ): AdminControls {
   const runtimes = new Map<string, RoomRuntime>();
   // gameId → userIds an admin has kicked from THIS room. Blocks rejoin (incl.
@@ -101,8 +164,8 @@ export function attachSocketHandlers(
     seats: Map<number, string>,
     pending: Map<string, string>,
   ): RoomDeps => ({
-    cards: new PrismaCardSource(),
-    persistence: new PrismaRoomPersistence(),
+    cards: data.makeCards(),
+    persistence: data.makePersistence(),
     emitter: new SocketEmitter(io, gameId, seats),
     timers: new NodeTimerService(),
     clock: systemClock,
@@ -129,7 +192,7 @@ export function attachSocketHandlers(
       const rt = runtimes.get(gameId);
       if (rt) return rt;
     }
-    const state = await hydrateRoom(gameId, ranks);
+    const state = await data.hydrate(gameId, ranks);
     if (!state) return null;
     const seats = new Map<number, string>();
     const pending = new Map<string, string>();
@@ -161,31 +224,10 @@ export function attachSocketHandlers(
   // ── Quick Play matchmaking ───────────────────────────────────────────────
   // Auto-creates a private table (reusing the normal Game row + lifecycle) when
   // a tier queue fills, then deals once the matched players have joined.
-  const quickInviteCode = () =>
-    randomBytes(6).toString("base64url").replace(/[-_]/g, "").slice(0, 8).toUpperCase();
-
   const matchmaking = new Matchmaking({
     io,
-    async createQuickGame(tier: Difficulty, hostUserId: string) {
-      const game = await prisma.game.create({
-        data: {
-          roomName: `لعب سريع — ${tier}`,
-          isPrivate: true, // never listed in the public rooms list
-          kind: "QUICK_PLAY", // authoritative room-type: matchmaking-only, no rejoin
-          maxPlayers: QUICK_PLAY.maxSeats,
-          difficulty: tier,
-          inviteCode: quickInviteCode(),
-          createdBy: hostUserId, // first queued player hosts (host-transfer applies)
-          config: {
-            ...DEFAULT_GAME_CONFIG,
-            ante: QUICK_PLAY.entryByTier[tier],
-            resolveMode: QUICK_PLAY.resolveMode,
-          } as unknown as Prisma.InputJsonValue,
-        },
-        select: { id: true, inviteCode: true },
-      });
-      return { gameId: game.id, inviteCode: game.inviteCode };
-    },
+    createQuickGame: (tier: Difficulty, hostUserId: string) =>
+      data.createQuickGame(tier, hostUserId),
     async startTable(gameId: string) {
       const rt = await getRuntime(gameId);
       if (!rt || rt.room.state.status !== "LOBBY") return; // already started / gone
@@ -238,6 +280,54 @@ export function attachSocketHandlers(
     }
   }
 
+  /**
+   * L-1 (one table at a time): entering a room releases any seat the user still
+   * holds in ANOTHER room, through the SAME leave path a voluntary exit uses
+   * (park/fold rules, host transfer, empty-table teardown). Without this, a
+   * second tab — or a grace-held seat — let one user accumulate live seats
+   * across tables. Runs only AFTER the new room admitted them, so a failed
+   * join (full/started) never costs the seat they already have.
+   */
+  async function releaseOtherRooms(userId: string, exceptGameId: string): Promise<void> {
+    for (const [gid, rt] of runtimes) {
+      if (gid === exceptGameId) continue;
+      const hasPending = rt.pending.has(userId);
+      const seatEntry = rt.room.state.players.find(
+        (p) => p.userId === userId && p.connected && !p.isBot,
+      );
+      if (!hasPending && !seatEntry) continue;
+      cancelGrace(gid, userId);
+      rt.pending.delete(userId);
+      rt.room.cancelPendingJoin(userId);
+      if (seatEntry) {
+        const oldSid = rt.seats.get(seatEntry.seat);
+        rt.seats.delete(seatEntry.seat);
+        rt.room.handlePlayerLeft(seatEntry.seat);
+        io.to(roomKey(gid)).emit(SERVER_EVENTS.playerLeft, {
+          seat: seatEntry.seat,
+          username: seatEntry.username,
+        });
+        // A still-open tab on the old table (multi-tab case): eject it from the
+        // socket room and tell it the seat moved. The socket stays CONNECTED —
+        // disconnecting it would trigger the client's auto-reconnect + rejoin
+        // and ping-pong the user's seat between the two tables forever.
+        if (oldSid) {
+          const old = io.sockets.sockets.get(oldSid);
+          old?.leave(roomKey(gid));
+          old?.emit(SERVER_EVENTS.roomClosed, { reason: "SEAT_RELEASED" });
+        }
+      }
+      if (hasConnectedHuman(rt.room.state.players)) {
+        io.to(roomKey(gid)).emit(
+          SERVER_EVENTS.stateSync,
+          buildStateSync(rt.room.state, null),
+        );
+      } else {
+        await closeAndTeardown(gid, rt, "EMPTY");
+      }
+    }
+  }
+
   io.on("connection", (socket: Socket) => {
     const user = socket.data.user as SocketUser | undefined;
     if (!user) {
@@ -250,12 +340,9 @@ export function attachSocketHandlers(
 
     socket.on(CLIENT_EVENTS.roomJoin, (raw: unknown) =>
       guard(socket, async () => {
-        void touchUserActivity(user.userId); // joining/rejoining counts as activity
+        data.touchActivity(user.userId); // joining/rejoining counts as activity
         const input = roomJoinSchema.parse(raw);
-        const game = await prisma.game.findUnique({
-          where: { inviteCode: input.inviteCode },
-          select: { id: true, kind: true },
-        });
+        const game = await data.findGameByInvite(input.inviteCode);
         if (!game) return emitError(socket, "ROOM_NOT_FOUND", "الغرفة غير موجودة");
         const rt = await getRuntime(game.id);
         // getRuntime returns null for ABANDONED (closed) rooms — gone for good.
@@ -300,6 +387,7 @@ export function attachSocketHandlers(
           });
           joinedGameId = game.id;
           await socket.join(roomKey(game.id));
+          await releaseOtherRooms(user.userId, game.id); // one table at a time
           socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, null));
           // Informational — the client renders SPECTATING as a calm notice.
           emitError(socket, "SPECTATING", "ستنضمّ إلى اللعب بعد انتهاء الجولة الحالية");
@@ -307,7 +395,7 @@ export function attachSocketHandlers(
         }
 
         // FIX #2: seat the player with their real wallet balance as `available`.
-        const balance = await getWalletBalance(user.userId);
+        const balance = await data.getBalance(user.userId);
         const player = seatPlayer(rt.room.state, user, balance);
         rt.seats.set(player.seat, socket.id);
         joinedGameId = game.id;
@@ -315,6 +403,7 @@ export function attachSocketHandlers(
         // cancel the pending disconnect cleanup so they were never "left".
         cancelGrace(game.id, user.userId);
         await socket.join(roomKey(game.id));
+        await releaseOtherRooms(user.userId, game.id); // one table at a time
 
         socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, player.seat));
         socket
@@ -370,7 +459,7 @@ export function attachSocketHandlers(
       guard(socket, async () => {
         // Active play keeps the session alive so a long, continuously-connected
         // hand never trips the inactivity window (throttled + guarded, no await).
-        void touchUserActivity(user.userId);
+        data.touchActivity(user.userId);
         const input = actionPlaceSchema.parse(raw);
         const rt = joinedGameId ? runtimes.get(joinedGameId) : undefined;
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
@@ -404,7 +493,7 @@ export function attachSocketHandlers(
         // Gate on affording the tier's entry (= the table ante). No charge here —
         // the queue NEVER deducts; the first charge is the ante at the table's
         // first deal. So leaving the queue costs nothing.
-        const balance = await getWalletBalance(user.userId);
+        const balance = await data.getBalance(user.userId);
         if (balance < BigInt(QUICK_PLAY.entryByTier[difficulty])) {
           return emitError(socket, "LOW_BALANCE", "رصيدك لا يكفي لرسوم الدخول");
         }
