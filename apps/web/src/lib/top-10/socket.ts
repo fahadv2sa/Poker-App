@@ -37,6 +37,8 @@ export interface TtCreateOptions {
   isPrivate?: boolean;
   roomName?: string;
   maxPlayers?: number;
+  /** One-time create id from the deep link (reload-safe create). */
+  nonce?: string;
 }
 
 /** Server ack for create/join — either the match id or a coded error. */

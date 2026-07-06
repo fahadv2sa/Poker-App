@@ -64,6 +64,10 @@ export interface MatchRoom {
   /** Private manual rooms are never listed — joinable only by invite link/code. */
   isPrivate: boolean;
   createdByUserId: string;
+  /** The create-nonce this MANUAL room was made with (null for quick play).
+   *  A create carrying the SAME nonce is a URL reload → resync, not a new
+   *  room; a different/new nonce is a deliberate fresh create. */
+  createNonce: string | null;
   status: "LOBBY" | "IN_PROGRESS" | "ENDED" | "ABANDONED";
   seats: TtSeat[];
   usedEntryIds: Set<string>;

@@ -77,6 +77,7 @@ export class Matches {
     isPrivate = false,
     roomName: string | null = null,
     maxPlayers: number = TT_MAX_PLAYERS,
+    nonce: string | null = null,
   ): MatchRoom {
     const id = cryptoRandomId();
     const room: MatchRoom = {
@@ -91,6 +92,7 @@ export class Matches {
       maxPlayers: clampSeats(maxPlayers),
       isPrivate,
       createdByUserId: creator.userId,
+      createNonce: nonce,
       status: "LOBBY",
       seats: [],
       usedEntryIds: new Set(),
@@ -120,6 +122,7 @@ export class Matches {
       maxPlayers: TT_MAX_PLAYERS,
       isPrivate: false,
       createdByUserId: "",
+      createNonce: null,
       status: "LOBBY",
       seats: [],
       usedEntryIds: new Set(),

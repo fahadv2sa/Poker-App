@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 /** The realtime play surface (quick-play lobby + live match). Reached from the
  *  home hero (quick play) and deep-linked from /create-room and /rooms:
  *    ?join=CODE              → auto-join a room by code
- *    ?create=1&difficulty&minutes&private → auto-create a manual room (no bots);
+ *    ?create=1&difficulty&minutes&private&n → auto-create a manual room (no bots);
  *                              private=1 keeps it off the rooms list (code-only) */
 export default async function PlayPage({
   searchParams,
@@ -22,6 +22,7 @@ export default async function PlayPage({
     private?: string;
     name?: string;
     max?: string;
+    n?: string;
   }>;
 }) {
   const session = await auth();
@@ -42,7 +43,10 @@ export default async function PlayPage({
   const isPrivate = sp.private === "1";
   const roomName = sp.name?.trim().slice(0, 40) || undefined;
   const maxPlayers = Math.min(TT_MAX_PLAYERS, Math.max(TT_MIN_PLAYERS, Number(sp.max) || TT_MAX_PLAYERS));
-  const autoCreate = sp.create === "1" ? { difficulty, minutes, isPrivate, roomName, maxPlayers } : null;
+  const autoCreate =
+    sp.create === "1"
+      ? { difficulty, minutes, isPrivate, roomName, maxPlayers, nonce: sp.n?.trim().slice(0, 32) || undefined }
+      : null;
 
   return (
     <TopTenClient

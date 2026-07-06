@@ -66,6 +66,12 @@ export const ttCreateSchema = z.object({
   roundTimerSec: z.number().int().min(60).max(1800).optional(),
   /** Private rooms are NEVER listed — reachable only via invite link / room code. */
   isPrivate: z.boolean().optional(),
+  /** One-time id minted by the create-room form and carried in the deep-link
+   *  URL. Reloading /play?create=1 re-sends the SAME nonce → the server
+   *  resyncs the room that nonce already created (no duplicate); a fresh
+   *  form submit mints a NEW nonce → any stale held seat is withdrawn and a
+   *  fresh lobby opens (fixes create dropping into an old live table). */
+  nonce: z.string().trim().min(1).max(32).optional(),
 });
 export type TtCreateInput = z.infer<typeof ttCreateSchema>;
 

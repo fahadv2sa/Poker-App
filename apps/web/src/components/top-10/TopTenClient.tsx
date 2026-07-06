@@ -48,6 +48,7 @@ export function TopTenClient({
     isPrivate: boolean;
     roomName?: string;
     maxPlayers?: number;
+    nonce?: string;
   } | null;
 }) {
   const router = useRouter();
@@ -104,6 +105,7 @@ export function TopTenClient({
               isPrivate: autoCreate.isPrivate,
               roomName: autoCreate.roomName,
               maxPlayers: autoCreate.maxPlayers,
+              nonce: autoCreate.nonce,
             },
             (res) => {
               if (res?.error) {

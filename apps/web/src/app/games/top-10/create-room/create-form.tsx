@@ -49,6 +49,9 @@ export function CreateRoomForm() {
       create: "1",
       difficulty,
       minutes: String(minutes),
+      // One-time create id: a RELOAD of the resulting URL resyncs the same
+      // room server-side; a fresh submit mints a new one → always a new lobby.
+      n: Math.random().toString(36).slice(2, 10),
       private: isPrivate ? "1" : "0",
       max: String(maxPlayers),
     });

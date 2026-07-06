@@ -31,12 +31,18 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
   const fillTimers = new Map<TtDifficulty, ReturnType<typeof setTimeout>>();
 
   const user = (socket: Socket): RealtimeClaims => socket.data.user as RealtimeClaims;
+  // Only an ACTIVE seat counts as "in a room": a mid-match withdrawal keeps the seat
+  // object around (status WITHDRAWN) for the standings, but the player no longer holds
+  // it — matching it here would shadow any room they create/join afterwards and resync
+  // them into a table they already left.
+  const holdsSeat = (r: MatchRoom, userId: string): boolean =>
+    r.seats.some((s) => s.userId === userId && s.status === "ACTIVE");
   const findRoomOf = (userId: string): MatchRoom | undefined =>
-    matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ENDED" && r.status !== "ABANDONED");
+    matches.list().find((r) => holdsSeat(r, userId) && r.status !== "ENDED" && r.status !== "ABANDONED");
   // Includes a just-ENDED room so the post-round New-Round window (ready vote / leave /
   // reconnect) can still find it; an ABANDONED room is torn down and never matched.
   const findActiveOrEnded = (userId: string): MatchRoom | undefined =>
-    matches.list().find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ABANDONED");
+    matches.list().find((r) => holdsSeat(r, userId) && r.status !== "ABANDONED");
 
   /** Re-attach a (re)connecting socket to a room the user already holds a seat in:
    *  cancel any leave-grace, mark connected, re-join the socket room, and push a fresh
@@ -151,12 +157,24 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     socket.on(TT_CLIENT_EVENTS.create, (raw, ack?: (r: unknown) => void) => {
       const parsed = ttCreateSchema.safeParse(raw);
       if (!parsed.success) return ack?.({ error: "INVALID" });
-      // Reconnect-safe: returning to a /play?create=1 URL must NOT spawn a duplicate —
-      // if the player is already in a live room, just resync it.
       const current = findActiveOrEnded(u.userId);
       if (current) {
-        resyncTo(socket, current);
-        return ack?.({ matchId: current.id, inviteCode: current.inviteCode });
+        // Reload of the SAME /play?create=1&n=… URL (or a nonce-less deep
+        // link) → reconnect-safe resync, never a duplicate room. A create
+        // with a NEW nonce is a deliberate fresh create: the user is done
+        // with whatever seat is still grace-held for them (e.g. an old
+        // quick-play table) — withdraw it (normal teardown rules apply)
+        // and open the fresh lobby. THE BUG this fixes: create used to
+        // resync unconditionally, dropping the creator into their old
+        // LIVE table instead of a waiting lobby.
+        const sameCreate =
+          !parsed.data.nonce || (current.createNonce != null && current.createNonce === parsed.data.nonce);
+        if (sameCreate) {
+          resyncTo(socket, current);
+          return ack?.({ matchId: current.id, inviteCode: current.inviteCode });
+        }
+        socket.leave(current.id); // stop old-room events first (withdraw may emit teardown)
+        matches.withdraw(current, u.userId);
       }
       const room = matches.createManual(
         u,
@@ -165,6 +183,7 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
         parsed.data.isPrivate ?? false,
         parsed.data.roomName ?? null,
         parsed.data.maxPlayers,
+        parsed.data.nonce ?? null,
       );
       const seat = room.seats[0]!;
       seat.socketId = socket.id;
@@ -176,12 +195,20 @@ export function attachSocketHandlers(io: Server, matches: Matches, botFiller?: B
     socket.on(TT_CLIENT_EVENTS.join, (raw, ack?: (r: unknown) => void) => {
       const parsed = ttJoinSchema.safeParse(raw);
       if (!parsed.success) return ack?.({ error: "INVALID" });
-      // Reconnect-safe: if already seated somewhere (e.g. returning to a /play?join=CODE
-      // URL after the room started), resync that room — works in ANY non-abandoned state.
       const current = findActiveOrEnded(u.userId);
       if (current) {
-        resyncTo(socket, current);
-        return ack?.({ matchId: current.id });
+        // Same room (invite-link reload / returning member) → resync into it —
+        // works in ANY non-abandoned state, so a member returning after the
+        // room started still lands back inside.
+        if (current.inviteCode === parsed.data.inviteCode) {
+          resyncTo(socket, current);
+          return ack?.({ matchId: current.id });
+        }
+        // A DIFFERENT room's invite is a deliberate move: release the stale
+        // seat first so the join lands in the target LOBBY, never back in an
+        // old table.
+        socket.leave(current.id); // stop old-room events first (withdraw may emit teardown)
+        matches.withdraw(current, u.userId);
       }
       const room = matches.list().find((r) => r.inviteCode === parsed.data.inviteCode && r.status === "LOBBY");
       if (!room) return ack?.({ error: "NOT_FOUND" });
