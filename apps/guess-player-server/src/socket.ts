@@ -31,19 +31,18 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
   const fillTimers = new Map<GpDifficulty, ReturnType<typeof setTimeout>>();
 
   const user = (socket: Socket): RealtimeClaims => socket.data.user as RealtimeClaims;
+  // Only an ACTIVE seat counts as "in a room": a mid-match withdrawal keeps the seat
+  // object around (status WITHDRAWN) for the standings, but the player no longer holds
+  // it — matching it here would shadow any room they create/join afterwards and resync
+  // them into a table they already left.
+  const holdsSeat = (r: GpMatchRoom, userId: string): boolean =>
+    r.seats.some((s) => s.userId === userId && s.status === "ACTIVE");
   const findRoomOf = (userId: string): GpMatchRoom | undefined =>
     matches
       .list()
-      .find(
-        (r) =>
-          r.seats.some((s) => s.userId === userId) &&
-          r.status !== "ENDED" &&
-          r.status !== "ABANDONED",
-      );
+      .find((r) => holdsSeat(r, userId) && r.status !== "ENDED" && r.status !== "ABANDONED");
   const findActiveOrEnded = (userId: string): GpMatchRoom | undefined =>
-    matches
-      .list()
-      .find((r) => r.seats.some((s) => s.userId === userId) && r.status !== "ABANDONED");
+    matches.list().find((r) => holdsSeat(r, userId) && r.status !== "ABANDONED");
 
   /** Re-attach a (re)connecting socket to a held seat (cancel grace, mark
    *  connected, rejoin the socket room, push a snapshot). */

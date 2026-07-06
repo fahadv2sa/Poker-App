@@ -294,6 +294,38 @@ describe("Guess the Player socket flow — create → lobby → join → start",
     expect(h.matches.get(oldAck.matchId)).toBeUndefined(); // …and the old empty lobby is gone
   });
 
+  it("REGRESSION: the WITHDRAWN seat left behind in the old (still-running) table never shadows the new room — a same-nonce reload resyncs the NEW lobby", async () => {
+    // Old multi-human table keeps playing after A withdraws, so A's seat stays
+    // in its seats array with status WITHDRAWN (needed for the standings)…
+    const qp = h.matches.createQuickPlay("EASY");
+    h.matches.addSeat(qp, { userId: "user-a", username: "A", playerNumber: 1 });
+    h.matches.addSeat(qp, { userId: "user-x", username: "X", playerNumber: 2 });
+    h.matches.addSeat(qp, { userId: "user-y", username: "Y", playerNumber: 3 });
+    h.matches.start(qp, "user-a");
+    await sleep(50);
+    expect(h.matches.get(qp.id)?.status).toBe("IN_PROGRESS");
+
+    const a = player(h, "user-a", "A");
+    const ack = await emitAck<{ matchId: string }>(a, "gp:create", {
+      mode: "VS_HUMANS",
+      isPrivate: false,
+      nonce: "n-shadow",
+    });
+    expect(ack.matchId).not.toBe(qp.id);
+    expect(h.matches.get(qp.id)?.status).toBe("IN_PROGRESS"); // others keep playing
+    expect(h.matches.get(qp.id)?.seats.find((s) => s.userId === "user-a")?.status).toBe("WITHDRAWN");
+
+    // …reloading the create URL (same nonce) must resync the NEW lobby, not the
+    // old table whose withdrawn seat still carries A's userId.
+    const ack2 = await emitAck<{ matchId: string }>(a, "gp:create", {
+      mode: "VS_HUMANS",
+      isPrivate: false,
+      nonce: "n-shadow",
+    });
+    expect(ack2.matchId).toBe(ack.matchId);
+    expect(h.matches.list().filter((r) => r.kind === "MANUAL")).toHaveLength(1);
+  });
+
   it("the creator leaving the lobby before start drops the empty room", async () => {
     const a = player(h, "user-a", "A");
     const ack = await emitAck<{ matchId: string }>(a, "gp:create", {
