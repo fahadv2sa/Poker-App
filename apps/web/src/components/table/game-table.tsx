@@ -565,12 +565,18 @@ export function GameTable({
                 <div className="flex flex-col gap-3">
                   {view.waiting ? (
                     <p className="rounded-lg border border-gold/30 bg-gold/10 px-3 py-2 text-center text-sm text-gold">
-                      بانتظار انضمام لاعبين (أو إعادة شحن الرصيد) لبدء جولة جديدة…
+                      {view.waiting === "NOT_READY"
+                        ? amHost
+                          ? "توقفت الطاولة — لم يطلب أحد جولة جديدة. اضغط «ابدأ اللعبة» للاستمرار."
+                          : "توقفت الطاولة — لم يطلب أحد جولة جديدة. بانتظار المضيف ليبدأ الجولة التالية…"
+                        : "بانتظار انضمام لاعبين (أو إعادة شحن الرصيد) لبدء جولة جديدة…"}
                     </p>
                   ) : null}
                   <LobbyPanel
                     inviteCode={inviteCode}
-                    isHost={isHost}
+                    // Live host authority (follows transfer) — the parked-table
+                    // resume must be pressable by whoever is host NOW.
+                    isHost={amHost}
                     canStart={players.length >= 2}
                     onStart={start}
                   />

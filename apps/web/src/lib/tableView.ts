@@ -50,8 +50,11 @@ export interface TableView {
   notices: Notice[];
   /** Authoritative wallet balance from the last hand's result (feature #7). */
   balance: number | null;
-  /** True between hands when the room can't deal (fewer than 2 can ante). */
-  waiting: boolean;
+  /** Set while the room is parked between hands: NEED_PLAYERS = fewer than 2
+   *  can afford the ante; NOT_READY = the winner-screen grace ran out with
+   *  nobody pressing "New Round" (money safety — no auto-deal to an AFK
+   *  table). null while a hand is live / the lobby is fresh. */
+  waiting: "NEED_PLAYERS" | "NOT_READY" | null;
   /** Set once the room is closed (host closed it, or it auto-emptied) — or this
    *  seat was released because the user entered another table (SEAT_RELEASED,
    *  one table at a time). The table shows a notice and returns to the menu;
@@ -80,7 +83,7 @@ export const INITIAL_VIEW: TableView = {
   bestRank: null,
   notices: [],
   balance: null,
-  waiting: false,
+  waiting: null,
   closed: null,
   error: null,
   authExpired: false,

@@ -183,7 +183,7 @@ export function useGameSocket(token: string, inviteCode: string) {
           result: null,
           bestRank: null,
           hole: [],
-          waiting: false,
+          waiting: null,
           roundReady: null,
           state: v.state
             ? {
@@ -208,14 +208,16 @@ export function useGameSocket(token: string, inviteCode: string) {
           ...v,
           roundReady: { readySeats: p.readySeats, total: p.totalHumans, deadlineTs: p.deadlineTs },
         })),
-      // Not enough players can afford the next ante — the room idles, open.
-      onSessionWaiting: () =>
+      // The room parked between hands, open: NEED_PLAYERS (can't afford the
+      // ante) or NOT_READY (grace ran out with nobody continuing) — the banner
+      // wording follows the reason.
+      onSessionWaiting: (p) =>
         setView((v) => ({
           ...v,
           result: null,
           bestRank: null,
           hole: [],
-          waiting: true,
+          waiting: p.reason,
           roundReady: null,
           state: v.state
             ? { ...v.state, phase: "LOBBY", status: "LOBBY", currentTurnSeat: null }
