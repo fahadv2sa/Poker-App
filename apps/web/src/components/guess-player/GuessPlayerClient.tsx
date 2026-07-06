@@ -50,6 +50,7 @@ export function GuessPlayerClient({
     isPrivate: boolean;
     roomName?: string;
     maxPlayers?: number;
+    nonce?: string;
   } | null;
 }) {
   const router = useRouter();
@@ -97,6 +98,7 @@ export function GuessPlayerClient({
               isPrivate: autoCreate.isPrivate,
               roomName: autoCreate.roomName,
               maxPlayers: autoCreate.maxPlayers,
+              nonce: autoCreate.nonce,
             },
             (res) => {
               if (res?.error) {
@@ -232,7 +234,9 @@ export function GuessPlayerClient({
             <BoltIcon size={22} />
           </span>
           <div className="min-w-0">
-            <h1 className="lu-gold-text lu-gold-title truncate text-xl font-black leading-tight">لعب سريع</h1>
+            <h1 className="lu-gold-text lu-gold-title truncate text-xl font-black leading-tight">
+              {state?.kind === "MANUAL" ? state.roomName?.trim() || "طاولة الأصدقاء" : "لعب سريع"}
+            </h1>
             <p className="truncate text-xs text-[var(--lu-tan)]">اسأل، استنتج، وخمّن اللاعب الخفي</p>
           </div>
         </header>
@@ -484,10 +488,15 @@ function LobbyRoom({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2 px-0.5">
-        <h2 className="truncate text-lg font-black lu-gold-text">{state.roomName?.trim() || "غرفة خاصة"}</h2>
-        <span className="lu-chip shrink-0 rounded-full px-3 py-1 text-xs font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/30">
-          {state.mode === "VS_HUMANS" ? "ضد الأصدقاء" : `ضد المنصة · ${state.difficulty ? DIFF_AR[state.difficulty] : ""}`}
-        </span>
+        <h2 className="truncate text-lg font-black lu-gold-text">{state.roomName?.trim() || "غرفة جديدة"}</h2>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="lu-chip rounded-full px-3 py-1 text-xs font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/30">
+            {state.mode === "VS_HUMANS" ? "ضد الأصدقاء" : `ضد المنصة · ${state.difficulty ? DIFF_AR[state.difficulty] : ""}`}
+          </span>
+          <span className="rounded-full bg-[var(--fb-surface)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--lu-tan)] ring-1 ring-[var(--border)]">
+            {state.isPrivate ? "🔒 خاصة" : "🌐 عامة"}
+          </span>
+        </div>
       </div>
 
       {code ? (

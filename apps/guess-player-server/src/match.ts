@@ -66,6 +66,7 @@ export class GpMatches {
       roomName?: string | null;
       maxPlayers?: number;
       isPrivate?: boolean;
+      nonce?: string | null;
     },
   ): GpMatchRoom {
     const id = cryptoRandomId();
@@ -84,6 +85,7 @@ export class GpMatches {
       maxPlayers: clampSeats(opts.maxPlayers ?? GP_LIMITS.maxPlayers),
       isPrivate: opts.isPrivate ?? false,
       createdByUserId: creator.userId,
+      createNonce: opts.nonce ?? null,
       status: "LOBBY",
       seats: [],
       usedPlayerIds: new Set(),
@@ -116,6 +118,7 @@ export class GpMatches {
       maxPlayers: GP_LIMITS.quickPlayMaxPlayers,
       isPrivate: false,
       createdByUserId: "",
+      createNonce: null,
       status: "LOBBY",
       seats: [],
       usedPlayerIds: new Set(),
@@ -745,6 +748,7 @@ export class GpMatches {
       inviteCode: room.inviteCode,
       roomName: room.roomName,
       maxPlayers: room.maxPlayers,
+      isPrivate: room.isPrivate,
       status: room.status,
       difficulty: room.difficulty,
       createdByUserId: room.createdByUserId,

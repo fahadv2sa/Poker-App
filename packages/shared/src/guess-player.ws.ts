@@ -73,6 +73,12 @@ export const gpCreateSchema = z
     roomName: z.string().trim().min(2, "اسم الغرفة قصير جدًا").max(40).optional(),
     maxPlayers: z.number().int().min(GP_LIMITS.minPlayers).max(GP_LIMITS.maxPlayers).optional(),
     isPrivate: z.boolean().optional(),
+    /** One-time id minted by the create-room form and carried in the deep-link
+     *  URL. Reloading /play?create=1 re-sends the SAME nonce → the server
+     *  resyncs the room that nonce already created (no duplicate); a fresh
+     *  form submit mints a NEW nonce → any stale held seat is withdrawn and a
+     *  fresh lobby opens (fixes create dropping into an old live table). */
+    nonce: z.string().trim().min(1).max(32).optional(),
   })
   .refine((v) => (v.mode === "VS_SYSTEM" ? v.difficulty != null : v.difficulty == null), {
     message: "difficulty is required for VS_SYSTEM and forbidden for VS_HUMANS",
@@ -166,6 +172,7 @@ export type GpStateView = {
   inviteCode: string | null;
   roomName: string | null;
   maxPlayers: number;
+  isPrivate: boolean;
   status: "LOBBY" | "IN_PROGRESS" | "ENDED" | "ABANDONED";
   difficulty: (typeof GP_DIFFICULTIES)[number] | null;
   createdByUserId: string;

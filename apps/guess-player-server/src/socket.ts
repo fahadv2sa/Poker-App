@@ -140,8 +140,22 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
       if (!parsed.success) return ack?.({ error: "INVALID" });
       const current = findActiveOrEnded(u.userId);
       if (current) {
-        resyncTo(socket, current);
-        return ack?.({ matchId: current.id, inviteCode: current.inviteCode });
+        // Reload of the SAME /play?create=1&n=… URL (or a nonce-less deep
+        // link) → reconnect-safe resync, never a duplicate room. A create
+        // with a NEW nonce is a deliberate fresh create: the user is done
+        // with whatever seat is still grace-held for them (e.g. an old
+        // quick-play table) — withdraw it (normal teardown rules apply)
+        // and open the fresh lobby. THE BUG this fixes: create used to
+        // resync unconditionally, dropping the creator into their old
+        // LIVE table instead of a waiting lobby.
+        const sameCreate =
+          !parsed.data.nonce || (current.createNonce != null && current.createNonce === parsed.data.nonce);
+        if (sameCreate) {
+          resyncTo(socket, current);
+          return ack?.({ matchId: current.id, inviteCode: current.inviteCode });
+        }
+        socket.leave(current.id); // stop old-room events first (withdraw may emit teardown)
+        matches.withdraw(current, u.userId);
       }
       const room = matches.createManual(u, {
         mode: parsed.data.mode,
@@ -149,6 +163,7 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
         roomName: parsed.data.roomName ?? null,
         maxPlayers: parsed.data.maxPlayers,
         isPrivate: parsed.data.isPrivate,
+        nonce: parsed.data.nonce ?? null,
       });
       const seat = room.seats[0]!;
       seat.socketId = socket.id;
@@ -162,8 +177,16 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
       if (!parsed.success) return ack?.({ error: "INVALID" });
       const current = findActiveOrEnded(u.userId);
       if (current) {
-        resyncTo(socket, current);
-        return ack?.({ matchId: current.id });
+        // Same room (invite-link reload / returning member) → resync into it.
+        if (current.inviteCode === parsed.data.inviteCode) {
+          resyncTo(socket, current);
+          return ack?.({ matchId: current.id });
+        }
+        // A DIFFERENT room's invite is a deliberate move: release the stale
+        // seat first so the join lands in the target LOBBY, never back in an
+        // old table.
+        socket.leave(current.id); // stop old-room events first (withdraw may emit teardown)
+        matches.withdraw(current, u.userId);
       }
       const room = matches
         .list()

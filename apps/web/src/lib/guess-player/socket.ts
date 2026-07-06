@@ -42,6 +42,8 @@ export interface GpCreateOptions {
   isPrivate?: boolean;
   roomName?: string;
   maxPlayers?: number;
+  /** One-time create id from the deep link (reload-safe create). */
+  nonce?: string;
 }
 
 export type GpJoinAck = { matchId?: string; inviteCode?: string | null; error?: string };

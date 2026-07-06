@@ -30,6 +30,7 @@ function baseState(over: Partial<GpStateView>): GpStateView {
     inviteCode: "G7421",
     roomName: "طاولة المحققين",
     maxPlayers: 6,
+    isPrivate: false,
     status: "ENDED",
     difficulty: null,
     createdByUserId: "me",
