@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 /** The realtime play surface (quick-play lobby + live match). Deep links:
  *    ?join=CODE                                → auto-join a room by code
- *    ?create=1&mode&difficulty&rounds&private&max&name → auto-create a room */
+ *    ?create=1&mode&difficulty&private&max&name → auto-create a room */
 export default async function PlayPage({
   searchParams,
 }: {
@@ -20,7 +20,6 @@ export default async function PlayPage({
     create?: string;
     mode?: string;
     difficulty?: string;
-    rounds?: string;
     private?: string;
     name?: string;
     max?: string;
@@ -43,10 +42,6 @@ export default async function PlayPage({
   const difficulty = (GP_DIFFICULTIES as readonly string[]).includes(sp.difficulty ?? "")
     ? (sp.difficulty as GpDifficulty)
     : "MEDIUM";
-  const roundsTotal = Math.min(
-    GP_LIMITS.maxRounds,
-    Math.max(GP_LIMITS.minRounds, Number(sp.rounds) || GP_LIMITS.defaultRounds),
-  );
   const isPrivate = sp.private === "1";
   const roomName = sp.name?.trim().slice(0, 40) || undefined;
   const maxPlayers = Math.min(
@@ -58,7 +53,6 @@ export default async function PlayPage({
       ? {
           mode,
           difficulty: mode === "VS_SYSTEM" ? difficulty : undefined,
-          roundsTotal,
           isPrivate,
           roomName,
           maxPlayers,

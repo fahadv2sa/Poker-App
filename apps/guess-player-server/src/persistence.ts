@@ -58,7 +58,8 @@ export class PrismaGpPersistence implements GpPersistence {
         kind: room.kind,
         mode: room.mode,
         difficulty: room.difficulty,
-        roundsTotal: room.roundsTotal,
+        // Open-ended sessions: rounds_total is REPURPOSED — written at close
+        // with the number of rounds the session contained (analytics only).
         roundTimerSec: room.roundTimerSec,
         turnTimerSec: room.turnTimerSec,
         maxPlayers: room.maxPlayers,
@@ -186,7 +187,7 @@ export class PrismaGpPersistence implements GpPersistence {
     if (!room.persisted) return;
     await prisma.gpMatch.update({
       where: { id: room.persistId },
-      data: { status: room.status, endedAt: new Date() },
+      data: { status: room.status, endedAt: new Date(), roundsTotal: room.roundsPlayed },
     });
     for (const s of room.seats) {
       const won = winnerUserId === s.userId;

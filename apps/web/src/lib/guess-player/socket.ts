@@ -39,7 +39,6 @@ export interface GpHandlers {
 export interface GpCreateOptions {
   mode: GpMode;
   difficulty?: GpDifficulty;
-  roundsTotal?: number;
   isPrivate?: boolean;
   roomName?: string;
   maxPlayers?: number;

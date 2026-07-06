@@ -8,17 +8,25 @@ import type { GpMatchRoom } from "../src/types.js";
 /**
  * Match-orchestration tests with fake deps (no DB, no sockets), mirroring the
  * top-10-server harness. The fake facts source answers through the REAL
- * engine (answerQuestion) over a synthetic FactPack.
+ * engine (answerQuestion) over a synthetic FactPack. Rounds are OPEN-ENDED:
+ * every round ends at the winner screen, whose 15s countdown (or a unanimous
+ * جولة جديدة) continues the SAME session with carried-over points.
  */
 
 const HIDDEN_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_ID = "22222222-2222-4222-8222-222222222222";
 const CLUB_YES = "33333333-3333-4333-8333-333333333333";
 const CLUB_NO = "44444444-4444-4444-8444-444444444444";
+// The no-repeat rule (usedPlayerIds) means every round needs a fresh hidden
+// player — a pool of distinct ids the fake pickHidden draws from in order.
+const HIDDEN_POOL = [
+  HIDDEN_ID,
+  ...Array.from({ length: 9 }, (_, i) => `55555555-5555-4555-8555-55555555555${i}`),
+];
 
-function hiddenPack(): GpFactPack {
+function packFor(playerId: string): GpFactPack {
   return {
-    playerId: HIDDEN_ID,
+    playerId,
     name: "Hidden Player",
     nameAr: "اللاعب الخفي",
     nationalityName: "Egypt",
@@ -36,21 +44,18 @@ function hiddenPack(): GpFactPack {
   };
 }
 
-const hidden = () => ({
-  ref: { id: HIDDEN_ID, name: "Hidden Player", nameAr: "اللاعب الخفي", photoUrl: null },
-  pack: hiddenPack(),
+const hiddenFor = (playerId: string) => ({
+  ref: { id: playerId, name: "Hidden Player", nameAr: "اللاعب الخفي", photoUrl: null },
+  pack: packFor(playerId),
 });
 
 function fakeFacts(): GpFactsSource {
   return {
-    pickHidden: async () => hidden(),
-    loadHidden: async (playerId: string) =>
-      playerId === HIDDEN_ID
-        ? hidden()
-        : {
-            ref: { id: playerId, name: "Picked", nameAr: null, photoUrl: null },
-            pack: { ...hiddenPack(), playerId },
-          },
+    pickHidden: async (_difficulty, usedIds) => {
+      const next = HIDDEN_POOL.find((id) => !usedIds.has(id));
+      return next ? hiddenFor(next) : null;
+    },
+    loadHidden: async (playerId: string) => hiddenFor(playerId),
     resolveAsk: async (input: GpAskInput): Promise<ResolvedAsk | null> => {
       if (input.template === "CLUB_EVER") {
         return {
@@ -81,7 +86,9 @@ const noopPersist = {
   saveQuestion: vi.fn(async () => {}),
   saveGuess: vi.fn(async () => {}),
   finishRound: vi.fn(async () => {}),
-  awardXp: vi.fn(async () => {}),
+  awardXp: vi.fn(
+    async (_userId: string, _matchId: string, _amount: number, _reference: string, _reason: string) => {},
+  ),
   markWithdrawn: vi.fn(async () => {}),
   finishMatch: vi.fn(async () => {}),
 };
@@ -120,7 +127,7 @@ async function vsSystemMatch(matches: GpMatches, players = 2): Promise<GpMatchRo
 async function vsHumansMatch(matches: GpMatches): Promise<GpMatchRoom> {
   const room = matches.createManual(
     { userId: "u0", username: "A", playerNumber: 1 },
-    { mode: "VS_HUMANS", roundsTotal: 2 },
+    { mode: "VS_HUMANS" },
   );
   matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 });
   matches.addSeat(room, { userId: "u2", username: "C", playerNumber: 3 });
@@ -131,6 +138,12 @@ async function vsHumansMatch(matches: GpMatches): Promise<GpMatchRoom> {
 
 const userAt = (room: GpMatchRoom, seat: number | null) =>
   room.seats.find((s) => s.seat === seat)!.userId;
+
+/** Round → winner screen: run out the post-reveal pause into the countdown. */
+async function toWinnerScreen() {
+  await vi.advanceTimersByTimeAsync(GP_TIMING.nextRoundPauseMs);
+  await settle();
+}
 
 describe("Guess the Player match orchestration", () => {
   beforeEach(() => {
@@ -232,26 +245,72 @@ describe("Guess the Player match orchestration", () => {
     expect(room.seats.find((s) => s.seat === seat0)!.totalPoints).toBe(500);
   });
 
-  it("round timer expiry reveals with no winner, then the match ends after all rounds", async () => {
+  it("timer expiry → winner screen; the countdown expiry auto-starts the next round (no fixed length)", async () => {
     const { matches, events } = makeMatches();
     const room = await vsSystemMatch(matches);
-    for (let round = 1; round <= room.roundsTotal; round++) {
-      // A real table has activity — one ask per round also keeps the 30-min
-      // idle clock (which is longer than 3 silent rounds) out of this test.
-      const seat = room.round!.turnOrder[0]!;
-      await matches.ask(room, userAt(room, seat), { template: "CLUB_EVER", clubId: CLUB_YES });
-      await vi.advanceTimersByTimeAsync(GP_TIMING.roundSec * 1000);
-      const reveal = events[GP_SERVER_EVENTS.reveal]!.at(-1) as {
-        roundNo: number;
-        reason: string;
-        winnerSeat: number | null;
-      };
-      expect(reveal).toMatchObject({ roundNo: round, reason: "TIMER", winnerSeat: null });
-      await vi.advanceTimersByTimeAsync(GP_TIMING.nextRoundPauseMs);
-      await settle();
-    }
+    // A real table has activity — one ask keeps the 30-min idle clock away.
+    const seat = room.round!.turnOrder[0]!;
+    await matches.ask(room, userAt(room, seat), { template: "CLUB_EVER", clubId: CLUB_YES });
+    await vi.advanceTimersByTimeAsync(GP_TIMING.roundSec * 1000);
+    const reveal = events[GP_SERVER_EVENTS.reveal]!.at(-1) as {
+      roundNo: number;
+      reason: string;
+      winnerSeat: number | null;
+    };
+    expect(reveal).toMatchObject({ roundNo: 1, reason: "TIMER", winnerSeat: null });
+    await toWinnerScreen();
+    // At the winner screen: the SESSION is not over — no matchEnded, and the
+    // state carries the 15s continuation countdown.
     expect(room.status).toBe("ENDED");
+    expect(events[GP_SERVER_EVENTS.matchEnded]).toBeUndefined();
+    expect(lastState(events).newMatchRequest).not.toBeNull();
+    // Countdown expiry auto-starts round 2 with a FRESH hidden player.
+    await vi.advanceTimersByTimeAsync(GP_TIMING.newMatchGraceSec * 1000);
+    await settle();
+    expect(room.status).toBe("IN_PROGRESS");
+    expect(room.round?.roundNo).toBe(2);
+    expect(room.round?.hidden?.ref.id).not.toBe(HIDDEN_ID); // no repeats per table
+  });
+
+  it("all players pressing جولة جديدة starts the next round instantly; points carry over", async () => {
+    const { matches, events } = makeMatches();
+    const room = await vsSystemMatch(matches);
+    const seat0 = room.round!.turnOrder[0]!;
+    await matches.guess(room, userAt(room, seat0), HIDDEN_ID);
+    await settle();
+    await toWinnerScreen();
+    expect(room.status).toBe("ENDED");
+    matches.requestNewMatch(room, "u0");
+    await settle();
+    expect(room.status).toBe("ENDED"); // 1 of 2 ready — countdown keeps running
+    matches.requestNewMatch(room, "u1");
+    await settle();
+    expect(room.status).toBe("IN_PROGRESS");
+    expect(room.round?.roundNo).toBe(2);
+    // cumulative scoring: round-1 points survive into round 2
+    expect(room.seats.find((s) => s.seat === seat0)!.totalPoints).toBe(500);
+    expect(events[GP_SERVER_EVENTS.matchEnded]).toBeUndefined();
+  });
+
+  it("the last player leaving the winner screen closes the session and awards SESSION_WIN to the unique leader", async () => {
+    const { matches, events } = makeMatches();
+    const room = await vsSystemMatch(matches);
+    const seat0 = room.round!.turnOrder[0]!;
+    const winnerUid = userAt(room, seat0);
+    const loserUid = winnerUid === "u0" ? "u1" : "u0";
+    await matches.guess(room, winnerUid, HIDDEN_ID);
+    await settle();
+    await toWinnerScreen();
+    matches.withdraw(room, loserUid);
+    await settle();
+    expect(room.status).toBe("ENDED"); // one player still at the winner screen
+    matches.withdraw(room, winnerUid);
+    await settle();
+    expect(matches.get(room.id)).toBeUndefined(); // session closed + room dropped
     expect(events[GP_SERVER_EVENTS.matchEnded]!.length).toBe(1);
+    expect(noopPersist.finishMatch).toHaveBeenCalledTimes(1);
+    const sessionWin = noopPersist.awardXp.mock.calls.find((c) => c[4] === "SESSION_WIN");
+    expect(sessionWin?.[0]).toBe(winnerUid);
   });
 
   it("a table with no human action for 30 minutes closes (idle rule)", async () => {
@@ -291,8 +350,11 @@ describe("Guess the Player match orchestration", () => {
     expect(reveal.winnerPoints).toBe(500); // no difficulty multiplier in VS_HUMANS
     expect(reveal.pickerSeat).toBe(0);
     expect(reveal.pickerPoints).toBe(125); // 25% share
-    // the winner becomes the next picker
-    await vi.advanceTimersByTimeAsync(GP_TIMING.nextRoundPauseMs);
+    // the correct guesser is the picker of the NEXT round — the role is
+    // carried across the winner-screen countdown
+    await toWinnerScreen();
+    expect(room.status).toBe("ENDED");
+    await vi.advanceTimersByTimeAsync(GP_TIMING.newMatchGraceSec * 1000);
     await settle();
     expect(room.round?.phase).toBe("PICKING");
     expect(room.round?.pickerSeat).toBe(winnerSeat);
@@ -311,7 +373,8 @@ describe("Guess the Player match orchestration", () => {
     };
     expect(reveal).toMatchObject({ reason: "TIMER", winnerSeat: null, pickerPoints: 150 });
     expect(room.seats.find((s) => s.seat === 0)!.totalPoints).toBe(150);
-    await vi.advanceTimersByTimeAsync(GP_TIMING.nextRoundPauseMs);
+    await toWinnerScreen();
+    await vi.advanceTimersByTimeAsync(GP_TIMING.newMatchGraceSec * 1000);
     await settle();
     expect(room.round?.pickerSeat).toBe(0); // same picker
   });

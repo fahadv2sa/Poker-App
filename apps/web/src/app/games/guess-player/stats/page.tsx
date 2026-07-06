@@ -21,7 +21,7 @@ export default async function StatsPage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  // Real metrics from the guess_player schema: progression + per-match points
+  // Real metrics from the guess_player schema: progression + per-session points
   // + detective work (questions asked, correct guesses, fastest solve).
   const [user, prog, pointsAgg, questionsAsked, correctGuesses] = await Promise.all([
     prisma.user.findUnique({
@@ -60,8 +60,8 @@ export default async function StatsPage() {
   const hue = hueFromSeed(user.avatarSeed ?? user.username);
 
   const core: TtStatTile[] = [
-    { icon: "⚽", label: "المباريات", value: String(matches), tone: "cream" },
-    { icon: "🏆", label: "الانتصارات", value: String(wins), tone: "gold" },
+    { icon: "⚽", label: "طاولات لعبتها", value: String(matches), tone: "cream" },
+    { icon: "🏆", label: "مرات الصدارة", value: String(wins), tone: "gold" },
     { icon: "🕵️", label: "جولات كشفتها", value: String(roundsWon), tone: "gold" },
     { icon: "⭐", label: "إجمالي النقاط", value: totalPoints.toLocaleString("en-US"), tone: "gold" },
     { icon: "❓", label: "أسئلة طرحتها", value: String(questionsAsked), tone: "cream" },
@@ -70,7 +70,7 @@ export default async function StatsPage() {
 
   const analysis = {
     bars: [
-      { label: "نسبة الفوز", r: Math.max(0, Math.min(1, winRate)), display: `${Math.round(winRate * 100)}%`, tone: "gold" as const },
+      { label: "نسبة الصدارة", r: Math.max(0, Math.min(1, winRate)), display: `${Math.round(winRate * 100)}%`, tone: "gold" as const },
       {
         label: "كفاءة التحقيق",
         r: questionsAsked > 0 ? Math.max(0, Math.min(1, correctGuesses / Math.max(1, questionsAsked / 5))) : 0,
@@ -83,9 +83,9 @@ export default async function StatsPage() {
   };
 
   const milestones: TtMilestone[] = [
-    { icon: "⚽", nameAr: "أول مباراة", descAr: "العب مباراتك الأولى", unlocked: matches >= 1 },
+    { icon: "⚽", nameAr: "أول طاولة", descAr: "العب على طاولتك الأولى", unlocked: matches >= 1 },
     { icon: "🎯", nameAr: "أول كشف", descAr: "خمّن لاعبًا خفيًا واحدًا", unlocked: correctGuesses >= 1 },
-    { icon: "🏆", nameAr: "أول فوز", descAr: "افز بمباراة واحدة", unlocked: wins >= 1 },
+    { icon: "🏆", nameAr: "أول صدارة", descAr: "تصدّر طاولة حتى إغلاقها", unlocked: wins >= 1 },
     { icon: "❓", nameAr: "محقق", descAr: "اطرح ٥٠ سؤالًا", unlocked: questionsAsked >= 50 },
     { icon: "🕵️", nameAr: "عين الصقر", descAr: "اكشف ١٠ جولات", unlocked: roundsWon >= 10 },
     { icon: "🧠", nameAr: "خبير", descAr: "ابلغ المستوى ١٠", unlocked: level >= 10 },

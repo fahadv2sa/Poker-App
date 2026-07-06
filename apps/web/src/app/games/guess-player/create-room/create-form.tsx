@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 // Mirrors Top Ten's create-form: room name, MODE (this game's key knob),
-// difficulty (VS_SYSTEM only), room type, players, rounds. Deep-links into
+// difficulty (VS_SYSTEM only), room type, players. Rounds are open-ended —
+// the table keeps playing as long as players press "جولة جديدة". Deep-links into
 // /play?create=1 where the socket creates the room and opens its lobby.
 const MODE_OPTIONS: ReadonlyArray<{ value: GpMode; label: string; desc: string }> = [
   { value: "VS_SYSTEM", label: "ضد المنصة", desc: "المنصة تخفي لاعبًا عشوائيًا حسب المستوى" },
@@ -48,11 +49,9 @@ export function CreateRoomForm() {
     const form = new FormData(e.currentTarget);
     const roomName = String(form.get("roomName") ?? "").trim();
     const maxPlayers = Number(form.get("maxPlayers") ?? GP_LIMITS.maxPlayers);
-    const rounds = Number(form.get("rounds") ?? GP_LIMITS.defaultRounds);
     const qs = new URLSearchParams({
       create: "1",
       mode,
-      rounds: String(rounds),
       private: isPrivate ? "1" : "0",
       max: String(maxPlayers),
     });
@@ -119,12 +118,6 @@ export function CreateRoomForm() {
         <Label htmlFor="maxPlayers" className="text-[var(--lu-cream)]">أقصى عدد لاعبين</Label>
         <Input id="maxPlayers" name="maxPlayers" type="number" min={GP_LIMITS.minPlayers} max={GP_LIMITS.maxPlayers} defaultValue={4} className="num" />
         <span className="text-[0.7rem] text-[var(--lu-tan)]">من ٢ إلى ٦ لاعبين.</span>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="rounds" className="text-[var(--lu-cream)]">عدد الجولات</Label>
-        <Input id="rounds" name="rounds" type="number" min={GP_LIMITS.minRounds} max={GP_LIMITS.maxRounds} defaultValue={GP_LIMITS.defaultRounds} className="num" />
-        <span className="text-[0.7rem] text-[var(--lu-tan)]">كل جولة ١٠ دقائق كحد أقصى، والدور ٣٠ ثانية.</span>
       </div>
 
       <Button type="submit" size="lg" disabled={pending} className="btn-gold-cta w-full text-black">

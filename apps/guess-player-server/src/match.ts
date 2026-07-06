@@ -63,7 +63,6 @@ export class GpMatches {
     opts: {
       mode: GpMode;
       difficulty?: GpDifficulty;
-      roundsTotal?: number;
       roomName?: string | null;
       maxPlayers?: number;
       isPrivate?: boolean;
@@ -76,7 +75,8 @@ export class GpMatches {
       kind: "MANUAL",
       mode: opts.mode,
       difficulty: opts.mode === "VS_SYSTEM" ? (opts.difficulty ?? "MEDIUM") : null,
-      roundsTotal: clampRounds(opts.roundsTotal ?? GP_LIMITS.defaultRounds),
+      roundsPlayed: 0,
+      nextPickerSeat: null,
       roundTimerSec: GP_TIMING.roundSec,
       turnTimerSec: GP_TIMING.turnSec,
       inviteCode: nextInvite(),
@@ -107,7 +107,8 @@ export class GpMatches {
       kind: "QUICK_PLAY",
       mode: "VS_SYSTEM", // quick play is ALWAYS vs the system (locked rule)
       difficulty,
-      roundsTotal: GP_LIMITS.defaultRounds,
+      roundsPlayed: 0,
+      nextPickerSeat: null,
       roundTimerSec: GP_TIMING.roundSec,
       turnTimerSec: GP_TIMING.turnSec,
       inviteCode: null,
@@ -205,7 +206,7 @@ export class GpMatches {
     const hidden = await this.deps.facts.pickHidden(room.difficulty, room.usedPlayerIds);
     if (room.round !== round || room.status !== "IN_PROGRESS") return; // superseded meanwhile
     if (!hidden) {
-      this.finishMatch(room, false); // pool exhausted — end gracefully
+      this.closeSession(room, false); // pool exhausted — close the session cleanly
       return;
     }
     this.beginPlaying(room, hidden);
@@ -258,7 +259,7 @@ export class GpMatches {
     const hidden = await this.deps.facts.pickHidden(null, room.usedPlayerIds);
     if (room.round !== r || r.phase !== "PICKING" || room.status !== "IN_PROGRESS") return;
     if (!hidden) {
-      this.finishMatch(room, false);
+      this.closeSession(room, false);
       return;
     }
     this.beginPlaying(room, hidden);
@@ -493,81 +494,58 @@ export class GpMatches {
     });
 
     // Next picker (VS_HUMANS): the correct guesser; a timeout keeps the SAME
-    // picker (locked rule).
-    const nextPicker =
+    // picker (locked rule). Carried across the winner-screen countdown.
+    room.nextPickerSeat =
       room.mode === "VS_HUMANS"
         ? reason === "CORRECT_GUESS" && winner
           ? winner.seat
           : r.pickerSeat
         : null;
 
-    const finishedRoundNo = r.roundNo;
+    room.roundsPlayed = r.roundNo;
     this.sync(room);
-    if (finishedRoundNo >= room.roundsTotal || reason === "ABANDONED") {
+    if (reason === "ABANDONED") {
       room.round = null;
-      room.timers.next = setTimeout(() => this.finishMatch(room, reason === "ABANDONED"), GP_TIMING.nextRoundPauseMs);
+      room.timers.next = setTimeout(() => this.closeSession(room, true), GP_TIMING.nextRoundPauseMs);
       return;
     }
-    room.timers.next = setTimeout(() => {
-      if (room.status === "IN_PROGRESS") {
-        room.round = null;
-        void this.startRound(room, finishedRoundNo + 1, nextPicker);
-      }
-    }, GP_TIMING.nextRoundPauseMs);
+    // OPEN-ENDED rounds (owner ruling): EVERY round ends at the winner screen;
+    // the 15s countdown there decides continuation — no fixed match length.
+    room.timers.next = setTimeout(() => this.betweenRounds(room), GP_TIMING.nextRoundPauseMs);
   }
 
-  private finishMatch(room: GpMatchRoom, abandoned: boolean): void {
+  /** Winner-screen state after every round: cumulative standings + the 15s
+   *  countdown. Status ENDED in-memory = "at the winner screen"; the DB
+   *  session row stays IN_PROGRESS until the table actually closes. */
+  private betweenRounds(room: GpMatchRoom): void {
+    if (room.status !== "IN_PROGRESS") return;
     this.clear(room, "turn", "round", "pick", "next");
     room.round = null;
     room.deadlineTs = null;
-    room.status = abandoned ? "ABANDONED" : "ENDED";
-    const standings = this.standings(room);
-    const winner =
-      !abandoned && standings.length > 0 && !standings[1]?.tiedWithPrev ? standings[0]! : null;
-    if (winner) {
-      void this.deps.persist
-        .awardXp(winner.userId, room.persistId, gpMatchWinBonus, `${room.persistId}:${winner.userId}:matchwin`, "MATCH_WIN")
-        .catch(() => {});
-    }
-    void this.deps.persist
-      .finishMatch(room, winner?.userId ?? null)
-      .catch((e) => console.error("[guess-player] finishMatch failed", e));
-    this.deps.emit(room.id, GP_SERVER_EVENTS.matchEnded, { standings });
-
-    if (abandoned) {
-      // Never keep a table alive with no humans (final ruling #2): the match
-      // row is already terminal in the DB; drop the in-memory room NOW.
-      this.sync(room);
-      this.removeRoom(room.id);
-      return;
-    }
-    this.openNewMatchWindow(room);
-  }
-
-  // ---- play again at the same table (mirrors Top Ten's new-round vote) ------
-
-  private openNewMatchWindow(room: GpMatchRoom): void {
+    room.status = "ENDED";
     room.newMatch = {
       readySeats: new Set(),
       deadlineTs: Date.now() + GP_TIMING.newMatchGraceSec * 1000,
     };
     this.clear(room, "newMatch");
     room.timers.newMatch = setTimeout(
-      () => this.resolveNewMatch(room, true),
+      () => this.resolveNewRound(room, true),
       GP_TIMING.newMatchGraceSec * 1000,
     );
     this.sync(room);
   }
 
+  /** جولة جديدة pressed: all connected players ready → the next round starts
+   *  immediately; otherwise the countdown expiry auto-starts it. */
   requestNewMatch(room: GpMatchRoom, byUserId: string): void {
     const seat = this.seatOf(room, byUserId);
     if (room.status !== "ENDED" || !room.newMatch || seat == null) return;
     this.touch(room);
     room.newMatch.readySeats.add(seat);
-    this.resolveNewMatch(room, false);
+    this.resolveNewRound(room, false);
   }
 
-  private resolveNewMatch(room: GpMatchRoom, byTimer: boolean): void {
+  private resolveNewRound(room: GpMatchRoom, byTimer: boolean): void {
     if (room.status !== "ENDED" || !room.newMatch) return;
     const connected = room.seats.filter((s) => s.connected && s.status === "ACTIVE");
     const allReady = connected.every((s) => room.newMatch!.readySeats.has(s.seat));
@@ -577,32 +555,52 @@ export class GpMatches {
     }
     const min = room.kind === "QUICK_PLAY" ? 1 : GP_LIMITS.minPlayers;
     if (connected.length < min) {
-      this.clear(room, "newMatch");
-      room.newMatch = null;
       this.deps.emit(room.id, GP_SERVER_EVENTS.tableClosed, { text: "أُغلقت الطاولة" });
-      this.removeRoom(room.id);
+      this.closeSession(room, connected.length === 0);
       return;
     }
-    this.restartMatch(room);
-  }
-
-  private restartMatch(room: GpMatchRoom): void {
-    this.clear(room, "turn", "round", "pick", "next", "newMatch");
+    // Continue the SAME session: points carry over, same persistence row,
+    // usedPlayerIds keeps every hidden player unique at this table.
+    this.clear(room, "newMatch");
     room.newMatch = null;
     room.seats = room.seats.filter((s) => s.status === "ACTIVE" && s.connected);
-    for (const s of room.seats) s.totalPoints = 0;
-    // Fresh persistence identity; usedPlayerIds is kept so a replay never
-    // repeats a hidden player from the previous match at this table.
-    room.persistId = cryptoRandomId();
-    room.persisted = false;
-    room.round = null;
     room.status = "IN_PROGRESS";
+    void this.startRound(
+      room,
+      room.roundsPlayed + 1,
+      room.nextPickerSeat ?? this.seatOf(room, room.createdByUserId) ?? room.seats[0]?.seat ?? null,
+    );
+  }
+
+  /** Close the table SESSION (the persistent unit — N open-ended rounds):
+   *  persists the terminal row + rounds played, awards the SESSION_WIN bonus
+   *  to the unique cumulative leader (replaces the old match-win bonus), and
+   *  drops the in-memory room immediately (never keep a dead table alive). */
+  private closeSession(room: GpMatchRoom, abandoned: boolean): void {
+    this.clear(room, "turn", "round", "pick", "next", "newMatch");
+    room.round = null;
+    room.newMatch = null;
+    room.deadlineTs = null;
+    room.status = abandoned ? "ABANDONED" : "ENDED";
+    const standings = this.standings(room);
+    const leader =
+      room.roundsPlayed > 0 &&
+      standings.length > 0 &&
+      standings[0]!.points > 0 &&
+      !standings[1]?.tiedWithPrev
+        ? standings[0]!
+        : null;
+    if (leader) {
+      void this.deps.persist
+        .awardXp(leader.userId, room.persistId, gpMatchWinBonus, `${room.persistId}:${leader.userId}:sessionwin`, "SESSION_WIN")
+        .catch(() => {});
+    }
     void this.deps.persist
-      .createMatch(room)
-      .then(() => (room.persisted = true))
-      .catch(() => {});
-    this.deps.emit(room.id, GP_SERVER_EVENTS.matchStarted, { matchId: room.id });
-    void this.startRound(room, 1, this.seatOf(room, room.createdByUserId) ?? room.seats[0]?.seat ?? null);
+      .finishMatch(room, leader?.userId ?? null)
+      .catch((e) => console.error("[guess-player] closeSession failed", e));
+    this.deps.emit(room.id, GP_SERVER_EVENTS.matchEnded, { standings });
+    this.sync(room);
+    this.removeRoom(room.id);
   }
 
   // ---- presence / withdrawal ------------------------------------------------
@@ -634,15 +632,17 @@ export class GpMatches {
       return;
     }
     if (room.status === "ENDED") {
-      room.seats = room.seats.filter((s) => s.userId !== userId);
       room.newMatch?.readySeats.delete(seat.seat);
-      if (!room.seats.some((s) => s.connected && s.status === "ACTIVE")) {
-        this.clear(room, "newMatch");
-        room.newMatch = null;
-        this.removeRoom(room.id);
+      const remaining = room.seats.filter((s) => s.userId !== userId);
+      if (!remaining.some((s) => s.connected && s.status === "ACTIVE")) {
+        // The LAST player pressed خروج at the winner screen — that IS the
+        // session close. Keep the full seat list so the cumulative leader
+        // (possibly the leaver) still earns the SESSION_WIN bonus.
+        this.closeSession(room, false);
         return;
       }
-      this.resolveNewMatch(room, false);
+      room.seats = remaining;
+      this.resolveNewRound(room, false);
       return;
     }
     if (room.status !== "IN_PROGRESS") return;
@@ -679,7 +679,7 @@ export class GpMatches {
     }
 
     if (!hasConnectedHuman(room)) {
-      this.finishMatch(room, true);
+      this.closeSession(room, true);
       return;
     }
     const r2 = room.round;
@@ -708,7 +708,7 @@ export class GpMatches {
       this.removeRoom(room.id);
       return;
     }
-    this.finishMatch(room, true);
+    this.closeSession(room, true);
   }
 
   // ---- views -----------------------------------------------------------------
@@ -748,8 +748,7 @@ export class GpMatches {
       status: room.status,
       difficulty: room.difficulty,
       createdByUserId: room.createdByUserId,
-      roundNo: r?.roundNo ?? 0,
-      roundsTotal: room.roundsTotal,
+      roundNo: r?.roundNo ?? (room.status === "ENDED" ? room.roundsPlayed : 0),
       phase: r?.phase ?? null,
       seats: room.seats.map((s) => ({
         seat: s.seat,
@@ -794,7 +793,7 @@ export class GpMatches {
       text: "أُغلقت الطاولة لعدم النشاط",
     });
     if (room.status === "IN_PROGRESS") {
-      this.finishMatch(room, true); // abandoned → persists terminal status + removes
+      this.closeSession(room, true); // abandoned → persists terminal status + removes
       return;
     }
     this.removeRoom(room.id);
@@ -847,11 +846,6 @@ function nextFreeSeat(room: GpMatchRoom): number {
 function clampSeats(n: number): number {
   if (!Number.isFinite(n)) return GP_LIMITS.maxPlayers;
   return Math.max(GP_LIMITS.minPlayers, Math.min(GP_LIMITS.maxPlayers, Math.round(n)));
-}
-
-function clampRounds(n: number): number {
-  if (!Number.isFinite(n)) return GP_LIMITS.defaultRounds;
-  return Math.max(GP_LIMITS.minRounds, Math.min(GP_LIMITS.maxRounds, Math.round(n)));
 }
 
 function cryptoRandomId(): string {

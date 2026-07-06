@@ -1545,7 +1545,9 @@ model GpMatch {
   mode            GpMode        @default(VS_SYSTEM)
   // Tier of the system picker — VS_SYSTEM only; null for VS_HUMANS.
   difficulty      GpDifficulty?
-  roundsTotal     Int           @default(3) @map("rounds_total") // chosen at creation
+  // REPURPOSED (open-ended sessions): rounds actually PLAYED, written once at
+  // session close — analytics only, no gameplay meaning. Column kept as-is.
+  roundsTotal     Int           @default(3) @map("rounds_total")
   roundTimerSec   Int           @default(600) @map("round_timer_sec") // 10 min
   turnTimerSec    Int           @default(30) @map("turn_timer_sec")
   maxPlayers      Int           @default(4) @map("max_players") // rooms 2–6, quick play 2–4

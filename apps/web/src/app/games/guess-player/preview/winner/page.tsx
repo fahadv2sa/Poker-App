@@ -34,7 +34,6 @@ function baseState(over: Partial<GpStateView>): GpStateView {
     difficulty: null,
     createdByUserId: "me",
     roundNo: 3,
-    roundsTotal: 3,
     phase: null,
     seats: SEATS,
     questions: [],
@@ -126,8 +125,8 @@ export default function PreviewWinner() {
     <main className="relative mx-auto flex min-h-[100dvh] max-w-md flex-col overflow-hidden bg-[var(--lu-abyss)] px-4 pb-6 page-top">
       <div className="fixed inset-x-0 top-0 z-[200] flex flex-wrap items-center justify-center gap-1 bg-black/75 px-2 py-1 text-[0.68rem] text-white/80 backdrop-blur">
         <span className="opacity-70">معاينة:</span>
-        <button onClick={() => setView("winner")} className={btn(view === "winner")}>🏆 فائز</button>
-        <button onClick={() => setView("tie")} className={btn(view === "tie")}>🤝 تعادل</button>
+        <button onClick={() => setView("winner")} className={btn(view === "winner")}>🏆 بين الجولات</button>
+        <button onClick={() => setView("tie")} className={btn(view === "tie")}>🤝 إغلاق الجلسة: تعادل</button>
         <button onClick={() => setView("abandoned")} className={btn(view === "abandoned")}>🚪 مهجورة</button>
         <span className="mx-1 opacity-50">|</span>
         <button onClick={() => setView("reveal-win")} className={btn(view === "reveal-win")}>كشف الجولة: فائز</button>

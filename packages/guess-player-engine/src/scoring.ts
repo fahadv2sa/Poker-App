@@ -12,10 +12,9 @@ export const GP_ROUND_SECONDS = 600;
 export const GP_TURN_SECONDS = 30;
 /** Guess attempts per contestant per round. */
 export const GP_GUESS_ATTEMPTS = 3;
-/** Default rounds per match (chosen at room creation). */
-export const GP_DEFAULT_ROUNDS = 3;
 /** Room size bounds: created rooms 2–6; quick play matches 2–4 and solo
- *  VS_SYSTEM is allowed (no bots in v1). */
+ *  VS_SYSTEM is allowed (no bots in v1). Rounds are OPEN-ENDED — the session
+ *  continues via the winner-screen countdown until players leave. */
 export const GP_ROOM_MIN_PLAYERS = 2;
 export const GP_ROOM_MAX_PLAYERS = 6;
 export const GP_QUICK_PLAY_MAX_PLAYERS = 4;

@@ -25,13 +25,13 @@ export const GP_QUESTION_TEMPLATES = [
 
 export const GP_ROUND_END_REASONS = ["CORRECT_GUESS", "TIMER", "ABANDONED"] as const;
 
+// Rounds are OPEN-ENDED (owner ruling 2026-07-06): a table session runs
+// round after round via the winner-screen countdown until players leave —
+// there is no rounds-per-match setting and no fixed match length.
 export const GP_LIMITS = {
   minPlayers: 2,
   maxPlayers: 6,
   quickPlayMaxPlayers: 4,
-  minRounds: 1,
-  maxRounds: 10,
-  defaultRounds: 3,
   guessAttempts: 3,
 } as const;
 

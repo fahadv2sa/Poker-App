@@ -70,12 +70,6 @@ export const gpCreateSchema = z
     mode: gpModeSchema,
     /** Required for VS_SYSTEM; must be absent for VS_HUMANS (no tiers there). */
     difficulty: gpDifficultySchema.optional(),
-    roundsTotal: z
-      .number()
-      .int()
-      .min(GP_LIMITS.minRounds)
-      .max(GP_LIMITS.maxRounds)
-      .optional(),
     roomName: z.string().trim().min(2, "اسم الغرفة قصير جدًا").max(40).optional(),
     maxPlayers: z.number().int().min(GP_LIMITS.minPlayers).max(GP_LIMITS.maxPlayers).optional(),
     isPrivate: z.boolean().optional(),
@@ -175,8 +169,8 @@ export type GpStateView = {
   status: "LOBBY" | "IN_PROGRESS" | "ENDED" | "ABANDONED";
   difficulty: (typeof GP_DIFFICULTIES)[number] | null;
   createdByUserId: string;
+  /** Session round counter (1, 2, 3…) — rounds are open-ended, no total. */
   roundNo: number;
-  roundsTotal: number;
   /** VS_HUMANS: PICKING while the picker chooses; PLAYING once questions run. */
   phase: "PICKING" | "PLAYING" | null;
   seats: GpSeatView[];

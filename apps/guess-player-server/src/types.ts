@@ -58,7 +58,11 @@ export interface GpMatchRoom {
   kind: "MANUAL" | "QUICK_PLAY";
   mode: GpMode;
   difficulty: GpDifficulty | null; // VS_SYSTEM only
-  roundsTotal: number;
+  /** Rounds completed this SESSION (open-ended — no total). */
+  roundsPlayed: number;
+  /** VS_HUMANS: the picker for the NEXT round (correct guesser, or the same
+   *  picker after a timeout), carried across the winner-screen countdown. */
+  nextPickerSeat: number | null;
   roundTimerSec: number;
   turnTimerSec: number;
   inviteCode: string | null;

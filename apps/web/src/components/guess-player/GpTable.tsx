@@ -149,7 +149,7 @@ function Hud({ state, onLeave }: { state: GpStateView; onLeave: () => void }) {
       </button>
       <div className="flex items-center gap-2">
         <span className="lu-chip rounded-full px-3 py-1 text-xs font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/30">
-          الجولة <span className="num">{state.roundNo}</span>/<span className="num">{state.roundsTotal}</span>
+          الجولة <span className="num">{state.roundNo}</span>
         </span>
         {state.roundDeadlineTs ? (
           <span className="lu-frame rounded-full px-3 py-1 text-xs">

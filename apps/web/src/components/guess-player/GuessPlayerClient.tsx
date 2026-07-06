@@ -47,7 +47,6 @@ export function GuessPlayerClient({
   autoCreate?: {
     mode: GpMode;
     difficulty?: GpDifficulty;
-    roundsTotal: number;
     isPrivate: boolean;
     roomName?: string;
     maxPlayers?: number;
@@ -95,7 +94,6 @@ export function GuessPlayerClient({
             {
               mode: autoCreate.mode,
               difficulty: autoCreate.difficulty,
-              roundsTotal: autoCreate.roundsTotal,
               isPrivate: autoCreate.isPrivate,
               roomName: autoCreate.roomName,
               maxPlayers: autoCreate.maxPlayers,
@@ -623,6 +621,10 @@ export function GpWinner({
   const canNewMatch = !abandoned;
   const showClose = !!onClose && !abandoned;
   const winner = !abandoned && standings.length > 0 && !standings[1]?.tiedWithPrev ? standings[0] : null;
+  // Between rounds (no terminal result yet) this is the CUMULATIVE session
+  // ladder, not a match verdict — the leader is framed as المتصدر, and the
+  // session-close bonus framing only appears once the table actually closes.
+  const sessionOver = abandoned || !!result;
 
   useEffect(() => {
     gpSound.play(abandoned ? "reveal" : "win");
@@ -674,8 +676,17 @@ export function GpWinner({
               {abandoned ? "🚪" : winner ? "🏆" : "🤝"}
             </span>
             <div className="lu-gold-text lu-gold-title text-lg font-black">
-              {abandoned ? "انتهت المباراة" : winner ? "الفائز" : "تعادل"}
+              {sessionOver
+                ? abandoned
+                  ? "أُغلقت الطاولة"
+                  : winner
+                    ? "متصدر الجلسة"
+                    : "تعادل في الصدارة"
+                : "الترتيب التراكمي"}
             </div>
+            {!sessionOver ? (
+              <span className="text-[0.7rem] text-[var(--lu-tan)]">النقاط تتراكم ما دامت الطاولة مفتوحة</span>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             {standings.map((row) => {

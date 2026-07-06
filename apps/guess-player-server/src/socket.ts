@@ -146,7 +146,6 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
       const room = matches.createManual(u, {
         mode: parsed.data.mode,
         difficulty: parsed.data.difficulty,
-        roundsTotal: parsed.data.roundsTotal,
         roomName: parsed.data.roomName ?? null,
         maxPlayers: parsed.data.maxPlayers,
         isPrivate: parsed.data.isPrivate,
