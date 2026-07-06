@@ -26,7 +26,41 @@ export type {
   TtRoundMode,
   TtRoundStatus,
   TtRoundEndReason,
+  // Guess the Player (game #3) — guess_player schema
+  GpAskableTrophy,
+  GpMatch,
+  GpMatchPlayer,
+  GpRound,
+  GpQuestion,
+  GpGuess,
+  GpProgression,
+  GpXpEvent,
+  GpMode,
+  GpMatchKind,
+  GpMatchStatus,
+  GpMatchPlayerStatus,
+  GpRoundStatus,
+  GpRoundEndReason,
+  GpQuestionTemplate,
+  GpAnswerValue,
 } from "./generated/client";
+export {
+  loadGpFactPack,
+  gpTrophyLeagueIds,
+  gpVsSystemPoolIds,
+  gpCountryLikeClubNames,
+} from "./gp-facts";
+export {
+  gpResolveClub,
+  gpResolveCompetition,
+  gpResolveCountry,
+  gpResolveTrophy,
+  gpResolvePlayer,
+  type GpClubRef,
+  type GpCompetitionRef,
+  type GpTrophyRefResolved,
+  type GpPlayerRef,
+} from "./gp-entities";
 export * from "./errors";
 export * from "./wallet";
 export * from "./email-otp";

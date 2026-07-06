@@ -20,6 +20,10 @@
  *  3) Catalog : superseded generations (tt_catalog_entry active=false → CASCADE
  *       tt_catalog_player) + stale tt_difficulty_config; keeps the ACTIVE generation.
  *       NOT age-gated — an inactive generation is already superseded by the active one.
+ *  4) Guess the Player : terminal matches (ENDED/ABANDONED) with ended_at < cutoff.
+ *       CASCADE  → gp_match_players, gp_rounds → gp_questions, gp_guesses
+ *       UNTOUCHED→ gp_progression, gp_xp_events (no FK to match) — same isolation as
+ *                  Top Ten. gp_askable_trophies is config, never touched.
  */
 import "./_ensure-system-ca";
 import "dotenv/config";
@@ -36,9 +40,9 @@ const DAYS = opt("--days", 90);
 const BATCH = opt("--batch", 500);
 const NO_CATALOG = flag("--no-catalog");
 
-/** Counts + sums for every table that MUST survive the purge (both games). */
+/** Counts + sums for every table that MUST survive the purge (all games). */
 async function keepSnapshot() {
-  const [wtxRows, wtxSum, pevRows, statNet, balSum, progRows, progXp, xpRows, xpSum] = await Promise.all([
+  const [wtxRows, wtxSum, pevRows, statNet, balSum, progRows, progXp, xpRows, xpSum, gpProgRows, gpProgXp, gpXpRows, gpXpSum] = await Promise.all([
     prisma.walletTransaction.count(),
     prisma.walletTransaction.aggregate({ _sum: { amount: true } }),
     prisma.playEvent.count(),
@@ -48,6 +52,10 @@ async function keepSnapshot() {
     prisma.ttProgression.aggregate({ _sum: { xp: true } }),
     prisma.ttXpEvent.count(),
     prisma.ttXpEvent.aggregate({ _sum: { amount: true } }),
+    prisma.gpProgression.count(),
+    prisma.gpProgression.aggregate({ _sum: { xp: true } }),
+    prisma.gpXpEvent.count(),
+    prisma.gpXpEvent.aggregate({ _sum: { amount: true } }),
   ]);
   return {
     walletTxRows: wtxRows,
@@ -59,6 +67,10 @@ async function keepSnapshot() {
     ttProgressionXpSum: progXp._sum.xp ?? 0n,
     ttXpEventRows: xpRows,
     ttXpAmountSum: xpSum._sum.amount ?? 0,
+    gpProgressionRows: gpProgRows,
+    gpProgressionXpSum: gpProgXp._sum.xp ?? 0n,
+    gpXpEventRows: gpXpRows,
+    gpXpAmountSum: gpXpSum._sum.amount ?? 0,
   };
 }
 
@@ -102,6 +114,24 @@ async function main() {
   console.log(`  CASCADE-DELETE → tt_match_players=${ttSeats} tt_rounds=${ttRounds} tt_round_reveals=${ttReveals}`);
   console.log(`  UNTOUCHED → tt_progression, tt_xp_events (verified below)`);
 
+  // ---------- 2b) GUESS THE PLAYER: terminal matches ----------
+  const gpWhere = { status: { in: ["ENDED", "ABANDONED"] as ("ENDED" | "ABANDONED")[] }, endedAt: { lt: cutoff } };
+  const gpMatches = await prisma.gpMatch.count({ where: gpWhere });
+  const gpIds = (await prisma.gpMatch.findMany({ where: gpWhere, select: { id: true } })).map((m) => m.id);
+  const [gpSeats, gpRounds] = await Promise.all([
+    prisma.gpMatchPlayer.count({ where: { matchId: { in: gpIds } } }),
+    prisma.gpRound.count({ where: { matchId: { in: gpIds } } }),
+  ]);
+  const [gpQuestions, gpGuesses] = gpIds.length
+    ? await Promise.all([
+        prisma.gpQuestion.count({ where: { round: { matchId: { in: gpIds } } } }),
+        prisma.gpGuess.count({ where: { round: { matchId: { in: gpIds } } } }),
+      ])
+    : [0, 0];
+  console.log(`\n[Guess the Player] terminal matches (ENDED/ABANDONED, ended_at < cutoff): ${gpMatches}`);
+  console.log(`  CASCADE-DELETE → gp_match_players=${gpSeats} gp_rounds=${gpRounds} gp_questions=${gpQuestions} gp_guesses=${gpGuesses}`);
+  console.log(`  UNTOUCHED → gp_progression, gp_xp_events, gp_askable_trophies (verified below)`);
+
   // ---------- 3) CATALOG: superseded generations ----------
   let catEntries = 0, catPlayers = 0, catCfg = 0;
   if (!NO_CATALOG) {
@@ -138,6 +168,14 @@ async function main() {
   }
   console.log(`deleted Top Ten matches: ${m}`);
 
+  let gp = 0;
+  for (;;) {
+    const b = await prisma.gpMatch.findMany({ where: gpWhere, select: { id: true }, orderBy: { endedAt: "asc" }, take: BATCH });
+    if (b.length === 0) break;
+    gp += (await prisma.gpMatch.deleteMany({ where: { id: { in: b.map((x) => x.id) } } })).count;
+  }
+  console.log(`deleted Guess the Player matches: ${gp}`);
+
   if (!NO_CATALOG) {
     // delete inactive entries in batches (tt_catalog_player cascades on the FK)
     let e = 0;
@@ -162,7 +200,11 @@ async function main() {
     same(before.ttProgressionRows, after.ttProgressionRows) &&
     same(before.ttProgressionXpSum, after.ttProgressionXpSum) &&
     same(before.ttXpEventRows, after.ttXpEventRows) &&
-    same(before.ttXpAmountSum, after.ttXpAmountSum);
+    same(before.ttXpAmountSum, after.ttXpAmountSum) &&
+    same(before.gpProgressionRows, after.gpProgressionRows) &&
+    same(before.gpProgressionXpSum, after.gpProgressionXpSum) &&
+    same(before.gpXpEventRows, after.gpXpEventRows) &&
+    same(before.gpXpAmountSum, after.gpXpAmountSum);
 
   console.log(`\n==== KEEP-TABLE VERIFICATION (before → after) ====`);
   console.log(`Link Up  wallet_transactions rows : ${before.walletTxRows} → ${after.walletTxRows}`);
@@ -174,6 +216,10 @@ async function main() {
   console.log(`Top Ten  tt_progression Σxp       : ${before.ttProgressionXpSum} → ${after.ttProgressionXpSum}`);
   console.log(`Top Ten  tt_xp_events rows        : ${before.ttXpEventRows} → ${after.ttXpEventRows}`);
   console.log(`Top Ten  tt_xp_events Σamt        : ${before.ttXpAmountSum} → ${after.ttXpAmountSum}`);
+  console.log(`Guess    gp_progression rows      : ${before.gpProgressionRows} → ${after.gpProgressionRows}`);
+  console.log(`Guess    gp_progression Σxp       : ${before.gpProgressionXpSum} → ${after.gpProgressionXpSum}`);
+  console.log(`Guess    gp_xp_events rows        : ${before.gpXpEventRows} → ${after.gpXpEventRows}`);
+  console.log(`Guess    gp_xp_events Σamt        : ${before.gpXpAmountSum} → ${after.gpXpAmountSum}`);
   console.log(unchanged ? "✅ KEEP tables UNCHANGED." : "❌ KEEP tables CHANGED — investigate!");
   if (!unchanged) process.exitCode = 1;
 }

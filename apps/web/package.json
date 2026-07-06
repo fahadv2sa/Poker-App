@@ -15,6 +15,7 @@
   "dependencies": {
     "@fb/admin-core": "workspace:*",
     "@fb/db": "workspace:*",
+    "@fb/guess-player-engine": "workspace:*",
     "@fb/shared": "workspace:*",
     "@fb/table-ui": "workspace:*",
     "@fb/theme": "workspace:*",

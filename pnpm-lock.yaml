@@ -73,6 +73,37 @@ importers:
         specifier: ^2.1.3
         version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
+  apps/guess-player-server:
+    dependencies:
+      '@fb/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@fb/guess-player-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-player-engine
+      '@fb/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
+      socket.io:
+        specifier: ^4.8.0
+        version: 4.8.3
+      tsx:
+        specifier: ^4.19.1
+        version: 4.22.4
+    devDependencies:
+      socket.io-client:
+        specifier: ^4.8.3
+        version: 4.8.3
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.3
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
+
   apps/top-10-server:
     dependencies:
       '@fb/db':
@@ -112,6 +143,9 @@ importers:
       '@fb/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@fb/guess-player-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-player-engine
       '@fb/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -228,6 +262,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.104.2
         version: 0.104.2(zod@3.25.76)
+      '@fb/guess-player-engine':
+        specifier: workspace:*
+        version: link:../guess-player-engine
       '@fb/shared':
         specifier: workspace:*
         version: link:../shared
@@ -264,6 +301,19 @@ importers:
         version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
 
   packages/engine:
+    dependencies:
+      '@fb/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.3
+        version: 2.1.9(@types/node@22.19.21)(lightningcss@1.32.0)
+
+  packages/guess-player-engine:
     dependencies:
       '@fb/shared':
         specifier: workspace:*

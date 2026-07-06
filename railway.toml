@@ -54,6 +54,20 @@
 #                    WEB_ORIGIN (= game1 web URL, for CORS), BOTS_ENABLED (optional)
 #                    (PORT injected by Railway — do not set it)
 #   Replicas       : EXACTLY 1  (authoritative in-memory match state + timers)
+#
+# Service: game-server-guess-player  (apps/guess-player-server)  —  Guess the Player realtime
+#   Game #3 (خمن اللاعب). Same repo, same shared Postgres (owns the `guess_player`
+#   schema; reads football.* through the @fb/db seam). BEFORE first deploy: seed the
+#   trophy whitelist against prod (pnpm --filter @fb/db seed:gp-trophies) and replicate
+#   football._apifootball_import_progress local→prod (without it the trophy/NT
+#   completeness gates degrade every negative to "cannot answer"). No bots in v1.
+#   Root Directory : (repo root)
+#   Build Command  : (none — tsx runs TypeScript source)
+#   Start Command  : pnpm --filter @fb/guess-player-server start  # → tsx src/index.ts
+#   Variables      : DATABASE_URL, DIRECT_URL, AUTH_SECRET (== Link Up's),
+#                    WEB_ORIGIN (= game1 web URL, for CORS)
+#                    (PORT injected by Railway — do not set it)
+#   Replicas       : EXACTLY 1  (authoritative in-memory match state + timers)
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # ── PER-SERVICE DEPLOYS (no project-wide redeploy) ─────────────────────────────
@@ -62,14 +76,17 @@
 # (Dashboard → service → Settings → Build → Watch Paths) so each rebuilds only on its
 # own code (+ the shared packages it depends on). Repo-root-relative globs:
 #
-#   link-up (apps/web — both game UIs):
+#   link-up (apps/web — all game UIs):
 #     apps/web/**, packages/admin-core/**, packages/db/**, packages/shared/**,
 #     packages/table-ui/**, packages/top-10-engine/**, packages/top-10-ui/**,
+#     packages/guess-player-engine/**,
 #     package.json, pnpm-lock.yaml, pnpm-workspace.yaml, turbo.json, tsconfig.base.json, railway.toml
 #   game-server-link-up (apps/game-server):
 #     apps/game-server/**, packages/engine/**, packages/db/**, packages/shared/**, + the root files above
 #   game-server-top-10 (apps/top-10-server):
 #     apps/top-10-server/**, packages/top-10-engine/**, packages/db/**, packages/shared/**, + the root files above
+#   game-server-guess-player (apps/guess-player-server):
+#     apps/guess-player-server/**, packages/guess-player-engine/**, packages/db/**, packages/shared/**, + the root files above
 #
 # Result: a Top-Ten realtime change (apps/top-10-server/**, packages/top-10-engine/**)
 # never redeploys Link Up. A Top-Ten WEB change (apps/web/games/top-10) DOES redeploy

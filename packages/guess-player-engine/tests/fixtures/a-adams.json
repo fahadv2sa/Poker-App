@@ -1,0 +1,250 @@
+{
+  "playerId": "1d1b141c-a16d-44d3-9bb0-7b9bfb4a1b60",
+  "name": "A. Adams",
+  "nameAr": "آدامز",
+  "nationalityName": "Nigeria",
+  "clubIdsEver": [
+    "7cacc841-0736-431b-a530-7a7cf5e43b32",
+    "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+    "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+    "ea4327a7-5948-4994-8dd1-193aa23fb8f4"
+  ],
+  "clubSeasons": [
+    {
+      "clubId": "7cacc841-0736-431b-a530-7a7cf5e43b32",
+      "season": 2024
+    },
+    {
+      "clubId": "7cacc841-0736-431b-a530-7a7cf5e43b32",
+      "season": 2025
+    },
+    {
+      "clubId": "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+      "season": 2023
+    },
+    {
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2018
+    },
+    {
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2019
+    },
+    {
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2020
+    },
+    {
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2021
+    },
+    {
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2022
+    }
+  ],
+  "seasonsWithClubData": [
+    2024,
+    2025,
+    2023,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+  ],
+  "nationalTeamCountries": [
+    "Nigeria"
+  ],
+  "nationalTeamsComplete": true,
+  "competitionIdsEver": [
+    6,
+    10,
+    61,
+    66,
+    103,
+    104,
+    105,
+    140,
+    490,
+    848
+  ],
+  "competitionSeasons": [
+    {
+      "leagueId": 140,
+      "season": 2025
+    },
+    {
+      "leagueId": 140,
+      "season": 2024
+    },
+    {
+      "leagueId": 66,
+      "season": 2024
+    },
+    {
+      "leagueId": 61,
+      "season": 2024
+    },
+    {
+      "leagueId": 66,
+      "season": 2023
+    },
+    {
+      "leagueId": 61,
+      "season": 2023
+    },
+    {
+      "leagueId": 105,
+      "season": 2021
+    },
+    {
+      "leagueId": 104,
+      "season": 2021
+    },
+    {
+      "leagueId": 104,
+      "season": 2020
+    },
+    {
+      "leagueId": 105,
+      "season": 2019
+    },
+    {
+      "leagueId": 104,
+      "season": 2019
+    },
+    {
+      "leagueId": 104,
+      "season": 2018
+    },
+    {
+      "leagueId": 103,
+      "season": 2023
+    },
+    {
+      "leagueId": 848,
+      "season": 2022
+    },
+    {
+      "leagueId": 105,
+      "season": 2022
+    },
+    {
+      "leagueId": 103,
+      "season": 2022
+    },
+    {
+      "leagueId": 10,
+      "season": 2026
+    },
+    {
+      "leagueId": 6,
+      "season": 2025
+    },
+    {
+      "leagueId": 490,
+      "season": 2019
+    }
+  ],
+  "seasonsWithCompleteCompetitionData": [
+    2025,
+    2024,
+    2023,
+    2021,
+    2020,
+    2019,
+    2018,
+    2022,
+    2026
+  ],
+  "seasonLines": [
+    {
+      "leagueId": 140,
+      "clubId": "7cacc841-0736-431b-a530-7a7cf5e43b32",
+      "season": 2025
+    },
+    {
+      "leagueId": 140,
+      "clubId": "7cacc841-0736-431b-a530-7a7cf5e43b32",
+      "season": 2024
+    },
+    {
+      "leagueId": 66,
+      "clubId": "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+      "season": 2024
+    },
+    {
+      "leagueId": 61,
+      "clubId": "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+      "season": 2024
+    },
+    {
+      "leagueId": 66,
+      "clubId": "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+      "season": 2023
+    },
+    {
+      "leagueId": 61,
+      "clubId": "870d22f6-4368-40fd-baa8-89a9a78c8a08",
+      "season": 2023
+    },
+    {
+      "leagueId": 105,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2021
+    },
+    {
+      "leagueId": 104,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2021
+    },
+    {
+      "leagueId": 104,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2020
+    },
+    {
+      "leagueId": 105,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2019
+    },
+    {
+      "leagueId": 104,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2019
+    },
+    {
+      "leagueId": 104,
+      "clubId": "ea4327a7-5948-4994-8dd1-193aa23fb8f4",
+      "season": 2018
+    },
+    {
+      "leagueId": 103,
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2023
+    },
+    {
+      "leagueId": 848,
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2022
+    },
+    {
+      "leagueId": 105,
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2022
+    },
+    {
+      "leagueId": 103,
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2022
+    },
+    {
+      "leagueId": 105,
+      "clubId": "53b0a3b7-2c16-4db9-bfe5-60512402ff97",
+      "season": 2021
+    }
+  ],
+  "trophies": [],
+  "trophiesImported": true
+}

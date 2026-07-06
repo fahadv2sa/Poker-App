@@ -20,7 +20,7 @@ datasource db {
   // docs/architecture/PLATFORM_CONTRACTS.md). platform = identity/social (A),
   // football = reference data (B), link_up = Link Up's economy + session (C+D).
   // A future game takes its own schema; A+B stay shared.
-  schemas   = ["platform", "football", "link_up", "top_10"]
+  schemas   = ["platform", "football", "link_up", "top_10", "guess_player"]
 }
 
 // ----------------------------------------------------------------------------
@@ -527,6 +527,11 @@ model Nationality {
   name      String  @unique
   isoCode   String? @map("iso_code")
   flagEmoji String? @map("flag_emoji")
+  // Arabic display name (Guess the Player Arabic-first search; usable by any
+  // game). Display/search only — NEVER used by rules (which key on canonical
+  // English identity). STRICT policy: shown/searched only when verified.
+  nameAr         String? @map("name_ar")
+  nameArVerified Boolean @default(false) @map("name_ar_verified")
 
   clubs     Club[]
   players   Player[]
@@ -575,6 +580,11 @@ model Club {
   // never a reserve side. Additive & default false → NO effect on the Link Up rank
   // engine, fame scores, or career display, none of which read it.
   isReserve   Boolean      @default(false) @map("is_reserve")
+  // Arabic display name (transliteration, e.g. "ريال مدريد") — display/search
+  // only, never rules. Curated seed + LLM pipeline; STRICT policy: shown/
+  // searched only when verified (see seed/generate/verify arabic-names scripts).
+  nameAr         String? @map("name_ar")
+  nameArVerified Boolean @default(false) @map("name_ar_verified")
 
   country       Nationality?         @relation(fields: [countryId], references: [id], onDelete: SetNull)
   playerClubs   PlayerClub[]
@@ -654,6 +664,36 @@ model Player {
   @@index([name])
   @@index([nameAr])
   @@map("players")
+  @@schema("football")
+}
+
+// Arabic display names for competitions, keyed by the STABLE league_id — a
+// separate table (not a column) because football.competition_dim is a raw
+// table that build-totals drops and rebuilds; this survives every rebuild.
+// TRANSLATION as used by Arabic sports media ("الدوري الإسباني"), sharing one
+// glossary with the trophy whitelist so the same competition reads identically
+// everywhere. STRICT policy: consumed only when verified.
+model CompetitionNameAr {
+  leagueId Int     @id @map("league_id")
+  nameAr   String  @map("name_ar")
+  verified Boolean @default(false)
+
+  @@map("competition_names_ar")
+  @@schema("football")
+}
+
+// Competition identity aliases (zero-error, same pattern as the trophy
+// merges): when the source data records the SAME real competition under two
+// league_ids (e.g. an API rename), the VARIANT id points at its canonical id;
+// the resolver folds variants into asks as altLeagueIds and the picker hides
+// variant ids. Curated ONLY by merge-competition-variants.ts. No such split
+// is provable in the data today (verified 2026-07-06) — this table exists so
+// the class is covered the moment one appears; the audit watches candidates.
+model CompetitionAlias {
+  leagueId          Int @id @map("league_id")
+  canonicalLeagueId Int @map("canonical_league_id")
+
+  @@map("competition_aliases")
   @@schema("football")
 }
 
@@ -1356,4 +1396,292 @@ model TtXpEvent {
   @@index([userId, createdAt])
   @@map("tt_xp_events")
   @@schema("top_10")
+}
+
+// ============================================================================
+// Guess the Player (خمن اللاعب) — game #3 (binding contract:
+// docs/architecture/PLATFORM_CONTRACTS.md). Lives in its OWN `guess_player`
+// schema (this game's group C+D). ISOLATION RULES honored, mirroring Top Ten:
+//   • Platform identity referenced by opaque `user_id` UUID only — NO FK to platform.users.
+//   • Football reference data referenced by `football_player_id` / raw league ids
+//     only — NO FK to football.* (keeps a future separate DB possible).
+//   • FKs exist ONLY between guess_player's own tables.
+// Guess the Player NEVER writes football.* or any other game's tables.
+//
+// SECRECY INVARIANT: gp_rounds.hidden_player_id is server/DB-side only. It is
+// NEVER emitted to any client (including /internal/rooms) before the reveal.
+// ============================================================================
+
+enum GpMode {
+  VS_SYSTEM // system picks the hidden player (quick play is ALWAYS this)
+  VS_HUMANS // a picker chooses via full-DB search (created rooms only)
+
+  @@map("gp_mode")
+  @@schema("guess_player")
+}
+
+enum GpMatchKind {
+  MANUAL
+  QUICK_PLAY
+
+  @@map("gp_match_kind")
+  @@schema("guess_player")
+}
+
+enum GpMatchStatus {
+  LOBBY
+  IN_PROGRESS
+  ENDED
+  ABANDONED
+
+  @@map("gp_match_status")
+  @@schema("guess_player")
+}
+
+// VS_SYSTEM hidden-player pool tiers over football.player_score.score:
+// EASY floor(score)>=70, MEDIUM 50–69, HARD 35–49; <35 never dealt by the
+// system (still pickable by a human picker). Own enum — schema isolation.
+enum GpDifficulty {
+  EASY
+  MEDIUM
+  HARD
+
+  @@map("gp_difficulty")
+  @@schema("guess_player")
+}
+
+enum GpMatchPlayerStatus {
+  ACTIVE
+  WITHDRAWN
+
+  @@map("gp_match_player_status")
+  @@schema("guess_player")
+}
+
+enum GpRoundStatus {
+  ACTIVE
+  ENDED
+
+  @@map("gp_round_status")
+  @@schema("guess_player")
+}
+
+enum GpRoundEndReason {
+  CORRECT_GUESS
+  TIMER // 10 minutes, nobody guessed → reveal, VS_HUMANS picker survival bonus
+  ABANDONED // all contestants gone / match closed mid-round
+
+  @@map("gp_round_end_reason")
+  @@schema("guess_player")
+}
+
+// The 9 question templates. Playing position and physical appearance are
+// FORBIDDEN topics enforced by ABSENCE: no template for them exists, so the
+// question system itself cannot ask them (locked rule).
+enum GpQuestionTemplate {
+  CLUB_EVER
+  CLUB_SEASON
+  NATIONALITY
+  NATIONAL_TEAM
+  COMPETITION_EVER
+  COMPETITION_SEASON
+  TROPHY_EVER
+  TROPHY_SEASON
+  TROPHY_WITH_CLUB
+
+  @@map("gp_question_template")
+  @@schema("guess_player")
+}
+
+// Three-valued answer (zero-error contract): YES/NO only when the data proves
+// it; UNKNOWN = "لا يمكن الإجابة" and the asker's turn is NOT consumed.
+enum GpAnswerValue {
+  YES
+  NO
+  UNKNOWN
+
+  @@map("gp_answer_value")
+  @@schema("guess_player")
+}
+
+// ---- Askable-trophy whitelist (curated, data-driven — edit rows, not code) --
+// Seeded from football.trophy_dim (non-youth categories) by seed-gp-trophies.
+// The question composer's trophy autocomplete reads active rows only; the
+// engine itself can verify ANY trophy — this table is UX scope, not truth.
+model GpAskableTrophy {
+  id        String   @id @default(uuid()) @db.Uuid
+  // trophy_dim identity (comp_name, country) — country may be empty.
+  compName  String   @map("comp_name")
+  country   String   @default("")
+  // trophy_dim category at seed time (UCL / LEAGUE_* / CLUB_CUP / OTHER_LEAGUE
+  // / NATIONAL_SENIOR) — drives default ordering in the picker.
+  category  String
+  // Arabic display label (shared glossary with competition_names_ar; null →
+  // show comp_name). STRICT policy: shown/searched only when verified.
+  nameAr         String?  @map("name_ar")
+  nameArVerified Boolean  @default(false) @map("name_ar_verified")
+  // Identity aliasing (zero-error fix, 2026-07-06): the source data records
+  // the SAME real trophy under variant strings ("World Cup" vs "FIFA World
+  // Cup" — winners split 19/72). A variant row points at its canonical row
+  // and is deactivated (not pickable); the resolver folds every variant's
+  // (comp_name, country) into the ask as altKeys so the engine matches ALL
+  // equivalent identities. Curated by merge-trophy-variants.ts only.
+  mergedIntoId   String?  @map("merged_into_id") @db.Uuid
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  seededAt  DateTime @default(now()) @map("seeded_at") @db.Timestamptz(6)
+
+  @@unique([compName, country])
+  @@index([active, sortOrder])
+  @@map("gp_askable_trophies")
+  @@schema("guess_player")
+}
+
+// ---- Live session (rooms temporary; results/progression persistent) --------
+
+model GpMatch {
+  id              String        @id @default(uuid()) @db.Uuid
+  kind            GpMatchKind   @default(MANUAL)
+  mode            GpMode        @default(VS_SYSTEM)
+  // Tier of the system picker — VS_SYSTEM only; null for VS_HUMANS.
+  difficulty      GpDifficulty?
+  roundsTotal     Int           @default(3) @map("rounds_total") // chosen at creation
+  roundTimerSec   Int           @default(600) @map("round_timer_sec") // 10 min
+  turnTimerSec    Int           @default(30) @map("turn_timer_sec")
+  maxPlayers      Int           @default(4) @map("max_players") // rooms 2–6, quick play 2–4
+  status          GpMatchStatus @default(LOBBY)
+  inviteCode      String?       @unique @map("invite_code")
+  isPrivate       Boolean       @default(false) @map("is_private")
+  roomName        String?       @map("room_name")
+  createdByUserId String        @map("created_by_user_id") @db.Uuid // opaque platform id
+  config          Json          @db.JsonB
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt       DateTime?     @map("started_at") @db.Timestamptz(6)
+  endedAt         DateTime?     @map("ended_at") @db.Timestamptz(6)
+
+  players         GpMatchPlayer[]
+  rounds          GpRound[]
+
+  // Supports the unified cleanup selection (status + ended_at cutoff).
+  @@index([status, endedAt])
+  @@map("gp_matches")
+  @@schema("guess_player")
+}
+
+model GpMatchPlayer {
+  id          String              @id @default(uuid()) @db.Uuid
+  matchId     String              @map("match_id") @db.Uuid
+  userId      String              @map("user_id") @db.Uuid // opaque platform id (no FK)
+  seat        Int
+  totalPoints Int                 @default(0) @map("total_points")
+  status      GpMatchPlayerStatus @default(ACTIVE)
+  withdrawnAt DateTime?           @map("withdrawn_at") @db.Timestamptz(6)
+  joinedAt    DateTime            @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  match       GpMatch             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, seat])
+  @@unique([matchId, userId])
+  @@map("gp_match_players")
+  @@schema("guess_player")
+}
+
+model GpRound {
+  id             String            @id @default(uuid()) @db.Uuid
+  matchId        String            @map("match_id") @db.Uuid
+  roundNo        Int               @map("round_no")
+  // SECRET until reveal — plain UUID into football.players (no FK, isolation).
+  hiddenPlayerId String            @map("hidden_player_id") @db.Uuid
+  // VS_HUMANS: who picked the hidden player (cannot ask or guess this round);
+  // null for VS_SYSTEM rounds.
+  pickerUserId   String?           @map("picker_user_id") @db.Uuid
+  status         GpRoundStatus     @default(ACTIVE)
+  endReason      GpRoundEndReason? @map("end_reason")
+  winnerUserId   String?           @map("winner_user_id") @db.Uuid
+  // Points credited at resolve (winner / picker share / survival bonus live in
+  // gp_xp_events with reasons; this is the winner's figure for the result UI).
+  winnerPoints   Int               @default(0) @map("winner_points")
+  startedAt      DateTime          @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt        DateTime?         @map("ended_at") @db.Timestamptz(6)
+
+  match          GpMatch           @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  questions      GpQuestion[]
+  guesses        GpGuess[]
+
+  @@unique([matchId, roundNo])
+  @@index([matchId])
+  @@map("gp_rounds")
+  @@schema("guess_player")
+}
+
+// Every asked question WITH its answer (approved): audit trail for any
+// disputed answer, the post-round history reveal, and question analytics.
+model GpQuestion {
+  id          String             @id @default(uuid()) @db.Uuid
+  roundId     String             @map("round_id") @db.Uuid
+  turnNo      Int                @map("turn_no")
+  askerUserId String             @map("asker_user_id") @db.Uuid
+  template    GpQuestionTemplate
+  // The template's resolved entity params AS ASKED, with display labels frozen
+  // at ask time (e.g. { clubId, clubName, season }) — self-contained history
+  // even if reference data changes later.
+  params      Json               @db.JsonB
+  answer      GpAnswerValue
+  askedAt     DateTime           @default(now()) @map("asked_at") @db.Timestamptz(6)
+
+  round       GpRound            @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId, turnNo])
+  @@map("gp_questions")
+  @@schema("guess_player")
+}
+
+model GpGuess {
+  id               String   @id @default(uuid()) @db.Uuid
+  roundId          String   @map("round_id") @db.Uuid
+  guesserUserId    String   @map("guesser_user_id") @db.Uuid
+  // The guessed player — selected via search, submitted as id (no free text).
+  footballPlayerId String   @map("football_player_id") @db.Uuid
+  correct          Boolean
+  attemptNo        Int      @map("attempt_no") // 1..3 per contestant per round
+  guessedAt        DateTime @default(now()) @map("guessed_at") @db.Timestamptz(6)
+
+  round            GpRound  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+  @@map("gp_guesses")
+  @@schema("guess_player")
+}
+
+// ---- Progression (points → XP + cosmetic level) — per-game, no coins -------
+
+model GpProgression {
+  userId          String   @id @map("user_id") @db.Uuid
+  xp              BigInt   @default(0)
+  level           Int      @default(1)
+  celebratedLevel Int      @default(1) @map("celebrated_level")
+  matchesPlayed   Int      @default(0) @map("matches_played")
+  matchesWon      Int      @default(0) @map("matches_won")
+  roundsWon       Int      @default(0) @map("rounds_won")
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("gp_progression")
+  @@schema("guess_player")
+}
+
+// Append-only XP/points ledger (audit + idempotent aggregation source).
+// reason: ROUND_WIN | PICKER_SHARE | SURVIVAL_BONUS | MATCH_WIN.
+model GpXpEvent {
+  seq       BigInt   @id @default(autoincrement())
+  userId    String   @map("user_id") @db.Uuid
+  matchId   String?  @map("match_id") @db.Uuid
+  amount    Int
+  reason    String
+  reference String   @unique // server-generated idempotency key
+  metadata  Json?    @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("gp_xp_events")
+  @@schema("guess_player")
 }

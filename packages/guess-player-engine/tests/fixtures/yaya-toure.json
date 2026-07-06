@@ -1,0 +1,466 @@
+{
+  "playerId": "92e320c9-2dbf-4761-a803-d06e8957f72f",
+  "name": "Yaya Touré",
+  "nameAr": "يايا توريه",
+  "nationalityName": "Côte d'Ivoire",
+  "clubIdsEver": [
+    "0ab90234-8d5d-49f0-a7a4-6404cf439fef",
+    "317fdee4-438c-4bd4-a70e-a94b7a818257",
+    "bda1d1bd-f0f2-4c16-ac72-85ea983b0e8d",
+    "651a6c01-be63-4270-b9c7-1914093bbf5d"
+  ],
+  "clubSeasons": [
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2010
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2011
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2012
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2013
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2014
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2015
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2016
+    },
+    {
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2017
+    },
+    {
+      "clubId": "651a6c01-be63-4270-b9c7-1914093bbf5d",
+      "season": 2006
+    },
+    {
+      "clubId": "bda1d1bd-f0f2-4c16-ac72-85ea983b0e8d",
+      "season": 2007
+    },
+    {
+      "clubId": "bda1d1bd-f0f2-4c16-ac72-85ea983b0e8d",
+      "season": 2008
+    },
+    {
+      "clubId": "bda1d1bd-f0f2-4c16-ac72-85ea983b0e8d",
+      "season": 2009
+    },
+    {
+      "clubId": "0ab90234-8d5d-49f0-a7a4-6404cf439fef",
+      "season": 2005
+    },
+    {
+      "clubId": "0ab90234-8d5d-49f0-a7a4-6404cf439fef",
+      "season": 2018
+    }
+  ],
+  "seasonsWithClubData": [
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2006,
+    2007,
+    2008,
+    2009,
+    2005,
+    2018
+  ],
+  "nationalTeamCountries": [
+    "Côte d'Ivoire"
+  ],
+  "nationalTeamsComplete": true,
+  "competitionIdsEver": [
+    1,
+    2,
+    3,
+    6,
+    10,
+    15,
+    39,
+    45,
+    48,
+    61,
+    140,
+    143,
+    199,
+    531
+  ],
+  "competitionSeasons": [
+    {
+      "leagueId": 2,
+      "season": 2017
+    },
+    {
+      "leagueId": 48,
+      "season": 2017
+    },
+    {
+      "leagueId": 45,
+      "season": 2017
+    },
+    {
+      "leagueId": 39,
+      "season": 2017
+    },
+    {
+      "leagueId": 2,
+      "season": 2016
+    },
+    {
+      "leagueId": 45,
+      "season": 2016
+    },
+    {
+      "leagueId": 39,
+      "season": 2016
+    },
+    {
+      "leagueId": 2,
+      "season": 2015
+    },
+    {
+      "leagueId": 48,
+      "season": 2015
+    },
+    {
+      "leagueId": 39,
+      "season": 2015
+    },
+    {
+      "leagueId": 2,
+      "season": 2014
+    },
+    {
+      "leagueId": 45,
+      "season": 2014
+    },
+    {
+      "leagueId": 48,
+      "season": 2014
+    },
+    {
+      "leagueId": 39,
+      "season": 2014
+    },
+    {
+      "leagueId": 2,
+      "season": 2013
+    },
+    {
+      "leagueId": 48,
+      "season": 2013
+    },
+    {
+      "leagueId": 45,
+      "season": 2013
+    },
+    {
+      "leagueId": 39,
+      "season": 2013
+    },
+    {
+      "leagueId": 2,
+      "season": 2012
+    },
+    {
+      "leagueId": 45,
+      "season": 2012
+    },
+    {
+      "leagueId": 39,
+      "season": 2012
+    },
+    {
+      "leagueId": 2,
+      "season": 2011
+    },
+    {
+      "leagueId": 48,
+      "season": 2011
+    },
+    {
+      "leagueId": 39,
+      "season": 2011
+    },
+    {
+      "leagueId": 39,
+      "season": 2010
+    },
+    {
+      "leagueId": 3,
+      "season": 2018
+    },
+    {
+      "leagueId": 199,
+      "season": 2018
+    },
+    {
+      "leagueId": 6,
+      "season": 2015
+    },
+    {
+      "leagueId": 1,
+      "season": 2014
+    },
+    {
+      "leagueId": 1,
+      "season": 2010
+    }
+  ],
+  "seasonsWithCompleteCompetitionData": [
+    2018
+  ],
+  "seasonLines": [
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2017
+    },
+    {
+      "leagueId": 48,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2017
+    },
+    {
+      "leagueId": 45,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2017
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2017
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2016
+    },
+    {
+      "leagueId": 45,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2016
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2016
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2015
+    },
+    {
+      "leagueId": 48,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2015
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2015
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2014
+    },
+    {
+      "leagueId": 45,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2014
+    },
+    {
+      "leagueId": 48,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2014
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2014
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2013
+    },
+    {
+      "leagueId": 48,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2013
+    },
+    {
+      "leagueId": 45,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2013
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2013
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2012
+    },
+    {
+      "leagueId": 45,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2012
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2012
+    },
+    {
+      "leagueId": 2,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2011
+    },
+    {
+      "leagueId": 48,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2011
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2011
+    },
+    {
+      "leagueId": 39,
+      "clubId": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+      "season": 2010
+    },
+    {
+      "leagueId": 3,
+      "clubId": "0ab90234-8d5d-49f0-a7a4-6404cf439fef",
+      "season": 2018
+    },
+    {
+      "leagueId": 199,
+      "clubId": "0ab90234-8d5d-49f0-a7a4-6404cf439fef",
+      "season": 2018
+    }
+  ],
+  "trophies": [
+    {
+      "compName": "Africa Cup of Nations",
+      "country": "Africa",
+      "season": 2015
+    },
+    {
+      "compName": "China League One",
+      "country": "China-Pr",
+      "season": 2019
+    },
+    {
+      "compName": "Community Shield",
+      "country": "England",
+      "season": 2012
+    },
+    {
+      "compName": "Copa del Rey",
+      "country": "Spain",
+      "season": 2008
+    },
+    {
+      "compName": "Cup",
+      "country": "Greece",
+      "season": 2005
+    },
+    {
+      "compName": "FA Cup",
+      "country": "England",
+      "season": 2010
+    },
+    {
+      "compName": "FIFA Club World Cup",
+      "country": "World",
+      "season": 2009
+    },
+    {
+      "compName": "La Liga",
+      "country": "Spain",
+      "season": 2008
+    },
+    {
+      "compName": "La Liga",
+      "country": "Spain",
+      "season": 2009
+    },
+    {
+      "compName": "League Cup",
+      "country": "England",
+      "season": 2013
+    },
+    {
+      "compName": "League Cup",
+      "country": "England",
+      "season": 2015
+    },
+    {
+      "compName": "League Cup",
+      "country": "England",
+      "season": 2017
+    },
+    {
+      "compName": "Premier League",
+      "country": "England",
+      "season": 2011
+    },
+    {
+      "compName": "Premier League",
+      "country": "England",
+      "season": 2013
+    },
+    {
+      "compName": "Premier League",
+      "country": "England",
+      "season": 2017
+    },
+    {
+      "compName": "Super Cup",
+      "country": "Spain",
+      "season": 2009
+    },
+    {
+      "compName": "Super League 1",
+      "country": "Greece",
+      "season": 2005
+    },
+    {
+      "compName": "UEFA Champions League",
+      "country": "Europe",
+      "season": 2008
+    },
+    {
+      "compName": "UEFA Super Cup",
+      "country": "Europe",
+      "season": 2009
+    }
+  ],
+  "trophiesImported": true
+}

@@ -1,0 +1,23 @@
+{
+  "clubsByName": {
+    "Liverpool": "604b33bb-2e3e-4005-8941-663c2e4a5c4f",
+    "Chelsea": "ec2a872b-63a8-4862-8055-23c0c97e9abd",
+    "Real Madrid": "2060b2e2-9c84-4fee-b169-c75801a2ff34",
+    "Barcelona": "bda1d1bd-f0f2-4c16-ac72-85ea983b0e8d",
+    "Manchester City": "317fdee4-438c-4bd4-a70e-a94b7a818257",
+    "AS Roma": "068ff5f5-066c-4e48-a194-c4089205a298"
+  },
+  "competitionsByName": {
+    "Premier League": 39,
+    "La Liga": 140,
+    "UEFA Champions League": 2
+  },
+  "trophyLeagueIds": {
+    "UEFA Champions League||Europe": [
+      2
+    ],
+    "Premier League||England": [
+      39
+    ]
+  }
+}
