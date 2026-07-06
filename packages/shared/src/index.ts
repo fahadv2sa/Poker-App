@@ -7,6 +7,7 @@ export * from "./auth.schemas.js";
 export * from "./ws.js";
 export * from "./rate-limit.js";
 export * from "./admin.js";
+export * from "./season.js";
 export * from "./top10.js";
 export * from "./top10.ws.js";
 export * from "./guess-player.js";

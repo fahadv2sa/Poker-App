@@ -4,7 +4,7 @@ import {
   type GpFactPack,
   type GpQuestion,
 } from "@fb/guess-player-engine";
-import type { GpAskInput } from "@fb/shared";
+import { fbSeasonLabel, type GpAskInput } from "@fb/shared";
 import {
   gpResolveClub,
   gpResolveCompetition,
@@ -134,7 +134,13 @@ export class PrismaGpFactsSource implements GpFactsSource {
                 altLeagueIds: comp.altLeagueIds,
                 season: input.season,
               },
-              params: { competitionName: comp.nameAr, season: input.season },
+              params: {
+                competitionName: comp.nameAr,
+                season: input.season,
+                // Frozen at ask time from competition_dim.is_national — a national
+                // tournament season is one calendar year ("2018", never "2018/19").
+                seasonLabel: fbSeasonLabel(input.season, { singleYear: comp.isNational }),
+              },
             }
           : null;
       }

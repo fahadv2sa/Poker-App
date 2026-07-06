@@ -69,7 +69,10 @@ const QUESTIONS: GpStateView["questions"] = [
   { turnNo: 2, seat: 2, template: "CLUB_EVER", params: { clubName: "ريال مدريد" }, answer: "NO" },
   { turnNo: 3, seat: 0, template: "COMPETITION_EVER", params: { competitionName: "الدوري الإنجليزي الممتاز" }, answer: "YES" },
   { turnNo: 4, seat: 2, template: "TROPHY_WITH_CLUB", params: { trophyName: "دوري أبطال أوروبا", clubName: "ليفربول" }, answer: "YES" },
-  { turnNo: 5, seat: 0, template: "CLUB_SEASON", params: { clubName: "تشيلسي", season: 2005 }, answer: "UNKNOWN" },
+  // seasonLabel is frozen server-side at ask time: cross-calendar club season
+  // vs a single-year national tournament (both forms exercised here).
+  { turnNo: 5, seat: 0, template: "CLUB_SEASON", params: { clubName: "تشيلسي", season: 2005, seasonLabel: "2005/06" }, answer: "UNKNOWN" },
+  { turnNo: 6, seat: 2, template: "COMPETITION_SEASON", params: { competitionName: "كأس العالم", season: 2018, seasonLabel: "2018" }, answer: "YES" },
 ];
 
 const WRONG_GUESSES: GpStateView["wrongGuesses"] = [

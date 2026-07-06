@@ -34,6 +34,9 @@ export interface GpCompetitionRef {
   nameAr: string;
   /** Equivalent league ids merged into this competition (engine matches all). */
   altLeagueIds: number[];
+  /** National-team tournament (WC/Euro/Copa/qualifiers…) — its seasons run in
+   *  a single calendar year, so the display label is "2018", never "2018/19". */
+  isNational: boolean;
 }
 export interface GpTrophyRefResolved {
   compName: string;
@@ -43,6 +46,9 @@ export interface GpTrophyRefResolved {
   leagueIds: number[];
   /** Equivalent identities merged into this trophy (engine matches all). */
   altKeys: { compName: string; country: string }[];
+  /** National-team trophy (single-calendar-year season label — see
+   *  GpCompetitionRef.isNational). */
+  isNational: boolean;
 }
 export interface GpPlayerRef {
   id: string;
@@ -75,9 +81,9 @@ export async function gpResolveCompetition(leagueId: number): Promise<GpCompetit
   const alias = await prisma.competitionAlias.findUnique({ where: { leagueId } });
   const canonicalId = alias?.canonicalLeagueId ?? leagueId;
   const rows = await prisma.$queryRaw<
-    { league_id: number; comp_name: string; name_ar: string }[]
+    { league_id: number; comp_name: string; name_ar: string; is_national: boolean }[]
   >(Prisma.sql`
-    SELECT d.league_id, d.comp_name, a.name_ar
+    SELECT d.league_id, d.comp_name, a.name_ar, d.is_national
     FROM football.competition_dim d
     JOIN football.competition_names_ar a ON a.league_id = d.league_id AND a.verified = true
     WHERE d.league_id = ${canonicalId} AND d.is_youth = false
@@ -92,6 +98,7 @@ export async function gpResolveCompetition(leagueId: number): Promise<GpCompetit
     name: rows[0].comp_name,
     nameAr: rows[0].name_ar,
     altLeagueIds: variants.map((v) => v.leagueId),
+    isNational: rows[0].is_national,
   };
 }
 
@@ -148,9 +155,16 @@ export async function gpResolveTrophy(
     where: { mergedIntoId: row.id },
     select: { compName: true, country: true },
   });
-  const leagueIdSets = await Promise.all([
-    gpTrophyLeagueIds(row.compName, row.country),
-    ...variants.map((v) => gpTrophyLeagueIds(v.compName, v.country)),
+  const [leagueIdSets, dim] = await Promise.all([
+    Promise.all([
+      gpTrophyLeagueIds(row.compName, row.country),
+      ...variants.map((v) => gpTrophyLeagueIds(v.compName, v.country)),
+    ]),
+    // The whitelist row's (comp_name, country) IS trophy_dim's identity.
+    prisma.$queryRaw<{ is_national: boolean }[]>(Prisma.sql`
+      SELECT is_national FROM football.trophy_dim
+      WHERE comp_name = ${row.compName} AND country = ${row.country}
+    `),
   ]);
   return {
     compName: row.compName,
@@ -158,6 +172,7 @@ export async function gpResolveTrophy(
     nameAr: row.nameAr,
     leagueIds: [...new Set(leagueIdSets.flat())],
     altKeys: variants,
+    isNational: dim[0]?.is_national ?? false,
   };
 }
 

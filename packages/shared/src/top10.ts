@@ -5,6 +5,7 @@
  * the Prisma enums in the `top_10` schema (packages/db/prisma/schema.prisma) and the
  * APPROVED build plan. Keep all tunables here so a change propagates everywhere.
  */
+import { fbSeasonLabel } from "./season.js";
 
 // ---- enums (mirror top_10.* Prisma enums) ----------------------------------
 
@@ -301,9 +302,10 @@ export const TT_TOURNAMENT_FINALS_MAX_APPS = 8;
  */
 export function ttSeasonLabel(season: number, seasonEnd: number, leagueId: number): string {
   // Cross-calendar → short two-year form "2020/21"; single-year tournament → "2020".
-  const fmt = TT_SINGLE_YEAR_LEAGUE_IDS.includes(leagueId)
-    ? (y: number) => `${y}`
-    : (y: number) => `${y}/${String((y + 1) % 100).padStart(2, "0")}`;
+  // The year math lives in the platform-wide fbSeasonLabel (shared with Guess
+  // the Player) so the two games can never drift apart.
+  const singleYear = TT_SINGLE_YEAR_LEAGUE_IDS.includes(leagueId);
+  const fmt = (y: number) => fbSeasonLabel(y, { singleYear });
   // Single season → just the season; multi-season → "من <start> إلى <end>" so the range
   // is unambiguous (applies to every from–to question).
   return season === seasonEnd ? fmt(season) : `من ${fmt(season)} إلى ${fmt(seasonEnd)}`;

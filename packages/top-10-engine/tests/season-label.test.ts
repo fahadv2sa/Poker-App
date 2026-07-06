@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  fbSeasonLabel,
   TT_COMPETITIONS,
   TT_SINGLE_YEAR_LEAGUE_IDS,
   TT_TOP5_LEAGUE_IDS,
@@ -39,6 +40,16 @@ describe("ttSeasonLabel — season display mapping", () => {
   it("multi-season windows read as an explicit Arabic from→to range", () => {
     expect(ttSeasonLabel(2018, 2020, 39)).toBe("من 2018/19 إلى 2020/21"); // 3-season PL
     expect(ttSeasonLabel(2014, 2018, 1)).toBe("من 2014 إلى 2018"); // single-year tournament range
+  });
+
+  it("delegates to the platform-wide fbSeasonLabel (shared with Guess the Player — no drift)", () => {
+    expect(fbSeasonLabel(2020)).toBe("2020/21");
+    expect(fbSeasonLabel(2009)).toBe("2009/10"); // zero-padded end year
+    expect(fbSeasonLabel(1999)).toBe("1999/00"); // century rollover
+    expect(fbSeasonLabel(2018, { singleYear: true })).toBe("2018");
+    // ttSeasonLabel must be exactly fbSeasonLabel under the hood
+    expect(ttSeasonLabel(2020, 2020, 39)).toBe(fbSeasonLabel(2020));
+    expect(ttSeasonLabel(2018, 2018, 1)).toBe(fbSeasonLabel(2018, { singleYear: true }));
   });
 
   it("the single-year set is exactly WC/Euro/Copa, and they are real whitelisted comps", () => {

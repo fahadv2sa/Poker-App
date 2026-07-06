@@ -5,6 +5,9 @@ export interface EntityItem {
   id: string;
   label: string;
   sub?: string | null;
+  /** Single-calendar-year competition/trophy (national tournaments) — drives
+   *  the composer's season display ("2018" vs "2018/19"). */
+  singleYear?: boolean;
 }
 
 /**

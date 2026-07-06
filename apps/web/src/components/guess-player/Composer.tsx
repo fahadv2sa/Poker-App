@@ -117,7 +117,7 @@ const SLOT_ENDPOINT: Record<Exclude<Slot, "season">, { url: string; placeholder:
 
 const SEASONS = Array.from({ length: 2026 - 1990 + 1 }, (_, i) => 2026 - i);
 
-type Picked = Partial<Record<Slot, { id: string; label: string }>>;
+type Picked = Partial<Record<Slot, { id: string; label: string; singleYear?: boolean }>>;
 
 export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (input: GpAskInput) => void }) {
   const [categoryId, setCategoryId] = useState<string>("clubs");
@@ -131,6 +131,15 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
     () => segments.filter((s): s is { slot: Slot } => "slot" in s).map((s) => s.slot),
     [segments],
   );
+  // Season display follows the picked competition/trophy: a national
+  // tournament season is one calendar year («2018»), everything else is the
+  // cross-calendar «2018/19» form. Club seasons have no league context →
+  // always cross-calendar (matches the server's frozen label).
+  const singleYearSeason =
+    (template === "COMPETITION_SEASON" && picked.competition?.singleYear) ||
+    (template === "TROPHY_SEASON" && picked.trophy?.singleYear) ||
+    false;
+  const fmtSeason = (y: number) => seasonLabel(y, { singleYear: singleYearSeason });
   const firstEmpty = slots.find((s) => !picked[s]) ?? null;
   const currentSlot = activeSlot && !picked[activeSlot] ? activeSlot : firstEmpty;
   const complete = slots.every((s) => picked[s]);
@@ -148,7 +157,7 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
     setActiveSlot(first?.slot ?? null);
   }
 
-  function fill(slot: Slot, value: { id: string; label: string }) {
+  function fill(slot: Slot, value: { id: string; label: string; singleYear?: boolean }) {
     setPicked((p) => {
       const next = { ...p, [slot]: value };
       const nextEmpty = slots.find((s) => !next[s]) ?? null;
@@ -308,7 +317,7 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
                   className="lu-chip inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-base font-black text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/50 transition hover:ring-[var(--lu-gold-1)]"
                 >
                   {seg.slot === "season"
-                    ? seasonLabel(Number(picked[seg.slot]!.id))
+                    ? fmtSeason(Number(picked[seg.slot]!.id))
                     : picked[seg.slot]!.label}
                   <span aria-hidden className="text-[0.6rem] opacity-70">✕</span>
                 </button>
@@ -352,7 +361,7 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
           </option>
           {SEASONS.map((y) => (
             <option key={y} value={y}>
-              {seasonLabel(y)}
+              {fmtSeason(y)}
             </option>
           ))}
         </select>
@@ -362,7 +371,9 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
           endpoint={SLOT_ENDPOINT[currentSlot].url}
           placeholder={SLOT_ENDPOINT[currentSlot].placeholder}
           disabled={disabled}
-          onPick={(item: EntityItem) => fill(currentSlot, { id: item.id, label: item.label })}
+          onPick={(item: EntityItem) =>
+            fill(currentSlot, { id: item.id, label: item.label, singleYear: item.singleYear })
+          }
         />
       ) : null}
 

@@ -16,8 +16,10 @@ export async function GET(req: Request) {
   const like = `%${normQ}%`;
   // ARABIC-ONLY: only competitions with a VERIFIED Arabic name are listed;
   // English input still matches, display is Arabic with no English sub.
-  const rows = await prisma.$queryRaw<{ league_id: number; name_ar: string }[]>(Prisma.sql`
-    SELECT d.league_id, a.name_ar
+  const rows = await prisma.$queryRaw<
+    { league_id: number; name_ar: string; is_national: boolean }[]
+  >(Prisma.sql`
+    SELECT d.league_id, a.name_ar, d.is_national
     FROM football.competition_dim d
     JOIN football.competition_names_ar a ON a.league_id = d.league_id AND a.verified = true
     WHERE d.is_youth = false
@@ -40,6 +42,13 @@ export async function GET(req: Request) {
     LIMIT 12
   `);
   return NextResponse.json({
-    items: rows.map((r) => ({ id: String(r.league_id), label: r.name_ar, sub: null })),
+    // singleYear: national tournaments run in ONE calendar year — the composer
+    // shows their seasons as "2018", not "2018/19".
+    items: rows.map((r) => ({
+      id: String(r.league_id),
+      label: r.name_ar,
+      sub: null,
+      singleYear: r.is_national,
+    })),
   });
 }

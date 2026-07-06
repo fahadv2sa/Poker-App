@@ -16,21 +16,29 @@ export async function GET(req: Request) {
   // ARABIC-ONLY: only whitelist trophies with a VERIFIED Arabic name are
   // listed; English input still matches, display is Arabic only.
   const like = `%${q.replace(/[أإآ]/g, "ا")}%`;
-  const rows = await prisma.$queryRaw<{ comp_name: string; country: string; name_ar: string }[]>(Prisma.sql`
-    SELECT comp_name, country, name_ar
-    FROM guess_player.gp_askable_trophies
-    WHERE active = true AND name_ar_verified AND name_ar IS NOT NULL AND (
-      comp_name ILIKE ${like}
-      OR translate(name_ar, 'أإآ', 'ااا') ILIKE ${like}
+  const rows = await prisma.$queryRaw<
+    { comp_name: string; country: string; name_ar: string; is_national: boolean }[]
+  >(Prisma.sql`
+    SELECT g.comp_name, g.country, g.name_ar,
+           coalesce(t.is_national, false) AS is_national
+    FROM guess_player.gp_askable_trophies g
+    LEFT JOIN football.trophy_dim t
+      ON t.comp_name = g.comp_name AND t.country = g.country
+    WHERE g.active = true AND g.name_ar_verified AND g.name_ar IS NOT NULL AND (
+      g.comp_name ILIKE ${like}
+      OR translate(g.name_ar, 'أإآ', 'ااا') ILIKE ${like}
     )
-    ORDER BY sort_order, name_ar
+    ORDER BY g.sort_order, g.name_ar
     LIMIT 12
   `);
   return NextResponse.json({
+    // singleYear mirrors the competitions endpoint: national-team trophies
+    // (WC/Euro/Copa…) label their season as one calendar year.
     items: rows.map((r) => ({
       id: `${r.comp_name}||${r.country}`,
       label: r.name_ar,
       sub: null,
+      singleYear: r.is_national,
     })),
   });
 }

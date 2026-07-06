@@ -1,9 +1,15 @@
-import type { GpQuestionView } from "@fb/shared";
+import { fbSeasonLabel, type GpQuestionView } from "@fb/shared";
 
-/** Season display: API start-year int → "٢٠١٨/٢٠١٩"-style label (Latin digits,
- *  matching the platform's `num` convention). */
-export function seasonLabel(season: number): string {
-  return `${season}/${season + 1}`;
+/** Season display — re-exported platform helper ("2020/21" cross-calendar,
+ *  "2018" single-year tournaments). Same source of truth as Top Ten. */
+export const seasonLabel = fbSeasonLabel;
+
+/** The season string for an ANSWERED question: prefer the label the server
+ *  froze into params at ask time (it knew the competition's calendar);
+ *  fall back to the cross-calendar form for rows frozen before the label
+ *  existed. */
+function frozenSeason(p: Record<string, string | number>): string {
+  return typeof p.seasonLabel === "string" ? p.seasonLabel : fbSeasonLabel(Number(p.season));
 }
 
 /** Render an answered question as the natural Arabic sentence the composer
@@ -14,7 +20,7 @@ export function questionTextAr(q: Pick<GpQuestionView, "template" | "params">): 
     case "CLUB_EVER":
       return `هل لعب في نادي ${p.clubName}؟`;
     case "CLUB_SEASON":
-      return `هل لعب في نادي ${p.clubName} موسم ${seasonLabel(Number(p.season))}؟`;
+      return `هل لعب في نادي ${p.clubName} موسم ${frozenSeason(p)}؟`;
     case "NATIONALITY":
       return `هل جنسيته ${p.countryName}؟`;
     case "NATIONAL_TEAM":
@@ -22,11 +28,11 @@ export function questionTextAr(q: Pick<GpQuestionView, "template" | "params">): 
     case "COMPETITION_EVER":
       return `هل لعب في ${p.competitionName}؟`;
     case "COMPETITION_SEASON":
-      return `هل لعب في ${p.competitionName} موسم ${seasonLabel(Number(p.season))}؟`;
+      return `هل لعب في ${p.competitionName} موسم ${frozenSeason(p)}؟`;
     case "TROPHY_EVER":
       return `هل فاز بلقب ${p.trophyName}؟`;
     case "TROPHY_SEASON":
-      return `هل فاز بلقب ${p.trophyName} موسم ${seasonLabel(Number(p.season))}؟`;
+      return `هل فاز بلقب ${p.trophyName} موسم ${frozenSeason(p)}؟`;
     case "TROPHY_WITH_CLUB":
       return `هل فاز بلقب ${p.trophyName} مع نادي ${p.clubName}؟`;
   }
@@ -69,15 +75,15 @@ export function categoryOf(template: GpQuestionView["template"]): GpBoardCategor
 }
 
 /** ONE compact chip label per answered question — exact approved format
- *  (entity [+ season start-year], NO sentence). The ✓/✗/؟ mark is rendered
- *  separately by the chip. */
+ *  (entity [+ season as «2020/21», owner ruling 2026-07-06], NO sentence).
+ *  The ✓/✗/؟ mark is rendered separately by the chip. */
 export function chipTextAr(q: Pick<GpQuestionView, "template" | "params">): string {
   const p = q.params as Record<string, string | number>;
   switch (q.template) {
     case "CLUB_EVER":
       return String(p.clubName);
     case "CLUB_SEASON":
-      return `${p.clubName} ${p.season}`;
+      return `${p.clubName} ${frozenSeason(p)}`;
     case "NATIONALITY":
       return String(p.countryName);
     case "NATIONAL_TEAM":
@@ -85,11 +91,11 @@ export function chipTextAr(q: Pick<GpQuestionView, "template" | "params">): stri
     case "COMPETITION_EVER":
       return String(p.competitionName);
     case "COMPETITION_SEASON":
-      return `${p.competitionName} ${p.season}`;
+      return `${p.competitionName} ${frozenSeason(p)}`;
     case "TROPHY_EVER":
       return String(p.trophyName);
     case "TROPHY_SEASON":
-      return `${p.trophyName} ${p.season}`;
+      return `${p.trophyName} ${frozenSeason(p)}`;
     case "TROPHY_WITH_CLUB":
       return `${p.trophyName} مع ${p.clubName}`;
   }
