@@ -35,7 +35,7 @@ export interface GpPersistence {
   finishRound(
     room: GpMatchRoom,
     round: ActiveGpRound,
-    endReason: "CORRECT_GUESS" | "TIMER" | "ABANDONED",
+    endReason: "CORRECT_GUESS" | "TIMER" | "ALL_EXHAUSTED" | "REVEAL_VOTE" | "ABANDONED",
     winnerUserId: string | null,
     winnerPoints: number,
   ): Promise<void>;
@@ -128,7 +128,7 @@ export class PrismaGpPersistence implements GpPersistence {
   async finishRound(
     room: GpMatchRoom,
     round: ActiveGpRound,
-    endReason: "CORRECT_GUESS" | "TIMER" | "ABANDONED",
+    endReason: "CORRECT_GUESS" | "TIMER" | "ALL_EXHAUSTED" | "REVEAL_VOTE" | "ABANDONED",
     winnerUserId: string | null,
     winnerPoints: number,
   ): Promise<void> {

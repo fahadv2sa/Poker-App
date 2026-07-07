@@ -30,7 +30,9 @@ export interface GpMatchDeps {
 let inviteSeq = Math.floor(Math.random() * 9000) + 1000;
 const nextInvite = () => `G${inviteSeq++}`;
 
-type EndReason = "CORRECT_GUESS" | "TIMER" | "ABANDONED";
+/** TIMER / ALL_EXHAUSTED / REVEAL_VOTE share the timeout treatment; the split
+ *  exists for balancing analytics only (owner ruling 2026-07-07). */
+type EndReason = "CORRECT_GUESS" | "TIMER" | "ALL_EXHAUSTED" | "REVEAL_VOTE" | "ABANDONED";
 
 /**
  * Authoritative match orchestrator (mirrors Top Ten's Matches). Owns the
@@ -359,7 +361,9 @@ export class GpMatches {
       text: `${name} استنفد محاولاته — أصبح مشاهدًا حتى نهاية الجولة`,
     });
     if (r.turnOrder.length === 0) {
-      void this.finishRound(room, "TIMER", null); // all exhausted → immediate reveal
+      // Everyone out of attempts → immediate reveal. Distinct reason for the
+      // balancing analytics; the treatment is identical to a timeout.
+      void this.finishRound(room, "ALL_EXHAUSTED", null);
       return;
     }
     this.beginTurn(room);
@@ -507,8 +511,9 @@ export class GpMatches {
       text: "اتفق الجميع على كشف اللاعب",
     });
     // Timeout treatment (approved): reveal, no winner, picker survival bonus
-    // in VS_HUMANS, same picker keeps the next round.
-    void this.finishRound(room, "TIMER", null);
+    // in VS_HUMANS, same picker keeps the next round. Distinct reason for the
+    // balancing analytics only.
+    void this.finishRound(room, "REVEAL_VOTE", null);
   }
 
   private onRoundTimer(room: GpMatchRoom): void {
@@ -549,7 +554,9 @@ export class GpMatches {
     let pickerPts = 0;
     if (room.mode === "VS_HUMANS" && picker) {
       if (reason === "CORRECT_GUESS") pickerPts = pickerPoints(pts);
-      else if (reason === "TIMER") pickerPts = GP_SURVIVAL_BONUS;
+      // Every no-winner ending pays the survival bonus (TIMER / ALL_EXHAUSTED /
+      // REVEAL_VOTE are one treatment; the reason split is analytics-only).
+      else if (reason !== "ABANDONED") pickerPts = GP_SURVIVAL_BONUS;
       picker.totalPoints += pickerPts;
     }
 

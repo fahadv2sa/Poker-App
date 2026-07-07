@@ -1488,6 +1488,8 @@ enum GpRoundStatus {
 enum GpRoundEndReason {
   CORRECT_GUESS
   TIMER // 10 minutes, nobody guessed → reveal, VS_HUMANS picker survival bonus
+  ALL_EXHAUSTED // every guesser out of attempts → immediate reveal (timeout treatment)
+  REVEAL_VOTE // unanimous «كشف اللاعب» give-up vote (timeout treatment)
   ABANDONED // all contestants gone / match closed mid-round
 
   @@map("gp_round_end_reason")

@@ -42,7 +42,18 @@ export const GP_CONTINENT_AR: Record<GpConfederation, string> = {
   OFC: "أوقيانوسيا",
 };
 
-export const GP_ROUND_END_REASONS = ["CORRECT_GUESS", "TIMER", "ABANDONED"] as const;
+/** Why a round ended. TIMER / ALL_EXHAUSTED / REVEAL_VOTE share the SAME
+ *  player-facing treatment (timeout-style reveal, no winner, VS_HUMANS picker
+ *  survival bonus) — the split is for balancing analytics only (owner ruling
+ *  2026-07-07): real clock expiry vs every guesser out of attempts vs the
+ *  unanimous «كشف اللاعب» vote. */
+export const GP_ROUND_END_REASONS = [
+  "CORRECT_GUESS",
+  "TIMER",
+  "ALL_EXHAUSTED",
+  "REVEAL_VOTE",
+  "ABANDONED",
+] as const;
 
 // Rounds are OPEN-ENDED (owner ruling 2026-07-06): a table session runs
 // round after round via the winner-screen countdown until players leave —

@@ -251,7 +251,7 @@ describe("Guess the Player match orchestration", () => {
       winnerSeat: number | null;
       player: { id: string };
     };
-    expect(reveal.reason).toBe("TIMER"); // timeout treatment (survival rules apply)
+    expect(reveal.reason).toBe("ALL_EXHAUSTED"); // distinct reason, timeout treatment (survival rules apply)
     expect(reveal.winnerSeat).toBeNull();
     expect(reveal.player.id).toBe(HIDDEN_ID); // the hidden player's card is revealed
   });
@@ -283,7 +283,7 @@ describe("Guess the Player match orchestration", () => {
       reason: string;
       winnerSeat: number | null;
     };
-    expect(reveal.reason).toBe("TIMER");
+    expect(reveal.reason).toBe("REVEAL_VOTE"); // distinct reason, timeout treatment
     expect(reveal.winnerSeat).toBeNull();
   });
 
