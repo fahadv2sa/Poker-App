@@ -299,4 +299,41 @@ describe("Top Ten match orchestration", () => {
     expect(room.round!.state.hidden).toHaveLength(9); // the other 9 ranks remain
     expect(room.status).toBe("IN_PROGRESS"); // not over — only 1 of 10 ranks revealed
   });
+
+  it("IDLE CLOSE: an untouched lobby closes after 30 minutes with no human action", () => {
+    const { matches, events } = makeMatches();
+    const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
+    vi.advanceTimersByTime(TT_TIMING.idleCloseMs + 1000);
+    expect(matches.get(room.id)).toBeUndefined(); // dropped, not lingering
+    const closed = (events[TT_SERVER_EVENTS.tableClosed] ?? []) as Array<{ text: string }>;
+    expect(closed.at(-1)?.text).toBe("أُغلقت الطاولة لعدم النشاط");
+  });
+
+  it("IDLE CLOSE: a human action resets the clock — the room outlives the original deadline", () => {
+    const { matches } = makeMatches();
+    const room = matches.createManual({ userId: "u0", username: "A", playerNumber: 1 }, "EASY", 600);
+    vi.advanceTimersByTime(TT_TIMING.idleCloseMs - 60_000); // 29 min idle…
+    matches.addSeat(room, { userId: "u1", username: "B", playerNumber: 2 }, false); // …human joins
+    vi.advanceTimersByTime(TT_TIMING.idleCloseMs - 60_000); // +29 min (29 since the touch)
+    expect(matches.get(room.id)).toBeDefined(); // still open — the join reset the clock
+    vi.advanceTimersByTime(2 * 60_000); // 31 min since the last human action
+    expect(matches.get(room.id)).toBeUndefined();
+  });
+
+  it("IDLE CLOSE: a HUMAN guess re-arms the idle timer; a BOT guess never does", () => {
+    const { matches } = makeMatches();
+    const room = matches.createQuickPlay("EASY");
+    matches.addSeat(room, { userId: "u0", username: "A", playerNumber: 1 }, false);
+    matches.addSeat(room, { userId: "bot", username: "بوت", playerNumber: 900001 }, true, 0.5);
+    matches.start(room, "u0");
+    const humanSeat = room.seats.find((s) => !s.isBot)!.seat;
+    const botSeat = room.seats.find((s) => s.isBot)!.seat;
+
+    const armedAtStart = room.timers.idle;
+    expect(armedAtStart).toBeDefined();
+    matches.guess(room, botSeat, "p9");
+    expect(room.timers.idle).toBe(armedAtStart); // bot activity must NOT keep the table alive
+    matches.guess(room, humanSeat, "p10");
+    expect(room.timers.idle).not.toBe(armedAtStart); // human activity re-arms
+  });
 });

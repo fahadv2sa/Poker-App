@@ -318,7 +318,7 @@ describe("turn enforcement", () => {
     await room.start();
     // Seat 1 is the dealer; seat 2 acts first.
     await expect(room.placeAction(1, { type: "CHECK" })).rejects.toThrow(
-      /Not your turn/,
+      /ليس دورك/,
     );
   });
 });
@@ -393,7 +393,7 @@ describe("server-generated idempotency key (FIX #3)", () => {
     // Replay the SAME action (a duplicated/late emit). The turn already advanced
     // synchronously to seat 1, so the server rejects it — no second debit.
     await expect(room.placeAction(2, { type: "RAISE", amount: 150n })).rejects.toThrow(
-      /Not your turn/,
+      /ليس دورك/,
     );
     expect(persistence.movements.length).toBe(before);
     expect(persistence.movements.filter((m) => m.type === "RAISE")).toHaveLength(1);

@@ -44,6 +44,8 @@ export type Timers = {
   newRound?: ReturnType<typeof setTimeout>;
   /** Celebratory hold on the fully-revealed board before the winner screen. */
   finish?: ReturnType<typeof setTimeout>;
+  /** 30-min no-human-action idle close (reset by touch(), never by auto timers). */
+  idle?: ReturnType<typeof setTimeout>;
 };
 
 export interface MatchRoom {

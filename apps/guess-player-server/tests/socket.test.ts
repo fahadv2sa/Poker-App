@@ -267,8 +267,12 @@ describe("Guess the Player socket flow — create → lobby → join → start",
 
     const c = player(h, "user-c", "C");
     const joinAck = await emitAck<{ error?: string }>(c, "gp:join", { inviteCode: ack.inviteCode });
-    expect(joinAck.error).toBe("NOT_FOUND");
+    // Distinct coded error: the room EXISTS but began — «المباراة بدأت», not a
+    // misleading "not found" (a truly unknown code still acks NOT_FOUND).
+    expect(joinAck.error).toBe("ALREADY_STARTED");
     expect(h.matches.get(ack.matchId)!.seats.some((s) => s.userId === "user-c")).toBe(false);
+    const ghost = await emitAck<{ error?: string }>(c, "gp:join", { inviteCode: "ZZZZ99" });
+    expect(ghost.error).toBe("NOT_FOUND");
   });
 
   it("joining a DIFFERENT room by code releases a stale lobby seat (old empty lobby is dropped)", async () => {
@@ -324,6 +328,29 @@ describe("Guess the Player socket flow — create → lobby → join → start",
     });
     expect(ack2.matchId).toBe(ack.matchId);
     expect(h.matches.list().filter((r) => r.kind === "MANUAL")).toHaveLength(1);
+  });
+
+  it("the creator leaving the LOBBY transfers authority — the new creator starts and picks round 1", async () => {
+    const a = player(h, "user-a", "A");
+    const ack = await emitAck<{ matchId: string; inviteCode: string }>(a, "gp:create", {
+      mode: "VS_HUMANS",
+      isPrivate: false,
+      nonce: "n-transfer",
+    });
+    const b = player(h, "user-b", "B");
+    await emitAck(b, "gp:join", { inviteCode: ack.inviteCode });
+
+    a.emit("gp:leave", {});
+    const after = await stateWhere(b, (s) => s.seats.length === 1 && s.matchId === ack.matchId);
+    expect(after.createdByUserId).toBe("user-b"); // authority handed over
+
+    // The new creator's start works once the room refills — and round 1's
+    // picker is the NEW creator (start rules follow the transferred authority).
+    const c = player(h, "user-c", "C");
+    await emitAck(c, "gp:join", { inviteCode: ack.inviteCode });
+    b.emit("gp:start", {});
+    const live = await stateWhere(b, (s) => s.status === "IN_PROGRESS");
+    expect(live.seats.find((s) => s.userId === "user-b")!.isPicker).toBe(true);
   });
 
   it("the creator leaving the lobby before start drops the empty room", async () => {

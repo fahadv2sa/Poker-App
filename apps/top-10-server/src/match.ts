@@ -104,6 +104,7 @@ export class Matches {
       persisted: false,
     };
     this.rooms.set(id, room);
+    this.touch(room);
     this.addSeat(room, creator, false);
     return room;
   }
@@ -134,6 +135,7 @@ export class Matches {
       persisted: false,
     };
     this.rooms.set(id, room);
+    this.touch(room);
     return room;
   }
 
@@ -144,6 +146,7 @@ export class Matches {
     botSkill?: number,
   ): TtSeat | null {
     if (room.seats.length >= room.maxPlayers) return null;
+    if (!isBot) this.touch(room); // a human joining/rejoining is activity
     const existing = room.seats.find((s) => s.userId === user.userId);
     if (existing) {
       existing.connected = true;
@@ -170,6 +173,7 @@ export class Matches {
     if (room.kind === "MANUAL" && room.createdByUserId !== byUserId)
       return { ok: false, error: "NOT_CREATOR" };
     if (activeSeats(room).length < TT_MIN_PLAYERS) return { ok: false, error: "NOT_ENOUGH_PLAYERS" };
+    this.touch(room); // an explicit start is a human action
     room.status = "IN_PROGRESS";
     void this.deps.persist.createMatch(room).then(() => (room.persisted = true)).catch(() => {});
     this.deps.emit(room.id, TT_SERVER_EVENTS.matchStarted, { matchId: room.id });
@@ -227,6 +231,9 @@ export class Matches {
   guess(room: MatchRoom, seat: number, playerId: string): void {
     const r = room.round;
     if (!r || room.status !== "IN_PROGRESS") return;
+    // A HUMAN guess resets the idle clock; bot guesses (no socket) never do —
+    // a bots-only rotation must not keep an abandoned table alive.
+    if (!room.seats.find((s) => s.seat === seat)?.isBot) this.touch(room);
     const outcome = resolveOutcome(r.entry, r.state, playerId);
     const step = r.state.mode === "NORMAL" ? normalGuess(r.state, seat, outcome) : hintGuess(r.state, seat, outcome);
     r.state = step.state;
@@ -381,6 +388,7 @@ export class Matches {
 
   requestEndRound(room: MatchRoom, seat: number): void {
     if (!room.round || room.status !== "IN_PROGRESS") return;
+    this.touch(room);
     room.endRoundReq = { bySeat: seat, approvals: new Set([seat]) };
     this.deps.emit(room.id, TT_SERVER_EVENTS.endRoundRequested, { bySeat: seat });
     this.maybeResolveEndRound(room);
@@ -388,6 +396,7 @@ export class Matches {
 
   voteEndRound(room: MatchRoom, seat: number, accept: boolean): void {
     if (!room.endRoundReq) return;
+    this.touch(room);
     if (!accept) {
       room.endRoundReq = null;
       this.sync(room);
@@ -458,11 +467,25 @@ export class Matches {
 
   // ---- withdrawal ---------------------------------------------------------
 
+  /** Creator/host transfer (mirrors Link Up): if the CREATOR leaves while others
+   *  remain, hand authority (start button, close button) to the lowest-seat
+   *  still-connected human — a lobby must never be stranded unstartable and a
+   *  table never left uncloseable. Quick play has createdByUserId "" (no
+   *  creator), so it never matches and is untouched. */
+  private transferCreator(room: MatchRoom, leavingUserId: string): void {
+    if (room.createdByUserId !== leavingUserId) return;
+    const next = room.seats
+      .filter((s) => s.userId !== leavingUserId && s.connected && !s.isBot && s.status === "ACTIVE")
+      .sort((a, b) => a.seat - b.seat)[0];
+    if (next) room.createdByUserId = next.userId;
+  }
+
   /** A player leaves (explicit) or their grace expires. During a match this is a
    *  withdrawal: they lose ALL accumulated points (recorded منسحب). */
   withdraw(room: MatchRoom, userId: string): void {
     const seat = room.seats.find((s) => s.userId === userId);
     if (!seat) return;
+    this.transferCreator(room, userId);
     if (room.status === "LOBBY") {
       room.seats = room.seats.filter((s) => s.userId !== userId);
       // An emptied lobby room must not linger — otherwise it shows as a ghost 0/4
@@ -660,6 +683,7 @@ export class Matches {
    *  connected human is ready (the grace timer is the fallback auto-start). */
   requestNewRound(room: MatchRoom, seat: number): void {
     if (room.status !== "ENDED" || !room.newRound) return;
+    this.touch(room); // pressing جولة جديدة is a human action
     room.newRound.readySeats.add(seat);
     this.resolveNewRound(room, false);
   }
@@ -805,6 +829,30 @@ export class Matches {
 
   // ---- timer utils --------------------------------------------------------
 
+  // ---- idle close (platform rule, mirrors Guess the Player) -----------------
+
+  /** Reset the 30-min idle clock. Called on every HUMAN action (create/join/
+   *  start/guess/end-round votes/replay-ready) — never by auto-advancing timers,
+   *  so a fully-AFK table (turn timeouts, auto replays) still closes. */
+  private touch(room: MatchRoom): void {
+    this.clear(room, "idle");
+    room.timers.idle = setTimeout(() => this.closeIdle(room), TT_TIMING.idleCloseMs);
+  }
+
+  private closeIdle(room: MatchRoom): void {
+    if (!this.rooms.has(room.id)) return;
+    this.deps.emit(room.id, TT_SERVER_EVENTS.tableClosed, {
+      text: "أُغلقت الطاولة لعدم النشاط",
+    });
+    if (room.status === "IN_PROGRESS") {
+      this.finishMatch(room, true); // abandoned → persists terminal status + delayed delete
+      return;
+    }
+    this.clear(room, "newRound");
+    room.newRound = null;
+    this.removeRoom(room.id);
+  }
+
   private clear(room: MatchRoom, ...names: (keyof MatchRoom["timers"])[]): void {
     for (const n of names) {
       const t = room.timers[n];
@@ -817,7 +865,7 @@ export class Matches {
 
   removeRoom(matchId: string): void {
     const room = this.rooms.get(matchId);
-    if (room) this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound");
+    if (room) this.clear(room, "turn", "hintCountdown", "hintWindow", "round", "bot", "newRound", "finish", "idle");
     this.rooms.delete(matchId);
   }
 }

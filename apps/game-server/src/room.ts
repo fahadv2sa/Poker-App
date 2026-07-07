@@ -22,6 +22,7 @@ import {
 } from "@fb/engine";
 import {
   BLUFF_BET_TO_POT,
+  IDLE_CLOSE_MS,
   NEW_ROUND_GRACE_SEC,
   SERVER_EVENTS,
   WEAK_RANK_MAX_STRENGTH,
@@ -67,6 +68,9 @@ export interface RoomDeps {
   bindSeat?: (userId: string, seat: number) => void;
   /** OPTIONAL: return a bot's identity to the pool when a human takes its seat. */
   releaseBot?: (playerNumber: number) => void;
+  /** OPTIONAL: the 30-min idle clock elapsed with no human action — the socket
+   *  layer closes + tears the room down (void/refund any live hand). */
+  onIdle?: () => void;
 }
 
 /** Optional bot turn-driver (see RoomDeps.bots). Implemented by src/bots. */
@@ -105,6 +109,7 @@ interface BestCombo {
 
 const TURN_KEY = "turn";
 const NEXT_HAND_KEY = "nexthand";
+const IDLE_KEY = "idle";
 
 /** Phases in which a hand is genuinely live with coins committed to the pot —
  *  closing during one must refund those stakes. LOBBY/ENDED hold no live pot
@@ -194,7 +199,20 @@ export class GameRoom {
   constructor(
     readonly state: RoomState,
     private readonly deps: RoomDeps,
-  ) {}
+  ) {
+    // Real rooms (loaded with a `kind`) start the idle clock immediately — an
+    // untouched lobby must close like an untouched live table.
+    this.touchIdle();
+  }
+
+  /** Reset the 30-min idle clock (platform rule, mirrors GP/TT). Called on
+   *  every HUMAN action by the socket layer — never by auto-advancing timers,
+   *  so a fully-AFK table (turn-timeout folds, auto-deals, parked sessions)
+   *  still closes. Bare engine-test rooms (no `kind`) keep no idle timer. */
+  touchIdle(): void {
+    if (!this.state.kind || this.closed) return;
+    this.deps.timers.arm(IDLE_KEY, IDLE_CLOSE_MS, () => this.deps.onIdle?.());
+  }
 
   // -- lifecycle -----------------------------------------------------------
 
@@ -207,7 +225,7 @@ export class GameRoom {
     const seated = this.state.players.filter(
       (p) => p.status !== "DISCONNECTED" && p.connected,
     );
-    if (seated.length < 2) throw new Error("Need at least 2 players to start");
+    if (seated.length < 2) throw new Error("تحتاج الطاولة إلى لاعبَين على الأقل للبدء");
 
     // FIX #2: source each seat's spendable `available` from the authoritative
     // wallet balance (never a guessed 0/1000), and refuse to start if anyone
@@ -629,6 +647,9 @@ export class GameRoom {
    *  out with nobody asking to continue. The host restarts via game:start. */
   private parkSession(eligible: number, reason: "NEED_PLAYERS" | "NOT_READY" = "NEED_PLAYERS"): void {
     this.deps.timers.clearAll();
+    // clearAll dropped the idle clock too — re-arm it: a PARKED table is exactly
+    // the one that must still close after 30 idle minutes.
+    this.touchIdle();
     for (const p of this.state.players) {
       this.resetHandState(p);
       p.holeCards = [];
@@ -733,7 +754,7 @@ export class GameRoom {
 
   /** Handle a player's betting action (the server validates turn + legality). */
   async placeAction(seat: number, action: Action): Promise<void> {
-    if (this.state.currentTurnSeat !== seat) throw new Error("Not your turn");
+    if (this.state.currentTurnSeat !== seat) throw new Error("ليس دورك");
     const bs = this.toBettingState(this.roundForPhase());
 
     // Stats Layer 1 (captured BEFORE the bet mutates the pot): pot-before for the
@@ -751,7 +772,7 @@ export class GameRoom {
     if (action.type === "RAISE") {
       const la = legalActions(bs, seat);
       if (!la.canRaise || (action.amount ?? 0n) < (la.minRaiseTo ?? 0n)) {
-        throw new Error("Illegal raise");
+        throw new Error("رفع غير صالح — تحقق من الحد الأدنى للرفع");
       }
     }
 

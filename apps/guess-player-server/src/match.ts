@@ -622,9 +622,23 @@ export class GpMatches {
     this.sync(room);
   }
 
+  /** Creator/host transfer (mirrors Link Up): if the CREATOR leaves while others
+   *  remain, hand authority (start button, close button, round-1 pick) to the
+   *  lowest-seat still-connected human — a lobby must never be stranded
+   *  unstartable and a table never left uncloseable. Quick play has
+   *  createdByUserId "" (no creator), so it never matches and is untouched. */
+  private transferCreator(room: GpMatchRoom, leavingUserId: string): void {
+    if (room.createdByUserId !== leavingUserId) return;
+    const next = room.seats
+      .filter((s) => s.userId !== leavingUserId && s.connected && s.status === "ACTIVE")
+      .sort((a, b) => a.seat - b.seat)[0];
+    if (next) room.createdByUserId = next.userId;
+  }
+
   withdraw(room: GpMatchRoom, userId: string): void {
     const seat = room.seats.find((s) => s.userId === userId);
     if (!seat) return;
+    this.transferCreator(room, userId);
     if (room.status === "LOBBY") {
       room.seats = room.seats.filter((s) => s.userId !== userId);
       if (room.seats.length === 0) {

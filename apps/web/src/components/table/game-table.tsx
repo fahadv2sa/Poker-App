@@ -670,7 +670,9 @@ export function GameTable({
                   ? "أغلق المضيف الطاولة"
                   : view.closed === "SEAT_RELEASED"
                     ? "انتقلت إلى طاولة أخرى"
-                    : "أُغلقت الطاولة"}
+                    : view.closed === "IDLE"
+                      ? "أُغلقت الطاولة لعدم النشاط"
+                      : "أُغلقت الطاولة"}
               </p>
               <p className="text-sm text-muted-foreground">
                 {view.closed === "SEAT_RELEASED"
@@ -1231,7 +1233,7 @@ function TableSummary({
   onClose,
 }: {
   rounds: RoundSummary[];
-  closedReason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED" | null;
+  closedReason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED" | "IDLE" | null;
   onClose: () => void;
 }) {
   return (
@@ -1253,7 +1255,9 @@ function TableSummary({
                   ? "أُغلقت الطاولة"
                   : closedReason === "SEAT_RELEASED"
                     ? "انتقلت إلى طاولة أخرى"
-                    : `استعرض جولاتك — ${rounds.length} ${rounds.length === 1 ? "جولة" : "جولات"}`}
+                    : closedReason === "IDLE"
+                      ? "أُغلقت الطاولة لعدم النشاط"
+                      : `استعرض جولاتك — ${rounds.length} ${rounds.length === 1 ? "جولة" : "جولات"}`}
             </span>
           </div>
           <button

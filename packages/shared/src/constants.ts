@@ -44,6 +44,11 @@ export const BANK_RESET_TZ_OFFSET_HOURS = 3;
  */
 export const NEW_ROUND_GRACE_SEC = 15;
 
+/** A table with no HUMAN ACTION for this long closes (platform rule, mirrors
+ *  Guess the Player / Top Ten) — auto-advancing timers (turn-timeout folds,
+ *  auto-deals, parked sessions) do NOT count as activity. */
+export const IDLE_CLOSE_MS = 30 * 60 * 1000;
+
 /** player_number sequence starts here, displayed as e.g. #100001 (Section 5). */
 export const PLAYER_NUMBER_START = 100001;
 

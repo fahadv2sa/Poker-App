@@ -333,6 +333,9 @@ export const TT_TIMING = {
    *  correct guess or hint auto-reveal): hold on the completed board this long before the
    *  winner-announcement screen. */
   finalRevealHoldMs: 5000,
+  /** A table with no HUMAN ACTION for this long closes (platform rule, mirrors
+   *  Guess the Player) — auto-advancing timers do NOT count as activity. */
+  idleCloseMs: 30 * 60 * 1000,
 } as const;
 
 export const TT_HINT = {

@@ -184,6 +184,16 @@ export function attachSocketHandlers(
       if (rt) io.to(sid).emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, seat));
     },
     releaseBot: bots ? (playerNumber) => bots.releaseOne(playerNumber) : undefined,
+    // 30-min idle close (platform rule): no human action for IDLE_CLOSE_MS →
+    // close + tear down through the normal path (voids/refunds any live hand).
+    onIdle: () => {
+      const rt = runtimes.get(gameId);
+      if (rt) {
+        void closeAndTeardown(gameId, rt, "IDLE").catch((err) =>
+          console.error("[idle] close failed", err),
+        );
+      }
+    },
   });
 
   async function getRuntime(gameId: string): Promise<RoomRuntime | null> {
@@ -261,7 +271,7 @@ export function attachSocketHandlers(
   async function closeAndTeardown(
     gameId: string,
     rt: RoomRuntime,
-    reason: "CLOSED_BY_HOST" | "EMPTY",
+    reason: "CLOSED_BY_HOST" | "EMPTY" | "IDLE",
   ): Promise<void> {
     if (closingGames.has(gameId)) return;
     closingGames.add(gameId);
@@ -388,6 +398,7 @@ export function attachSocketHandlers(
           joinedGameId = game.id;
           await socket.join(roomKey(game.id));
           await releaseOtherRooms(user.userId, game.id); // one table at a time
+          rt.room.touchIdle(); // a human entering is activity
           socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, null));
           // Informational — the client renders SPECTATING as a calm notice.
           emitError(socket, "SPECTATING", "ستنضمّ إلى اللعب بعد انتهاء الجولة الحالية");
@@ -404,6 +415,7 @@ export function attachSocketHandlers(
         cancelGrace(game.id, user.userId);
         await socket.join(roomKey(game.id));
         await releaseOtherRooms(user.userId, game.id); // one table at a time
+        rt.room.touchIdle(); // a human joining/rejoining is activity
 
         socket.emit(SERVER_EVENTS.stateSync, buildStateSync(rt.room.state, player.seat));
         socket
@@ -423,6 +435,7 @@ export function attachSocketHandlers(
         if (rt.room.state.hostUserId !== user.userId) {
           return emitError(socket, "NOT_HOST", "المضيف فقط يبدأ اللعبة");
         }
+        rt.room.touchIdle();
         await rt.room.start();
       }),
     );
@@ -451,6 +464,7 @@ export function attachSocketHandlers(
         if (rt.room.state.hostUserId !== user.userId) {
           return emitError(socket, "NOT_HOST", "المضيف فقط يبدأ الجولة التالية");
         }
+        rt.room.touchIdle();
         await rt.room.startNextHand();
       }),
     );
@@ -469,6 +483,7 @@ export function attachSocketHandlers(
           type: input.type as Action["type"],
           amount: input.amount !== undefined ? BigInt(input.amount) : undefined,
         };
+        rt.room.touchIdle(); // a real player's bet/fold is activity (bots bypass this handler)
         await rt.room.placeAction(seat, action);
       }),
     );
@@ -482,6 +497,7 @@ export function attachSocketHandlers(
         if (!rt) return emitError(socket, "NO_ROOM", "لست في غرفة");
         const seat = seatOf(rt, socket.id);
         if (seat === null) return emitError(socket, "NO_SEAT", "لا مقعد لك");
+        rt.room.touchIdle(); // pressing "New Round" is activity
         rt.room.markReady(seat);
       }),
     );
@@ -640,8 +656,8 @@ function seatPlayer(state: RoomState, user: SocketUser, available: bigint): Room
     existing.connected = true;
     return existing;
   }
-  if (state.status !== "LOBBY") throw new Error("Game already started");
-  if (state.players.length >= state.maxPlayers) throw new Error("Room is full");
+  if (state.status !== "LOBBY") throw new Error("المباراة بدأت — لا يمكن الانضمام الآن");
+  if (state.players.length >= state.maxPlayers) throw new Error("الطاولة ممتلئة — لا يوجد مقعد متاح");
   const used = new Set(state.players.map((p) => p.seat));
   let seat = 1;
   while (used.has(seat)) seat++;

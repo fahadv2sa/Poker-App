@@ -189,6 +189,7 @@ function makeRoom(
   seats: Array<[number, string]>,
   balances: Record<string, bigint>,
   deck: DealtCard[] = midDeck(),
+  opts?: { kind?: "MANUAL" | "QUICK_PLAY"; onIdle?: () => void },
 ) {
   const state: RoomState = {
     gameId: "g1",
@@ -210,6 +211,7 @@ function makeRoom(
     currentBet: 0n,
     turnDeadlineTs: null,
     ranks: RANKS,
+    kind: opts?.kind,
   };
   const persistence = new LedgerPersistence(balances);
   const emitter = new FakeEmitter();
@@ -220,6 +222,7 @@ function makeRoom(
     emitter,
     timers,
     clock,
+    onIdle: opts?.onIdle,
   };
   return { room: new GameRoom(state, deps), persistence, emitter, timers };
 }
@@ -557,6 +560,39 @@ describe("L-2 — the grace auto-advance requires at least ONE explicit ready (m
     expect(room.state.phase).toBe("PREFLOP");
     expect(room.state.handNumber).toBe(2);
     expect(persistence.movements.filter((m) => m.type === "ANTE").length).toBe(4);
+  });
+});
+
+describe("30-min idle close (platform rule — no human action keeps a table alive)", () => {
+  it("a real room arms the idle clock at construction; firing it invokes onIdle", () => {
+    let idleFired = 0;
+    const { timers } = makeRoom([[1, "a"], [2, "b"]], { a: 5000n, b: 5000n }, midDeck(), {
+      kind: "MANUAL",
+      onIdle: () => idleFired++,
+    });
+    expect(timers.pending.has("idle")).toBe(true);
+    timers.pending.get("idle")!();
+    expect(idleFired).toBe(1);
+  });
+
+  it("a bare engine-test room (no kind) keeps no idle timer", () => {
+    const { timers } = makeRoom([[1, "a"], [2, "b"]], { a: 5000n, b: 5000n });
+    expect(timers.pending.has("idle")).toBe(false);
+  });
+
+  it("a PARKED table keeps its idle clock — parking must never disarm the close", async () => {
+    let idleFired = 0;
+    const { room, timers } = makeRoom([[1, "a"], [2, "b"]], { a: 5000n, b: 5000n }, midDeck(), {
+      kind: "MANUAL",
+      onIdle: () => idleFired++,
+    });
+    await room.start();
+    await playHand(room);
+    timers.pending.get("nexthand")!(); // grace fires, nobody ready → park (clearAll inside)
+    expect(room.state.phase).toBe("LOBBY"); // parked
+    expect(timers.pending.has("idle")).toBe(true); // …but the idle clock was re-armed
+    timers.pending.get("idle")!();
+    expect(idleFired).toBe(1);
   });
 });
 

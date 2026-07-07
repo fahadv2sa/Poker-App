@@ -231,8 +231,12 @@ describe("Top Ten socket flow — create → lobby → join", () => {
 
     const c = player("user-c", "C");
     const joinAck = await emitAck<{ error?: string }>(c, TT_CLIENT_EVENTS.join, { inviteCode: ack.inviteCode });
-    expect(joinAck.error).toBe("NOT_FOUND");
+    // Distinct coded error: the room EXISTS but began — «المباراة بدأت», not a
+    // misleading "not found" (a truly unknown code still acks NOT_FOUND).
+    expect(joinAck.error).toBe("ALREADY_STARTED");
     expect(matches.get(ack.matchId)!.seats.some((s) => s.userId === "user-c")).toBe(false);
+    const ghost = await emitAck<{ error?: string }>(c, TT_CLIENT_EVENTS.join, { inviteCode: "ZZZZ99" });
+    expect(ghost.error).toBe("NOT_FOUND");
   });
 
   it("joining a DIFFERENT room by code releases a stale lobby seat (old empty lobby is dropped)", async () => {
@@ -256,6 +260,46 @@ describe("Top Ten socket flow — create → lobby → join", () => {
     expect(joinAck.matchId).toBe(bAck.matchId); // landed in B's lobby…
     await stateWhere(a2, (s) => s.matchId === bAck.matchId && s.seats.length === 2);
     expect(matches.get(oldAck.matchId)).toBeUndefined(); // …and the old empty lobby is gone
+  });
+
+  it("the creator leaving the LOBBY transfers authority — the room is never stranded unstartable", async () => {
+    const a = player("user-a", "A");
+    const ack = await emitAck<{ matchId: string; inviteCode: string }>(a, TT_CLIENT_EVENTS.create, {
+      difficulty: "EASY",
+      isPrivate: false,
+      nonce: "n-transfer",
+    });
+    const b = player("user-b", "B");
+    await emitAck(b, TT_CLIENT_EVENTS.join, { inviteCode: ack.inviteCode });
+
+    a.emit(TT_CLIENT_EVENTS.leave);
+    const after = await stateWhere(b, (s) => s.seats.length === 1 && s.matchId === ack.matchId);
+    expect(after.createdByUserId).toBe("user-b"); // authority handed over
+
+    // …and the NEW creator's start button actually works once the room refills.
+    const c = player("user-c", "C");
+    await emitAck(c, TT_CLIENT_EVENTS.join, { inviteCode: ack.inviteCode });
+    b.emit(TT_CLIENT_EVENTS.start);
+    const live = await stateWhere(b, (s) => s.status === "IN_PROGRESS");
+    expect(live.matchId).toBe(ack.matchId);
+  });
+
+  it("the creator withdrawing MID-MATCH transfers close authority to a remaining player", async () => {
+    const a = player("user-a", "A");
+    const ack = await emitAck<{ matchId: string; inviteCode: string }>(a, TT_CLIENT_EVENTS.create, {
+      difficulty: "EASY",
+      nonce: "n-transfer-live",
+    });
+    const b = player("user-b", "B");
+    await emitAck(b, TT_CLIENT_EVENTS.join, { inviteCode: ack.inviteCode });
+    const c = player("user-c", "C");
+    await emitAck(c, TT_CLIENT_EVENTS.join, { inviteCode: ack.inviteCode });
+    a.emit(TT_CLIENT_EVENTS.start);
+    await stateWhere(a, (s) => s.status === "IN_PROGRESS");
+
+    a.emit(TT_CLIENT_EVENTS.leave);
+    await stateWhere(b, (s) => s.createdByUserId === "user-b" && s.status === "IN_PROGRESS");
+    expect(matches.get(ack.matchId)!.createdByUserId).toBe("user-b");
   });
 
   it("re-joining the SAME room by its own code resyncs it (invite-link reload)", async () => {

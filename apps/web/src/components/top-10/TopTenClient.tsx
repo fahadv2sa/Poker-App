@@ -93,7 +93,13 @@ export function TopTenClient({
           conn.join(autoJoinCode, (res) => {
             // Bad / expired code → don't hang on the connecting spinner: notify + go home.
             if (res?.error) {
-              flash("تعذّر الانضمام إلى الغرفة");
+              flash(
+                res.error === "ALREADY_STARTED"
+                  ? "المباراة بدأت — لا يمكن الانضمام الآن"
+                  : res.error === "FULL"
+                    ? "الغرفة ممتلئة"
+                    : "تعذّر الانضمام إلى الغرفة",
+              );
               goHome();
             }
           });

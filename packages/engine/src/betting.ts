@@ -208,19 +208,21 @@ export function legalActions(state: BettingState, seat: number): LegalActions {
  * server is the referee, so callers must have validated turn/phase first.
  */
 export function applyAction(state: BettingState, seat: number, action: Action): ApplyResult {
+  // User-reachable messages are Arabic — they surface verbatim in the client
+  // (game-server guard → ACTION_FAILED.messageAr in an all-Arabic UI).
   if (state.currentTurnSeat !== seat) {
-    throw new Error(`Not seat ${seat}'s turn`);
+    throw new Error(`ليس دور المقعد ${seat}`);
   }
   const next = clone(state);
   const s = get(next, seat);
-  if (s.status !== "ACTIVE") throw new Error(`Seat ${seat} cannot act (${s.status})`);
+  if (s.status !== "ACTIVE") throw new Error(`المقعد ${seat} لا يستطيع اللعب الآن (${s.status})`);
 
   const owed = next.currentBet - s.committedThisRound;
   let movement: ChipMovement;
 
   switch (action.type) {
     case "CHECK": {
-      if (owed !== 0n) throw new Error("Cannot check facing a bet");
+      if (owed !== 0n) throw new Error("لا يمكن التمرير وهناك رهان قائم");
       s.hasActed = true;
       movement = { seat, action: "CHECK", amount: 0n };
       break;

@@ -321,9 +321,10 @@ export interface PlayerLeftPayload {
  *  `CLOSED_BY_HOST` = the creator closed it; `EMPTY` = it auto-deleted when the
  *  last player left; `SEAT_RELEASED` = sent only to a stale socket whose user
  *  deliberately entered ANOTHER table (one table at a time — the old seat was
- *  released via the normal leave path). */
+ *  released via the normal leave path); `IDLE` = 30 minutes passed with no
+ *  human action (any live hand voided + refunded). */
 export interface RoomClosedPayload {
-  reason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED";
+  reason: "CLOSED_BY_HOST" | "EMPTY" | "SEAT_RELEASED" | "IDLE";
 }
 
 /** Quick Play waiting-lobby state for one tier's queue. `deadlineTs` (epoch ms)

@@ -189,8 +189,11 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
       }
       const room = matches
         .list()
-        .find((r) => r.inviteCode === parsed.data.inviteCode && r.status === "LOBBY");
+        .find((r) => r.inviteCode === parsed.data.inviteCode && r.status !== "ABANDONED");
       if (!room) return ack?.({ error: "NOT_FOUND" });
+      // The room exists but its match already began — tell the invitee the
+      // truth («المباراة بدأت») instead of a misleading "not found".
+      if (room.status !== "LOBBY") return ack?.({ error: "ALREADY_STARTED" });
       const seat = matches.addSeat(room, u);
       if (!seat) return ack?.({ error: "FULL" });
       seat.socketId = socket.id;

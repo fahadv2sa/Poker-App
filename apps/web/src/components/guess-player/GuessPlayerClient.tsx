@@ -86,7 +86,13 @@ export function GuessPlayerClient({
         if (autoJoinCode)
           conn.join(autoJoinCode, (res) => {
             if (res?.error) {
-              flash("تعذّر الانضمام إلى الغرفة");
+              flash(
+                res.error === "ALREADY_STARTED"
+                  ? "المباراة بدأت — لا يمكن الانضمام الآن"
+                  : res.error === "FULL"
+                    ? "الغرفة ممتلئة"
+                    : "تعذّر الانضمام إلى الغرفة",
+              );
               goHome();
             }
           });
