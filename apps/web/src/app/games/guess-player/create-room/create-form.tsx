@@ -28,6 +28,10 @@ const ROOM_TYPE_OPTIONS: ReadonlyArray<{ value: boolean; label: string; desc: st
   { value: true, label: "غرفة خاصة", desc: "لا تظهر في القائمة — تُدخَل عبر رابط الدعوة أو الكود فقط" },
 ];
 
+/** Owner setting: created rooms choose the round length; quick play stays 10. */
+const ROUND_MINUTE_OPTIONS = [10, 15, 20] as const;
+type RoundMinutes = (typeof ROUND_MINUTE_OPTIONS)[number];
+
 const optionCls = (active: boolean) =>
   cn(
     "flex flex-col gap-0.5 rounded-xl border p-3 text-right transition",
@@ -42,6 +46,7 @@ export function CreateRoomForm() {
   const [mode, setMode] = useState<GpMode>("VS_SYSTEM");
   const [isPrivate, setIsPrivate] = useState(false);
   const [difficulty, setDifficulty] = useState<GpDifficulty>("MEDIUM");
+  const [roundMinutes, setRoundMinutes] = useState<RoundMinutes>(10);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -57,6 +62,7 @@ export function CreateRoomForm() {
       n: Math.random().toString(36).slice(2, 10),
       private: isPrivate ? "1" : "0",
       max: String(maxPlayers),
+      minutes: String(roundMinutes),
     });
     if (mode === "VS_SYSTEM") qs.set("difficulty", difficulty);
     if (roomName) qs.set("name", roomName);
@@ -111,6 +117,21 @@ export function CreateRoomForm() {
               <button key={String(o.value)} type="button" onClick={() => setIsPrivate(o.value)} aria-pressed={active} className={optionCls(active)}>
                 <span className={cn("text-sm font-bold", active ? "text-[var(--lu-gold-1)]" : "text-[var(--lu-cream)]")}>{o.label}</span>
                 <span className="text-[0.7rem] leading-snug text-[var(--lu-tan)]">{o.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label className="text-[var(--lu-cream)]">مدة الجولة</Label>
+        <div className="grid grid-cols-3 gap-2">
+          {ROUND_MINUTE_OPTIONS.map((m) => {
+            const active = roundMinutes === m;
+            return (
+              <button key={m} type="button" onClick={() => setRoundMinutes(m)} aria-pressed={active} className={optionCls(active)}>
+                <span className={cn("num text-sm font-bold", active ? "text-[var(--lu-gold-1)]" : "text-[var(--lu-cream)]")}>{m} دقائق</span>
+                <span className="text-[0.7rem] leading-snug text-[var(--lu-tan)]">{m === 10 ? "الإيقاع الاعتيادي" : m === 15 ? "وقت أطول للاستنتاج" : "جولة هادئة ومتأنية"}</span>
               </button>
             );
           })}

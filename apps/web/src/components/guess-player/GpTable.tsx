@@ -29,6 +29,8 @@ export function GpTable({
   onAsk,
   onGuess,
   onPick,
+  onRevealRequest,
+  onRevealVote,
   onLeave,
 }: {
   state: GpStateView;
@@ -39,13 +41,21 @@ export function GpTable({
   onAsk: (input: GpAskInput) => void;
   onGuess: (playerId: string) => void;
   onPick: (playerId: string) => void;
+  /** «كشف اللاعب» — request the unanimous give-up vote / answer a pending one. */
+  onRevealRequest: () => void;
+  onRevealVote: (accept: boolean) => void;
   onLeave: () => void;
 }) {
   const mySeat = state.seats.find((s) => s.userId === meId);
   const turnSeatObj = state.seats.find((s) => s.seat === state.turnSeat);
   const pickerSeatObj = state.seats.find((s) => s.isPicker);
   const iAmPicker = !!mySeat?.isPicker;
+  const iAmExhausted = !!mySeat?.exhausted;
   const myTurn = mySeat != null && state.turnSeat === mySeat.seat && !iAmPicker;
+  // Reveal-vote eligibility mirrors the server: contestants still in the
+  // rotation (not the picker, not exhausted spectators).
+  const iCanVote =
+    mySeat != null && mySeat.status === "ACTIVE" && !iAmPicker && !iAmExhausted && state.phase === "PLAYING";
 
   // Sound: "your turn" cue when the turn arrives at my seat.
   const prevMyTurn = useRef(false);
@@ -78,11 +88,21 @@ export function GpTable({
       <Hud state={state} onLeave={() => setConfirmExit(true)} />
       <SeatsRow state={state} meId={meId} />
       <Board state={state} />
+      {state.phase === "PLAYING" ? (
+        <RevealVoteBar
+          state={state}
+          mySeat={mySeat?.seat ?? null}
+          iCanVote={iCanVote}
+          onRequest={onRevealRequest}
+          onVote={onRevealVote}
+        />
+      ) : null}
       <ActionArea
         state={state}
         meId={meId}
         myTurn={myTurn}
         iAmPicker={iAmPicker}
+        iAmExhausted={iAmExhausted}
         turnName={turnSeatObj?.username ?? "—"}
         pickerName={pickerSeatObj?.username ?? "—"}
         myPick={myPick}
@@ -180,6 +200,7 @@ function SeatsRow({ state, meId }: { state: GpStateView; meId: string }) {
                 ? "border-[var(--lu-gold-1)]/60 bg-[var(--lu-gold-2)]/10 shadow-[0_0_14px_rgb(var(--c-ember)/0.35)]"
                 : "border-white/10 bg-black/25",
               s.status === "WITHDRAWN" && "opacity-40",
+              s.exhausted && "opacity-60 saturate-50", // spectator until the reveal
             )}
           >
             <SeatAvatar playerNumber={s.playerNumber} seed={s.username} size={28} sizeClass="size-7" />
@@ -187,13 +208,18 @@ function SeatsRow({ state, meId }: { state: GpStateView; meId: string }) {
               <span className="max-w-24 truncate text-xs font-bold text-[var(--lu-cream)]">
                 {s.userId === meId ? "أنت" : s.username}
                 {s.isPicker ? " 🎯" : ""}
+                {s.exhausted ? " 👁" : ""}
                 {s.away ? " 💤" : ""}
                 {!s.connected && s.status === "ACTIVE" ? " ⚠️" : ""}
               </span>
               <span className="flex items-center gap-1 text-[0.62rem] text-[var(--lu-tan)]">
                 <span className="num font-bold text-[var(--lu-gold-1)]">{s.totalPoints}</span>
                 نقطة
-                {!s.isPicker && s.status === "ACTIVE" ? (
+                {s.exhausted ? (
+                  <span className="mr-1 rounded-full bg-white/[0.08] px-1.5 py-px text-[0.58rem] font-bold text-[var(--lu-tan)]">
+                    مشاهد
+                  </span>
+                ) : !s.isPicker && s.status === "ACTIVE" ? (
                   <span className="mr-1 inline-flex gap-0.5" title="محاولات التخمين">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <span
@@ -416,6 +442,7 @@ function ActionArea({
   state,
   myTurn,
   iAmPicker,
+  iAmExhausted,
   turnName,
   pickerName,
   myPick,
@@ -428,6 +455,7 @@ function ActionArea({
   meId: string;
   myTurn: boolean;
   iAmPicker: boolean;
+  iAmExhausted: boolean;
   turnName: string;
   pickerName: string;
   myPick: { name: string; nameAr: string | null } | null;
@@ -459,6 +487,15 @@ function ActionArea({
     return (
       <div className="shrink-0 rounded-2xl border border-[var(--border)] bg-[var(--fb-surface)] px-3 py-2.5 text-center text-sm text-[var(--lu-tan)]">
         أنت المنتقي هذه الجولة{myPick ? <> — اللاعب الخفي: <b className="text-[var(--lu-gold-1)]">{myPick.nameAr ?? myPick.name}</b></> : null}. المنصة تجيب تلقائيًا.
+      </div>
+    );
+  }
+  if (iAmExhausted) {
+    // Spectator for the rest of the round: skipped by the rotation, no asking
+    // or guessing — they watch the board until the reveal.
+    return (
+      <div className="shrink-0 rounded-2xl border border-[var(--border)] bg-[var(--fb-surface)] px-3 py-2.5 text-center text-sm text-[var(--lu-tan)]">
+        👁 أنت مشاهد هذه الجولة — استنفدت محاولات التخمين. تابع اللوحة حتى كشف اللاعب.
       </div>
     );
   }
@@ -502,6 +539,80 @@ function ActionArea({
           استنفدت محاولات التخمين — تابع بالأسئلة لمساعدة البقية
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * «كشف اللاعب» — the unanimous give-up vote (owner spec). A slim bar over the
+ * action area: voting contestants can raise the request; a pending one shows a
+ * visible prompt with نعم/لا for everyone who hasn't approved. Any decline —
+ * or the current turn moving on — cancels it; unanimous approval ends the
+ * round with the timeout treatment (reveal, no winner, survival bonus).
+ * Spectators (exhausted) and the picker see the pending state but cannot vote.
+ */
+function RevealVoteBar({
+  state,
+  mySeat,
+  iCanVote,
+  onRequest,
+  onVote,
+}: {
+  state: GpStateView;
+  mySeat: number | null;
+  iCanVote: boolean;
+  onRequest: () => void;
+  onVote: (accept: boolean) => void;
+}) {
+  const req = state.revealRequest;
+  if (!req) {
+    if (!iCanVote) return null;
+    return (
+      <div className="flex shrink-0 justify-end">
+        <button
+          type="button"
+          onClick={onRequest}
+          className="lu-btn lu-frame rounded-full px-3 py-1 text-[0.7rem] font-bold text-[var(--lu-tan)] hover:text-[var(--lu-cream)]"
+          title="اطلب موافقة الجميع على كشف اللاعب وإنهاء الجولة بلا فائز"
+        >
+          🏳️ كشف اللاعب
+        </button>
+      </div>
+    );
+  }
+
+  const byName = state.seats.find((s) => s.seat === req.bySeat)?.username ?? "لاعب";
+  const iApproved = mySeat != null && req.approvals.includes(mySeat);
+  return (
+    <div className="shrink-0 rounded-2xl border border-[var(--lu-ember)]/40 bg-[var(--lu-ember)]/[0.08] p-2.5 fade-rise">
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 text-xs font-bold text-[var(--lu-cream)]">
+          🏳️ يطلب <span className="text-[var(--lu-ember-glow)]">{byName}</span> كشف اللاعب وإنهاء الجولة
+          <span className="mr-1 text-[0.66rem] font-normal text-[var(--lu-tan)]">
+            (موافقة <span className="num">{req.approvals.length}</span>/<span className="num">{req.needed}</span> — ينتهي الطلب مع انتهاء الدور)
+          </span>
+        </p>
+        {iCanVote && !iApproved ? (
+          <span className="flex shrink-0 gap-1.5">
+            <button
+              type="button"
+              onClick={() => onVote(true)}
+              className="rounded-lg border border-[var(--lu-gold-1)]/50 bg-[var(--lu-gold-2)]/15 px-3 py-1 text-xs font-black text-[var(--lu-gold-1)]"
+            >
+              أوافق
+            </button>
+            <button
+              type="button"
+              onClick={() => onVote(false)}
+              className="rounded-lg border border-[var(--fb-danger)]/50 bg-[var(--fb-danger)]/10 px-3 py-1 text-xs font-black text-[var(--fb-danger)]"
+            >
+              أرفض
+            </button>
+          </span>
+        ) : iApproved ? (
+          <span className="shrink-0 text-[0.68rem] font-bold text-[var(--lu-tan)]">بانتظار البقية…</span>
+        ) : null}
+      </div>
     </div>
   );
 }

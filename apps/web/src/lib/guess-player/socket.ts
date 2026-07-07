@@ -42,6 +42,8 @@ export interface GpCreateOptions {
   isPrivate?: boolean;
   roomName?: string;
   maxPlayers?: number;
+  /** Round length in minutes — exactly 10 / 15 / 20 (created rooms only). */
+  roundMinutes?: 10 | 15 | 20;
   /** One-time create id from the deep link (reload-safe create). */
   nonce?: string;
 }
@@ -56,6 +58,9 @@ export interface GpConnection {
   pick: (playerId: string) => void;
   ask: (input: GpAskInput) => void;
   guess: (playerId: string) => void;
+  /** «كشف اللاعب»: request the unanimous give-up vote / answer a pending one. */
+  revealRequest: () => void;
+  revealVote: (accept: boolean) => void;
   newMatch: () => void;
   queueJoin: (difficulty: GpDifficulty) => void;
   queueLeave: () => void;
@@ -115,6 +120,8 @@ export function connectGuessPlayer(token: string, handlers: GpHandlers): GpConne
     pick: (playerId) => socket.emit(GP_CLIENT_EVENTS.pick, { playerId }),
     ask: (input) => socket.emit(GP_CLIENT_EVENTS.ask, input),
     guess: (playerId) => socket.emit(GP_CLIENT_EVENTS.guess, { playerId }),
+    revealRequest: () => socket.emit(GP_CLIENT_EVENTS.revealRequest, {}),
+    revealVote: (accept) => socket.emit(GP_CLIENT_EVENTS.revealVote, { accept }),
     newMatch: () => socket.emit(GP_CLIENT_EVENTS.newMatch, {}),
     queueJoin: (difficulty) => socket.emit(GP_CLIENT_EVENTS.queueJoin, { difficulty }),
     queueLeave: () => socket.emit(GP_CLIENT_EVENTS.queueLeave, {}),

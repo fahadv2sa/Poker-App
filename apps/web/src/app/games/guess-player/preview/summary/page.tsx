@@ -13,10 +13,10 @@ import { GpSummary, type GpRoundSummary } from "@/components/guess-player/GpSumm
  */
 
 const SEATS: GpStateView["seats"] = [
-  { seat: 0, userId: "me", username: "فهد العتيبي", playerNumber: 100001, connected: true, totalPoints: 875, status: "ACTIVE", guessesLeft: 2, isPicker: false, away: false },
-  { seat: 1, userId: "u1", username: "خالد", playerNumber: 100002, connected: true, totalPoints: 620, status: "ACTIVE", guessesLeft: 1, isPicker: true, away: false },
-  { seat: 2, userId: "u2", username: "نوّاف", playerNumber: 100003, connected: true, totalPoints: 455, status: "ACTIVE", guessesLeft: 0, isPicker: false, away: false },
-  { seat: 3, userId: "u3", username: "سلطان", playerNumber: 100004, connected: false, totalPoints: 0, status: "WITHDRAWN", guessesLeft: 3, isPicker: false, away: false },
+  { seat: 0, userId: "me", username: "فهد العتيبي", playerNumber: 100001, connected: true, totalPoints: 875, status: "ACTIVE", guessesLeft: 2, isPicker: false, exhausted: false, away: false },
+  { seat: 1, userId: "u1", username: "خالد", playerNumber: 100002, connected: true, totalPoints: 620, status: "ACTIVE", guessesLeft: 1, isPicker: true, exhausted: false, away: false },
+  { seat: 2, userId: "u2", username: "نوّاف", playerNumber: 100003, connected: true, totalPoints: 455, status: "ACTIVE", guessesLeft: 0, isPicker: false, exhausted: false, away: false },
+  { seat: 3, userId: "u3", username: "سلطان", playerNumber: 100004, connected: false, totalPoints: 0, status: "WITHDRAWN", guessesLeft: 3, isPicker: false, exhausted: false, away: false },
 ];
 
 const ROUNDS: GpRoundSummary[] = [

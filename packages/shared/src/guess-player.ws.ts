@@ -12,6 +12,7 @@
  */
 import { z } from "zod";
 import {
+  GP_CONFEDERATIONS,
   GP_DIFFICULTIES,
   GP_LIMITS,
   GP_MODES,
@@ -31,6 +32,12 @@ export const GP_CLIENT_EVENTS = {
   ask: "gp:ask",
   /** Spend one of the 3 guess attempts on a searched player id. */
   guess: "gp:guess",
+  /** «كشف اللاعب»: a contestant asks the table to give up and reveal — needs
+   *  UNANIMOUS approval of the other voting contestants (exhausted spectators
+   *  and the picker have no vote). Expires when the current turn moves on. */
+  revealRequest: "gp:revealRequest",
+  /** Approve/decline a pending reveal request. Any decline cancels it. */
+  revealVote: "gp:revealVote",
   /** Ready up to play the match again at the same table. */
   newMatch: "gp:newMatch",
   queueJoin: "gp:queueJoin",
@@ -73,6 +80,9 @@ export const gpCreateSchema = z
     roomName: z.string().trim().min(2, "اسم الغرفة قصير جدًا").max(40).optional(),
     maxPlayers: z.number().int().min(GP_LIMITS.minPlayers).max(GP_LIMITS.maxPlayers).optional(),
     isPrivate: z.boolean().optional(),
+    /** Created rooms only: round length in minutes — exactly 10 / 15 / 20
+     *  (default 10). Quick play always uses the fixed 10-minute round. */
+    roundMinutes: z.union([z.literal(10), z.literal(15), z.literal(20)]).optional(),
     /** One-time id minted by the create-room form and carried in the deep-link
      *  URL. Reloading /play?create=1 re-sends the SAME nonce → the server
      *  resyncs the room that nonce already created (no duplicate); a fresh
@@ -100,6 +110,9 @@ export const gpAskSchema = z.discriminatedUnion("template", [
   z.object({ template: z.literal("CLUB_SEASON"), clubId: z.string().uuid(), season: seasonField }),
   z.object({ template: z.literal("NATIONALITY"), countryName: countryField }),
   z.object({ template: z.literal("NATIONAL_TEAM"), countryName: countryField }),
+  /** «هل هو من قارة …؟» — the wire value is the CONFEDERATION code; the UI
+   *  shows the Arabic continent name (GP_CONTINENT_AR). */
+  z.object({ template: z.literal("CONTINENT"), confederation: z.enum(GP_CONFEDERATIONS) }),
   z.object({ template: z.literal("COMPETITION_EVER"), leagueId: z.number().int().positive() }),
   z.object({
     template: z.literal("COMPETITION_SEASON"),
@@ -127,6 +140,7 @@ export const gpAskSchema = z.discriminatedUnion("template", [
 export type GpAskInput = z.infer<typeof gpAskSchema>;
 
 export const gpGuessSchema = z.object({ playerId: z.string().uuid() });
+export const gpRevealVoteSchema = z.object({ accept: z.boolean() });
 export const gpQueueJoinSchema = z.object({ difficulty: gpDifficultySchema });
 
 // ---- server → client (typed) -----------------------------------------------
@@ -162,6 +176,9 @@ export type GpSeatView = {
   guessesLeft: number;
   /** VS_HUMANS: this seat is the current round's picker (cannot ask/guess). */
   isPicker: boolean;
+  /** Out of guess attempts THIS round → spectator: skipped by the rotation,
+   *  no asking/guessing/reveal vote; watches the board until the reveal. */
+  exhausted: boolean;
   away: boolean;
 };
 
@@ -187,8 +204,15 @@ export type GpStateView = {
   turnSeat: number | null;
   /** Current phase deadline (turn / pick), absolute ms. */
   deadlineTs: number | null;
-  /** Round deadline (10-min clock), absolute ms; null between rounds. */
+  /** Round deadline, absolute ms; null between rounds. */
   roundDeadlineTs: number | null;
+  /** This room's configured round length (seconds) — 10/15/20 min in created
+   *  rooms, always 10 min in quick play. Shown in the lobby settings chips. */
+  roundTimerSec: number;
+  /** Pending «كشف اللاعب» vote: who asked + who approved so far. Every seat in
+   *  the current rotation must approve; any decline (or the turn moving on)
+   *  cancels it. */
+  revealRequest: { bySeat: number; approvals: number[]; needed: number } | null;
   newMatchRequest: { readySeats: number[]; needed: number; deadlineTs: number | null } | null;
 };
 

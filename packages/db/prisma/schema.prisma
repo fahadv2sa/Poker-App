@@ -540,6 +540,25 @@ model Nationality {
   @@schema("football")
 }
 
+// Curated country → football CONFEDERATION mapping (Guess the Player continent
+// question). Membership by RULE, not geography — current confederation
+// membership is the reference (Russia/Türkiye → UEFA, Australia → AFC since
+// 2006, Kazakhstan → UEFA); includes non-FIFA confederation members present in
+// the data (Réunion → CAF; Martinique/Guadeloupe/French Guiana → CONCACAF).
+// Keys are the LITERAL nationality names as they appear in
+// football.nationalities (near-duplicates like Türkiye/Turkey both seeded).
+// Zero-error rule: a nationality missing here answers UNKNOWN, never a guess.
+// Seeded by packages/db/prisma/seed-confederations.ts (audits coverage).
+model CountryConfederation {
+  /// The literal nationality name (football.nationalities.name).
+  countryName String @id @map("country_name")
+  /// UEFA | AFC | CAF | CONMEBOL | CONCACAF | OFC (checked in the seed).
+  confederation String
+
+  @@map("country_confederations")
+  @@schema("football")
+}
+
 model Position {
   id      String       @id @default(uuid()) @db.Uuid
   code    PositionCode @unique
@@ -1483,6 +1502,7 @@ enum GpQuestionTemplate {
   CLUB_SEASON
   NATIONALITY
   NATIONAL_TEAM
+  CONTINENT
   COMPETITION_EVER
   COMPETITION_SEASON
   TROPHY_EVER

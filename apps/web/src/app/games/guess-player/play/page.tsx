@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 /** The realtime play surface (quick-play lobby + live match). Deep links:
  *    ?join=CODE                                → auto-join a room by code
- *    ?create=1&mode&difficulty&private&max&name&n → auto-create a room */
+ *    ?create=1&mode&difficulty&private&max&name&minutes&n → auto-create a room */
 export default async function PlayPage({
   searchParams,
 }: {
@@ -23,6 +23,7 @@ export default async function PlayPage({
     private?: string;
     name?: string;
     max?: string;
+    minutes?: string;
     n?: string;
   }>;
 }) {
@@ -49,6 +50,8 @@ export default async function PlayPage({
     GP_LIMITS.maxPlayers,
     Math.max(GP_LIMITS.minPlayers, Number(sp.max) || GP_LIMITS.maxPlayers),
   );
+  // Round length: exactly 10 / 15 / 20 minutes (anything else → the default 10).
+  const roundMinutes = ([10, 15, 20] as const).find((m) => m === Number(sp.minutes)) ?? 10;
   const autoCreate =
     sp.create === "1"
       ? {
@@ -57,6 +60,7 @@ export default async function PlayPage({
           isPrivate,
           roomName,
           maxPlayers,
+          roundMinutes,
           nonce: sp.n?.trim().slice(0, 32) || undefined,
         }
       : null;

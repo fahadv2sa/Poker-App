@@ -43,6 +43,11 @@ export type GpQuestion =
   | { template: "NATIONALITY"; countryName: string }
   /** هل لعب لمنتخب X؟ (senior national team) */
   | { template: "NATIONAL_TEAM"; countryName: string }
+  /** هل هو من قارة X؟ — the football CONFEDERATION the player's country
+   *  competes under (rule, not geography: Russia/Türkiye → UEFA, Australia →
+   *  AFC). The FactPack carries the hidden player's confederation resolved
+   *  from the curated football.country_confederations table. */
+  | { template: "CONTINENT"; confederation: string }
   /** هل لعب في بطولة X؟ (league / cup / tournament, ever). `altLeagueIds` are
    *  EQUIVALENT ids for the same real competition (API renames) — appearing
    *  under ANY equivalent id counts (mirrors trophy altKeys; curated data). */
@@ -120,6 +125,12 @@ export interface GpFactPack {
   nameAr: string | null;
   /** Canonical country name of players.nationality_id (always present). */
   nationalityName: string;
+  /** The football confederation the nationality competes under (UEFA/AFC/CAF/
+   *  CONMEBOL/CONCACAF/OFC), from the curated country_confederations table.
+   *  null/absent = country not (yet) in the curated mapping → CONTINENT
+   *  answers UNKNOWN (zero-error: never guess geography). Optional so frozen
+   *  fixtures/packs from before the field exist stay valid. */
+  confederation?: string | null;
   /** Clubs ever played for (kind=CLUB): player_clubs ∪ mapped team-seasons. */
   clubIdsEver: string[];
   /** Per-season club memberships (kind=CLUB). */

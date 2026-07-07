@@ -35,6 +35,11 @@ export interface ActiveGpRound {
   /** Wrong guesses this round (public info — part of the shared board). */
   wrongGuesses: GpWrongGuessView[];
   guessesLeft: Map<number, number>; // seat → remaining attempts (3 at round start)
+  /** Pending «كشف اللاعب» vote (unanimous give-up). Voters = the current
+   *  turnOrder (exhausted spectators and the picker are already outside it).
+   *  Cleared whenever the turn moves on, the rotation changes, or anyone
+   *  declines. */
+  revealReq: { bySeat: number; approvals: Set<number> } | null;
   roundDeadlineTs: number | null; // set when PLAYING begins
 }
 

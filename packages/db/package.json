@@ -25,6 +25,7 @@
     "build:top10-catalog": "tsx prisma/build-top10-catalog.ts",
     "audit:top10-catalog": "tsx prisma/audit-top10-catalog.ts",
     "seed:gp-trophies": "tsx prisma/seed-gp-trophies.ts",
+    "seed:confederations": "tsx prisma/seed-confederations.ts",
     "audit:gp-facts": "tsx prisma/audit-gp-facts.ts",
     "gp:spot-check": "tsx prisma/gp-spot-check.ts",
     "gp:export-fixtures": "tsx prisma/export-gp-fixtures.ts",

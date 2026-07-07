@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@fb/top-10-ui";
 
@@ -103,48 +102,24 @@ function EmptyState({ text, glyph }: { text: string; glyph: string }) {
   );
 }
 
-export function RoomBrowser({ publicRooms, friendsRooms }: { publicRooms: RoomCardData[]; friendsRooms: RoomCardData[] }) {
-  const [tab, setTab] = useState<"public" | "friends">("public");
-  const rooms = tab === "public" ? publicRooms : friendsRooms;
-
-  const Tab = ({ id, label, count }: { id: "public" | "friends"; label: string; count: number }) => (
-    <button
-      type="button"
-      onClick={() => setTab(id)}
-      aria-pressed={tab === id}
-      className={cn(
-        "flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition",
-        tab === id ? "lu-chip text-[var(--lu-gold-1)]" : "text-[var(--lu-tan)] hover:text-[var(--lu-cream)]",
-      )}
-    >
-      {label}
-      <span
-        className={cn(
-          "num rounded-full px-1.5 text-[0.66rem]",
-          tab === id ? "text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40" : "bg-white/[0.08] text-[var(--lu-tan)]",
-        )}
-      >
-        {count}
-      </span>
-    </button>
-  );
-
+/** The joinable CREATED rooms (open manual lobbies). Quick-play tables are
+ *  matchmaking-only and deliberately never listed — quick play is entered from
+ *  its own button, not the browser. */
+export function RoomBrowser({ friendsRooms }: { friendsRooms: RoomCardData[] }) {
   return (
     <div className="relative z-10">
-      <div className="lu-frame mb-4 flex gap-2 rounded-2xl p-1.5">
-        <Tab id="public" label="الغرف العامة" count={publicRooms.length} />
-        <Tab id="friends" label="غرف الأصدقاء" count={friendsRooms.length} />
+      <div className="lu-frame mb-4 flex items-center justify-between rounded-2xl px-4 py-2.5">
+        <span className="text-sm font-bold text-[var(--lu-gold-1)]">غرف الأصدقاء المفتوحة</span>
+        <span className="num rounded-full px-1.5 text-[0.66rem] text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/40">
+          {friendsRooms.length}
+        </span>
       </div>
 
       <div className="grid gap-3">
-        {rooms.length === 0 ? (
-          tab === "public" ? (
-            <EmptyState glyph="⚡" text="لا توجد طاولات سريعة نشطة الآن" />
-          ) : (
-            <EmptyState glyph="🔒" text="لا توجد غرف أصدقاء مفتوحة" />
-          )
+        {friendsRooms.length === 0 ? (
+          <EmptyState glyph="🔒" text="لا توجد غرف أصدقاء مفتوحة" />
         ) : (
-          rooms.map((r) => <RoomCard key={r.id} r={r} />)
+          friendsRooms.map((r) => <RoomCard key={r.id} r={r} />)
         )}
       </div>
     </div>

@@ -16,10 +16,10 @@ import type { GpRoundSummary } from "@/components/guess-player/GpSummary";
  */
 
 const SEATS: GpStateView["seats"] = [
-  { seat: 0, userId: "me", username: "فهد العتيبي", playerNumber: 100001, connected: true, totalPoints: 875, status: "ACTIVE", guessesLeft: 2, isPicker: false, away: false },
-  { seat: 1, userId: "u1", username: "خالد", playerNumber: 100002, connected: true, totalPoints: 620, status: "ACTIVE", guessesLeft: 1, isPicker: true, away: false },
-  { seat: 2, userId: "u2", username: "نوّاف", playerNumber: 100003, connected: true, totalPoints: 455, status: "ACTIVE", guessesLeft: 0, isPicker: false, away: false },
-  { seat: 3, userId: "u3", username: "سلطان", playerNumber: 100004, connected: false, totalPoints: 150, status: "WITHDRAWN", guessesLeft: 3, isPicker: false, away: false },
+  { seat: 0, userId: "me", username: "فهد العتيبي", playerNumber: 100001, connected: true, totalPoints: 875, status: "ACTIVE", guessesLeft: 2, isPicker: false, exhausted: false, away: false },
+  { seat: 1, userId: "u1", username: "خالد", playerNumber: 100002, connected: true, totalPoints: 620, status: "ACTIVE", guessesLeft: 1, isPicker: true, exhausted: false, away: false },
+  { seat: 2, userId: "u2", username: "نوّاف", playerNumber: 100003, connected: true, totalPoints: 455, status: "ACTIVE", guessesLeft: 0, isPicker: false, exhausted: true, away: false },
+  { seat: 3, userId: "u3", username: "سلطان", playerNumber: 100004, connected: false, totalPoints: 150, status: "WITHDRAWN", guessesLeft: 3, isPicker: false, exhausted: false, away: false },
 ];
 
 function baseState(over: Partial<GpStateView>): GpStateView {
@@ -41,7 +41,7 @@ function baseState(over: Partial<GpStateView>): GpStateView {
     wrongGuesses: [],
     turnSeat: null,
     deadlineTs: null,
-    roundDeadlineTs: null,
+    roundDeadlineTs: null, roundTimerSec: 600, revealRequest: null,
     newMatchRequest: { readySeats: [1], needed: 3, deadlineTs: Date.now() + 15_000 },
     ...over,
   };
@@ -74,6 +74,7 @@ const QUESTIONS: GpStateView["questions"] = [
   // vs a single-year national tournament (both forms exercised here).
   { turnNo: 5, seat: 0, template: "CLUB_SEASON", params: { clubName: "تشيلسي", season: 2005, seasonLabel: "2005/06" }, answer: "UNKNOWN" },
   { turnNo: 6, seat: 2, template: "COMPETITION_SEASON", params: { competitionName: "كأس العالم", season: 2018, seasonLabel: "2018" }, answer: "YES" },
+  { turnNo: 7, seat: 0, template: "CONTINENT", params: { continentAr: "أفريقيا" }, answer: "YES" },
 ];
 
 const WRONG_GUESSES: GpStateView["wrongGuesses"] = [
@@ -188,6 +189,7 @@ export default function PreviewWinner() {
             turnSeat: 0,
             deadlineTs: Date.now() + 14_000,
             roundDeadlineTs: Date.now() + 175_000,
+            revealRequest: view === "composer" ? { bySeat: 3, approvals: [3], needed: 2 } : null,
             newMatchRequest: null,
           })}
           meId="me"
@@ -198,6 +200,8 @@ export default function PreviewWinner() {
           onAsk={(q) => console.log("ask", q)}
           onGuess={(id) => console.log("guess", id)}
           onPick={(id) => console.log("pick", id)}
+          onRevealRequest={() => console.log("revealRequest")}
+          onRevealVote={(a) => console.log("revealVote", a)}
           onLeave={() => console.log("leave")}
         />
       ) : null}

@@ -105,6 +105,19 @@ async function importCompleted(externalRef: number | null, endpoint: string): Pr
   return rows[0]?.ok === true;
 }
 
+/** Curated country → confederation map (football.country_confederations),
+ *  keyed by the LITERAL nationality name. Static reference data → cached for
+ *  the process lifetime. null = unmapped → the CONTINENT question answers
+ *  UNKNOWN (zero-error). */
+let confederationCache: Map<string, string> | null = null;
+async function confederationOf(nationalityName: string): Promise<string | null> {
+  if (!confederationCache) {
+    const rows = await prisma.countryConfederation.findMany();
+    confederationCache = new Map(rows.map((r) => [r.countryName, r.confederation]));
+  }
+  return confederationCache.get(nationalityName) ?? null;
+}
+
 /** Canonical-country lookup set: nationalities ∪ national-team club rows.
  *  Returned as canonical-key → display spelling (nationalities preferred). */
 let countryIndexCache: Map<string, string> | null = null;
@@ -278,9 +291,10 @@ export async function loadGpFactPack(playerId: string): Promise<GpFactPack> {
     ...new Set(statLines.map((l) => l.season)),
   ].filter((s) => !seasonsWithNullLeague.has(s));
 
-  const [teamsComplete, trophiesImported] = await Promise.all([
+  const [teamsComplete, trophiesImported, confederation] = await Promise.all([
     importCompleted(player.external_ref, "teams"),
     importCompleted(player.external_ref, "trophies"),
+    confederationOf(player.nat),
   ]);
 
   return {
@@ -288,6 +302,7 @@ export async function loadGpFactPack(playerId: string): Promise<GpFactPack> {
     name: player.name,
     nameAr: player.name_ar,
     nationalityName: player.nat,
+    confederation,
     clubIdsEver,
     clubSeasons,
     seasonsWithClubData: [...new Set(clubSeasons.map((c) => c.season))],

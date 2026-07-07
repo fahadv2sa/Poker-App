@@ -50,17 +50,14 @@ async function main(): Promise<void> {
       return;
     }
     // Live, non-sensitive room occupancy for the join page's browser (mirrors Link
-    // Up's /internal/rooms). Lists OPEN public manual rooms (friends) + live quick-play
-    // tables (public). Private manual rooms are NEVER listed — reachable only via
-    // invite link / room code. Never exposes who is a bot beyond an aggregate count.
+    // Up's /internal/rooms). Lists OPEN public manual rooms (friends) ONLY —
+    // quick-play tables are matchmaking-only and never listed (they carry no
+    // invite code, so a listed card could never be joined anyway). Private manual
+    // rooms are NEVER listed — reachable only via invite link / room code.
     if (req.method === "GET" && u.pathname === "/internal/rooms") {
       const rooms = matches
         .list()
-        .filter(
-          (r) =>
-            (r.kind === "MANUAL" && r.status === "LOBBY" && !r.isPrivate) ||
-            (r.kind === "QUICK_PLAY" && (r.status === "LOBBY" || r.status === "IN_PROGRESS")),
-        )
+        .filter((r) => r.kind === "MANUAL" && r.status === "LOBBY" && !r.isPrivate)
         .map((r) => {
           const connected = r.seats.filter((s) => s.connected);
           const creatorSeat =

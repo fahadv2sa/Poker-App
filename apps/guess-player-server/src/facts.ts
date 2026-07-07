@@ -4,7 +4,7 @@ import {
   type GpFactPack,
   type GpQuestion,
 } from "@fb/guess-player-engine";
-import { fbSeasonLabel, type GpAskInput } from "@fb/shared";
+import { fbSeasonLabel, type GpAskInput, GP_CONTINENT_AR } from "@fb/shared";
 import {
   gpResolveClub,
   gpResolveCompetition,
@@ -110,6 +110,14 @@ export class PrismaGpFactsSource implements GpFactsSource {
               params: { countryName: c.nameAr },
             }
           : null;
+      }
+      case "CONTINENT": {
+        // Fixed six-option enum (already zod-validated) — no DB resolution
+        // needed; freeze the Arabic continent label for the board.
+        return {
+          q: { template: "CONTINENT", confederation: input.confederation },
+          params: { continentAr: GP_CONTINENT_AR[input.confederation] },
+        };
       }
       case "COMPETITION_EVER": {
         const comp = await gpResolveCompetition(input.leagueId);

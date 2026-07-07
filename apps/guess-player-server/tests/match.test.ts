@@ -197,11 +197,12 @@ describe("Guess the Player match orchestration", () => {
     expect(lastState(events).turnSeat).toBe(seat0);
   });
 
-  it("wrong guesses burn attempts; the third leaves questions only", async () => {
+  it("the third wrong guess makes a SPECTATOR: skipped by the rotation, no asking/guessing", async () => {
     const { matches, events } = makeMatches();
     const room = await vsSystemMatch(matches);
     const r = room.round!;
     const seat0 = r.turnOrder[0]!;
+    const seat1 = r.turnOrder[1]!;
     const uid = userAt(room, seat0);
     for (let i = 0; i < 3; i++) {
       // rotate back to seat0 by letting the other seat time out when needed
@@ -212,17 +213,78 @@ describe("Guess the Player match orchestration", () => {
       await settle();
     }
     expect(r.guessesLeft.get(seat0)).toBe(0);
-    const wrong = events[GP_SERVER_EVENTS.wrongGuess]!;
-    expect(wrong.length).toBe(3);
-    // 4th attempt: rejected, no state change, still may ask
-    while (lastState(events).turnSeat !== seat0) {
-      await vi.advanceTimersByTimeAsync(GP_TIMING.turnSec * 1000);
-    }
+    expect(events[GP_SERVER_EVENTS.wrongGuess]!.length).toBe(3);
+
+    // Exhausted → OUT of the rotation for the rest of the round (spectator):
+    // the round continues with the other contestant, never returning to seat0.
+    expect(room.round).toBe(r); // round did NOT end — a contestant remains
+    expect(r.turnOrder).toEqual([seat1]);
+    expect(lastState(events).turnSeat).toBe(seat1);
+    const seatView = lastState(events).seats.find((s) => s.seat === seat0)!;
+    expect(seatView.exhausted).toBe(true);
+
+    // Both asking and guessing rights are gone (owner ruling): a stray ask or
+    // guess from the spectator is ignored — it is never their turn again.
+    const questionsBefore = (events[GP_SERVER_EVENTS.question] ?? []).length;
+    await matches.ask(room, uid, { template: "CLUB_EVER", clubId: CLUB_NO });
     await matches.guess(room, uid, HIDDEN_ID);
     await settle();
-    expect(room.round?.hidden?.pack.playerId).toBe(HIDDEN_ID); // round did NOT end
-    await matches.ask(room, uid, { template: "CLUB_EVER", clubId: CLUB_NO });
-    expect((events[GP_SERVER_EVENTS.question]!.at(-1) as { answer: string }).answer).toBe("NO");
+    expect((events[GP_SERVER_EVENTS.question] ?? []).length).toBe(questionsBefore);
+    expect(room.round?.hidden?.pack.playerId).toBe(HIDDEN_ID); // still the same live round
+  });
+
+  it("ALL contestants exhausted → the round ends IMMEDIATELY with the timeout treatment", async () => {
+    const { matches, events } = makeMatches();
+    const room = await vsSystemMatch(matches);
+    const r = room.round!;
+    // Burn all 3 attempts of BOTH contestants (whoever holds the turn guesses).
+    for (let i = 0; i < 6; i++) {
+      if (!room.round || room.round !== r) break;
+      const turn = lastState(events).turnSeat;
+      if (turn == null) break;
+      await matches.guess(room, userAt(room, turn), OTHER_ID);
+      await settle();
+    }
+    // The last exhaustion ended the round on the spot: reveal, NO winner.
+    const reveal = events[GP_SERVER_EVENTS.reveal]!.at(-1) as {
+      reason: string;
+      winnerSeat: number | null;
+      player: { id: string };
+    };
+    expect(reveal.reason).toBe("TIMER"); // timeout treatment (survival rules apply)
+    expect(reveal.winnerSeat).toBeNull();
+    expect(reveal.player.id).toBe(HIDDEN_ID); // the hidden player's card is revealed
+  });
+
+  it("«كشف اللاعب»: unanimous approval reveals with the timeout treatment; a decline cancels", async () => {
+    const { matches, events } = makeMatches();
+    const room = await vsSystemMatch(matches);
+    const r = room.round!;
+    const seat0 = r.turnOrder[0]!;
+    const seat1 = r.turnOrder[1]!;
+
+    // A decline cancels the request and play continues.
+    matches.requestReveal(room, userAt(room, seat0));
+    expect(r.revealReq?.bySeat).toBe(seat0);
+    matches.voteReveal(room, userAt(room, seat1), false);
+    expect(r.revealReq).toBeNull();
+    expect(room.round).toBe(r); // round unchanged
+
+    // The request expires with the current turn (turn timeout moves it on).
+    matches.requestReveal(room, userAt(room, seat0));
+    await vi.advanceTimersByTimeAsync(GP_TIMING.turnSec * 1000);
+    expect(r.revealReq).toBeNull();
+
+    // Unanimous approval → reveal, no winner, timeout treatment.
+    matches.requestReveal(room, userAt(room, seat0));
+    matches.voteReveal(room, userAt(room, seat1), true);
+    await settle();
+    const reveal = events[GP_SERVER_EVENTS.reveal]!.at(-1) as {
+      reason: string;
+      winnerSeat: number | null;
+    };
+    expect(reveal.reason).toBe("TIMER");
+    expect(reveal.winnerSeat).toBeNull();
   });
 
   it("a correct guess ends the round with time-scaled points (EASY ×1)", async () => {

@@ -58,6 +58,13 @@ export function answerQuestion(q: GpQuestion, f: GpFactPack): GpAnswer {
       return f.nationalTeamsComplete ? "NO" : "UNKNOWN";
     }
 
+    case "CONTINENT": {
+      // Confederation membership by RULE (curated table), never geography.
+      // An unmapped nationality can prove nothing — UNKNOWN (zero-error).
+      if (!f.confederation) return "UNKNOWN";
+      return f.confederation === q.confederation ? "YES" : "NO";
+    }
+
     case "COMPETITION_EVER": {
       const ids = [q.leagueId, ...(q.altLeagueIds ?? [])];
       return f.competitionIdsEver.some((id) => ids.includes(id)) ? "YES" : "NO";

@@ -76,6 +76,28 @@ describe("NATIONAL_TEAM", () => {
   });
 });
 
+describe("CONTINENT (confederation by rule, never geography)", () => {
+  it("YES/NO from the curated confederation on the pack", () => {
+    const f = factPack({ confederation: "UEFA" });
+    expect(answerQuestion({ template: "CONTINENT", confederation: "UEFA" }, f)).toBe("YES");
+    expect(answerQuestion({ template: "CONTINENT", confederation: "CAF" }, f)).toBe("NO");
+  });
+  it("transcontinental cases resolve by MEMBERSHIP (Australia → AFC, i.e. آسيا)", () => {
+    const f = factPack({ nationalityName: "Australia", confederation: "AFC" });
+    expect(answerQuestion({ template: "CONTINENT", confederation: "AFC" }, f)).toBe("YES");
+    expect(answerQuestion({ template: "CONTINENT", confederation: "OFC" }, f)).toBe("NO");
+  });
+  it("UNKNOWN when the nationality is not in the curated mapping (zero-error)", () => {
+    expect(
+      answerQuestion({ template: "CONTINENT", confederation: "UEFA" }, factPack({ confederation: null })),
+    ).toBe("UNKNOWN");
+    // …and for packs frozen before the field existed (absent entirely).
+    const legacy = factPack();
+    delete (legacy as { confederation?: string | null }).confederation;
+    expect(answerQuestion({ template: "CONTINENT", confederation: "UEFA" }, legacy)).toBe("UNKNOWN");
+  });
+});
+
 describe("COMPETITION_EVER / COMPETITION_SEASON", () => {
   it("EVER: YES / NO from the complete competition set", () => {
     expect(answerQuestion({ template: "COMPETITION_EVER", leagueId: UCL }, factPack())).toBe("YES");

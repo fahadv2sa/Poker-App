@@ -50,6 +50,7 @@ export function GuessPlayerClient({
     isPrivate: boolean;
     roomName?: string;
     maxPlayers?: number;
+    roundMinutes?: 10 | 15 | 20;
     nonce?: string;
   } | null;
 }) {
@@ -104,6 +105,7 @@ export function GuessPlayerClient({
               isPrivate: autoCreate.isPrivate,
               roomName: autoCreate.roomName,
               maxPlayers: autoCreate.maxPlayers,
+              roundMinutes: autoCreate.roundMinutes,
               nonce: autoCreate.nonce,
             },
             (res) => {
@@ -233,9 +235,14 @@ export function GuessPlayerClient({
       <Atmosphere />
       <div className="relative z-10 flex min-h-0 flex-1 flex-col">
         <header className="mb-3 flex shrink-0 items-center gap-3 pt-1">
-          <BackArrow fallback="/games/guess-player" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
-            <BackIcon size={20} />
-          </BackArrow>
+          {/* The LIVE TABLE has NO back control (owner ruling) — leaving happens
+              only through the exit button and its confirmation dialog. The
+              arrow renders on the pre-table surfaces (lobby/queue) only. */}
+          {view !== "match" && (
+            <BackArrow fallback="/games/guess-player" className="lu-btn lu-frame grid size-10 shrink-0 place-items-center rounded-xl">
+              <BackIcon size={20} />
+            </BackArrow>
+          )}
           <span className="lu-chip grid size-11 shrink-0 place-items-center rounded-2xl ring-1 ring-[var(--lu-gold-1)]/30">
             <BoltIcon size={22} />
           </span>
@@ -413,6 +420,8 @@ function MatchView({
   const onAsk = useCallback((input: Parameters<NonNullable<GpConnection["ask"]>>[0]) => conn()?.ask(input), [conn]);
   const onGuess = useCallback((id: string) => conn()?.guess(id), [conn]);
   const onPick = useCallback((id: string) => conn()?.pick(id), [conn]);
+  const onRevealRequest = useCallback(() => conn()?.revealRequest(), [conn]);
+  const onRevealVote = useCallback((accept: boolean) => conn()?.revealVote(accept), [conn]);
 
   if (state.status === "ENDED" || state.status === "ABANDONED") {
     return (
@@ -446,6 +455,8 @@ function MatchView({
       onAsk={onAsk}
       onGuess={onGuess}
       onPick={onPick}
+      onRevealRequest={onRevealRequest}
+      onRevealVote={onRevealVote}
       onLeave={onExit}
     />
   );
@@ -498,6 +509,9 @@ function LobbyRoom({
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="lu-chip rounded-full px-3 py-1 text-xs font-bold text-[var(--lu-gold-1)] ring-1 ring-[var(--lu-gold-1)]/30">
             {state.mode === "VS_HUMANS" ? "ضد الأصدقاء" : `ضد المنصة · ${state.difficulty ? DIFF_AR[state.difficulty] : ""}`}
+          </span>
+          <span className="rounded-full bg-[var(--fb-surface)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--lu-tan)] ring-1 ring-[var(--border)]">
+            ⏱ <span className="num">{Math.round(state.roundTimerSec / 60)}</span> د
           </span>
           <span className="rounded-full bg-[var(--fb-surface)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--lu-tan)] ring-1 ring-[var(--border)]">
             {state.isPrivate ? "🔒 خاصة" : "🌐 عامة"}

@@ -32,16 +32,14 @@ async function main(): Promise<void> {
       return;
     }
     // Live, non-sensitive room occupancy for the join page (mirrors Top Ten's
-    // /internal/rooms). NEVER exposes the hidden player. Private manual rooms
-    // are never listed.
+    // /internal/rooms). Lists OPEN public manual rooms ONLY — quick-play tables
+    // are matchmaking-only and never listed (no invite code, unjoinable from a
+    // list). NEVER exposes the hidden player. Private manual rooms are never
+    // listed.
     if (req.method === "GET" && u.pathname === "/internal/rooms") {
       const rooms = matches
         .list()
-        .filter(
-          (r) =>
-            (r.kind === "MANUAL" && r.status === "LOBBY" && !r.isPrivate) ||
-            (r.kind === "QUICK_PLAY" && (r.status === "LOBBY" || r.status === "IN_PROGRESS")),
-        )
+        .filter((r) => r.kind === "MANUAL" && r.status === "LOBBY" && !r.isPrivate)
         .map((r) => ({
           id: r.id,
           code: r.inviteCode,

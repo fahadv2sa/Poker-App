@@ -6,6 +6,7 @@ import {
   gpAskSchema,
   gpCreateSchema,
   gpGuessSchema,
+  gpRevealVoteSchema,
   gpJoinSchema,
   gpPickSchema,
   gpQueueJoinSchema,
@@ -162,6 +163,7 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
         roomName: parsed.data.roomName ?? null,
         maxPlayers: parsed.data.maxPlayers,
         isPrivate: parsed.data.isPrivate,
+        roundMinutes: parsed.data.roundMinutes,
         nonce: parsed.data.nonce ?? null,
       });
       const seat = room.seats[0]!;
@@ -226,6 +228,18 @@ export function attachSocketHandlers(io: Server, matches: GpMatches): void {
       if (!parsed.success) return;
       const room = findRoomOf(u.userId);
       if (room) void matches.guess(room, u.userId, parsed.data.playerId);
+    });
+
+    socket.on(GP_CLIENT_EVENTS.revealRequest, () => {
+      const room = findRoomOf(u.userId);
+      if (room) matches.requestReveal(room, u.userId);
+    });
+
+    socket.on(GP_CLIENT_EVENTS.revealVote, (raw) => {
+      const parsed = gpRevealVoteSchema.safeParse(raw);
+      if (!parsed.success) return;
+      const room = findRoomOf(u.userId);
+      if (room) matches.voteReveal(room, u.userId, parsed.data.accept);
     });
 
     socket.on(GP_CLIENT_EVENTS.newMatch, () => {

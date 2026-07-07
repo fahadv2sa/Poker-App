@@ -66,6 +66,8 @@ export class GpMatches {
       roomName?: string | null;
       maxPlayers?: number;
       isPrivate?: boolean;
+      /** Round length in minutes (10/15/20, default 10) — created rooms only. */
+      roundMinutes?: number;
       nonce?: string | null;
     },
   ): GpMatchRoom {
@@ -78,7 +80,8 @@ export class GpMatches {
       difficulty: opts.mode === "VS_SYSTEM" ? (opts.difficulty ?? "MEDIUM") : null,
       roundsPlayed: 0,
       nextPickerSeat: null,
-      roundTimerSec: GP_TIMING.roundSec,
+      // Owner setting (10/15/20 min, default = the fixed quick-play length).
+      roundTimerSec: (opts.roundMinutes ?? GP_TIMING.roundSec / 60) * 60,
       turnTimerSec: GP_TIMING.turnSec,
       inviteCode: nextInvite(),
       roomName: opts.roomName?.trim() || null,
@@ -194,6 +197,7 @@ export class GpMatches {
       questions: [],
       wrongGuesses: [],
       guessesLeft: new Map(contestants.map((s) => [s.seat, GP_LIMITS.guessAttempts])),
+      revealReq: null,
       roundDeadlineTs: null,
     };
     room.round = round;
@@ -329,7 +333,35 @@ export class GpMatches {
   private advanceTurn(room: GpMatchRoom): void {
     const r = room.round;
     if (!r || r.turnOrder.length === 0) return;
+    // A pending «كشف اللاعب» request lives only for the turn it was raised in.
+    r.revealReq = null;
     r.turnIndex = (r.turnIndex + 1) % r.turnOrder.length;
+    this.beginTurn(room);
+  }
+
+  /** A contestant spent their LAST guess attempt: they become a SPECTATOR for
+   *  the rest of the round — dropped from the rotation (never consume turn
+   *  time again, no asking/guessing/reveal vote), still seated and watching.
+   *  If NOBODY can guess anymore, the round ends immediately with the timeout
+   *  treatment (reveal, no winner, picker survival bonus in VS_HUMANS). */
+  private exhaustSeat(room: GpMatchRoom, r: ActiveGpRound, seat: number): void {
+    r.revealReq = null; // the voting set changed — any pending vote is void
+    const idx = r.turnOrder.indexOf(seat);
+    if (idx !== -1) {
+      r.turnOrder.splice(idx, 1);
+      if (r.turnOrder.length > 0) {
+        if (idx < r.turnIndex) r.turnIndex--;
+        r.turnIndex = r.turnIndex % r.turnOrder.length;
+      }
+    }
+    const name = room.seats.find((s) => s.seat === seat)?.username ?? "";
+    this.deps.emit(room.id, GP_SERVER_EVENTS.toast, {
+      text: `${name} استنفد محاولاته — أصبح مشاهدًا حتى نهاية الجولة`,
+    });
+    if (r.turnOrder.length === 0) {
+      void this.finishRound(room, "TIMER", null); // all exhausted → immediate reveal
+      return;
+    }
     this.beginTurn(room);
   }
 
@@ -403,7 +435,12 @@ export class GpMatches {
     }
 
     r.guessesLeft.set(seat, left - 1);
-    this.advanceTurn(room);
+    const nowExhausted = left - 1 <= 0;
+    if (nowExhausted) this.exhaustSeat(room, r, seat);
+    else this.advanceTurn(room);
+    // The last exhaustion may have ended the round (everyone out) — the reveal
+    // supersedes the wrong-guess feedback.
+    if (nowExhausted && r.turnOrder.length === 0) return;
     // Public feedback (the named player is information for everyone) — resolve
     // the display ref after advancing so the tempo never waits on the DB.
     const named = await this.deps.facts.resolvePlayer(playerId);
@@ -418,6 +455,60 @@ export class GpMatches {
     r.wrongGuesses.push(payload);
     this.deps.emit(room.id, GP_SERVER_EVENTS.wrongGuess, payload);
     this.sync(room);
+  }
+
+  // ---- «كشف اللاعب» — unanimous give-up vote --------------------------------
+
+  /** A voting contestant asks the table to reveal the hidden player. Voters =
+   *  the current rotation (exhausted spectators and the picker have no vote).
+   *  Solo contestant → resolves immediately. The request lives only for the
+   *  current turn — the turn moving on (or any rotation change) voids it. */
+  requestReveal(room: GpMatchRoom, byUserId: string): void {
+    const r = room.round;
+    if (!r || room.status !== "IN_PROGRESS" || r.phase !== "PLAYING" || !r.hidden) return;
+    const seat = this.seatOf(room, byUserId);
+    if (seat == null || !r.turnOrder.includes(seat)) return; // spectators/picker: no vote
+    if (r.revealReq) return; // one pending request at a time
+    this.touch(room);
+    r.revealReq = { bySeat: seat, approvals: new Set([seat]) };
+    const name = room.seats.find((s) => s.seat === seat)?.username ?? "";
+    this.deps.emit(room.id, GP_SERVER_EVENTS.toast, {
+      text: `${name} يطلب كشف اللاعب — بانتظار موافقة الجميع`,
+    });
+    this.maybeResolveReveal(room, r);
+    if (room.round === r && r.revealReq) this.sync(room);
+  }
+
+  voteReveal(room: GpMatchRoom, byUserId: string, accept: boolean): void {
+    const r = room.round;
+    if (!r || room.status !== "IN_PROGRESS" || r.phase !== "PLAYING" || !r.revealReq) return;
+    const seat = this.seatOf(room, byUserId);
+    if (seat == null || !r.turnOrder.includes(seat)) return; // spectators/picker: no vote
+    this.touch(room);
+    if (!accept) {
+      r.revealReq = null;
+      const name = room.seats.find((s) => s.seat === seat)?.username ?? "";
+      this.deps.emit(room.id, GP_SERVER_EVENTS.toast, {
+        text: `${name} رفض كشف اللاعب — تستمر الجولة`,
+      });
+      this.sync(room);
+      return;
+    }
+    r.revealReq.approvals.add(seat);
+    this.maybeResolveReveal(room, r);
+    if (room.round === r && r.revealReq) this.sync(room);
+  }
+
+  private maybeResolveReveal(room: GpMatchRoom, r: ActiveGpRound): void {
+    if (!r.revealReq) return;
+    const allApproved = r.turnOrder.every((s) => r.revealReq!.approvals.has(s));
+    if (!allApproved) return;
+    this.deps.emit(room.id, GP_SERVER_EVENTS.toast, {
+      text: "اتفق الجميع على كشف اللاعب",
+    });
+    // Timeout treatment (approved): reveal, no winner, picker survival bonus
+    // in VS_HUMANS, same picker keeps the next round.
+    void this.finishRound(room, "TIMER", null);
   }
 
   private onRoundTimer(room: GpMatchRoom): void {
@@ -437,6 +528,7 @@ export class GpMatches {
     const r = room.round;
     if (!r || !r.hidden) return;
     this.clear(room, "turn", "round", "pick", "next");
+    r.revealReq = null; // the round is over — no pending vote survives it
     room.deadlineTs = null;
 
     const remainingSec = r.roundDeadlineTs ? Math.max(0, (r.roundDeadlineTs - Date.now()) / 1000) : 0;
@@ -671,6 +763,7 @@ export class GpMatches {
 
     const r = room.round;
     if (r) {
+      r.revealReq = null; // the voting set changed — any pending vote is void
       const wasTurn = this.currentTurnSeat(r) === seat.seat;
       const idx = r.turnOrder.indexOf(seat.seat);
       if (idx !== -1) {
@@ -778,6 +871,14 @@ export class GpMatches {
         status: s.status,
         guessesLeft: r?.guessesLeft.get(s.seat) ?? GP_LIMITS.guessAttempts,
         isPicker: r?.pickerSeat === s.seat,
+        // Spectator for THIS round: a contestant who spent all attempts (the
+        // picker is not a contestant and never counts as exhausted).
+        exhausted:
+          r != null &&
+          r.phase === "PLAYING" &&
+          r.pickerSeat !== s.seat &&
+          s.status === "ACTIVE" &&
+          (r.guessesLeft.get(s.seat) ?? 0) <= 0,
         away: s.away ?? false,
       })),
       questions: r?.questions ?? [],
@@ -785,6 +886,14 @@ export class GpMatches {
       turnSeat: r ? this.currentTurnSeat(r) : null,
       deadlineTs: room.deadlineTs,
       roundDeadlineTs: r?.roundDeadlineTs ?? null,
+      roundTimerSec: room.roundTimerSec,
+      revealRequest: r?.revealReq
+        ? {
+            bySeat: r.revealReq.bySeat,
+            approvals: [...r.revealReq.approvals],
+            needed: r.turnOrder.length,
+          }
+        : null,
       newMatchRequest: room.newMatch
         ? {
             readySeats: [...room.newMatch.readySeats],

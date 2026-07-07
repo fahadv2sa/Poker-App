@@ -2,12 +2,12 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@fb/top-10-ui";
-import type { GpAskInput } from "@fb/shared";
+import { GP_CONFEDERATIONS, GP_CONTINENT_AR, type GpAskInput, type GpConfederation } from "@fb/shared";
 import { EntitySearch, type EntityItem } from "./EntitySearch";
 import { seasonLabel } from "./question-text";
 
 type GpTemplate = GpAskInput["template"];
-type Slot = "club" | "country" | "competition" | "trophy" | "season";
+type Slot = "club" | "country" | "continent" | "competition" | "trophy" | "season";
 
 /**
  * The question composer, "investigation" edition (approved design A):
@@ -34,18 +34,22 @@ const CATEGORIES: ReadonlyArray<{
     ],
   },
   {
+    // Owner ruling 2026-07-07: nationality + national team were the same fact —
+    // merged into nationality + CONTINENT (football confederation, by rule).
     id: "identity",
     icon: "🌍",
-    label: "الجنسية والمنتخب",
+    label: "الجنسية والقارة",
     variants: [
       { t: "NATIONALITY", label: "ما جنسيته؟" },
-      { t: "NATIONAL_TEAM", label: "لأي منتخب لعب؟" },
+      { t: "CONTINENT", label: "من أي قارة؟" },
     ],
   },
   {
+    // «شارك في» (participation) — renamed from «البطولات», which read like
+    // trophies WON and collided with «الألقاب» (owner ruling 2026-07-07).
     id: "competitions",
     icon: "🏆",
-    label: "البطولات",
+    label: "شارك في",
     variants: [
       { t: "COMPETITION_EVER", label: "لعب في بطولة؟" },
       { t: "COMPETITION_SEASON", label: "بطولة في موسم؟" },
@@ -74,7 +78,9 @@ const SENTENCES: Record<GpTemplate, Segment[]> = {
     { text: "؟" },
   ],
   NATIONALITY: [{ text: "هل جنسيته" }, { slot: "country" }, { text: "؟" }],
+  // NATIONAL_TEAM stays renderable (history/board) but has no composer entry.
   NATIONAL_TEAM: [{ text: "هل لعب لمنتخب" }, { slot: "country" }, { text: "؟" }],
+  CONTINENT: [{ text: "هل هو من قارة" }, { slot: "continent" }, { text: "؟" }],
   COMPETITION_EVER: [{ text: "هل لعب في" }, { slot: "competition" }, { text: "؟" }],
   COMPETITION_SEASON: [
     { text: "هل لعب في" },
@@ -103,12 +109,14 @@ const SENTENCES: Record<GpTemplate, Segment[]> = {
 const SLOT_META: Record<Slot, { word: string; icon: string }> = {
   club: { word: "نادٍ", icon: "🏟️" },
   country: { word: "دولة", icon: "🌍" },
+  continent: { word: "قارة", icon: "🧭" },
   competition: { word: "بطولة", icon: "🏆" },
   trophy: { word: "لقب", icon: "🥇" },
   season: { word: "موسم", icon: "📅" },
 };
 
-const SLOT_ENDPOINT: Record<Exclude<Slot, "season">, { url: string; placeholder: string }> = {
+// Continent + season are fixed-option slots; everything else autocompletes.
+const SLOT_ENDPOINT: Record<Exclude<Slot, "season" | "continent">, { url: string; placeholder: string }> = {
   club: { url: "/api/games/guess-player/entities/clubs", placeholder: "اكتب اسم النادي… (مثال: ريال مدريد)" },
   country: { url: "/api/games/guess-player/entities/countries", placeholder: "اكتب اسم الدولة… (مثال: البرازيل)" },
   competition: { url: "/api/games/guess-player/entities/competitions", placeholder: "اكتب اسم البطولة… (مثال: الدوري الإسباني)" },
@@ -185,6 +193,11 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
       case "NATIONALITY":
       case "NATIONAL_TEAM":
         input = picked.country ? { template, countryName: picked.country.id } : null;
+        break;
+      case "CONTINENT":
+        input = picked.continent
+          ? { template, confederation: picked.continent.id as GpConfederation }
+          : null;
         break;
       case "COMPETITION_EVER":
         input = picked.competition ? { template, leagueId: Number(picked.competition.id) } : null;
@@ -365,6 +378,22 @@ export function Composer({ disabled, onAsk }: { disabled?: boolean; onAsk: (inpu
             </option>
           ))}
         </select>
+      ) : currentSlot === "continent" ? (
+        // The six confederations as fixed Arabic-continent pills — membership
+        // by rule, so there is nothing to search.
+        <div className="grid grid-cols-3 gap-1.5">
+          {GP_CONFEDERATIONS.map((conf) => (
+            <button
+              key={conf}
+              type="button"
+              disabled={disabled}
+              onClick={() => fill("continent", { id: conf, label: GP_CONTINENT_AR[conf] })}
+              className="rounded-xl border border-[var(--border)] bg-[var(--fb-surface)] px-2 py-2.5 text-sm font-bold text-[var(--lu-cream)] transition hover:border-[var(--lu-gold-1)]/50 disabled:opacity-50"
+            >
+              {GP_CONTINENT_AR[conf]}
+            </button>
+          ))}
+        </div>
       ) : currentSlot ? (
         <EntitySearch
           key={`${template}:${currentSlot}`}

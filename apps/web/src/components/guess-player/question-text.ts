@@ -25,6 +25,8 @@ export function questionTextAr(q: Pick<GpQuestionView, "template" | "params">): 
       return `هل جنسيته ${p.countryName}؟`;
     case "NATIONAL_TEAM":
       return `هل لعب لمنتخب ${p.countryName}؟`;
+    case "CONTINENT":
+      return `هل هو من قارة ${p.continentAr}؟`;
     case "COMPETITION_EVER":
       return `هل لعب في ${p.competitionName}؟`;
     case "COMPETITION_SEASON":
@@ -51,8 +53,10 @@ export type GpBoardCategory = "clubs" | "identity" | "competitions" | "trophies"
 
 export const BOARD_CATEGORIES: ReadonlyArray<{ id: GpBoardCategory; icon: string; label: string }> = [
   { id: "clubs", icon: "🏟️", label: "الأندية" },
-  { id: "identity", icon: "🌍", label: "الجنسية والمنتخب" },
-  { id: "competitions", icon: "🏆", label: "البطولات" },
+  // Owner ruling 2026-07-07: identity = nationality + continent (confederation);
+  // «شارك في» renamed from «البطولات» to stop the collision with «الألقاب».
+  { id: "identity", icon: "🌍", label: "الجنسية والقارة" },
+  { id: "competitions", icon: "🏆", label: "شارك في" },
   { id: "trophies", icon: "🥇", label: "الألقاب" },
 ];
 
@@ -63,6 +67,7 @@ export function categoryOf(template: GpQuestionView["template"]): GpBoardCategor
       return "clubs";
     case "NATIONALITY":
     case "NATIONAL_TEAM":
+    case "CONTINENT":
       return "identity";
     case "COMPETITION_EVER":
     case "COMPETITION_SEASON":
@@ -88,6 +93,8 @@ export function chipTextAr(q: Pick<GpQuestionView, "template" | "params">): stri
       return String(p.countryName);
     case "NATIONAL_TEAM":
       return `منتخب ${p.countryName}`;
+    case "CONTINENT":
+      return `قارة ${p.continentAr}`;
     case "COMPETITION_EVER":
       return String(p.competitionName);
     case "COMPETITION_SEASON":

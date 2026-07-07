@@ -16,12 +16,31 @@ export const GP_QUESTION_TEMPLATES = [
   "CLUB_SEASON",
   "NATIONALITY",
   "NATIONAL_TEAM",
+  "CONTINENT",
   "COMPETITION_EVER",
   "COMPETITION_SEASON",
   "TROPHY_EVER",
   "TROPHY_SEASON",
   "TROPHY_WITH_CLUB",
 ] as const;
+
+/** The six football CONFEDERATIONS (owner ruling: the continent question asks
+ *  which confederation the player's national team competes under — membership
+ *  by RULE, not geography: Russia/Türkiye → UEFA, Australia → AFC since 2006,
+ *  Kazakhstan → UEFA). Reference = current confederation membership, curated
+ *  in football.country_confederations (zero-error: unmapped → UNKNOWN). */
+export const GP_CONFEDERATIONS = ["UEFA", "AFC", "CAF", "CONMEBOL", "CONCACAF", "OFC"] as const;
+export type GpConfederation = (typeof GP_CONFEDERATIONS)[number];
+
+/** Arabic CONTINENT display names for the confederations (Arabic-only UI). */
+export const GP_CONTINENT_AR: Record<GpConfederation, string> = {
+  UEFA: "أوروبا",
+  AFC: "آسيا",
+  CAF: "أفريقيا",
+  CONMEBOL: "أمريكا الجنوبية",
+  CONCACAF: "أمريكا الشمالية",
+  OFC: "أوقيانوسيا",
+};
 
 export const GP_ROUND_END_REASONS = ["CORRECT_GUESS", "TIMER", "ABANDONED"] as const;
 

@@ -42,20 +42,8 @@ export default async function RoomsPage() {
   if (!session?.user?.id) redirect("/login");
 
   const live = await fetchRooms();
-  // Public (الغرف العامة) = live quick-play tables. Friends (غرف الأصدقاء) = open
-  // manual rooms waiting in their lobby (no bots — created from /create-room).
-  const publicRooms: RoomCardData[] = live
-    .filter((r) => r.kind === "QUICK_PLAY")
-    .map((r) => ({
-      id: r.id,
-      code: null,
-      name: null,
-      creator: r.creator,
-      difficulty: r.difficulty,
-      maxPlayers: r.max,
-      filled: r.filled,
-      kind: "PUBLIC",
-    }));
+  // The browser lists joinable CREATED rooms only (open manual lobbies) — the
+  // server no longer returns quick-play tables (matchmaking-only, no code).
   const friendsRooms: RoomCardData[] = live
     .filter((r) => r.kind === "MANUAL")
     .map((r) => ({
@@ -76,7 +64,7 @@ export default async function RoomsPage() {
         <h2 className="mb-4 text-lg font-bold text-[var(--lu-cream)]">دخول بكود</h2>
         <JoinForm />
       </LuPanel>
-      <RoomBrowser publicRooms={publicRooms} friendsRooms={friendsRooms} />
+      <RoomBrowser friendsRooms={friendsRooms} />
     </LuScreen>
   );
 }
