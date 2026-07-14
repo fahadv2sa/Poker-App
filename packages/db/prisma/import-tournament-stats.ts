@@ -17,6 +17,7 @@
  */
 import "./_ensure-system-ca";
 import "dotenv/config";
+import { archiveRaw } from "./_raw-archive";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -82,10 +83,14 @@ async function apiGet<T>(
       continue;
     }
     if (!res.ok) throw new Error(`API ${path} → HTTP ${res.status}`);
+    // Persist the raw response BEFORE parsing (and before the quota check, so
+    // even the final response of a quota-exhausted day is kept).
+    const rawText = await res.text();
+    archiveRaw(path, params, rawText, res.status);
     if (res.headers.get("x-ratelimit-requests-remaining") === "0") {
       throw new QuotaStop("Daily quota exhausted (header).");
     }
-    const body = (await res.json()) as ApiEnvelope<T>;
+    const body = JSON.parse(rawText) as ApiEnvelope<T>;
     const errs = body.errors;
     const hasErrors =
       (Array.isArray(errs) && errs.length > 0) ||

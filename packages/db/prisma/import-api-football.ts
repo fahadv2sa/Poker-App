@@ -18,6 +18,7 @@
  */
 import "./_ensure-system-ca";
 import "dotenv/config";
+import { archiveRaw } from "./_raw-archive";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { prisma } from "../src/client";
@@ -126,7 +127,11 @@ async function apiGet<T>(
     if (!res.ok) {
       throw new Error(`API ${path} → HTTP ${res.status}`);
     }
-    const body = (await res.json()) as ApiEnvelope<T>;
+    // Persist the raw response BEFORE parsing — full paid-for payload, nothing
+    // discarded. Overwrites on re-fetch of the same request.
+    const rawText = await res.text();
+    archiveRaw(path, params, rawText, res.status);
+    const body = JSON.parse(rawText) as ApiEnvelope<T>;
     const errs = body.errors;
     const hasErrors =
       (Array.isArray(errs) && errs.length > 0) ||
