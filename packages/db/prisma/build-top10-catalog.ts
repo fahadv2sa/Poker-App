@@ -80,7 +80,7 @@ const DRY_RUN = process.argv.includes("--dry-run");
  * players, and field-fill cannot detect an ABSENT top scorer — that would risk a wrong list.
  * These cups are cross-calendar (Aug–May), so they are NOT single-year tournaments.
  */
-const EXTRA_COMPETITIONS: ReadonlyArray<{ leagueId: number; nameAr: string }> = [
+export const EXTRA_COMPETITIONS: ReadonlyArray<{ leagueId: number; nameAr: string }> = [
   { leagueId: 3, nameAr: "الدوري الأوروبي" }, // UEFA Europa League
   { leagueId: 848, nameAr: "دوري المؤتمر الأوروبي" }, // UEFA Europa Conference League
   { leagueId: 143, nameAr: "كأس ملك إسبانيا" }, // Copa del Rey
@@ -93,7 +93,7 @@ const EXTRA_COMPETITIONS: ReadonlyArray<{ leagueId: number; nameAr: string }> = 
 ];
 const EXTRA_NAME = new Map(EXTRA_COMPETITIONS.map((c) => [c.leagueId, c.nameAr]));
 /** Every competition the builder generates non-club COMP questions from = whitelist + cups. */
-const ELIGIBLE_LEAGUE_IDS: readonly number[] = [
+export const ELIGIBLE_LEAGUE_IDS: readonly number[] = [
   ...TT_WHITELIST_LEAGUE_IDS,
   ...EXTRA_COMPETITIONS.map((c) => c.leagueId),
 ];
@@ -638,12 +638,16 @@ function writeArtifact(
   console.log(`  artifact → docs/top-10/CATALOG.md + CATALOG.json`);
 }
 
-main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+// Only auto-run when executed directly (pnpm db:build-top10-catalog) — NOT when
+// the audit imports EXTRA_COMPETITIONS (same guard as import-api-football.ts).
+if (process.argv[1]?.endsWith("build-top10-catalog.ts")) {
+  main()
+    .then(async () => {
+      await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+      console.error(e);
+      await prisma.$disconnect();
+      process.exit(1);
+    });
+}

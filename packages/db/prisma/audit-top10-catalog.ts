@@ -32,7 +32,6 @@ import {
   TT_SINGLE_YEAR_LEAGUE_IDS,
   TT_TOURNAMENT_FINALS_MAX_APPS,
   TT_TYPE_META,
-  TT_WHITELIST_LEAGUE_IDS,
   ttSeasonLabel,
   type TtQuestionType,
 } from "@fb/shared";
@@ -48,6 +47,12 @@ import {
   type SeasonRow,
   type TtScopeKind,
 } from "./top10-guards";
+// The builder admits the major cups + UEFA knockouts beyond TT_COMPETITIONS —
+// the audit must recompute over the SAME league universe and recognize the same
+// Arabic names (import, never duplicate).
+import { ELIGIBLE_LEAGUE_IDS, EXTRA_COMPETITIONS } from "./build-top10-catalog";
+
+const EXTRA_COMP_NAME = new Map(EXTRA_COMPETITIONS.map((c) => [c.leagueId, c.nameAr]));
 
 interface AggRow {
   league_id: number;
@@ -66,21 +71,24 @@ interface AggRow {
 async function aggregateType(type: TtQuestionType): Promise<AggRow[]> {
   const pos = TT_TYPE_META[type].position;
   const posFilter = pos ? Prisma.sql`AND pos.code = ${pos}::"football"."position_code"` : Prisma.empty;
-  const leagueList = Prisma.join([...TT_WHITELIST_LEAGUE_IDS]);
+  const leagueList = Prisma.join([...ELIGIBLE_LEAGUE_IDS]);
   const valueExpr = Prisma.raw(VALUE_EXPR[type]!);
+  // fame = the NEW composite score (football.player_score.score), matching the
+  // builder's aggregateType exactly — the legacy players.fame_score is retired.
   return prisma.$queryRaw<AggRow[]>(Prisma.sql`
     SELECT s.league_id, s.season, s.player_id, s.team_id,
            ${valueExpr} AS value,
            SUM(s.games_appearances) AS apps,
-           COALESCE(p.fame_score, 0) AS fame,
+           COALESCE(psc.score, 0) AS fame,
            p.name, p.name_ar, p.active
     FROM football.player_season_stats s
     JOIN football.players p ON p.id = s.player_id
     JOIN football.positions pos ON pos.id = p.position_id
+    LEFT JOIN football.player_score psc ON psc.player_id = p.id
     WHERE s.league_id IN (${leagueList}) AND s.league_id IS NOT NULL
       AND s.season BETWEEN ${TT_GATE.seasonMin} AND ${TT_GATE.seasonMax}
       ${posFilter}
-    GROUP BY s.league_id, s.season, s.player_id, s.team_id, p.fame_score, p.name, p.name_ar, p.active
+    GROUP BY s.league_id, s.season, s.player_id, s.team_id, psc.score, p.name, p.name_ar, p.active
   `);
 }
 
@@ -176,7 +184,11 @@ async function main() {
     // title / translation completeness
     if (!TT_TYPE_META[type]?.nameAr?.trim()) issues.push("missing Arabic type label");
     if (!e.competitionName?.trim()) issues.push("stored competitionName is blank");
-    if (scope === "COMP" && !TT_COMPETITIONS.find((c) => c.leagueId === e.leagueId)?.nameAr?.trim()) {
+    if (
+      scope === "COMP" &&
+      !TT_COMPETITIONS.find((c) => c.leagueId === e.leagueId)?.nameAr?.trim() &&
+      !EXTRA_COMP_NAME.get(e.leagueId)?.trim()
+    ) {
       issues.push(`competition ${e.leagueId} has no Arabic name`);
     }
     if ((scope.startsWith("CLUB")) && !club) issues.push(`unknown club_key "${e.clubKey}"`);
