@@ -25,6 +25,7 @@
 import "./_ensure-system-ca";
 import "dotenv/config";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { prisma } from "../src/client";
 import {
@@ -41,13 +42,30 @@ import {
 // --- config ---------------------------------------------------------------
 
 const LEAGUES = [39, 140, 78, 135, 61]; // PL, La Liga, Bundesliga, Serie A, Ligue 1 (this order)
-const SEASONS = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]; // oldest -> newest
+// Seasons to FETCH from the API (discovery scope). Default = the 2010-2014
+// backfill (the 2015-2024 window was fully imported on 2026-06-18). Override
+// with --seasons=2025 (comma-separated) e.g. for the season-2025 top-up run.
+const seasonsFlag = process.argv.find((a) => a.startsWith("--seasons="));
+const SEASONS = seasonsFlag
+  ? seasonsFlag.split("=")[1]!.split(",").map(Number)
+  : [2010, 2011, 2012, 2013, 2014]; // oldest -> newest
+// The REMOVAL check additionally counts a player as qualified if the DB already
+// holds a top-5 appearance line in 2015-2024 (equivalent to the API data — the
+// enrichment stored the same statistics[]), widening the window to
+// min(SEASONS)..2024 without re-fetching 50 league-seasons.
+const DB_QUALIFY_SEASONS: [number, number] = [2015, 2024];
+// --add-only: never run Phase 2 (removal) — used for top-up runs whose fetch
+// window is NOT a superset of the current roster's qualification window.
+const ADD_ONLY = process.argv.includes("--add-only");
 // Hard stop on API calls per run. Defaults to 7000 (cautious); pass --daily=N to
 // raise it (e.g. --daily=75000 on the Ultra plan). The reused apiGet reads the
 // same --daily flag from the shared args, so one flag lifts both caps.
 const dailyFlag = process.argv.find((a) => a.startsWith("--daily="));
 const HARD_CAP = dailyFlag ? Number(dailyFlag.split("=")[1]) : 7000;
-const PROGRESS = resolve(process.cwd(), ".diff-import-progress.json");
+// Checkpoint lives OUTSIDE OneDrive (OS temp dir) like the enrich/tournament
+// checkpoints — OneDrive locks frequently-written files → EBUSY mid-run.
+const PROGRESS =
+  process.env.DIFF_IMPORT_CHECKPOINT ?? resolve(tmpdir(), ".diff-import-progress.json");
 const CONFIRM = process.argv.includes("--confirm");
 const today = () => new Date().toISOString().slice(0, 10);
 const capReached = () => requestsMade >= HARD_CAP;
@@ -124,9 +142,16 @@ interface PlayerListItem {
 
 /** Fetch a player's record, freshest first (2024) then their known qualifying
  *  season (guaranteed to contain a record) — at most 2 calls instead of a long
- *  2024->2015 scan, using the season we already discovered in Phase 1. */
+ *  2024->2015 scan, using the season we already discovered in Phase 1.
+ *  Pre-2015 cohorts (the 2010-2014 backfill) skip the 2024 probe: those players
+ *  are by definition absent from every 2015+ roster, so the probe is a
+ *  near-guaranteed wasted request (~1 per added player). Photo URLs are
+ *  id-based (season-independent) and name/nationality/birth are stable. */
 async function fetchPlayer(id: number, qualifyingSeason: number, apiKey: string): Promise<PlayerListItem | undefined> {
-  const seasons = qualifyingSeason === 2024 ? [2024] : [2024, qualifyingSeason];
+  const seasons =
+    qualifyingSeason < 2015 || qualifyingSeason >= 2024
+      ? [qualifyingSeason]
+      : [2024, qualifyingSeason];
   for (const season of seasons) {
     if (capReached()) break;
     const res = await apiGet<PlayerListItem>("/players", { id, season }, apiKey);
@@ -187,24 +212,50 @@ async function main() {
   const qualifiedIds = new Set(p.qualifiedOrder.map((q) => q.id));
   console.log(`\nPhase 1 complete: ${qualifiedIds.size} qualified IDs across ${COMBOS.length} league-seasons.`);
 
+  // Widen the qualification window for the REMOVE check with the DB-derived
+  // 2015-2024 qualifiers (same statistics the API returned, stored by the
+  // enrichment): a player already holding a top-5 appearance line in that
+  // window is qualified and must never be removed by a backfill run.
+  const dbQualified = await prisma.playerSeasonStat.findMany({
+    where: {
+      leagueId: { in: LEAGUES },
+      season: { gte: DB_QUALIFY_SEASONS[0], lte: DB_QUALIFY_SEASONS[1] },
+      appearances: { gte: 1 },
+      player: { externalRef: { not: null } },
+    },
+    select: { player: { select: { externalRef: true } } },
+    distinct: ["playerId"],
+  });
+  const removeSafeIds = new Set<number>(qualifiedIds);
+  for (const r of dbQualified) removeSafeIds.add(r.player.externalRef!);
+  console.log(
+    `Qualification window ${Math.min(...SEASONS)}-${DB_QUALIFY_SEASONS[1]}: ` +
+      `${qualifiedIds.size} fetched + ${dbQualified.length} DB-derived (2015-2024) → ${removeSafeIds.size} total qualified.`,
+  );
+
   // ===== PHASE 4 — dry-run summary =====
   const dbPlayers = await prisma.player.findMany({
     where: { externalRef: { not: null } },
     select: { id: true, externalRef: true, name: true },
   });
   const dbRefs = new Set(dbPlayers.map((x) => x.externalRef!));
-  const toRemove = dbPlayers.filter((x) => !qualifiedIds.has(x.externalRef!));
+  const toRemove = dbPlayers.filter((x) => !removeSafeIds.has(x.externalRef!));
   const toAdd = p.qualifiedOrder.filter((q) => !dbRefs.has(q.id));
   const manualCount = await prisma.player.count({ where: { externalRef: null } });
 
   console.log("\n==== DRY-RUN SUMMARY (Phase 4) ====");
   console.log(`Total qualified player IDs (API)     : ${qualifiedIds.size}`);
+  console.log(`Qualified incl. DB-derived window    : ${removeSafeIds.size}`);
   console.log(`DB players WITH external_ref         : ${dbPlayers.length}`);
   console.log(`Manual players (external_ref NULL)   : ${manualCount}  — never touched`);
-  console.log(`To REMOVE (in DB, not qualified)     : ${toRemove.length}`);
+  console.log(`To REMOVE (in DB, not qualified)     : ${toRemove.length}${ADD_ONLY ? "  [--add-only: removal disabled]" : ""}`);
   console.log(`To ADD (qualified, not in DB)        : ${toAdd.length}`);
   console.log(`To KEEP unchanged                    : ${dbPlayers.length - toRemove.length}`);
   console.log(`API calls this run                   : ${requestsMade}`);
+  if (toRemove.length > 0) {
+    console.log("\nREMOVE candidates (full list):");
+    for (const r of toRemove) console.log(`  - ${r.name} (ref ${r.externalRef})`);
+  }
 
   if (!CONFIRM) {
     p.status = "awaiting_confirmation";
@@ -215,7 +266,11 @@ async function main() {
   }
 
   // ===== PHASE 2 — remove unqualified (external_ref NOT NULL only); run once =====
-  if (p.phase < 2) {
+  if (ADD_ONLY) {
+    console.log("\nPhase 2 SKIPPED (--add-only): no removals in this mode.");
+    if (p.phase < 2) p.phase = 2;
+    saveProgress(p);
+  } else if (p.phase < 2) {
     console.log(`\nPhase 2 — removing ${toRemove.length} unqualified players (never the ${manualCount} manual NULL-ref ones)...`);
     let removed = 0;
     let removeSkipped = 0;

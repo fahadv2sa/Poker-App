@@ -171,12 +171,19 @@ async function apiStatus(apiKey: string) {
 
 async function writeStatic(playerId: string, p: PlayerProfile, existingBirthYear: number | null) {
   const birthDate = p.birth?.date ?? null;
+  // The API occasionally ships malformed dates (e.g. "1975-16-12" — month 16,
+  // day/month transposed, seen on player 113880). An Invalid Date would fail
+  // Prisma validation and kill the whole run; store null instead — the raw
+  // response is archived, so nothing is lost if we fix these later.
+  const birthDateObj = birthDate ? new Date(birthDate) : null;
+  const validBirthDate =
+    birthDateObj && !Number.isNaN(birthDateObj.getTime()) ? birthDateObj : null;
   await prisma.player.update({
     where: { id: playerId },
     data: {
       firstName: p.firstname ?? undefined,
       lastName: p.lastname ?? undefined,
-      birthDate: birthDate ? new Date(birthDate) : undefined,
+      birthDate: validBirthDate ?? undefined,
       birthPlace: p.birth?.place ?? undefined,
       birthCountry: p.birth?.country ?? undefined,
       heightCm: measure(p.height) ?? undefined,
@@ -283,11 +290,13 @@ async function main() {
   let seasonRows = 0;
   let staticUpdates = 0;
   let stopped = false;
+  const failedRefs: number[] = [];
 
   try {
     for (const pl of queue) {
       const ext = pl.externalRef!;
       if (doneSet.has(ext)) continue;
+      try {
       const seasonsStored = new Set(progress.seasons[String(ext)] ?? []);
 
       // 1) which seasons does this player have data for?
@@ -323,6 +332,14 @@ async function main() {
           `  enriched ${playersTouched} players · ${seasonRows} season rows · ${requestsMade} API calls`,
         );
       }
+      } catch (err) {
+        // One bad player must never kill a multi-hour run: QuotaStop still
+        // ends it cleanly; anything else is logged and skipped — NOT marked
+        // done, so a re-run retries once the underlying bug is fixed.
+        if (err instanceof QuotaStop) throw err;
+        failedRefs.push(ext);
+        console.warn(`  ! player ${ext} failed — skipped: ${(err as Error).message.split("\n")[0]}`);
+      }
     }
   } catch (err) {
     if (err instanceof QuotaStop) {
@@ -343,6 +360,7 @@ async function main() {
   console.log(`season stat rows written  : ${seasonRows}`);
   console.log(`static profiles updated   : ${staticUpdates}`);
   console.log(`API calls this run        : ${requestsMade}`);
+  console.log(`players failed (skipped)  : ${failedRefs.length}${failedRefs.length ? ` — refs: ${failedRefs.join(", ")}` : ""}`);
   console.log(`daily quota               : ${usedEnd ?? "?"}/${limitDay ?? "?"} used → ${remaining ?? "?"} remaining`);
   console.log(`players fully done (total): ${doneSet.size}`);
   console.log(
